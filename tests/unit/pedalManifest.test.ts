@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { buildManifestIndex, lookupPedalArt, type PedalArtEntry } from '@/components/board/pedalManifest';
 
@@ -32,5 +34,38 @@ describe('lookupPedalArt', () => {
   it('returns undefined for effects without artwork and for a null index', () => {
     expect(lookupPedalArt(index, 26)).toBeUndefined(); // PRE Boost — not in fixture
     expect(lookupPedalArt(null, 0)).toBeUndefined();
+  });
+});
+
+describe('generated manifest.json (public/pedals/)', () => {
+  const manifest: PedalArtEntry[] = JSON.parse(
+    readFileSync(join(process.cwd(), 'public/pedals/manifest.json'), 'utf8'),
+  );
+
+  it('every entry carries a full body-colors block with valid values', () => {
+    const hex = /^#[0-9a-f]{6}$/i;
+    expect(manifest.length).toBeGreaterThan(250);
+    for (const entry of manifest) {
+      const c = entry.colors;
+      expect(c, `${entry.module}::${entry.name} has no colors`).toBeDefined();
+      expect(c!.body).toMatch(hex);
+      expect(c!.bodyDeep).toMatch(hex);
+      expect(c!.ink).toMatch(hex);
+      expect(c!.led).toMatch(hex);
+      expect(['dark', 'cream', 'gold']).toContain(c!.knob);
+      if (c!.panel !== undefined) {
+        expect(c!.panel).toMatch(hex);
+        expect(c!.panelText).toMatch(hex);
+      }
+    }
+  });
+
+  it('amp-head effects carry a control-panel color, others never do', () => {
+    // not all AMP-module effects are drawn as amp heads (bass preamps are
+    // racks/stomps) — but the bulk are, and only AMP entries may have a panel
+    const withPanel = manifest.filter((e) => e.colors?.panel !== undefined);
+    expect(withPanel.length).toBeGreaterThan(40);
+    expect(withPanel.every((e) => e.module === 'AMP')).toBe(true);
+    expect(manifest.find((e) => e.name === 'UK 800')?.colors?.panel).toBeDefined();
   });
 });

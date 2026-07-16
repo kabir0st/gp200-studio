@@ -84,6 +84,16 @@ describe('PedalBoard (render smoke test)', () => {
     expect(container.querySelector('.info-bar')?.textContent).toContain('Hover a pedal');
   });
 
+  it('the EQ pedal renders faders, not knobs', () => {
+    const { container } = renderBoard();
+    const eqPedal = [...container.querySelectorAll('article.pedal')].find(
+      (p) => p.querySelector('.module-chip')?.textContent === 'EQ',
+    )!;
+    expect(eqPedal).toBeDefined();
+    expect(eqPedal.querySelectorAll('.fader').length).toBeGreaterThan(0);
+    expect(eqPedal.querySelectorAll('.knob')).toHaveLength(0);
+  });
+
   it('SAVE is disabled while offline; LOAD requests the slot browser', () => {
     const { props, container } = renderBoard();
     const save = [...container.querySelectorAll('button.hw-btn')].find((b) => b.textContent?.startsWith('SAVE'))!;

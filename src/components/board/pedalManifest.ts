@@ -10,6 +10,17 @@
 import { useEffect, useState } from 'react';
 import { getEffectName, getModuleName } from '@/core/effectNames';
 
+export interface PedalArtColors {
+  body: string;
+  bodyDeep: string;
+  ink: string;
+  knob: 'dark' | 'cream' | 'gold';
+  led: string;
+  /** amp control-panel strip color (AMP module only) */
+  panel?: string;
+  panelText?: string;
+}
+
 export interface PedalArtEntry {
   name: string;
   module: string;
@@ -21,6 +32,8 @@ export interface PedalArtEntry {
   basedOn: string;
   /** one-line "what it does" */
   blurb: string;
+  /** authentic body colors derived from the artwork spec (older manifests omit it) */
+  colors?: PedalArtColors;
 }
 
 export type ManifestIndex = Map<string, PedalArtEntry>;

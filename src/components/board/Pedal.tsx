@@ -6,6 +6,7 @@ import { getEffectParams } from '@/core/effectParams';
 import { getBodySpec } from './boardPalette';
 import { pedalArtUrl, type PedalArtEntry } from './pedalManifest';
 import { PedalKnob } from './PedalKnob';
+import { PedalFader } from './PedalFader';
 import { ComboSelect, MiniSwitch } from './MiniSwitch';
 
 export interface PedalProps {
@@ -57,17 +58,25 @@ export function Pedal({
 
   const effectName = getEffectName(slot.effectId);
   const moduleName = getModuleName(slot.effectId);
-  const spec = getBodySpec(moduleName);
+  // authentic per-effect colors from the artwork spec; module palette as fallback
+  const spec = art?.colors ?? getBodySpec(moduleName);
   const defs = getEffectParams(slot.effectId);
   const wide = defs.filter((d) => d.type === 'knob').length >= 5;
   const effects = getEffectsByModule(moduleName);
   const caption = art?.basedOn ?? EFFECT_DESCRIPTIONS[effectName] ?? '';
+
+  // amps get a control-panel strip (knobs live on the panel, like the hardware)
+  const panel = art?.colors?.panel;
+  const panelText = art?.colors?.panelText ?? spec.ink;
+  // graphic EQs get faders, not knobs
+  const isEq = moduleName === 'EQ';
 
   const bodyVars = {
     '--body': spec.body,
     '--body-deep': spec.bodyDeep,
     '--ink': spec.ink,
     '--led': spec.led,
+    ...(panel ? { '--panel': panel, '--panel-text': panelText } : {}),
   } as CSSProperties;
 
   const classes = ['pedal'];
@@ -139,7 +148,7 @@ export function Pedal({
 
       {/* knob/switch drags must never start a pedal drag */}
       <div
-        className="controls"
+        className={`controls${panel ? ' amp-panel' : ''}`}
         draggable
         onDragStart={(e) => {
           e.preventDefault();
@@ -149,6 +158,17 @@ export function Pedal({
         {defs.map((def) => {
           const value = slot.params[def.idx] ?? def.default;
           if (def.type === 'knob') {
+            if (isEq) {
+              return (
+                <PedalFader
+                  key={def.idx}
+                  param={def}
+                  value={value}
+                  onChange={(v) => onParamChange(def.idx, v)}
+                  pedalName={effectName}
+                />
+              );
+            }
             return (
               <PedalKnob
                 key={def.idx}
@@ -156,7 +176,7 @@ export function Pedal({
                 value={value}
                 onChange={(v) => onParamChange(def.idx, v)}
                 knobStyle={spec.knob}
-                ink={spec.ink}
+                ink={panel ? panelText : spec.ink}
                 pedalName={effectName}
               />
             );

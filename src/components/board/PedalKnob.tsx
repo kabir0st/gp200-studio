@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import type { KnobParam } from '@/core/effectParams';
 import { KNOB_STYLES, type BodySpec } from './boardPalette';
+import { clampSnap, formatValue } from './paramValue';
 
 interface PedalKnobProps {
   param: KnobParam;
@@ -22,17 +23,6 @@ function polar(cx: number, cy: number, r: number, deg: number): [number, number]
   return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
 }
 
-function clampSnap(raw: number, param: KnobParam): number {
-  const clamped = Math.min(param.max, Math.max(param.min, raw));
-  const step = param.step > 0 ? param.step : 1;
-  return Math.round(clamped / step) * step;
-}
-
-function formatValue(value: number, param: KnobParam): string {
-  const dp = param.step > 0 && param.step < 1 ? 1 : 0;
-  const v = Number(value.toFixed(dp));
-  return `${param.min < 0 && v > 0 ? '+' : ''}${v}`;
-}
 
 /**
  * Skeuomorphic rotary knob: 270° sweep, vertical pointer drag, double-click

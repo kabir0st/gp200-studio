@@ -6,7 +6,14 @@
     "file": "comp.svg",
     "type": "Compressor",
     "basedOn": "Ross™ Compressor",
-    "blurb": "Evens out your dynamics — quiet notes come up, loud peaks get tamed, sustain increases."
+    "blurb": "Evens out your dynamics — quiet notes come up, loud peaks get tamed, sustain increases.",
+    "colors": {
+      "body": "#9aa0a4",
+      "bodyDeep": "#787d80",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "COMP4",
@@ -15,7 +22,14 @@
     "file": "comp4.svg",
     "type": "Compressor",
     "basedOn": "Keeley® Compressor Plus (4-knob)",
-    "blurb": "Evens out your dynamics — quiet notes come up, loud peaks get tamed, sustain increases."
+    "blurb": "Evens out your dynamics — quiet notes come up, loud peaks get tamed, sustain increases.",
+    "colors": {
+      "body": "#c8ccd0",
+      "bodyDeep": "#9c9fa2",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "S-Comp",
@@ -24,7 +38,14 @@
     "file": "s-comp.svg",
     "type": "Compressor",
     "basedOn": "Valeton original — fully adjustable studio-style compressor",
-    "blurb": "Evens out your dynamics — quiet notes come up, loud peaks get tamed, sustain increases."
+    "blurb": "Evens out your dynamics — quiet notes come up, loud peaks get tamed, sustain increases.",
+    "colors": {
+      "body": "#ece4d4",
+      "bodyDeep": "#b8b2a5",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "AC Boost",
@@ -33,7 +54,14 @@
     "file": "ac-boost.svg",
     "type": "Boost",
     "basedOn": "Xotic® AC Booster",
-    "blurb": "Pushes your signal harder into the next stage for more volume or drive."
+    "blurb": "Pushes your signal harder into the next stage for more volume or drive.",
+    "colors": {
+      "body": "#2f5fa8",
+      "bodyDeep": "#254a83",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "B-Boost",
@@ -42,7 +70,14 @@
     "file": "b-boost.svg",
     "type": "Boost",
     "basedOn": "Xotic® BB Preamp",
-    "blurb": "Pushes your signal harder into the next stage for more volume or drive."
+    "blurb": "Pushes your signal harder into the next stage for more volume or drive.",
+    "colors": {
+      "body": "#232326",
+      "bodyDeep": "#1b1b1e",
+      "ink": "#d8b860",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "P-Boost",
@@ -51,7 +86,14 @@
     "file": "p-boost.svg",
     "type": "Boost",
     "basedOn": "Xotic® RC Booster",
-    "blurb": "Pushes your signal harder into the next stage for more volume or drive."
+    "blurb": "Pushes your signal harder into the next stage for more volume or drive.",
+    "colors": {
+      "body": "#3a8a5c",
+      "bodyDeep": "#2d6c48",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "14 Boost",
@@ -60,7 +102,14 @@
     "file": "14-boost.svg",
     "type": "Boost",
     "basedOn": "Fortin® Grind boost",
-    "blurb": "Pushes your signal harder into the next stage for more volume or drive."
+    "blurb": "Pushes your signal harder into the next stage for more volume or drive.",
+    "colors": {
+      "body": "#141416",
+      "bodyDeep": "#101011",
+      "ink": "#e8e8e8",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Micro Boost",
@@ -69,7 +118,14 @@
     "file": "micro-boost.svg",
     "type": "Boost",
     "basedOn": "MXR® M133 Micro Amp",
-    "blurb": "Pushes your signal harder into the next stage for more volume or drive."
+    "blurb": "Pushes your signal harder into the next stage for more volume or drive.",
+    "colors": {
+      "body": "#e8e4d8",
+      "bodyDeep": "#b5b2a8",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "FAT BB",
@@ -78,7 +134,14 @@
     "file": "fat-bb.svg",
     "type": "Boost",
     "basedOn": "Fulltone® Fat Boost",
-    "blurb": "Pushes your signal harder into the next stage for more volume or drive."
+    "blurb": "Pushes your signal harder into the next stage for more volume or drive.",
+    "colors": {
+      "body": "#e0d6b8",
+      "bodyDeep": "#afa790",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Boost",
@@ -87,7 +150,14 @@
     "file": "boost.svg",
     "type": "Boost",
     "basedOn": "Xotic® EP Booster",
-    "blurb": "Pushes your signal harder into the next stage for more volume or drive."
+    "blurb": "Pushes your signal harder into the next stage for more volume or drive.",
+    "colors": {
+      "body": "#c9a227",
+      "bodyDeep": "#9d7e1e",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Gate 1",
@@ -96,7 +166,14 @@
     "file": "gate-1.svg",
     "type": "Gate",
     "basedOn": "ISP® Decimator™",
-    "blurb": "Cuts noise and hum when you stop playing."
+    "blurb": "Cuts noise and hum when you stop playing.",
+    "colors": {
+      "body": "#c4c8cc",
+      "bodyDeep": "#999c9f",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4dff88"
+    }
   },
   {
     "name": "Gate 2",
@@ -105,7 +182,14 @@
     "file": "gate-2.svg",
     "type": "Gate",
     "basedOn": "Valeton original — gate with attack/release control",
-    "blurb": "Cuts noise and hum when you stop playing."
+    "blurb": "Cuts noise and hum when you stop playing.",
+    "colors": {
+      "body": "#c9cfd2",
+      "bodyDeep": "#9da1a4",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4dff88"
+    }
   },
   {
     "name": "Gate 3",
@@ -114,7 +198,14 @@
     "file": "gate-3.svg",
     "type": "Gate",
     "basedOn": "Valeton original — inverse expander dynamics gate",
-    "blurb": "Cuts noise and hum when you stop playing."
+    "blurb": "Cuts noise and hum when you stop playing.",
+    "colors": {
+      "body": "#aab4b8",
+      "bodyDeep": "#858c90",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4dff88"
+    }
   },
   {
     "name": "AC Refiner",
@@ -123,7 +214,14 @@
     "file": "ac-refiner.svg",
     "type": "Acoustic",
     "basedOn": "Valeton original — natural acoustic enhancer",
-    "blurb": "Shapes an electric signal to behave like an acoustic instrument."
+    "blurb": "Shapes an electric signal to behave like an acoustic instrument.",
+    "colors": {
+      "body": "#d9c9a8",
+      "bodyDeep": "#a99d83",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "AC Sim",
@@ -132,7 +230,14 @@
     "file": "ac-sim.svg",
     "type": "Acoustic",
     "basedOn": "Boss® AC-2 Acoustic Simulator",
-    "blurb": "Shapes an electric signal to behave like an acoustic instrument."
+    "blurb": "Shapes an electric signal to behave like an acoustic instrument.",
+    "colors": {
+      "body": "#d8b878",
+      "bodyDeep": "#a8905e",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "T-Wah",
@@ -141,7 +246,14 @@
     "file": "t-wah.svg",
     "type": "Filter",
     "basedOn": "Valeton original — touch (envelope) wah",
-    "blurb": "Sweeps a resonant filter across your signal for vocal, synth-like motion."
+    "blurb": "Sweeps a resonant filter across your signal for vocal, synth-like motion.",
+    "colors": {
+      "body": "#c8a03a",
+      "bodyDeep": "#9c7d2d",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "A-WAH",
@@ -150,7 +262,14 @@
     "file": "a-wah.svg",
     "type": "Filter",
     "basedOn": "Valeton original — variable auto wah",
-    "blurb": "Sweeps a resonant filter across your signal for vocal, synth-like motion."
+    "blurb": "Sweeps a resonant filter across your signal for vocal, synth-like motion.",
+    "colors": {
+      "body": "#8a5ac8",
+      "bodyDeep": "#6c469c",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Step Filter",
@@ -159,7 +278,14 @@
     "file": "step-filter.svg",
     "type": "Filter",
     "basedOn": "Valeton original — 4-step synth filter sequencer",
-    "blurb": "Sweeps a resonant filter across your signal for vocal, synth-like motion."
+    "blurb": "Sweeps a resonant filter across your signal for vocal, synth-like motion.",
+    "colors": {
+      "body": "#3aa8a0",
+      "bodyDeep": "#2d837d",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "OCTA",
@@ -168,7 +294,14 @@
     "file": "octa.svg",
     "type": "Pitch",
     "basedOn": "Valeton original — polyphonic octaver",
-    "blurb": "Shifts or harmonizes the pitch of what you play."
+    "blurb": "Shifts or harmonizes the pitch of what you play.",
+    "colors": {
+      "body": "#7a4ac8",
+      "bodyDeep": "#5f3a9c",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Pitch",
@@ -177,7 +310,14 @@
     "file": "pitch.svg",
     "type": "Pitch",
     "basedOn": "Valeton original — polyphonic pitch shifter (dry CTRL)",
-    "blurb": "Shifts or harmonizes the pitch of what you play."
+    "blurb": "Shifts or harmonizes the pitch of what you play.",
+    "colors": {
+      "body": "#5a6ad8",
+      "bodyDeep": "#4653a8",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "P-Bend",
@@ -186,7 +326,14 @@
     "file": "p-bend.svg",
     "type": "Pitch",
     "basedOn": "Valeton original — polyphonic bend with wet/dry CTRL",
-    "blurb": "Shifts or harmonizes the pitch of what you play."
+    "blurb": "Shifts or harmonizes the pitch of what you play.",
+    "colors": {
+      "body": "#4a5ac8",
+      "bodyDeep": "#3a469c",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Detune",
@@ -195,7 +342,14 @@
     "file": "detune.svg",
     "type": "Pitch",
     "basedOn": "Valeton original — micro pitch-shift doubler",
-    "blurb": "Shifts or harmonizes the pitch of what you play."
+    "blurb": "Shifts or harmonizes the pitch of what you play.",
+    "colors": {
+      "body": "#4a7ad8",
+      "bodyDeep": "#3a5fa8",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Bit Smash",
@@ -204,7 +358,14 @@
     "file": "bit-smash.svg",
     "type": "Special",
     "basedOn": "Valeton original — bitcrusher / sample reducer",
-    "blurb": "A creative sound-design effect."
+    "blurb": "A creative sound-design effect.",
+    "colors": {
+      "body": "#d85a8a",
+      "bodyDeep": "#a8466c",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Ring Mod",
@@ -213,7 +374,14 @@
     "file": "ring-mod.svg",
     "type": "Special",
     "basedOn": "Valeton original — ring modulator (bells & chimes)",
-    "blurb": "A creative sound-design effect."
+    "blurb": "A creative sound-design effect.",
+    "colors": {
+      "body": "#b8b0a0",
+      "bodyDeep": "#90897d",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Saturate",
@@ -222,7 +390,14 @@
     "file": "saturate.svg",
     "type": "Special",
     "basedOn": "Valeton original — vintage tape saturation",
-    "blurb": "A creative sound-design effect."
+    "blurb": "A creative sound-design effect.",
+    "colors": {
+      "body": "#b06a32",
+      "bodyDeep": "#895327",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Guitar EQ 1",
@@ -231,7 +406,14 @@
     "file": "guitar-eq-1.svg",
     "type": "EQ",
     "basedOn": "5-band guitar EQ (125 Hz – 4 kHz)",
-    "blurb": "Cuts or boosts frequency bands to sculpt your tone."
+    "blurb": "Cuts or boosts frequency bands to sculpt your tone.",
+    "colors": {
+      "body": "#ece8e2",
+      "bodyDeep": "#b8b5b0",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Guitar EQ 2",
@@ -240,7 +422,14 @@
     "file": "guitar-eq-2.svg",
     "type": "EQ",
     "basedOn": "5-band guitar EQ (100 Hz – 6 kHz)",
-    "blurb": "Cuts or boosts frequency bands to sculpt your tone."
+    "blurb": "Cuts or boosts frequency bands to sculpt your tone.",
+    "colors": {
+      "body": "#e2ded2",
+      "bodyDeep": "#b0ada4",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Bass EQ 1",
@@ -249,7 +438,14 @@
     "file": "bass-eq-1.svg",
     "type": "EQ",
     "basedOn": "5-band bass EQ",
-    "blurb": "Cuts or boosts frequency bands to sculpt your tone."
+    "blurb": "Cuts or boosts frequency bands to sculpt your tone.",
+    "colors": {
+      "body": "#3a8a5c",
+      "bodyDeep": "#2d6c48",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Bass EQ 2",
@@ -258,7 +454,14 @@
     "file": "bass-eq-2.svg",
     "type": "EQ",
     "basedOn": "5-band bass EQ",
-    "blurb": "Cuts or boosts frequency bands to sculpt your tone."
+    "blurb": "Cuts or boosts frequency bands to sculpt your tone.",
+    "colors": {
+      "body": "#2f7a50",
+      "bodyDeep": "#255f3e",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Mess EQ",
@@ -267,7 +470,14 @@
     "file": "mess-eq.svg",
     "type": "EQ",
     "basedOn": "Mesa/Boogie® amp-style 5-band graphic EQ",
-    "blurb": "Cuts or boosts frequency bands to sculpt your tone."
+    "blurb": "Cuts or boosts frequency bands to sculpt your tone.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Hyper EQ",
@@ -276,7 +486,14 @@
     "file": "hyper-eq.svg",
     "type": "EQ",
     "basedOn": "10-band graphic EQ for any instrument",
-    "blurb": "Cuts or boosts frequency bands to sculpt your tone."
+    "blurb": "Cuts or boosts frequency bands to sculpt your tone.",
+    "colors": {
+      "body": "#2a52b8",
+      "bodyDeep": "#214090",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Hammy",
@@ -285,7 +502,14 @@
     "file": "hammy.svg",
     "type": "Pitch",
     "basedOn": "DigiTech® Whammy™ pitch treadle",
-    "blurb": "Shifts or harmonizes the pitch of what you play."
+    "blurb": "Shifts or harmonizes the pitch of what you play.",
+    "colors": {
+      "body": "#c02020",
+      "bodyDeep": "#961919",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Harmonizer 1",
@@ -294,7 +518,14 @@
     "file": "harmonizer-1.svg",
     "type": "Pitch",
     "basedOn": "Valeton original — single-voice auto harmonizer",
-    "blurb": "Shifts or harmonizes the pitch of what you play."
+    "blurb": "Shifts or harmonizes the pitch of what you play.",
+    "colors": {
+      "body": "#4a9ad8",
+      "bodyDeep": "#3a78a8",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Harmonizer 2",
@@ -303,7 +534,14 @@
     "file": "harmonizer-2.svg",
     "type": "Pitch",
     "basedOn": "Valeton original — dual-voice auto harmonizer",
-    "blurb": "Shifts or harmonizes the pitch of what you play."
+    "blurb": "Shifts or harmonizes the pitch of what you play.",
+    "colors": {
+      "body": "#3a8ac8",
+      "bodyDeep": "#2d6c9c",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Green OD",
@@ -312,7 +550,14 @@
     "file": "green-od.svg",
     "type": "Overdrive",
     "basedOn": "Ibanez® TS-808 Tube Screamer",
-    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob.",
+    "colors": {
+      "body": "#2fa050",
+      "bodyDeep": "#257d3e",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "OD 9",
@@ -321,7 +566,14 @@
     "file": "od-9.svg",
     "type": "Overdrive",
     "basedOn": "Ibanez® TS9 Tube Screamer",
-    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob.",
+    "colors": {
+      "body": "#3aa060",
+      "bodyDeep": "#2d7d4b",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Yellow OD",
@@ -330,7 +582,14 @@
     "file": "yellow-od.svg",
     "type": "Overdrive",
     "basedOn": "Boss® OD-1 OverDrive (2-knob)",
-    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob.",
+    "colors": {
+      "body": "#e0b83a",
+      "bodyDeep": "#af902d",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Swarm",
@@ -339,7 +598,14 @@
     "file": "swarm.svg",
     "type": "Overdrive",
     "basedOn": "Providence® SOV-2 Stampede OD",
-    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob.",
+    "colors": {
+      "body": "#4a7a3a",
+      "bodyDeep": "#3a5f2d",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Super OD",
@@ -348,7 +614,14 @@
     "file": "super-od.svg",
     "type": "Overdrive",
     "basedOn": "Boss® SD-1 Super OverDrive",
-    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob.",
+    "colors": {
+      "body": "#e8c93e",
+      "bodyDeep": "#b59d30",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Scream OD",
@@ -357,7 +630,14 @@
     "file": "scream-od.svg",
     "type": "Overdrive",
     "basedOn": "Valeton's take on the Tube Screamer® circuit, extra switches",
-    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob.",
+    "colors": {
+      "body": "#3aa060",
+      "bodyDeep": "#2d7d4b",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Blues OD",
@@ -366,7 +646,14 @@
     "file": "blues-od.svg",
     "type": "Overdrive",
     "basedOn": "Boss® BD-2 Blues Driver",
-    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob.",
+    "colors": {
+      "body": "#3a70c8",
+      "bodyDeep": "#2d579c",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Force",
@@ -375,7 +662,14 @@
     "file": "force.svg",
     "type": "Overdrive",
     "basedOn": "Fulltone® OCD",
-    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob.",
+    "colors": {
+      "body": "#e8e2d2",
+      "bodyDeep": "#b5b0a4",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Tube",
@@ -384,7 +678,14 @@
     "file": "tube--dst.svg",
     "type": "Overdrive",
     "basedOn": "BK Butler® Tube Driver",
-    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob.",
+    "colors": {
+      "body": "#c8c8cc",
+      "bodyDeep": "#9c9c9f",
+      "ink": "#2a4ad8",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Blues Master",
@@ -393,7 +694,14 @@
     "file": "blues-master.svg",
     "type": "Overdrive",
     "basedOn": "Marshall® BluesBreaker",
-    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob.",
+    "colors": {
+      "body": "#9a9a9e",
+      "bodyDeep": "#78787b",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Master OD",
@@ -402,7 +710,14 @@
     "file": "master-od.svg",
     "type": "Overdrive",
     "basedOn": "Marshall® JCM800-in-a-box (clean to driven)",
-    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob.",
+    "colors": {
+      "body": "#1c1c1c",
+      "bodyDeep": "#161616",
+      "ink": "#d8b860",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "TaiChi OD",
@@ -411,7 +726,14 @@
     "file": "taichi-od.svg",
     "type": "Overdrive",
     "basedOn": "Hermida® Zendrive",
-    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob.",
+    "colors": {
+      "body": "#b8923a",
+      "bodyDeep": "#90722d",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Penesas",
@@ -420,7 +742,14 @@
     "file": "penesas.svg",
     "type": "Overdrive",
     "basedOn": "Klon® Centaur",
-    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob.",
+    "colors": {
+      "body": "#c9a227",
+      "bodyDeep": "#9d7e1e",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Precise OD",
@@ -429,7 +758,14 @@
     "file": "precise-od.svg",
     "type": "Overdrive",
     "basedOn": "Horizon Devices® Precision Drive",
-    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob.",
+    "colors": {
+      "body": "#1a1a1c",
+      "bodyDeep": "#141416",
+      "ink": "#e8e8e8",
+      "knob": "cream",
+      "led": "#ffffff"
+    }
   },
   {
     "name": "Timmy OD",
@@ -438,7 +774,14 @@
     "file": "timmy-od.svg",
     "type": "Overdrive",
     "basedOn": "Paul Cochrane® Timmy V2/V3",
-    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob.",
+    "colors": {
+      "body": "#e8e0c8",
+      "bodyDeep": "#b5af9c",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Lazaro",
@@ -447,7 +790,14 @@
     "file": "lazaro.svg",
     "type": "Fuzz",
     "basedOn": "Electro-Harmonix® Big Muff Pi",
-    "blurb": "Aggressive square-wave clipping — thick, saturated, woolly sustain."
+    "blurb": "Aggressive square-wave clipping — thick, saturated, woolly sustain.",
+    "colors": {
+      "body": "#c8c8cc",
+      "bodyDeep": "#9c9c9f",
+      "ink": "#c02020",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Red Haze",
@@ -456,7 +806,14 @@
     "file": "red-haze.svg",
     "type": "Fuzz",
     "basedOn": "Dallas-Arbiter® Fuzz Face",
-    "blurb": "Aggressive square-wave clipping — thick, saturated, woolly sustain."
+    "blurb": "Aggressive square-wave clipping — thick, saturated, woolly sustain.",
+    "colors": {
+      "body": "#b83030",
+      "bodyDeep": "#902525",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Sora Fuzz",
@@ -465,7 +822,14 @@
     "file": "sora-fuzz.svg",
     "type": "Fuzz",
     "basedOn": "Sola Sound® Tone Bender",
-    "blurb": "Aggressive square-wave clipping — thick, saturated, woolly sustain."
+    "blurb": "Aggressive square-wave clipping — thick, saturated, woolly sustain.",
+    "colors": {
+      "body": "#b89440",
+      "bodyDeep": "#907332",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Plustortion",
@@ -474,7 +838,14 @@
     "file": "plustortion.svg",
     "type": "Distortion",
     "basedOn": "MXR® M104 Distortion+",
-    "blurb": "Hard clipping with more gain and edge than an overdrive."
+    "blurb": "Hard clipping with more gain and edge than an overdrive.",
+    "colors": {
+      "body": "#e8c93e",
+      "bodyDeep": "#b59d30",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "SM Dist",
@@ -483,7 +854,14 @@
     "file": "sm-dist.svg",
     "type": "Distortion",
     "basedOn": "Boss® DS-1 Distortion",
-    "blurb": "Hard clipping with more gain and edge than an overdrive."
+    "blurb": "Hard clipping with more gain and edge than an overdrive.",
+    "colors": {
+      "body": "#e87820",
+      "bodyDeep": "#b55e19",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Darktale",
@@ -492,7 +870,14 @@
     "file": "darktale.svg",
     "type": "Distortion",
     "basedOn": "ProCo™ RAT (early LM308 op-amp)",
-    "blurb": "Hard clipping with more gain and edge than an overdrive."
+    "blurb": "Hard clipping with more gain and edge than an overdrive.",
+    "colors": {
+      "body": "#1a1a1c",
+      "bodyDeep": "#141416",
+      "ink": "#e8e8e8",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Chief",
@@ -501,7 +886,14 @@
     "file": "chief.svg",
     "type": "Distortion",
     "basedOn": "Marshall® Guv'nor",
-    "blurb": "Hard clipping with more gain and edge than an overdrive."
+    "blurb": "Hard clipping with more gain and edge than an overdrive.",
+    "colors": {
+      "body": "#232326",
+      "bodyDeep": "#1b1b1e",
+      "ink": "#d8b860",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Master Dist",
@@ -510,7 +902,14 @@
     "file": "master-dist.svg",
     "type": "Distortion",
     "basedOn": "Marshall® Shredmaster",
-    "blurb": "Hard clipping with more gain and edge than an overdrive."
+    "blurb": "Hard clipping with more gain and edge than an overdrive.",
+    "colors": {
+      "body": "#26262a",
+      "bodyDeep": "#1e1e21",
+      "ink": "#c8c8c8",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "La Charger",
@@ -519,7 +918,14 @@
     "file": "la-charger.svg",
     "type": "Distortion",
     "basedOn": "MI Audio® Crunch Box",
-    "blurb": "Hard clipping with more gain and edge than an overdrive."
+    "blurb": "Hard clipping with more gain and edge than an overdrive.",
+    "colors": {
+      "body": "#c02828",
+      "bodyDeep": "#961f1f",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Revolt",
@@ -528,7 +934,14 @@
     "file": "revolt.svg",
     "type": "Distortion",
     "basedOn": "Suhr® Riot",
-    "blurb": "Hard clipping with more gain and edge than an overdrive."
+    "blurb": "Hard clipping with more gain and edge than an overdrive.",
+    "colors": {
+      "body": "#2a2a2e",
+      "bodyDeep": "#212124",
+      "ink": "#e04030",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Flex OD",
@@ -537,7 +950,14 @@
     "file": "flex-od.svg",
     "type": "Bass Drive",
     "basedOn": "Valeton original — drive for guitar and bass",
-    "blurb": "Drive voiced for bass — keeps the low end intact while adding grit."
+    "blurb": "Drive voiced for bass — keeps the low end intact while adding grit.",
+    "colors": {
+      "body": "#c86438",
+      "bodyDeep": "#9c4e2c",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Bass OD",
@@ -546,7 +966,14 @@
     "file": "bass-od.svg",
     "type": "Bass Drive",
     "basedOn": "Valeton original — bass OD / distortion / boost",
-    "blurb": "Drive voiced for bass — keeps the low end intact while adding grit."
+    "blurb": "Drive voiced for bass — keeps the low end intact while adding grit.",
+    "colors": {
+      "body": "#2a3a6a",
+      "bodyDeep": "#212d53",
+      "ink": "#e8e8ea",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Black Bass",
@@ -555,7 +982,14 @@
     "file": "black-bass.svg",
     "type": "Bass Preamp",
     "basedOn": "Darkglass® Microtubes B7K",
-    "blurb": "Full tone-shaping preamp voiced for bass guitar."
+    "blurb": "Full tone-shaping preamp voiced for bass guitar.",
+    "colors": {
+      "body": "#141416",
+      "bodyDeep": "#101011",
+      "ink": "#e8e8e8",
+      "knob": "cream",
+      "led": "#ffffff"
+    }
   },
   {
     "name": "Empire OD",
@@ -564,7 +998,14 @@
     "file": "empire-od.svg",
     "type": "Overdrive",
     "basedOn": "Analog Man® Prince of Tone",
-    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob.",
+    "colors": {
+      "body": "#ece8e0",
+      "bodyDeep": "#b8b5af",
+      "ink": "#6a3ab0",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Bass Hammer",
@@ -573,7 +1014,14 @@
     "file": "bass-hammer.svg",
     "type": "Bass Preamp",
     "basedOn": "Bass preamp (likely Aguilar® Tone Hammer)",
-    "blurb": "Full tone-shaping preamp voiced for bass guitar."
+    "blurb": "Full tone-shaping preamp voiced for bass guitar.",
+    "colors": {
+      "body": "#3a3e42",
+      "bodyDeep": "#2d3033",
+      "ink": "#e0a030",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Flagman Dist",
@@ -582,7 +1030,14 @@
     "file": "flagman-dist.svg",
     "type": "Distortion",
     "basedOn": "Friedman® BE-OD",
-    "blurb": "Hard clipping with more gain and edge than an overdrive."
+    "blurb": "Hard clipping with more gain and edge than an overdrive.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#d8b860",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "A-Chorus",
@@ -591,7 +1046,14 @@
     "file": "a-chorus.svg",
     "type": "Chorus",
     "basedOn": "Boss® CE-3 Chorus",
-    "blurb": "Doubles your signal with slight detune and motion — wide and lush."
+    "blurb": "Doubles your signal with slight detune and motion — wide and lush.",
+    "colors": {
+      "body": "#3a8ad8",
+      "bodyDeep": "#2d6ca8",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "G-Chorus",
@@ -600,7 +1062,14 @@
     "file": "g-chorus.svg",
     "type": "Chorus",
     "basedOn": "Roland® CE-1 Chorus Ensemble",
-    "blurb": "Doubles your signal with slight detune and motion — wide and lush."
+    "blurb": "Doubles your signal with slight detune and motion — wide and lush.",
+    "colors": {
+      "body": "#7a90a8",
+      "bodyDeep": "#5f7083",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "C-Chorus",
@@ -609,7 +1078,14 @@
     "file": "c-chorus.svg",
     "type": "Chorus",
     "basedOn": "Boss® DC-2 Dimension C",
-    "blurb": "Doubles your signal with slight detune and motion — wide and lush."
+    "blurb": "Doubles your signal with slight detune and motion — wide and lush.",
+    "colors": {
+      "body": "#a8b8c8",
+      "bodyDeep": "#83909c",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "B-Chorus",
@@ -618,7 +1094,14 @@
     "file": "b-chorus.svg",
     "type": "Chorus",
     "basedOn": "Chorus voiced for bass (Boss® CEB-3 style)",
-    "blurb": "Doubles your signal with slight detune and motion — wide and lush."
+    "blurb": "Doubles your signal with slight detune and motion — wide and lush.",
+    "colors": {
+      "body": "#3a70a8",
+      "bodyDeep": "#2d5783",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "M-Chorus",
@@ -627,7 +1110,14 @@
     "file": "m-chorus.svg",
     "type": "Chorus",
     "basedOn": "Boss® CH-1 Super Chorus",
-    "blurb": "Doubles your signal with slight detune and motion — wide and lush."
+    "blurb": "Doubles your signal with slight detune and motion — wide and lush.",
+    "colors": {
+      "body": "#4a9ae0",
+      "bodyDeep": "#3a78af",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Jet",
@@ -636,7 +1126,14 @@
     "file": "jet.svg",
     "type": "Flanger",
     "basedOn": "Boss® BF-2 Flanger",
-    "blurb": "A swept comb filter — the classic jet-plane whoosh."
+    "blurb": "A swept comb filter — the classic jet-plane whoosh.",
+    "colors": {
+      "body": "#9a6ad8",
+      "bodyDeep": "#7853a8",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "B-Jet",
@@ -645,7 +1142,14 @@
     "file": "b-jet.svg",
     "type": "Flanger",
     "basedOn": "Boss® BF-2 style flanger for bass",
-    "blurb": "A swept comb filter — the classic jet-plane whoosh."
+    "blurb": "A swept comb filter — the classic jet-plane whoosh.",
+    "colors": {
+      "body": "#7a5ac8",
+      "bodyDeep": "#5f469c",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "N-Jet",
@@ -654,7 +1158,14 @@
     "file": "n-jet.svg",
     "type": "Flanger",
     "basedOn": "Negative-feedback flanger — \"underwater\" voicing",
-    "blurb": "A swept comb filter — the classic jet-plane whoosh."
+    "blurb": "A swept comb filter — the classic jet-plane whoosh.",
+    "colors": {
+      "body": "#6a4ab8",
+      "bodyDeep": "#533a90",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Trem Jet",
@@ -663,7 +1174,14 @@
     "file": "trem-jet.svg",
     "type": "Flanger",
     "basedOn": "Valeton original — flanger + tremolo combo",
-    "blurb": "A swept comb filter — the classic jet-plane whoosh."
+    "blurb": "A swept comb filter — the classic jet-plane whoosh.",
+    "colors": {
+      "body": "#5a8ad8",
+      "bodyDeep": "#466ca8",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "V-Roto",
@@ -672,7 +1190,14 @@
     "file": "v-roto.svg",
     "type": "Vibrato",
     "basedOn": "Boss® VB-2 Vibrato (BBD)",
-    "blurb": "Cyclic pitch modulation — wobbles the note itself."
+    "blurb": "Cyclic pitch modulation — wobbles the note itself.",
+    "colors": {
+      "body": "#b8a8d8",
+      "bodyDeep": "#9083a8",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "G-Roto",
@@ -681,7 +1206,14 @@
     "file": "g-roto.svg",
     "type": "Vibrato",
     "basedOn": "Roland® CE-1 (vibrato mode)",
-    "blurb": "Cyclic pitch modulation — wobbles the note itself."
+    "blurb": "Cyclic pitch modulation — wobbles the note itself.",
+    "colors": {
+      "body": "#7a90a8",
+      "bodyDeep": "#5f7083",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Vibrato",
@@ -690,7 +1222,14 @@
     "file": "vibrato.svg",
     "type": "Vibrato",
     "basedOn": "Boss® VB-2 style, wider range",
-    "blurb": "Cyclic pitch modulation — wobbles the note itself."
+    "blurb": "Cyclic pitch modulation — wobbles the note itself.",
+    "colors": {
+      "body": "#b8a8d8",
+      "bodyDeep": "#9083a8",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Vibrato T",
@@ -699,7 +1238,14 @@
     "file": "vibrato-t.svg",
     "type": "Vibrato",
     "basedOn": "Valeton original — touch-sensitive vibrato",
-    "blurb": "Cyclic pitch modulation — wobbles the note itself."
+    "blurb": "Cyclic pitch modulation — wobbles the note itself.",
+    "colors": {
+      "body": "#2f6fd8",
+      "bodyDeep": "#2557a8",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "O-Phase",
@@ -708,7 +1254,14 @@
     "file": "o-phase.svg",
     "type": "Phaser",
     "basedOn": "MXR® M101 Phase 90",
-    "blurb": "Sweeping notch filters — a swirling, liquid motion."
+    "blurb": "Sweeping notch filters — a swirling, liquid motion.",
+    "colors": {
+      "body": "#e87820",
+      "bodyDeep": "#b55e19",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "G-Phase",
@@ -717,7 +1270,14 @@
     "file": "g-phase.svg",
     "type": "Phaser",
     "basedOn": "Boss® PH-1 Phaser",
-    "blurb": "Sweeping notch filters — a swirling, liquid motion."
+    "blurb": "Sweeping notch filters — a swirling, liquid motion.",
+    "colors": {
+      "body": "#4aa860",
+      "bodyDeep": "#3a834b",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "S-Phase",
@@ -726,7 +1286,14 @@
     "file": "s-phase.svg",
     "type": "Phaser",
     "basedOn": "Electro-Harmonix® Small Stone",
-    "blurb": "Sweeping notch filters — a swirling, liquid motion."
+    "blurb": "Sweeping notch filters — a swirling, liquid motion.",
+    "colors": {
+      "body": "#c8d8c0",
+      "bodyDeep": "#9ca896",
+      "ink": "#2a6a3a",
+      "knob": "dark",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Pan Phase",
@@ -735,7 +1302,14 @@
     "file": "pan-phase.svg",
     "type": "Phaser",
     "basedOn": "Valeton original — phaser + tremolo/pan blend",
-    "blurb": "Sweeping notch filters — a swirling, liquid motion."
+    "blurb": "Sweeping notch filters — a swirling, liquid motion.",
+    "colors": {
+      "body": "#2f6fd8",
+      "bodyDeep": "#2557a8",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "M-Vibe",
@@ -744,7 +1318,14 @@
     "file": "m-vibe.svg",
     "type": "Phaser",
     "basedOn": "Voodoo Lab® Micro Vibe",
-    "blurb": "Sweeping notch filters — a swirling, liquid motion."
+    "blurb": "Sweeping notch filters — a swirling, liquid motion.",
+    "colors": {
+      "body": "#7a3ac8",
+      "bodyDeep": "#5f2d9c",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Vibe",
@@ -753,7 +1334,14 @@
     "file": "vibe.svg",
     "type": "Phaser",
     "basedOn": "Shin-Ei® Uni-Vibe",
-    "blurb": "Sweeping notch filters — a swirling, liquid motion."
+    "blurb": "Sweeping notch filters — a swirling, liquid motion.",
+    "colors": {
+      "body": "#2a2a2e",
+      "bodyDeep": "#212124",
+      "ink": "#e8d8b0",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "O-Trem",
@@ -762,7 +1350,14 @@
     "file": "o-trem.svg",
     "type": "Tremolo",
     "basedOn": "Demeter® TRM-1 Tremulator",
-    "blurb": "Cyclic volume modulation — rhythmic pulsing."
+    "blurb": "Cyclic volume modulation — rhythmic pulsing.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#e8e8e8",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Sine Trem",
@@ -771,7 +1366,14 @@
     "file": "sine-trem.svg",
     "type": "Tremolo",
     "basedOn": "Valeton original — sine-wave tremolo",
-    "blurb": "Cyclic volume modulation — rhythmic pulsing."
+    "blurb": "Cyclic volume modulation — rhythmic pulsing.",
+    "colors": {
+      "body": "#2f6fd8",
+      "bodyDeep": "#2557a8",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Triangle Trem",
@@ -780,7 +1382,14 @@
     "file": "triangle-trem.svg",
     "type": "Tremolo",
     "basedOn": "Valeton original — triangle-wave tremolo",
-    "blurb": "Cyclic volume modulation — rhythmic pulsing."
+    "blurb": "Cyclic volume modulation — rhythmic pulsing.",
+    "colors": {
+      "body": "#2a62c8",
+      "bodyDeep": "#214c9c",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Bias Trem",
@@ -789,7 +1398,14 @@
     "file": "bias-trem.svg",
     "type": "Tremolo",
     "basedOn": "Valeton original — tube-bias style tremolo",
-    "blurb": "Cyclic volume modulation — rhythmic pulsing."
+    "blurb": "Cyclic volume modulation — rhythmic pulsing.",
+    "colors": {
+      "body": "#2456b8",
+      "bodyDeep": "#1c4390",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Auto Swell",
@@ -798,7 +1414,14 @@
     "file": "auto-swell.svg",
     "type": "Special",
     "basedOn": "Valeton original — violin-style auto volume swell",
-    "blurb": "A creative sound-design effect."
+    "blurb": "A creative sound-design effect.",
+    "colors": {
+      "body": "#ece4d4",
+      "bodyDeep": "#b8b2a5",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Hold",
@@ -807,7 +1430,14 @@
     "file": "hold.svg",
     "type": "Special",
     "basedOn": "Valeton original — holds a note like a short loop",
-    "blurb": "A creative sound-design effect."
+    "blurb": "A creative sound-design effect.",
+    "colors": {
+      "body": "#ece4d4",
+      "bodyDeep": "#b8b2a5",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Freeze",
@@ -816,7 +1446,14 @@
     "file": "freeze.svg",
     "type": "Special",
     "basedOn": "Valeton original — sustains the sound at the moment of activation",
-    "blurb": "A creative sound-design effect."
+    "blurb": "A creative sound-design effect.",
+    "colors": {
+      "body": "#9ad8e8",
+      "bodyDeep": "#78a8b5",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "V-Wah",
@@ -825,7 +1462,14 @@
     "file": "v-wah.svg",
     "type": "Wah",
     "basedOn": "VOX® V846",
-    "blurb": "A sweepable band-pass filter — the classic crying vowel sound."
+    "blurb": "A sweepable band-pass filter — the classic crying vowel sound.",
+    "colors": {
+      "body": "#8a8d92",
+      "bodyDeep": "#6c6e72",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "S-Wah",
@@ -834,7 +1478,14 @@
     "file": "s-wah.svg",
     "type": "Wah",
     "basedOn": "Valeton original — classic wah voicing",
-    "blurb": "A sweepable band-pass filter — the classic crying vowel sound."
+    "blurb": "A sweepable band-pass filter — the classic crying vowel sound.",
+    "colors": {
+      "body": "#8a4dd8",
+      "bodyDeep": "#6c3ca8",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "B-Wah",
@@ -843,7 +1494,14 @@
     "file": "b-wah.svg",
     "type": "Wah",
     "basedOn": "Valeton original — wah voiced for bass",
-    "blurb": "A sweepable band-pass filter — the classic crying vowel sound."
+    "blurb": "A sweepable band-pass filter — the classic crying vowel sound.",
+    "colors": {
+      "body": "#2a3a6a",
+      "bodyDeep": "#212d53",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "C-Wah",
@@ -852,7 +1510,14 @@
     "file": "c-wah.svg",
     "type": "Wah",
     "basedOn": "Dunlop® Cry Baby® (classic 60's)",
-    "blurb": "A sweepable band-pass filter — the classic crying vowel sound."
+    "blurb": "A sweepable band-pass filter — the classic crying vowel sound.",
+    "colors": {
+      "body": "#232326",
+      "bodyDeep": "#1b1b1e",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "P-Wah",
@@ -861,7 +1526,14 @@
     "file": "p-wah.svg",
     "type": "Wah",
     "basedOn": "Dunlop® JP95 John Petrucci signature wah",
-    "blurb": "A sweepable band-pass filter — the classic crying vowel sound."
+    "blurb": "A sweepable band-pass filter — the classic crying vowel sound.",
+    "colors": {
+      "body": "#3a2a4a",
+      "bodyDeep": "#2d213a",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   },
   {
     "name": "Volume",
@@ -870,7 +1542,14 @@
     "file": "volume.svg",
     "type": "Volume",
     "basedOn": "Volume pedal block",
-    "blurb": "Master level control placed anywhere in the chain."
+    "blurb": "Master level control placed anywhere in the chain.",
+    "colors": {
+      "body": "#b8bcc0",
+      "bodyDeep": "#909396",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ffffff"
+    }
   },
   {
     "name": "Tweedy",
@@ -879,7 +1558,16 @@
     "file": "tweedy.svg",
     "type": "Clean Amp",
     "basedOn": "Fender® Tweed Deluxe",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#c9a86a",
+      "bodyDeep": "#9d8353",
+      "ink": "#1c1712",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#4a3520",
+      "panelText": "#e8d8b0"
+    }
   },
   {
     "name": "Bellman 59N",
@@ -888,7 +1576,16 @@
     "file": "bellman-59n.svg",
     "type": "Clean Amp",
     "basedOn": "Fender® '59 Bassman (normal channel)",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#c9a86a",
+      "bodyDeep": "#9d8353",
+      "ink": "#1c1712",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#4a3520",
+      "panelText": "#e8d8b0"
+    }
   },
   {
     "name": "Dark Twin",
@@ -897,7 +1594,16 @@
     "file": "dark-twin--amp.svg",
     "type": "Clean Amp",
     "basedOn": "Fender® '65 Twin Reverb",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#26282c",
+      "panelText": "#e8e8e8"
+    }
   },
   {
     "name": "Dark DLX",
@@ -906,7 +1612,16 @@
     "file": "dark-dlx.svg",
     "type": "Clean Amp",
     "basedOn": "Fender® Deluxe Reverb",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#26282c",
+      "panelText": "#e8e8e8"
+    }
   },
   {
     "name": "Dark Vibra",
@@ -915,7 +1630,16 @@
     "file": "dark-vibra.svg",
     "type": "Clean Amp",
     "basedOn": "Fender® Vibroverb 6G16 (1963)",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#26282c",
+      "panelText": "#e8e8e8"
+    }
   },
   {
     "name": "Silver Twin",
@@ -924,7 +1648,16 @@
     "file": "silver-twin.svg",
     "type": "Clean Amp",
     "basedOn": "Fender® Silverface Twin Reverb",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#b8bcc0",
+      "panelText": "#2a4a8a"
+    }
   },
   {
     "name": "SUPDual CL",
@@ -933,7 +1666,16 @@
     "file": "supdual-cl.svg",
     "type": "Clean Amp",
     "basedOn": "Supro® Dual-Tone 1624T (CH1)",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#c8c8c0",
+      "bodyDeep": "#9c9c96",
+      "ink": "#1c1712",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#28304a",
+      "panelText": "#e8e8e8"
+    }
   },
   {
     "name": "Foxy 15TB",
@@ -942,7 +1684,16 @@
     "file": "foxy-15tb.svg",
     "type": "Clean Amp",
     "basedOn": "VOX® AC-100 (vintage)",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#1a1a1c",
+      "bodyDeep": "#141416",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#2a2620",
+      "panelText": "#d89a50"
+    }
   },
   {
     "name": "Foxy 30N",
@@ -951,7 +1702,16 @@
     "file": "foxy-30n.svg",
     "type": "Clean Amp",
     "basedOn": "VOX® AC30HW (clean)",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#1a1a1c",
+      "bodyDeep": "#141416",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#2a2620",
+      "panelText": "#d89a50"
+    }
   },
   {
     "name": "J-120 CL",
@@ -960,7 +1720,16 @@
     "file": "j-120-cl.svg",
     "type": "Clean Amp",
     "basedOn": "Roland® JC-120 Jazz Chorus",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#2a2a2e",
+      "panelText": "#e8e8e8"
+    }
   },
   {
     "name": "Match CL",
@@ -969,7 +1738,16 @@
     "file": "match-cl.svg",
     "type": "Clean Amp",
     "basedOn": "Matchless™ Chieftain 212 (clean)",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#1a1a1c",
+      "panelText": "#e8d060"
+    }
   },
   {
     "name": "L-Star CL",
@@ -978,7 +1756,16 @@
     "file": "l-star-cl.svg",
     "type": "Clean Amp",
     "basedOn": "Mesa/Boogie® Lone Star (CH1)",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#c9b998",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "BogSV CL",
@@ -987,7 +1774,16 @@
     "file": "bogsv-cl.svg",
     "type": "Clean Amp",
     "basedOn": "Bogner® Shiva 20th Anniversary (clean)",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#c8ccd0",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "Z38 CL",
@@ -996,7 +1792,16 @@
     "file": "z38-cl.svg",
     "type": "Clean Amp",
     "basedOn": "Dr. Z® Maz 38 Sr. (clean)",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#8a2222",
+      "bodyDeep": "#6c1b1b",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#1c1c1e",
+      "panelText": "#e8e8e8"
+    }
   },
   {
     "name": "Knights CL",
@@ -1005,7 +1810,16 @@
     "file": "knights-cl.svg",
     "type": "Clean Amp",
     "basedOn": "Grindrod® Pendragon PG20C (clean, bright off)",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#2a4a3a",
+      "bodyDeep": "#213a2d",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#c8b888",
+      "panelText": "#1c1712"
+    }
   },
   {
     "name": "Bad-KT CL",
@@ -1014,7 +1828,16 @@
     "file": "bad-kt-cl.svg",
     "type": "Clean Amp",
     "basedOn": "Bad Cat® Hot Cat 30 (clean)",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#e8e0c8",
+      "panelText": "#1c1712"
+    }
   },
   {
     "name": "Solo100 CL",
@@ -1023,7 +1846,16 @@
     "file": "solo100-cl.svg",
     "type": "Clean Amp",
     "basedOn": "Soldano® SLO-100 (clean)",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#2a2a2e",
+      "panelText": "#e05a5a"
+    }
   },
   {
     "name": "Bellman 59B",
@@ -1032,7 +1864,16 @@
     "file": "bellman-59b.svg",
     "type": "Drive Amp",
     "basedOn": "Fender® '59 Bassman (bright channel)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#c9a86a",
+      "bodyDeep": "#9d8353",
+      "ink": "#1c1712",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#4a3520",
+      "panelText": "#e8d8b0"
+    }
   },
   {
     "name": "Foxy 30TB",
@@ -1041,7 +1882,16 @@
     "file": "foxy-30tb.svg",
     "type": "Drive Amp",
     "basedOn": "VOX® AC30HW (top boost, driven)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1a1a1c",
+      "bodyDeep": "#141416",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#2a2620",
+      "panelText": "#d89a50"
+    }
   },
   {
     "name": "SUPDual OD",
@@ -1050,7 +1900,16 @@
     "file": "supdual-od.svg",
     "type": "Drive Amp",
     "basedOn": "Supro® Dual-Tone 1624T (CH2)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#c8c8c0",
+      "bodyDeep": "#9c9c96",
+      "ink": "#1c1712",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#28304a",
+      "panelText": "#e8e8e8"
+    }
   },
   {
     "name": "UK 45",
@@ -1059,7 +1918,16 @@
     "file": "uk-45.svg",
     "type": "Drive Amp",
     "basedOn": "Marshall® JTM45 (normal channel)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#b8933a",
+      "panelText": "#1c1207"
+    }
   },
   {
     "name": "UK 45+",
@@ -1068,7 +1936,16 @@
     "file": "uk-45-plus.svg",
     "type": "Drive Amp",
     "basedOn": "Marshall® JTM45 \"Plexi\"",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#b8933a",
+      "panelText": "#1c1207"
+    }
   },
   {
     "name": "UK 45JP",
@@ -1077,7 +1954,16 @@
     "file": "uk-45jp.svg",
     "type": "Drive Amp",
     "basedOn": "Marshall® JTM45 (channels jumpered)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#b8933a",
+      "panelText": "#1c1207"
+    }
   },
   {
     "name": "UK 50",
@@ -1086,7 +1972,16 @@
     "file": "uk-50.svg",
     "type": "Drive Amp",
     "basedOn": "Marshall® JMP50 (normal channel)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#b8933a",
+      "panelText": "#1c1207"
+    }
   },
   {
     "name": "UK 50+",
@@ -1095,7 +1990,16 @@
     "file": "uk-50-plus.svg",
     "type": "Drive Amp",
     "basedOn": "Marshall® JMP50 (1966)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#b8933a",
+      "panelText": "#1c1207"
+    }
   },
   {
     "name": "UK 50JP",
@@ -1104,7 +2008,16 @@
     "file": "uk-50jp.svg",
     "type": "Drive Amp",
     "basedOn": "Marshall® JMP50 (channels jumpered)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#b8933a",
+      "panelText": "#1c1207"
+    }
   },
   {
     "name": "UK SLP",
@@ -1113,7 +2026,16 @@
     "file": "uk-slp.svg",
     "type": "Drive Amp",
     "basedOn": "Marshall® 1959HW Super Lead Plexi (mid-60's)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#b8933a",
+      "panelText": "#1c1207"
+    }
   },
   {
     "name": "UK 800",
@@ -1122,7 +2044,16 @@
     "file": "uk-800.svg",
     "type": "Drive Amp",
     "basedOn": "Marshall® JCM800",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#b8933a",
+      "panelText": "#1c1207"
+    }
   },
   {
     "name": "Mess2C+ 1",
@@ -1131,7 +2062,16 @@
     "file": "mess2c-plus-1.svg",
     "type": "Drive Amp",
     "basedOn": "Mesa/Boogie® Mark IIC+ (voicing 1)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#c8ccd0",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "Mess2C+ 2",
@@ -1140,7 +2080,16 @@
     "file": "mess2c-plus-2.svg",
     "type": "Drive Amp",
     "basedOn": "Mesa/Boogie® Mark IIC+ (voicing 2)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#c8ccd0",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "Mess2C+ 3",
@@ -1149,7 +2098,16 @@
     "file": "mess2c-plus-3.svg",
     "type": "Drive Amp",
     "basedOn": "Mesa/Boogie® Mark IIC+ (voicing 3)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#c8ccd0",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "BogSV OD",
@@ -1158,7 +2116,16 @@
     "file": "bogsv-od.svg",
     "type": "Drive Amp",
     "basedOn": "Bogner® Shiva 20th Anniversary (overdrive)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#c8ccd0",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "Juice30 OD",
@@ -1167,7 +2134,16 @@
     "file": "juice30-od.svg",
     "type": "Drive Amp",
     "basedOn": "Orange® AD30 (dirty channel)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#d86a1a",
+      "bodyDeep": "#a85314",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#e8e0c8",
+      "panelText": "#c05a10"
+    }
   },
   {
     "name": "Flagman 1",
@@ -1176,7 +2152,16 @@
     "file": "flagman-1.svg",
     "type": "Drive Amp",
     "basedOn": "Friedman® BE-100 (plexi channel)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#26262a",
+      "panelText": "#e8e8e8"
+    }
   },
   {
     "name": "Flagman 2",
@@ -1185,7 +2170,16 @@
     "file": "flagman-2.svg",
     "type": "Drive Amp",
     "basedOn": "Friedman® BE-100 Deluxe (plexi channel)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#26262a",
+      "panelText": "#e8e8e8"
+    }
   },
   {
     "name": "Bog BlueV",
@@ -1194,7 +2188,16 @@
     "file": "bog-bluev.svg",
     "type": "Drive Amp",
     "basedOn": "Bogner® Ecstasy (blue channel, vintage)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#3a3a3e",
+      "panelText": "#5a8ad8"
+    }
   },
   {
     "name": "Bog BlueM",
@@ -1203,7 +2206,16 @@
     "file": "bog-bluem.svg",
     "type": "Drive Amp",
     "basedOn": "Bogner® Ecstasy (blue channel, modern)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#3a3a3e",
+      "panelText": "#5a8ad8"
+    }
   },
   {
     "name": "Solo100 OD",
@@ -1212,7 +2224,16 @@
     "file": "solo100-od.svg",
     "type": "Drive Amp",
     "basedOn": "Soldano® SLO-100 (crunch)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#2a2a2e",
+      "panelText": "#e05a5a"
+    }
   },
   {
     "name": "Match OD",
@@ -1221,7 +2242,16 @@
     "file": "match-od.svg",
     "type": "Drive Amp",
     "basedOn": "Matchless™ Chieftain 212 (overdrive)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#1a1a1c",
+      "panelText": "#e8d060"
+    }
   },
   {
     "name": "Z38 OD",
@@ -1230,7 +2260,16 @@
     "file": "z38-od.svg",
     "type": "Drive Amp",
     "basedOn": "Dr. Z® Maz 38 Sr. (overdrive)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#8a2222",
+      "bodyDeep": "#6c1b1b",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#1c1c1e",
+      "panelText": "#e8e8e8"
+    }
   },
   {
     "name": "L-Star OD",
@@ -1239,7 +2278,16 @@
     "file": "l-star-od.svg",
     "type": "Drive Amp",
     "basedOn": "Mesa/Boogie® Lone Star (CH2)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#c9b998",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "Bad-KT OD",
@@ -1248,7 +2296,16 @@
     "file": "bad-kt-od.svg",
     "type": "Drive Amp",
     "basedOn": "Bad Cat® Hot Cat 30 (overdrive)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#e8e0c8",
+      "panelText": "#1c1712"
+    }
   },
   {
     "name": "UK 900",
@@ -1257,7 +2314,16 @@
     "file": "uk-900.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "Marshall® JCM900",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#b8933a",
+      "panelText": "#1c1207"
+    }
   },
   {
     "name": "Juice R100",
@@ -1266,7 +2332,16 @@
     "file": "juice-r100.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "Orange® Rockerverb 100 (dirty channel)",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#d86a1a",
+      "bodyDeep": "#a85314",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#e8e0c8",
+      "panelText": "#c05a10"
+    }
   },
   {
     "name": "Mess4 LD",
@@ -1275,7 +2350,16 @@
     "file": "mess4-ld.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "Mesa/Boogie® Mark IV (lead 1)",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#c8ccd0",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "Mess4 LD 2",
@@ -1284,7 +2368,16 @@
     "file": "mess4-ld-2.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "Mesa/Boogie® Mark IV (lead 2)",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#c8ccd0",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "Mess4 LD 3",
@@ -1293,7 +2386,16 @@
     "file": "mess4-ld-3.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "Mesa/Boogie® Mark IV (lead 3)",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#c8ccd0",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "Solo100 LD",
@@ -1302,7 +2404,16 @@
     "file": "solo100-ld.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "Soldano® SLO-100 (overdrive)",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#2a2a2e",
+      "panelText": "#e05a5a"
+    }
   },
   {
     "name": "EV 51",
@@ -1311,7 +2422,16 @@
     "file": "ev-51.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "Peavey® 5150 (lead channel)",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#26282c",
+      "panelText": "#c8c8cc"
+    }
   },
   {
     "name": "Flagman+ 1",
@@ -1320,7 +2440,16 @@
     "file": "flagman-plus-1.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "Friedman® BE-100 (brown-eye channel)",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#26262a",
+      "panelText": "#e8e8e8"
+    }
   },
   {
     "name": "Flagman+ 2",
@@ -1329,7 +2458,16 @@
     "file": "flagman-plus-2.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "Friedman® BE-100 Deluxe (brown-eye channel)",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#26262a",
+      "panelText": "#e8e8e8"
+    }
   },
   {
     "name": "Eagle 120",
@@ -1338,7 +2476,16 @@
     "file": "eagle-120.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "ENGL® Savage 120",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#1a1a1c",
+      "panelText": "#d8d8dc"
+    }
   },
   {
     "name": "Eagle 120+",
@@ -1347,7 +2494,16 @@
     "file": "eagle-120-plus.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "ENGL® Savage 120 (boosted)",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#1a1a1c",
+      "panelText": "#d8d8dc"
+    }
   },
   {
     "name": "Power LD",
@@ -1356,7 +2512,16 @@
     "file": "power-ld.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "ENGL® Powerball II E645/2 (CH4)",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#1a1a1c",
+      "panelText": "#d8d8dc"
+    }
   },
   {
     "name": "Dizz VH",
@@ -1365,7 +2530,16 @@
     "file": "dizz-vh.svg",
     "type": "Clean Amp",
     "basedOn": "Diezel® VH4 (CH1 clean)",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#b8bcc0",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "Dizz VH S",
@@ -1374,7 +2548,16 @@
     "file": "dizz-vh-s.svg",
     "type": "Drive Amp",
     "basedOn": "Diezel® VH4 (CH2 crunch)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#b8bcc0",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "Mess DualV",
@@ -1383,7 +2566,16 @@
     "file": "mess-dualv.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "Mesa/Boogie® Dual Rectifier (vintage mode)",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#b0b4b8",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "Mess DualM",
@@ -1392,7 +2584,16 @@
     "file": "mess-dualm.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "Mesa/Boogie® Dual Rectifier (modern mode)",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#b0b4b8",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "Dizz VH+",
@@ -1401,7 +2602,16 @@
     "file": "dizz-vh-plus.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "Diezel® VH4 (CH3 heavy)",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#b8bcc0",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "Dizz VH+ S",
@@ -1410,7 +2620,16 @@
     "file": "dizz-vh-plus-s.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "Diezel® VH4 (CH4 ultra)",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#b8bcc0",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "Bog RedV",
@@ -1419,7 +2638,16 @@
     "file": "bog-redv.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "Bogner® Ecstasy (red channel, vintage)",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#3a3a3e",
+      "panelText": "#d85a5a"
+    }
   },
   {
     "name": "Bog RedM",
@@ -1428,7 +2656,16 @@
     "file": "bog-redm.svg",
     "type": "Hi-Gain Amp",
     "basedOn": "Bogner® Ecstasy (red channel, modern)",
-    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+    "blurb": "High-gain amp voicing — saturated, compressed and huge.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#3a3a3e",
+      "panelText": "#d85a5a"
+    }
   },
   {
     "name": "Classic Bass",
@@ -1437,7 +2674,16 @@
     "file": "classic-bass.svg",
     "type": "Bass Amp",
     "basedOn": "Ampeg® SVT",
-    "blurb": "Bass amplifier voicing — deep lows and punchy mids."
+    "blurb": "Bass amplifier voicing — deep lows and punchy mids.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#26282c",
+      "panelText": "#5a8ad8"
+    }
   },
   {
     "name": "Foxy Bass",
@@ -1446,7 +2692,16 @@
     "file": "foxy-bass.svg",
     "type": "Bass Amp",
     "basedOn": "VOX® AC-100 bass (vintage)",
-    "blurb": "Bass amplifier voicing — deep lows and punchy mids."
+    "blurb": "Bass amplifier voicing — deep lows and punchy mids.",
+    "colors": {
+      "body": "#1a1a1c",
+      "bodyDeep": "#141416",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#2a2620",
+      "panelText": "#d89a50"
+    }
   },
   {
     "name": "Mess Bass",
@@ -1455,7 +2710,16 @@
     "file": "mess-bass.svg",
     "type": "Bass Amp",
     "basedOn": "Mesa/Boogie® Bass 400",
-    "blurb": "Bass amplifier voicing — deep lows and punchy mids."
+    "blurb": "Bass amplifier voicing — deep lows and punchy mids.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#c8ccd0",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "Knights CL+",
@@ -1464,7 +2728,16 @@
     "file": "knights-cl-plus.svg",
     "type": "Clean Amp",
     "basedOn": "Grindrod® Pendragon PG20C (clean, bright on)",
-    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body.",
+    "colors": {
+      "body": "#2a4a3a",
+      "bodyDeep": "#213a2d",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#c8b888",
+      "panelText": "#1c1712"
+    }
   },
   {
     "name": "Knights OD",
@@ -1473,7 +2746,16 @@
     "file": "knights-od.svg",
     "type": "Drive Amp",
     "basedOn": "Grindrod® Pendragon PG20C (overdrive)",
-    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl.",
+    "colors": {
+      "body": "#2a4a3a",
+      "bodyDeep": "#213a2d",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#c8b888",
+      "panelText": "#1c1712"
+    }
   },
   {
     "name": "Mini Bass",
@@ -1482,7 +2764,16 @@
     "file": "mini-bass.svg",
     "type": "Bass Amp",
     "basedOn": "Ampeg® B-15 \"Flip Top\"",
-    "blurb": "Bass amplifier voicing — deep lows and punchy mids."
+    "blurb": "Bass amplifier voicing — deep lows and punchy mids.",
+    "colors": {
+      "body": "#28407c",
+      "bodyDeep": "#1f3261",
+      "ink": "#f2ede2",
+      "knob": "gold",
+      "led": "#ffa23f",
+      "panel": "#26282c",
+      "panelText": "#e8e8e8"
+    }
   },
   {
     "name": "Bass Pre",
@@ -1491,7 +2782,14 @@
     "file": "bass-pre.svg",
     "type": "Bass Amp",
     "basedOn": "Alembic™ F-2B tube preamp",
-    "blurb": "Bass amplifier voicing — deep lows and punchy mids."
+    "blurb": "Bass amplifier voicing — deep lows and punchy mids.",
+    "colors": {
+      "body": "#7a4a22",
+      "bodyDeep": "#5f3a1b",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "AC Pre",
@@ -1500,7 +2798,16 @@
     "file": "ac-pre.svg",
     "type": "Acoustic Preamp",
     "basedOn": "AER® Colourizer 2 (EQ F1: 90 Hz – 1.6 kHz)",
-    "blurb": "Preamp voicing for acoustic instruments."
+    "blurb": "Preamp voicing for acoustic instruments.",
+    "colors": {
+      "body": "#26262a",
+      "bodyDeep": "#1e1e21",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#c8c4b8",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "AC Pre 2",
@@ -1509,7 +2816,16 @@
     "file": "ac-pre-2.svg",
     "type": "Acoustic Preamp",
     "basedOn": "AER® Colourizer 2 (EQ F2: 680 Hz – 11 kHz)",
-    "blurb": "Preamp voicing for acoustic instruments."
+    "blurb": "Preamp voicing for acoustic instruments.",
+    "colors": {
+      "body": "#26262a",
+      "bodyDeep": "#1e1e21",
+      "ink": "#f2ede2",
+      "knob": "dark",
+      "led": "#ffa23f",
+      "panel": "#c8c4b8",
+      "panelText": "#1a1a1c"
+    }
   },
   {
     "name": "SUP ZEP",
@@ -1518,7 +2834,14 @@
     "file": "sup-zep.svg",
     "type": "Cabinet",
     "basedOn": "Supro® 1×6\" cab (oval speaker)",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#c8c8c0",
+      "bodyDeep": "#9c9c96",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "TWD CP",
@@ -1527,7 +2850,14 @@
     "file": "twd-cp.svg",
     "type": "Cabinet",
     "basedOn": "Vintage Fender® Champ 1×8\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#c9a86a",
+      "bodyDeep": "#9d8353",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "TWD PRC",
@@ -1536,7 +2866,14 @@
     "file": "twd-prc.svg",
     "type": "Cabinet",
     "basedOn": "Vintage Fender® Princeton 1×10\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#c9a86a",
+      "bodyDeep": "#9d8353",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "DARK LUX",
@@ -1545,7 +2882,14 @@
     "file": "dark-lux.svg",
     "type": "Cabinet",
     "basedOn": "Vintage Fender® Deluxe 1×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "DARK VIT",
@@ -1554,7 +2898,14 @@
     "file": "dark-vit.svg",
     "type": "Cabinet",
     "basedOn": "Vintage Fender® Vibrolux 1×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "ROUT",
@@ -1563,7 +2914,14 @@
     "file": "rout.svg",
     "type": "Cabinet",
     "basedOn": "Carr® Rambler 1×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#d8d0b8",
+      "bodyDeep": "#a8a290",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "BogSV",
@@ -1572,7 +2930,14 @@
     "file": "bogsv.svg",
     "type": "Cabinet",
     "basedOn": "Bogner® Shiva 1×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Bad-KT",
@@ -1581,7 +2946,14 @@
     "file": "bad-kt.svg",
     "type": "Cabinet",
     "basedOn": "Bad Cat® Hot Cat 1×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "FOXY 1",
@@ -1590,7 +2962,14 @@
     "file": "foxy-1.svg",
     "type": "Cabinet",
     "basedOn": "Vintage VOX® AC15 1×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1a1a1c",
+      "bodyDeep": "#141416",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "D STAR",
@@ -1599,7 +2978,14 @@
     "file": "d-star.svg",
     "type": "Cabinet",
     "basedOn": "Mesa/Boogie® Lone Star 1×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "TOM OPEN",
@@ -1608,7 +2994,14 @@
     "file": "tom-open.svg",
     "type": "Cabinet",
     "basedOn": "Swart® Atomic Space 1×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#c8b890",
+      "bodyDeep": "#9c9070",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "TWD LUX",
@@ -1617,7 +3010,14 @@
     "file": "twd-lux.svg",
     "type": "Cabinet",
     "basedOn": "Fender® Tweed Deluxe 1×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#c9a86a",
+      "bodyDeep": "#9d8353",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "US STO",
@@ -1626,7 +3026,14 @@
     "file": "us-sto.svg",
     "type": "Cabinet",
     "basedOn": "1980's Mesa/Boogie® 1×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "ACE",
@@ -1635,7 +3042,14 @@
     "file": "ace.svg",
     "type": "Cabinet",
     "basedOn": "Morgan® AC20 Deluxe 1×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#3a5a4a",
+      "bodyDeep": "#2d463a",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "UK G12",
@@ -1644,7 +3058,14 @@
     "file": "uk-g12.svg",
     "type": "Cabinet",
     "basedOn": "Marshall® 1×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "FOXY 2",
@@ -1653,7 +3074,14 @@
     "file": "foxy-2.svg",
     "type": "Cabinet",
     "basedOn": "Vintage VOX® AC30 2×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1a1a1c",
+      "bodyDeep": "#141416",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Match",
@@ -1662,7 +3090,14 @@
     "file": "match.svg",
     "type": "Cabinet",
     "basedOn": "Matchless® Chieftain 2×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "J-120",
@@ -1671,7 +3106,14 @@
     "file": "j-120.svg",
     "type": "Cabinet",
     "basedOn": "Roland® Jazz Chorus 2×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Dark Twin",
@@ -1680,7 +3122,14 @@
     "file": "dark-twin--cab.svg",
     "type": "Cabinet",
     "basedOn": "Vintage Fender® '65 Twin Reverb 2×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "UK GRN 1",
@@ -1689,7 +3138,14 @@
     "file": "uk-grn-1.svg",
     "type": "Cabinet",
     "basedOn": "Marshall® 2550 Silver Jubilee 2×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "TWD SUP",
@@ -1698,7 +3154,14 @@
     "file": "twd-sup.svg",
     "type": "Cabinet",
     "basedOn": "Custom Fender® Tweed 2×10\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#c9a86a",
+      "bodyDeep": "#9d8353",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "BOUTI",
@@ -1707,7 +3170,14 @@
     "file": "bouti.svg",
     "type": "Cabinet",
     "basedOn": "Unique custom 2×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#5a4a6a",
+      "bodyDeep": "#463a53",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Bellman 1",
@@ -1716,7 +3186,14 @@
     "file": "bellman-1.svg",
     "type": "Cabinet",
     "basedOn": "Vintage Fender® \"Piggyback\" Bassman 2×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#d8cfa8",
+      "bodyDeep": "#a8a183",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "SUP",
@@ -1725,7 +3202,14 @@
     "file": "sup.svg",
     "type": "Cabinet",
     "basedOn": "Supro® 1624T 2×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#c8c8c0",
+      "bodyDeep": "#9c9c96",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "MATT TWD",
@@ -1734,7 +3218,14 @@
     "file": "matt-twd.svg",
     "type": "Cabinet",
     "basedOn": "Matchless® 2×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "SUP Star",
@@ -1743,7 +3234,14 @@
     "file": "sup-star.svg",
     "type": "Cabinet",
     "basedOn": "Mesa/Boogie® Lone Star 2×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Freed",
@@ -1752,7 +3250,14 @@
     "file": "freed.svg",
     "type": "Cabinet",
     "basedOn": "Fryette® Deliverance 2×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Dark CS",
@@ -1761,7 +3266,14 @@
     "file": "dark-cs.svg",
     "type": "Cabinet",
     "basedOn": "Custom-modified Fender® 2×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "DB Rock",
@@ -1770,7 +3282,14 @@
     "file": "db-rock.svg",
     "type": "Cabinet",
     "basedOn": "Two-Rock® 2×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#3a3a3e",
+      "bodyDeep": "#2d2d30",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Blue SK",
@@ -1779,7 +3298,14 @@
     "file": "blue-sk.svg",
     "type": "Cabinet",
     "basedOn": "Custom 2×12\" w/ Celestion® Alnico Blue",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#26324a",
+      "bodyDeep": "#1e273a",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Bellman 2",
@@ -1788,7 +3314,14 @@
     "file": "bellman-2.svg",
     "type": "Cabinet",
     "basedOn": "Fender® '59 Bassman 4×10\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#c9a86a",
+      "bodyDeep": "#9d8353",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "UK LD",
@@ -1797,7 +3330,14 @@
     "file": "uk-ld.svg",
     "type": "Cabinet",
     "basedOn": "Marshall® 1960AV 4×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "UK TD",
@@ -1806,7 +3346,14 @@
     "file": "uk-td.svg",
     "type": "Cabinet",
     "basedOn": "'68 Marshall® basketweave 4×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "UK MD",
@@ -1815,7 +3362,14 @@
     "file": "uk-md.svg",
     "type": "Cabinet",
     "basedOn": "Custom-modified Marshall® 4×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "UK GRN 2",
@@ -1824,7 +3378,14 @@
     "file": "uk-grn-2.svg",
     "type": "Cabinet",
     "basedOn": "Vintage Marshall® 4×12\" w/ Celestion® Greenbacks",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "EV",
@@ -1833,7 +3394,14 @@
     "file": "ev.svg",
     "type": "Cabinet",
     "basedOn": "Peavey® 6505 4×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Mess",
@@ -1842,7 +3410,14 @@
     "file": "mess.svg",
     "type": "Cabinet",
     "basedOn": "Mesa/Boogie® Rectifier 4×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Bog",
@@ -1851,7 +3426,14 @@
     "file": "bog.svg",
     "type": "Cabinet",
     "basedOn": "Bogner® 4×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Eagle",
@@ -1860,7 +3442,14 @@
     "file": "eagle.svg",
     "type": "Cabinet",
     "basedOn": "ENGL® 4×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Uban",
@@ -1869,7 +3458,14 @@
     "file": "uban.svg",
     "type": "Cabinet",
     "basedOn": "Bogner® Über Kab 4×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Solo",
@@ -1878,7 +3474,14 @@
     "file": "solo.svg",
     "type": "Cabinet",
     "basedOn": "Soldano® 4×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Juice",
@@ -1887,7 +3490,14 @@
     "file": "juice.svg",
     "type": "Cabinet",
     "basedOn": "Orange® PPC412 4×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#d86a1a",
+      "bodyDeep": "#a85314",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "H-WAY",
@@ -1896,7 +3506,14 @@
     "file": "h-way.svg",
     "type": "Cabinet",
     "basedOn": "Vintage Hiwatt® SE4123 4×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "UK Dark",
@@ -1905,7 +3522,14 @@
     "file": "uk-dark.svg",
     "type": "Cabinet",
     "basedOn": "1968 Marshall® 4×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Way",
@@ -1914,7 +3538,14 @@
     "file": "way.svg",
     "type": "Cabinet",
     "basedOn": "Vintage WEM® 4×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Dumb",
@@ -1923,7 +3554,14 @@
     "file": "dumb.svg",
     "type": "Cabinet",
     "basedOn": "Dumble® 4×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Dizz",
@@ -1932,7 +3570,14 @@
     "file": "dizz.svg",
     "type": "Cabinet",
     "basedOn": "Diezel® 4×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "TRP",
@@ -1941,7 +3586,14 @@
     "file": "trp.svg",
     "type": "Cabinet",
     "basedOn": "Hughes & Kettner® Triamp 4×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "UK 75",
@@ -1950,7 +3602,14 @@
     "file": "uk-75.svg",
     "type": "Cabinet",
     "basedOn": "Marshall® 4×12\" w/ Celestion® G12T-75",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "King",
@@ -1959,7 +3618,14 @@
     "file": "king.svg",
     "type": "Cabinet",
     "basedOn": "Mesa/Boogie® Road King 4×12\"",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "ADM 1",
@@ -1968,7 +3634,14 @@
     "file": "adm-1.svg",
     "type": "Cabinet",
     "basedOn": "David Eden® 1×15\" bass cab",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Workman 1",
@@ -1977,7 +3650,14 @@
     "file": "workman-1.svg",
     "type": "Cabinet",
     "basedOn": "SWR® 1×15\" bass cab",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "F-TOP",
@@ -1986,7 +3666,14 @@
     "file": "f-top.svg",
     "type": "Cabinet",
     "basedOn": "Ampeg® PF-115HE 1×15\" bass cab",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "US BASS",
@@ -1995,7 +3682,14 @@
     "file": "us-bass.svg",
     "type": "Cabinet",
     "basedOn": "Mesa/Boogie® 2×10\" bass cab",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "MATT",
@@ -2004,7 +3698,14 @@
     "file": "matt.svg",
     "type": "Cabinet",
     "basedOn": "Markbass® 2×10\" bass cab",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "ADM 2",
@@ -2013,7 +3714,14 @@
     "file": "adm-2.svg",
     "type": "Cabinet",
     "basedOn": "David Eden® 4×10\" bass cab",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "AMPG 1",
@@ -2022,7 +3730,14 @@
     "file": "ampg-1.svg",
     "type": "Cabinet",
     "basedOn": "Ampeg® SVT-410HE 4×10\" bass cab",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Workman 2",
@@ -2031,7 +3746,14 @@
     "file": "workman-2.svg",
     "type": "Cabinet",
     "basedOn": "SWR® Workingman's 4×10\" bass cab",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "HACK",
@@ -2040,7 +3762,14 @@
     "file": "hack.svg",
     "type": "Cabinet",
     "basedOn": "Hartke® 4×12\" (aluminum cones)",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "AMPG 2",
@@ -2049,7 +3778,14 @@
     "file": "ampg-2.svg",
     "type": "Cabinet",
     "basedOn": "Ampeg® SVT-810E 8×10\" fridge",
-    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig.",
+    "colors": {
+      "body": "#1c1c1e",
+      "bodyDeep": "#161617",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "AC",
@@ -2058,7 +3794,14 @@
     "file": "ac.svg",
     "type": "Acoustic IR",
     "basedOn": "Dreadnought acoustic simulation 1",
-    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument.",
+    "colors": {
+      "body": "#d9a95e",
+      "bodyDeep": "#a98449",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "AC Dream",
@@ -2067,7 +3810,14 @@
     "file": "ac-dream.svg",
     "type": "Acoustic IR",
     "basedOn": "Dreadnought acoustic simulation 2",
-    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument.",
+    "colors": {
+      "body": "#c89048",
+      "bodyDeep": "#9c7038",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "OM",
@@ -2076,7 +3826,14 @@
     "file": "om.svg",
     "type": "Acoustic IR",
     "basedOn": "OM-body acoustic simulation",
-    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument.",
+    "colors": {
+      "body": "#d9a95e",
+      "bodyDeep": "#a98449",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "JUMBO",
@@ -2085,7 +3842,14 @@
     "file": "jumbo.svg",
     "type": "Acoustic IR",
     "basedOn": "Jumbo acoustic simulation",
-    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument.",
+    "colors": {
+      "body": "#c89860",
+      "bodyDeep": "#9c774b",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Bird",
@@ -2094,7 +3858,14 @@
     "file": "bird.svg",
     "type": "Acoustic IR",
     "basedOn": "Iconic \"H-Bird\" acoustic simulation",
-    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument.",
+    "colors": {
+      "body": "#a85a20",
+      "bodyDeep": "#834619",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "GA",
@@ -2103,7 +3874,14 @@
     "file": "ga.svg",
     "type": "Acoustic IR",
     "basedOn": "Grand Auditorium acoustic simulation",
-    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument.",
+    "colors": {
+      "body": "#c8a060",
+      "bodyDeep": "#9c7d4b",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Classic AC",
@@ -2112,7 +3890,14 @@
     "file": "classic-ac.svg",
     "type": "Acoustic IR",
     "basedOn": "Classical (nylon) guitar simulation",
-    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument.",
+    "colors": {
+      "body": "#e0b060",
+      "bodyDeep": "#af894b",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Mandolin",
@@ -2121,7 +3906,14 @@
     "file": "mandolin.svg",
     "type": "Acoustic IR",
     "basedOn": "Mandolin simulation",
-    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument.",
+    "colors": {
+      "body": "#b87838",
+      "bodyDeep": "#905e2c",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Fretless Bass",
@@ -2130,7 +3922,14 @@
     "file": "fretless-bass.svg",
     "type": "Acoustic IR",
     "basedOn": "Fretless acoustic bass simulation",
-    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument.",
+    "colors": {
+      "body": "#7a4a20",
+      "bodyDeep": "#5f3a19",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Double Bass",
@@ -2139,7 +3938,14 @@
     "file": "double-bass.svg",
     "type": "Acoustic IR",
     "basedOn": "Double bass simulation",
-    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument.",
+    "colors": {
+      "body": "#8a4a1a",
+      "bodyDeep": "#6c3a14",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "User IR",
@@ -2148,7 +3954,14 @@
     "file": "user-ir.svg",
     "type": "User IR",
     "basedOn": "Your imported IR (44.1 kHz / 1024-sample WAV)",
-    "blurb": "Plays your own imported impulse-response WAV files."
+    "blurb": "Plays your own imported impulse-response WAV files.",
+    "colors": {
+      "body": "#3a3d3f",
+      "bodyDeep": "#2d3031",
+      "ink": "#dfe4e6",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "Pure",
@@ -2157,7 +3970,14 @@
     "file": "pure.svg",
     "type": "Delay",
     "basedOn": "Valeton original — pristine digital delay",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#5a5fd8",
+      "bodyDeep": "#464aa8",
+      "ink": "#eeeeff",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Analog",
@@ -2166,7 +3986,14 @@
     "file": "analog.svg",
     "type": "Delay",
     "basedOn": "Warm BBD-style analog delay",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#d8cfb8",
+      "bodyDeep": "#a8a190",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Tape",
@@ -2175,7 +4002,14 @@
     "file": "tape.svg",
     "type": "Delay",
     "basedOn": "Roland® RE-201 Space Echo",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#3a4a44",
+      "bodyDeep": "#2d3a35",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Dual Echo",
@@ -2184,7 +4018,14 @@
     "file": "dual-echo.svg",
     "type": "Delay",
     "basedOn": "Dual L/R delay (Andy Timmons \"Halo\"-style)",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#6a70d8",
+      "bodyDeep": "#5357a8",
+      "ink": "#eeeeff",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Ping Pong",
@@ -2193,7 +4034,14 @@
     "file": "ping-pong.svg",
     "type": "Delay",
     "basedOn": "Valeton original — stereo bouncing repeats",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#5a60d0",
+      "bodyDeep": "#464ba2",
+      "ink": "#eeeeff",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Slapback",
@@ -2202,7 +4050,14 @@
     "file": "slapback.svg",
     "type": "Delay",
     "basedOn": "Classic 50s-style short slapback echo",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#d88a4a",
+      "bodyDeep": "#a86c3a",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Sweep Echo",
@@ -2211,7 +4066,14 @@
     "file": "sweep-echo.svg",
     "type": "Delay",
     "basedOn": "Valeton original — filter-swept repeats",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#5a60d0",
+      "bodyDeep": "#464ba2",
+      "ink": "#eeeeff",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Ring Echo",
@@ -2220,7 +4082,14 @@
     "file": "ring-echo.svg",
     "type": "Delay",
     "basedOn": "Valeton original — ring-modulated repeats",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#4a50c0",
+      "bodyDeep": "#3a3e96",
+      "ink": "#eeeeff",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Tube",
@@ -2229,7 +4098,14 @@
     "file": "tube--dly.svg",
     "type": "Delay",
     "basedOn": "Binson® Echorec magnetic-drum echo",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#8a6a2a",
+      "bodyDeep": "#6c5321",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "M-Echo",
@@ -2238,7 +4114,14 @@
     "file": "m-echo.svg",
     "type": "Delay",
     "basedOn": "4-head multi-tap tape echo machine",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#4a4a52",
+      "bodyDeep": "#3a3a40",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Sweet Echo",
@@ -2247,7 +4130,14 @@
     "file": "sweet-echo.svg",
     "type": "Delay",
     "basedOn": "Maxon® AD900 Analog Delay",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#b09468",
+      "bodyDeep": "#897351",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "999 Echo",
@@ -2256,7 +4146,14 @@
     "file": "999-echo.svg",
     "type": "Delay",
     "basedOn": "Vintage 80's rack delay (likely Boss® RDD-10)",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#26262a",
+      "bodyDeep": "#1e1e21",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Vintage Rack",
@@ -2265,7 +4162,14 @@
     "file": "vintage-rack.svg",
     "type": "Delay",
     "basedOn": "Vintage 1980's rack-mount digital delay",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#3a3a40",
+      "bodyDeep": "#2d2d32",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "BBD Delay S",
@@ -2274,7 +4178,14 @@
     "file": "bbd-delay-s.svg",
     "type": "Delay",
     "basedOn": "Boss® DM-3 stereo analog delay (BBD)",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#ece8de",
+      "bodyDeep": "#b8b5ad",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Digital Delay S",
@@ -2283,7 +4194,14 @@
     "file": "digital-delay-s.svg",
     "type": "Delay",
     "basedOn": "Boss® DD-3 stereo digital delay",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#ece8e2",
+      "bodyDeep": "#b8b5b0",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Tape Delay S",
@@ -2292,7 +4210,14 @@
     "file": "tape-delay-s.svg",
     "type": "Delay",
     "basedOn": "Roland® RE-201 Space Echo (stereo)",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#3a4a44",
+      "bodyDeep": "#2d3a35",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Lofi Echo",
@@ -2301,7 +4226,14 @@
     "file": "lofi-echo.svg",
     "type": "Delay",
     "basedOn": "Valeton original — degraded lo-fi repeats",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#8a7a5a",
+      "bodyDeep": "#6c5f46",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Rev Echo",
@@ -2310,7 +4242,14 @@
     "file": "rev-echo.svg",
     "type": "Delay",
     "basedOn": "Valeton original — reversed-feedback delay",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#5a50b8",
+      "bodyDeep": "#463e90",
+      "ink": "#eeeeff",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Ambience 1",
@@ -2319,7 +4258,14 @@
     "file": "ambience-1.svg",
     "type": "Delay",
     "basedOn": "Electro-Harmonix® Deluxe Memory Man (multi-tap voicing 1)",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#c8c8cc",
+      "bodyDeep": "#9c9c9f",
+      "ink": "#1a5ab8",
+      "knob": "dark",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Ambience 2",
@@ -2328,7 +4274,14 @@
     "file": "ambience-2.svg",
     "type": "Delay",
     "basedOn": "Electro-Harmonix® Deluxe Memory Man (multi-tap voicing 2)",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#c8c8cc",
+      "bodyDeep": "#9c9c9f",
+      "ink": "#c02020",
+      "knob": "dark",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Broken Delay",
@@ -2337,7 +4290,14 @@
     "file": "broken-delay.svg",
     "type": "Delay",
     "basedOn": "Valeton original — glitch/stutter fragment delay",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#8a4a4a",
+      "bodyDeep": "#6c3a3a",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Ice Delay",
@@ -2346,7 +4306,14 @@
     "file": "ice-delay.svg",
     "type": "Delay",
     "basedOn": "Valeton original — crystalline ambient delay",
-    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails.",
+    "colors": {
+      "body": "#4ab8d8",
+      "bodyDeep": "#3a90a8",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4da6ff"
+    }
   },
   {
     "name": "Room",
@@ -2355,7 +4322,14 @@
     "file": "room.svg",
     "type": "Reverb",
     "basedOn": "Room simulation",
-    "blurb": "Adds the reflections of a physical space around your sound."
+    "blurb": "Adds the reflections of a physical space around your sound.",
+    "colors": {
+      "body": "#2fb9c9",
+      "bodyDeep": "#25909d",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4dffe0"
+    }
   },
   {
     "name": "Hall",
@@ -2364,7 +4338,14 @@
     "file": "hall.svg",
     "type": "Reverb",
     "basedOn": "Concert-hall simulation",
-    "blurb": "Adds the reflections of a physical space around your sound."
+    "blurb": "Adds the reflections of a physical space around your sound.",
+    "colors": {
+      "body": "#2aa8c0",
+      "bodyDeep": "#218396",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4dffe0"
+    }
   },
   {
     "name": "Church",
@@ -2373,7 +4354,14 @@
     "file": "church.svg",
     "type": "Reverb",
     "basedOn": "Church / cathedral simulation",
-    "blurb": "Adds the reflections of a physical space around your sound."
+    "blurb": "Adds the reflections of a physical space around your sound.",
+    "colors": {
+      "body": "#2a8ab0",
+      "bodyDeep": "#216c89",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4dffe0"
+    }
   },
   {
     "name": "Plate",
@@ -2382,7 +4370,14 @@
     "file": "plate.svg",
     "type": "Reverb",
     "basedOn": "EMT® 140 studio plate",
-    "blurb": "Adds the reflections of a physical space around your sound."
+    "blurb": "Adds the reflections of a physical space around your sound.",
+    "colors": {
+      "body": "#8a9098",
+      "bodyDeep": "#6c7077",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4dffe0"
+    }
   },
   {
     "name": "Spring",
@@ -2391,7 +4386,14 @@
     "file": "spring.svg",
     "type": "Reverb",
     "basedOn": "Roland® RE-201 spring tank",
-    "blurb": "Adds the reflections of a physical space around your sound."
+    "blurb": "Adds the reflections of a physical space around your sound.",
+    "colors": {
+      "body": "#a8acb0",
+      "bodyDeep": "#838689",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4dffe0"
+    }
   },
   {
     "name": "N-Star",
@@ -2400,7 +4402,14 @@
     "file": "n-star.svg",
     "type": "Reverb",
     "basedOn": "Valeton original — lush bright decays",
-    "blurb": "Adds the reflections of a physical space around your sound."
+    "blurb": "Adds the reflections of a physical space around your sound.",
+    "colors": {
+      "body": "#3ac8d8",
+      "bodyDeep": "#2d9ca8",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4dffe0"
+    }
   },
   {
     "name": "Deepsea",
@@ -2409,7 +4418,14 @@
     "file": "deepsea.svg",
     "type": "Reverb",
     "basedOn": "Valeton original — huge deep decays",
-    "blurb": "Adds the reflections of a physical space around your sound."
+    "blurb": "Adds the reflections of a physical space around your sound.",
+    "colors": {
+      "body": "#1a5a8a",
+      "bodyDeep": "#14466c",
+      "ink": "#c8e8f8",
+      "knob": "cream",
+      "led": "#4dffe0"
+    }
   },
   {
     "name": "Sweet Space",
@@ -2418,7 +4434,14 @@
     "file": "sweet-space.svg",
     "type": "Reverb",
     "basedOn": "Valeton original — lush modulated reverb",
-    "blurb": "Adds the reflections of a physical space around your sound."
+    "blurb": "Adds the reflections of a physical space around your sound.",
+    "colors": {
+      "body": "#7a8ad8",
+      "bodyDeep": "#5f6ca8",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4dffe0"
+    }
   },
   {
     "name": "Shimmer",
@@ -2427,7 +4450,14 @@
     "file": "shimmer.svg",
     "type": "Reverb",
     "basedOn": "Valeton original — octave-up shimmer trails",
-    "blurb": "Adds the reflections of a physical space around your sound."
+    "blurb": "Adds the reflections of a physical space around your sound.",
+    "colors": {
+      "body": "#5ad8c8",
+      "bodyDeep": "#46a89c",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4dffe0"
+    }
   },
   {
     "name": "Studio",
@@ -2436,7 +4466,14 @@
     "file": "studio.svg",
     "type": "Reverb",
     "basedOn": "Recording-studio room simulation",
-    "blurb": "Adds the reflections of a physical space around your sound."
+    "blurb": "Adds the reflections of a physical space around your sound.",
+    "colors": {
+      "body": "#38b0a8",
+      "bodyDeep": "#2c8983",
+      "ink": "#1c1712",
+      "knob": "dark",
+      "led": "#4dffe0"
+    }
   },
   {
     "name": "Club",
@@ -2445,7 +4482,14 @@
     "file": "club.svg",
     "type": "Reverb",
     "basedOn": "Small club simulation",
-    "blurb": "Adds the reflections of a physical space around your sound."
+    "blurb": "Adds the reflections of a physical space around your sound.",
+    "colors": {
+      "body": "#30a0b8",
+      "bodyDeep": "#257d90",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4dffe0"
+    }
   },
   {
     "name": "Concert",
@@ -2454,7 +4498,14 @@
     "file": "concert.svg",
     "type": "Reverb",
     "basedOn": "Concert venue simulation",
-    "blurb": "Adds the reflections of a physical space around your sound."
+    "blurb": "Adds the reflections of a physical space around your sound.",
+    "colors": {
+      "body": "#2890b8",
+      "bodyDeep": "#1f7090",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4dffe0"
+    }
   },
   {
     "name": "Arena",
@@ -2463,7 +4514,14 @@
     "file": "arena.svg",
     "type": "Reverb",
     "basedOn": "Arena simulation",
-    "blurb": "Adds the reflections of a physical space around your sound."
+    "blurb": "Adds the reflections of a physical space around your sound.",
+    "colors": {
+      "body": "#2080b0",
+      "bodyDeep": "#196489",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4dffe0"
+    }
   },
   {
     "name": "Amp Spring",
@@ -2472,7 +4530,14 @@
     "file": "amp-spring.svg",
     "type": "Reverb",
     "basedOn": "Solid-state combo amp spring reverb",
-    "blurb": "Adds the reflections of a physical space around your sound."
+    "blurb": "Adds the reflections of a physical space around your sound.",
+    "colors": {
+      "body": "#3a3d3f",
+      "bodyDeep": "#2d3031",
+      "ink": "#dfe4e6",
+      "knob": "cream",
+      "led": "#4dffe0"
+    }
   },
   {
     "name": "Tube Spring",
@@ -2481,7 +4546,14 @@
     "file": "tube-spring.svg",
     "type": "Reverb",
     "basedOn": "60's Fender® tube spring reverb unit",
-    "blurb": "Adds the reflections of a physical space around your sound."
+    "blurb": "Adds the reflections of a physical space around your sound.",
+    "colors": {
+      "body": "#8a5a2a",
+      "bodyDeep": "#6c4621",
+      "ink": "#f2ede2",
+      "knob": "cream",
+      "led": "#4dffe0"
+    }
   },
   {
     "name": "SnapTone",
@@ -2490,7 +4562,14 @@
     "file": "snaptone--amp.svg",
     "type": "NAM Player",
     "basedOn": "Neural Amp Modeler capture player (amp captures)",
-    "blurb": "Plays Neural Amp Modeler captures imported from the community."
+    "blurb": "Plays Neural Amp Modeler captures imported from the community.",
+    "colors": {
+      "body": "#26282c",
+      "bodyDeep": "#1e1f22",
+      "ink": "#6ad8b0",
+      "knob": "cream",
+      "led": "#ffa23f"
+    }
   },
   {
     "name": "SnapTone",
@@ -2499,6 +4578,13 @@
     "file": "snaptone--dst.svg",
     "type": "NAM Player",
     "basedOn": "Neural Amp Modeler capture player (drive captures)",
-    "blurb": "Plays Neural Amp Modeler captures imported from the community."
+    "blurb": "Plays Neural Amp Modeler captures imported from the community.",
+    "colors": {
+      "body": "#26282c",
+      "bodyDeep": "#1e1f22",
+      "ink": "#6ad8b0",
+      "knob": "cream",
+      "led": "#ff4d4d"
+    }
   }
 ]

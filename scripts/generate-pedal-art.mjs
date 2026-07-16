@@ -582,6 +582,81 @@ const MODULE_BODY = {
   CAB: '#3a3d3f', EQ: '#f1f1ec', MOD: '#2f6fd8', DLY: '#5a5fd8', RVB: '#2fb9c9', VOL: '#2e2e33',
 };
 
+/* per-module LED colors (specs don't carry LEDs — the board view does) */
+const MODULE_LED = {
+  PRE: '#ff4d4d', WAH: '#ff4d4d', DST: '#ff4d4d', AMP: '#ffa23f', NR: '#4dff88',
+  CAB: '#ffa23f', EQ: '#ff4d4d', MOD: '#4da6ff', DLY: '#4da6ff', RVB: '#4dffe0', VOL: '#ffffff',
+};
+
+/* representative base hex for each pattern fill (see patternDefs) */
+const PATTERN_HEX = {
+  tweed: '#c9a86a', oxblood: '#4a2028', silverface: '#a8a49a', wheat: '#cfc0a0',
+  diamond: '#5a4632', cane: '#c8a878', basket: '#8a7454', blackweave: '#1c1c1e',
+  metalgrid: '#26282a', bluecheck: '#28407c', orangeweave: '#d86a1a', diamondplate: '#b0b4b8',
+};
+const hexOf = (c, fallback) => (typeof c === 'string' && c.startsWith('#') ? c : PATTERN_HEX[c] ?? fallback);
+
+const relLum = (hex) => {
+  const n = parseInt(hex.slice(1), 16);
+  return 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255);
+};
+const inkOn = (bg) => (relLum(bg) > 135 ? '#1c1712' : '#f2ede2');
+const knobStyleOn = (bg) => (relLum(bg) > 135 ? 'dark' : 'cream');
+
+/**
+ * Body colors the board view paints the whole pedal with — the enclosure
+ * gradient, text ink, knob style, LED, and (amps) the control-panel strip.
+ * Derived from the same spec that drew the SVG so pedal and artwork match.
+ */
+function bodyColorsFor(spec, module) {
+  let body, ink;
+  let panel, panelText;
+  switch (spec.t) {
+    case 'amp':
+      body = hexOf(spec.tolex, '#211d18');
+      panel = hexOf(spec.panel, '#26282c');
+      panelText = spec.panelText && spec.panelText.startsWith('#') ? spec.panelText : inkOn(panel);
+      ink = inkOn(body);
+      break;
+    case 'cab':
+      body = hexOf(spec.tolex, '#3a3d3f');
+      ink = inkOn(body);
+      break;
+    case 'acoustic':
+      body = spec.wood || '#d9a95e';
+      ink = inkOn(body);
+      break;
+    case 'rack':
+      body = hexOf(spec.face, '#26262a');
+      ink = inkOn(body);
+      break;
+    case 'tape':
+      body = hexOf(spec.body, '#3a3a3c');
+      ink = inkOn(body);
+      break;
+    case 'rocker':
+      body = hexOf(spec.body, '#2e2e33');
+      ink = inkOn(body);
+      break;
+    default: // stomp / eq / util
+      body = hexOf(spec.body, MODULE_BODY[module] ?? '#666');
+      ink = spec.ink && spec.ink.startsWith('#') ? spec.ink : inkOn(body);
+  }
+  const colors = {
+    body,
+    bodyDeep: shade(body, -0.22),
+    ink,
+    // amp knobs sit on the panel, everything else's sit on the body
+    knob: spec.t === 'amp' ? (relLum(panel) > 135 ? 'dark' : 'gold') : knobStyleOn(body),
+    led: spec.led ?? MODULE_LED[module] ?? '#ff4d4d',
+  };
+  if (panel) {
+    colors.panel = panel;
+    colors.panelText = panelText;
+  }
+  return colors;
+}
+
 function main() {
   const effects = readEffects();
   mkdirSync(OUT, { recursive: true });
@@ -619,6 +694,7 @@ function main() {
       type: spec.type ?? 'Special',
       basedOn: spec.basedOn ?? '—',
       blurb: spec.blurb ?? TYPE_BLURBS[spec.type] ?? '',
+      colors: bodyColorsFor(spec, e.module),
     });
   }
 

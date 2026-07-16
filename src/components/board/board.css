@@ -368,6 +368,77 @@
   color: var(--ink);
   opacity: 0.55;
 }
+
+/* ── EQ fader (graphic-EQ pedals render sliders, not knobs) ── */
+.board-view .fader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  width: 30px;
+  user-select: none;
+}
+.board-view .fader .f-track {
+  position: relative;
+  width: 16px;
+  height: 47px; /* 40px cap travel + 7px cap */
+  cursor: ns-resize;
+  touch-action: none;
+  border-radius: 3px;
+}
+.board-view .fader .f-track::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 1px;
+  bottom: 1px;
+  width: 4px;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.7),
+    0 1px 0 rgba(255, 255, 255, 0.14);
+}
+.board-view .fader .f-cap {
+  position: absolute;
+  left: 0;
+  width: 16px;
+  height: 7px;
+  border-radius: 1.5px;
+  background: linear-gradient(180deg, #f6f2e8, #b9b4a6);
+  box-shadow:
+    inset 0 -2px 3px rgba(0, 0, 0, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.5);
+}
+.board-view .fader .f-cap::after {
+  content: '';
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  top: 3px;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.55);
+}
+.board-view .fader.dragging .f-cap {
+  background: linear-gradient(180deg, #ffffff, #cfc9ba);
+}
+
+/* ── amp control panel (AMP pedals put their knobs on a panel strip) ── */
+.board-view .controls.amp-panel {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 90%, white), var(--panel));
+  border-radius: 5px;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 2px 4px rgba(0, 0, 0, 0.35);
+  padding: 5px 4px 4px;
+  margin: 12px 2px 6px;
+}
+.board-view .controls.amp-panel .k-label,
+.board-view .controls.amp-panel .k-value {
+  color: var(--panel-text);
+}
 .board-view .knob.dragging svg {
   filter: brightness(1.15);
 }
