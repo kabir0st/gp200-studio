@@ -1,14 +1,15 @@
 import { useEffect, useRef } from 'react';
-import { useAudioMeter } from '@/hooks/useAudioMeter';
+import { useAudioEngine } from '@/components/AudioEngineProvider';
 
 /**
  * Live audio in/out meters fed by the GP-200's USB audio interface —
  * groundwork for the loop station. Bar widths are driven directly from a
  * rAF loop (no React state per frame). MON routes the input to the
- * speakers; the OUT meter follows that monitoring path.
+ * speakers; the OUT meter follows that monitoring path. Reads the shared
+ * audio engine so the meters and looper run off one AudioContext.
  */
 export function AudioMeters() {
-  const meter = useAudioMeter();
+  const meter = useAudioEngine();
   const { active, getLevels } = meter;
   const inBar = useRef<HTMLSpanElement>(null);
   const outBar = useRef<HTMLSpanElement>(null);

@@ -1,9 +1,10 @@
-import { useState, type CSSProperties, type DragEvent } from 'react';
+import { useRef, useState, type CSSProperties, type DragEvent } from 'react';
 import type { GP200Preset, EffectSlot } from '@/core/types';
 import type { PushProgress } from '@/core/devicePush';
 import { getSlotModule } from '@/core/effectNames';
 import { bayMinHeight, isWideSlot } from './boardLayout';
 import { useFlipReorder } from './useFlipReorder';
+import { useFitZoom } from './useFitZoom';
 import { FxLoopArrows } from '@/components/FxLoopArrows';
 import { ControllerPanel } from '@/components/ControllerPanel';
 import { FootswitchPanel } from '@/components/FootswitchPanel';
@@ -132,6 +133,9 @@ export function PedalBoard({
 
   // FLIP: capture pedal positions before a reorder, then spring them to place
   const { scopeRef, capture } = useFlipReorder(orderKey);
+  // shrink the grid just enough that both rows + deck fit without scrolling
+  const stageRef = useRef<HTMLElement>(null);
+  useFitZoom(stageRef, scopeRef, orderKey);
   const handleReorderDrop = (index: number) => {
     capture();
     onDrop(index);
@@ -207,7 +211,7 @@ export function PedalBoard({
         pinned={pinnedSlot !== null && inspected !== null}
         onUnpin={() => setPinnedSlot(null)}
       />
-      <main className="stage">
+      <main className="stage" ref={stageRef}>
         <section className="board-deck">
           {/* rows never wrap; the scroll wrapper handles overflow on narrow
               screens, and the cables live inside it so they scroll in lockstep

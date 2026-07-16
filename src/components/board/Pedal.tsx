@@ -6,6 +6,7 @@ import { getEffectParams } from '@/core/effectParams';
 import { getBodySpec } from './boardPalette';
 import { pedalIsWide } from './boardLayout';
 import { type PedalArtEntry } from './pedalManifest';
+import { ModuleGlyph } from './ModuleGlyph';
 import { PedalKnob } from './PedalKnob';
 import { PedalFader } from './PedalFader';
 import { ComboSelect, MiniSwitch } from './MiniSwitch';
@@ -200,7 +201,8 @@ export function Pedal({
           aria-haspopup="dialog"
           onClick={onOpenPicker}
         >
-          {effectName}
+          <ModuleGlyph module={moduleName} className="p-name-icon" />
+          <span className="p-name-text">{effectName}</span>
         </button>
       </div>
       <p className="p-desc" title={caption}>

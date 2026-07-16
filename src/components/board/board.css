@@ -172,7 +172,7 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 34px 24px 40px;
+  padding: 16px 24px 18px;
 }
 .board-view .cables-svg {
   position: absolute;
@@ -198,7 +198,7 @@
 .board-view .board-deck {
   position: relative;
   border-radius: 10px;
-  padding: 34px 26px 22px;
+  padding: 18px 26px 16px;
   background:
     repeating-linear-gradient(0deg, transparent 0 118px, rgba(0, 0, 0, 0.14) 118px 122px, rgba(255, 255, 255, 0.3) 122px 124px),
     repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.015) 0 2px, transparent 2px 6px),
@@ -223,6 +223,10 @@
   position: relative;
   width: max-content;
   margin: 0 auto;
+  /* scale the whole pedal grid down so both rows + deck fit without scrolling
+     (Chrome/Edge only, like Web MIDI; cables live inside so they scale in step).
+     --board-zoom is set by useFitZoom to the largest value that avoids scrolling. */
+  zoom: var(--board-zoom, 1);
 }
 .board-view .board-row {
   display: flex;
@@ -232,7 +236,7 @@
   flex-wrap: nowrap;
 }
 .board-view .board-row + .board-row {
-  margin-top: 38px;
+  margin-top: 20px;
 }
 
 /* ── pedal bay ──
@@ -657,6 +661,10 @@
 }
 .board-view .p-name-btn {
   width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   text-align: center;
   appearance: none;
   background: transparent;
@@ -671,6 +679,18 @@
   cursor: pointer;
   padding: 0 2px;
   transition: border-color 0.12s ease, background 0.12s ease;
+}
+.board-view .p-name-icon {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  opacity: 0.85;
+}
+.board-view .p-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 .board-view .pedal.wide .p-name-btn {
   font-size: 19px;
@@ -839,7 +859,7 @@
 
 /* ── control deck (clean, modern — no LCD glow, no decorative stomps) ── */
 .board-view .deck {
-  margin-top: 40px;
+  margin-top: 18px;
   border-radius: 10px;
   background: var(--chrome-bg);
   border: 1px solid var(--chrome-border);

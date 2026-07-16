@@ -21,6 +21,10 @@ export interface AudioMeterApi {
   setMonitoring: (on: boolean) => void;
   /** current levels 0..1 (perceptual, dB-mapped) — read inside rAF, not state */
   getLevels: () => { input: number; output: number };
+  /** the live AudioContext, or null while inactive — shared with the looper */
+  getContext: () => AudioContext | null;
+  /** the GP-200 input source node, or null while inactive — the looper taps this */
+  getSource: () => MediaStreamAudioSourceNode | null;
 }
 
 const DEVICE_HINT = /gp-?200|valeton/i;
@@ -43,6 +47,7 @@ export function useAudioMeter(): AudioMeterApi {
 
   const ctxRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const inAnalyserRef = useRef<AnalyserNode | null>(null);
   const outAnalyserRef = useRef<AnalyserNode | null>(null);
   const monitorGainRef = useRef<GainNode | null>(null);
@@ -51,6 +56,7 @@ export function useAudioMeter(): AudioMeterApi {
   const disable = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+    sourceRef.current = null;
     void ctxRef.current?.close().catch(() => {});
     ctxRef.current = null;
     inAnalyserRef.current = null;
@@ -103,6 +109,7 @@ export function useAudioMeter(): AudioMeterApi {
 
       ctxRef.current = ctx;
       streamRef.current = stream;
+      sourceRef.current = source;
       inAnalyserRef.current = inAnalyser;
       outAnalyserRef.current = outAnalyser;
       monitorGainRef.current = gain;
@@ -132,5 +139,11 @@ export function useAudioMeter(): AudioMeterApi {
     };
   }, []);
 
-  return { active, starting, deviceLabel, error, monitoring, enable, disable, setMonitoring, getLevels };
+  const getContext = useCallback(() => ctxRef.current, []);
+  const getSource = useCallback(() => sourceRef.current, []);
+
+  return {
+    active, starting, deviceLabel, error, monitoring,
+    enable, disable, setMonitoring, getLevels, getContext, getSource,
+  };
 }
