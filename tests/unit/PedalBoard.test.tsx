@@ -6,6 +6,29 @@ import { PRSTDecoder } from '@/core/PRSTDecoder';
 import { getEffectName } from '@/core/effectNames';
 import { PedalBoard } from '@/components/board/PedalBoard';
 import { isWidePedal, isWideSlot, splitRows } from '@/components/board/boardLayout';
+import { AudioEngineProvider } from '@/components/AudioEngineProvider';
+import { defaultLooperBindings } from '@/core/looperBindings';
+import type { LooperApi } from '@/hooks/useLooper';
+
+// Minimal looper stub — the smoke tests never open the Loop Station drawer, so
+// an inert API that satisfies the type is enough. AudioEngineProvider is inert
+// at mount (no getUserMedia until enable()), so wrapping is jsdom-safe.
+const fakeLooper: LooperApi = {
+  ready: false,
+  tracks: [0, 1, 2, 3].map((id) => ({ id, state: 'empty' as const, muted: false, hasAudio: false, lengthLoops: 0 })),
+  isRecording: false,
+  recordArmedTrack: null,
+  masterLoopLengthSec: null,
+  getPlayhead: () => 0,
+  startRecord: vi.fn(),
+  stopRecord: vi.fn(),
+  togglePlay: vi.fn(),
+  setMute: vi.fn(),
+  clear: vi.fn(),
+  clearAll: vi.fn(),
+  setTrackGain: vi.fn(),
+  setMasterGain: vi.fn(),
+};
 
 // jsdom has no ResizeObserver (CableLayer uses it to re-measure jacks)
 class ResizeObserverStub {
@@ -54,6 +77,11 @@ function renderBoard(overrides: Partial<Parameters<typeof PedalBoard>[0]> = {}) 
     onCtrlBlockToggle: vi.fn(),
     onCtrlClear: vi.fn(),
     onOpenPatchManager: vi.fn(),
+    looper: fakeLooper,
+    looperBindings: defaultLooperBindings,
+    onLooperBindingsChange: vi.fn(),
+    onEnableAudio: vi.fn(),
+    audioStarting: false,
     onConnectRequest: vi.fn(),
     onDisconnect: vi.fn(),
     onPushRequest: vi.fn(),
@@ -61,7 +89,7 @@ function renderBoard(overrides: Partial<Parameters<typeof PedalBoard>[0]> = {}) 
     firmware: null,
     ...overrides,
   };
-  const utils = render(<PedalBoard {...props} />);
+  const utils = render(<PedalBoard {...props} />, { wrapper: AudioEngineProvider });
   return { preset, props, ...utils };
 }
 

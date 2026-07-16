@@ -172,7 +172,7 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 16px 24px 18px;
+  padding: 14px 16px 16px;
 }
 .board-view .cables-svg {
   position: absolute;
@@ -198,7 +198,7 @@
 .board-view .board-deck {
   position: relative;
   border-radius: 10px;
-  padding: 18px 26px 16px;
+  padding: 32px 20px 22px;
   background:
     repeating-linear-gradient(0deg, transparent 0 118px, rgba(0, 0, 0, 0.14) 118px 122px, rgba(255, 255, 255, 0.3) 122px 124px),
     repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.015) 0 2px, transparent 2px 6px),
@@ -221,22 +221,21 @@
 }
 .board-view .board-rows {
   position: relative;
+  /* fill the available width so pedals spread edge-to-edge (no wasted side
+     space), but grow past it when the chain is wider than the screen so the
+     wrapper can scroll horizontally and the cables still span every pedal */
   width: max-content;
-  margin: 0 auto;
-  /* scale the whole pedal grid down so both rows + deck fit without scrolling
-     (Chrome/Edge only, like Web MIDI; cables live inside so they scale in step).
-     --board-zoom is set by useFitZoom to the largest value that avoids scrolling. */
-  zoom: var(--board-zoom, 1);
+  min-width: 100%;
 }
 .board-view .board-row {
   display: flex;
   gap: 18px;
   align-items: flex-end;
-  justify-content: center;
+  justify-content: space-evenly;
   flex-wrap: nowrap;
 }
 .board-view .board-row + .board-row {
-  margin-top: 20px;
+  margin-top: 36px;
 }
 
 /* ── pedal bay ──
@@ -859,7 +858,7 @@
 
 /* ── control deck (clean, modern — no LCD glow, no decorative stomps) ── */
 .board-view .deck {
-  margin-top: 18px;
+  margin-top: 34px;
   border-radius: 10px;
   background: var(--chrome-bg);
   border: 1px solid var(--chrome-border);

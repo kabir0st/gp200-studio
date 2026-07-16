@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePreset } from '@/hooks/usePreset';
 import { useMidiDevice } from '@/hooks/useMidiDevice';
+import { useLooper } from '@/hooks/useLooper';
+import { useAudioEngine } from '@/components/AudioEngineProvider';
+import {
+  defaultLooperBindings,
+  resolveFootswitch,
+  dispatchLooperAction,
+  applyExp,
+  type LooperBindings,
+} from '@/core/looperBindings';
 import { PRSTDecoder } from '@/core/PRSTDecoder';
 import { PRSTEncoder } from '@/core/PRSTEncoder';
 import { convertHLX } from '@/core/HLXConverter';
@@ -46,6 +55,17 @@ function App() {
     setCtrlMask, setExpAssignment, reset,
   } = usePreset();
   const midiDevice = useMidiDevice();
+  const audioEngine = useAudioEngine();
+  const looper = useLooper(audioEngine);
+
+  // Loop-station hardware bindings. State drives the LooperPanel UI; the ref
+  // mirror is what the once-per-connection MIDI callbacks read (so they see the
+  // current map without re-registering) — same pattern as presetRef below.
+  const [looperBindings, setLooperBindings] = useState<LooperBindings>(defaultLooperBindings);
+  const looperBindingsRef = useRef(looperBindings);
+  looperBindingsRef.current = looperBindings;
+  const looperRef = useRef(looper);
+  looperRef.current = looper;
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -181,6 +201,33 @@ function App() {
     if (midiDevice.status !== 'connected') return;
     midiDevice.setOnDeviceParamChange((blockIndex, paramIndex, value) => setParam(blockIndex, paramIndex, value));
     return () => midiDevice.setOnDeviceParamChange(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [midiDevice.status]);
+
+  // Loop-station triggers: bind hardware footswitch presses and EXP-pedal
+  // movement to looper transport/params via the (editable) binding map. The
+  // callbacks read the ref mirrors so they stay registered once per connection.
+  useEffect(() => {
+    if (midiDevice.status !== 'connected') return;
+    midiDevice.setOnFootswitch((fsNumber, state) => {
+      if (!state) return; // act on press, not release
+      const action = resolveFootswitch(looperBindingsRef.current, fsNumber);
+      if (action) dispatchLooperAction(looperRef.current, action);
+    });
+    return () => midiDevice.setOnFootswitch(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [midiDevice.status]);
+
+  useEffect(() => {
+    if (midiDevice.status !== 'connected') return;
+    midiDevice.setOnExpPosition((value) => {
+      const target = looperBindingsRef.current.expTarget;
+      if (!target) return;
+      const gain = applyExp(value);
+      if (target.kind === 'trackGain') looperRef.current.setTrackGain(target.track, gain);
+      else looperRef.current.setMasterGain(gain);
+    });
+    return () => midiDevice.setOnExpPosition(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [midiDevice.status]);
 
@@ -526,6 +573,11 @@ function App() {
           onCtrlBlockToggle={setCtrlBlock}
           onCtrlClear={(ctrlIndex) => setCtrlMask(ctrlIndex, 0)}
           onOpenPatchManager={handleOpenPatchManager}
+          looper={looper}
+          looperBindings={looperBindings}
+          onLooperBindingsChange={setLooperBindings}
+          onEnableAudio={() => void audioEngine.enable()}
+          audioStarting={audioEngine.starting}
           onConnectRequest={() => void midiDevice.connect()}
           onDisconnect={midiDevice.disconnect}
           onPushRequest={() => handleOpenBrowser('push')}

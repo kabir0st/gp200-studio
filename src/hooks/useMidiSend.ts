@@ -19,12 +19,18 @@ type OnDeviceToggle = (blockIndex: number, enabled: boolean) => void;
 // only suppress follow-up FX-state messages after a REAL effect swap.
 type OnDeviceEffectChange = (blockIndex: number, effectId: number) => boolean;
 type OnDeviceParamChange = (blockIndex: number, paramIndex: number, value: number) => void;
+// Real-time hardware controls (footswitch press, EXP-pedal position) — the
+// loop station binds these. Wire format pending capture (docs/protocol-capture.md).
+type OnFootswitch = (fsNumber: number, state: boolean) => void;
+type OnExpPosition = (value: number) => void; // 0..127
 
 export interface DeviceCallbackRefs {
   onDeviceChangeRef: React.MutableRefObject<OnDeviceChange | null>;
   onDeviceToggleRef: React.MutableRefObject<OnDeviceToggle | null>;
   onDeviceEffectChangeRef: React.MutableRefObject<OnDeviceEffectChange | null>;
   onDeviceParamChangeRef: React.MutableRefObject<OnDeviceParamChange | null>;
+  onFootswitchRef: React.MutableRefObject<OnFootswitch | null>;
+  onExpPositionRef: React.MutableRefObject<OnExpPosition | null>;
 }
 
 export interface UseMidiSendReturn {
@@ -56,6 +62,8 @@ export interface UseMidiSendReturn {
   setOnDeviceToggle: (cb: OnDeviceToggle | null) => void;
   setOnDeviceEffectChange: (cb: OnDeviceEffectChange | null) => void;
   setOnDeviceParamChange: (cb: OnDeviceParamChange | null) => void;
+  setOnFootswitch: (cb: OnFootswitch | null) => void;
+  setOnExpPosition: (cb: OnExpPosition | null) => void;
   // Internal plumbing consumed by useMidiDevice's onMidiMessage handler
   deviceCallbacks: DeviceCallbackRefs;
   suppressFxCountRef: React.MutableRefObject<number>;
@@ -97,6 +105,8 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
   const onDeviceToggleRef = useRef<OnDeviceToggle | null>(null);
   const onDeviceEffectChangeRef = useRef<OnDeviceEffectChange | null>(null);
   const onDeviceParamChangeRef = useRef<OnDeviceParamChange | null>(null);
+  const onFootswitchRef = useRef<OnFootswitch | null>(null);
+  const onExpPositionRef = useRef<OnExpPosition | null>(null);
 
   // Suppress FX state toggles when we're actively sending commands (responses
   // are echoes, not hardware changes). Counter, not a boolean + single timer:
@@ -292,11 +302,19 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
     setOnDeviceParamChange: (cb) => {
       onDeviceParamChangeRef.current = cb;
     },
+    setOnFootswitch: (cb) => {
+      onFootswitchRef.current = cb;
+    },
+    setOnExpPosition: (cb) => {
+      onExpPositionRef.current = cb;
+    },
     deviceCallbacks: {
       onDeviceChangeRef,
       onDeviceToggleRef,
       onDeviceEffectChangeRef,
       onDeviceParamChangeRef,
+      onFootswitchRef,
+      onExpPositionRef,
     },
     suppressFxCountRef,
     suppressFxFor,

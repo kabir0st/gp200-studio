@@ -21,6 +21,7 @@ interface SwitcherUnitProps {
   onOpenFxLoop: () => void;
   onOpenExp: () => void;
   onOpenCtrl: () => void;
+  onOpenLooper: () => void;
 }
 
 interface LiveBar {
@@ -130,6 +131,7 @@ export function SwitcherUnit({
   onOpenFxLoop,
   onOpenExp,
   onOpenCtrl,
+  onOpenLooper,
 }: SwitcherUnitProps) {
   const [openPop, setOpenPop] = useState<'meta' | 'settings' | null>(null);
 
@@ -318,6 +320,14 @@ export function SwitcherUnit({
           onClick={onOpenCtrl}
         >
           CTRL
+        </button>
+        <button
+          type="button"
+          className="deck-btn"
+          title="Multi-track loop station (records the GP-200's USB audio)"
+          onClick={onOpenLooper}
+        >
+          LOOP
         </button>
         {connected && (
           <button

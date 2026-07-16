@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { SysExCodec } from '@/core/SysExCodec';
+import { decodeControlChange } from '@/core/midiControlMap';
 import type { GP200Preset } from '@/core/types';
 import { useMidiSend } from './useMidiSend';
 
@@ -78,6 +79,9 @@ export interface UseMidiDeviceReturn {
   // Callback returns whether the change was applied (drives FX-state suppression)
   setOnDeviceEffectChange: (cb: ((blockIndex: number, effectId: number) => boolean) | null) => void;
   setOnDeviceParamChange: (cb: ((blockIndex: number, paramIndex: number, value: number) => void) | null) => void;
+  // Real-time hardware controls for the loop station (wire format pending capture)
+  setOnFootswitch: (cb: ((fsNumber: number, state: boolean) => void) | null) => void;
+  setOnExpPosition: (cb: ((value: number) => void) | null) => void;
 }
 
 // Minimal shape we actually use — avoids conflicts with DOM's MIDIInput / MIDIOutput
@@ -192,6 +196,8 @@ export function useMidiDevice(): UseMidiDeviceReturn {
       onDeviceToggleRef,
       onDeviceEffectChangeRef,
       onDeviceParamChangeRef,
+      onFootswitchRef,
+      onExpPositionRef,
     },
     suppressFxCountRef,
     suppressFxFor,
@@ -199,6 +205,17 @@ export function useMidiDevice(): UseMidiDeviceReturn {
 
   const onMidiMessage = useCallback((event: { data: unknown }) => {
     const data = getBytes(event.data);
+    // Real-time hardware controls arrive (per current hypothesis) as standard
+    // Control Change messages, NOT SysEx — so they must be routed BEFORE the
+    // 0xF0 SysEx checks below, which every downstream branch requires. The exact
+    // CC numbers are pending a USB capture; decodeControlChange centralizes them
+    // (see src/core/midiControlMap.ts + docs/protocol-capture.md §4).
+    const control = decodeControlChange(data);
+    if (control) {
+      if (control.kind === 'exp') onExpPositionRef.current?.(control.value);
+      else onFootswitchRef.current?.(control.fsNumber, control.state);
+      return;
+    }
     // sub=0x08 D→H: multipurpose — preset change echo vs FX state response
     // Distinguish by data[14]: 0x08 = preset change echo, other = FX state response.
     // CAUTION: hardware footswitch presses ALSO emit data[14]=0x08 frames whose
@@ -289,7 +306,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   // including it would make onMidiMessage (and everything that depends on
   // it, e.g. `connect` below) unstable every render.
   // oxlint-disable-next-line react-hooks/exhaustive-deps
-  }, [onDeviceChangeRef, onDeviceToggleRef, onDeviceEffectChangeRef, onDeviceParamChangeRef, suppressFxCountRef]);
+  }, [onDeviceChangeRef, onDeviceToggleRef, onDeviceEffectChangeRef, onDeviceParamChangeRef, onFootswitchRef, onExpPositionRef, suppressFxCountRef]);
 
   const connect = useCallback(async () => {
     setStatus('connecting');
@@ -770,5 +787,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     setOnDeviceToggle: send.setOnDeviceToggle,
     setOnDeviceEffectChange: send.setOnDeviceEffectChange,
     setOnDeviceParamChange: send.setOnDeviceParamChange,
+    setOnFootswitch: send.setOnFootswitch,
+    setOnExpPosition: send.setOnExpPosition,
   };
 }

@@ -4,7 +4,10 @@
 // AudioBuffer. Pure sink: it produces no output.
 //
 // This file runs in AudioWorkletGlobalScope: plain JS only, no imports, no TS.
-// Loaded once via `ctx.audioWorklet.addModule(url)` (Vite `?url` asset import).
+// Loaded once via `ctx.audioWorklet.addModule(url)`, where url comes from
+// `new URL('./looper-recorder.worklet.js', import.meta.url)`. It is kept a real
+// emitted asset (never inlined as a data: URL) by vite.config's assetsInlineLimit
+// override, because Chromium's addModule() rejects data: URLs.
 //
 // Control protocol (main thread → processor, via port.postMessage):
 //   { type: 'start' }  begin forwarding frames

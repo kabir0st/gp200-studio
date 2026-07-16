@@ -1,13 +1,15 @@
-import { useRef, useState, type CSSProperties, type DragEvent } from 'react';
+import { useState, type CSSProperties, type DragEvent } from 'react';
 import type { GP200Preset, EffectSlot } from '@/core/types';
 import type { PushProgress } from '@/core/devicePush';
 import { getSlotModule } from '@/core/effectNames';
 import { bayMinHeight, isWideSlot } from './boardLayout';
 import { useFlipReorder } from './useFlipReorder';
-import { useFitZoom } from './useFitZoom';
 import { FxLoopArrows } from '@/components/FxLoopArrows';
 import { ControllerPanel } from '@/components/ControllerPanel';
 import { FootswitchPanel } from '@/components/FootswitchPanel';
+import { LooperPanel } from './LooperPanel';
+import type { LooperApi } from '@/hooks/useLooper';
+import type { LooperBindings } from '@/core/looperBindings';
 import { splitRows } from './boardLayout';
 import { lookupPedalArt, usePedalManifest } from './pedalManifest';
 import { Pedal } from './Pedal';
@@ -60,6 +62,12 @@ export interface PedalBoardProps {
   onCtrlBlockToggle: (ctrlIndex: number, blockIndex: number, on: boolean) => void;
   onCtrlClear: (ctrlIndex: number) => void;
   onOpenPatchManager: () => void;
+  /* loop station */
+  looper: LooperApi;
+  looperBindings: LooperBindings;
+  onLooperBindingsChange: (next: LooperBindings) => void;
+  onEnableAudio: () => void;
+  audioStarting: boolean;
   /* device session controls (deck-hosted — there is no separate status bar) */
   onConnectRequest: () => void;
   onDisconnect: () => void;
@@ -107,6 +115,11 @@ export function PedalBoard({
   onCtrlBlockToggle,
   onCtrlClear,
   onOpenPatchManager,
+  looper,
+  looperBindings,
+  onLooperBindingsChange,
+  onEnableAudio,
+  audioStarting,
   onConnectRequest,
   onDisconnect,
   onPushRequest,
@@ -118,7 +131,7 @@ export function PedalBoard({
   // hover inspects, ⓘ pins; both keyed by slotIndex (stable across reorders)
   const [hoverSlot, setHoverSlot] = useState<number | null>(null);
   const [pinnedSlot, setPinnedSlot] = useState<number | null>(null);
-  const [openDrawer, setOpenDrawer] = useState<'fxloop' | 'exp' | 'ctrl' | null>(null);
+  const [openDrawer, setOpenDrawer] = useState<'fxloop' | 'exp' | 'ctrl' | 'looper' | null>(null);
   const [pickerSlot, setPickerSlot] = useState<number | null>(null);
 
   const inspectKey = pinnedSlot ?? hoverSlot;
@@ -133,9 +146,6 @@ export function PedalBoard({
 
   // FLIP: capture pedal positions before a reorder, then spring them to place
   const { scopeRef, capture } = useFlipReorder(orderKey);
-  // shrink the grid just enough that both rows + deck fit without scrolling
-  const stageRef = useRef<HTMLElement>(null);
-  useFitZoom(stageRef, scopeRef, orderKey);
   const handleReorderDrop = (index: number) => {
     capture();
     onDrop(index);
@@ -211,7 +221,7 @@ export function PedalBoard({
         pinned={pinnedSlot !== null && inspected !== null}
         onUnpin={() => setPinnedSlot(null)}
       />
-      <main className="stage" ref={stageRef}>
+      <main className="stage">
         <section className="board-deck">
           {/* rows never wrap; the scroll wrapper handles overflow on narrow
               screens, and the cables live inside it so they scroll in lockstep
@@ -246,6 +256,7 @@ export function PedalBoard({
             onOpenFxLoop={() => setOpenDrawer('fxloop')}
             onOpenExp={() => setOpenDrawer('exp')}
             onOpenCtrl={() => setOpenDrawer('ctrl')}
+            onOpenLooper={() => setOpenDrawer('looper')}
           />
         </section>
       </main>
@@ -290,6 +301,20 @@ export function PedalBoard({
           connected={connected}
           onCtrlBlockToggle={onCtrlBlockToggle}
           onCtrlClear={onCtrlClear}
+        />
+      </DeckDrawer>
+
+      <DeckDrawer
+        open={openDrawer === 'looper'}
+        onClose={() => setOpenDrawer(null)}
+        title="Loop Station"
+      >
+        <LooperPanel
+          looper={looper}
+          bindings={looperBindings}
+          onBindingsChange={onLooperBindingsChange}
+          onEnableAudio={onEnableAudio}
+          audioStarting={audioStarting}
         />
       </DeckDrawer>
 

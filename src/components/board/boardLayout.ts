@@ -22,19 +22,16 @@ export function isWidePedal(effectId: number): boolean {
 // effect switches — swapping effects only changes the padding inside the bay,
 // never a neighbour's position.
 //
-// A module's bay is wide only if it is *predominantly* wide (≥40% of its effects).
-// Reserving a wide bay for every module that has any wide effect would make 8 of
-// 11 slots double-width and overflow the two-row board; instead the few wide
-// effects inside a mostly-compact module render compact (see pedalIsWide) so they
-// still fit their bay without pushing neighbours. AMP/DST/EQ/DLY/RVB clear the bar.
-const WIDE_BAY_FRACTION = 0.4;
+// A module's bay is wide if any of its effects is wide. This keeps the tall,
+// knob-heavy effects (compressors, amps, delays) laid out in 2 rows instead of
+// squeezing them into 3 rows of a compact body — so bays stay shorter and both
+// rows + the deck fit a 1080p viewport. The board fills its width and scrolls
+// horizontally, so the extra wide bays never overflow the two-row layout.
 const wideModuleCache = new Map<string, boolean>();
 function isWideModule(module: string): boolean {
   const cached = wideModuleCache.get(module);
   if (cached !== undefined) return cached;
-  const effects = getEffectsByModule(module);
-  const wideN = effects.filter((e) => isWidePedal(e.effectId)).length;
-  const wide = effects.length > 0 && wideN / effects.length >= WIDE_BAY_FRACTION;
+  const wide = getEffectsByModule(module).some((e) => isWidePedal(e.effectId));
   wideModuleCache.set(module, wide);
   return wide;
 }
