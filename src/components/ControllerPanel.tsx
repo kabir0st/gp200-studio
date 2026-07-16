@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { GP200Preset } from '@/core/types';
-import { getModuleName, getEffectName } from '@/core/effectNames';
+import { getSlotModule, getEffectName } from '@/core/effectNames';
 import { getEffectParams } from '@/core/effectParams';
 
 /** EXP page indices matching the SysEx protocol */
@@ -24,9 +24,12 @@ interface ParamOption {
 function buildParamOptions(preset: GP200Preset | null): ParamOption[] {
   if (!preset) return [];
   const options: ParamOption[] = [];
-  for (let blockIndex = 0; blockIndex < preset.effects.length; blockIndex++) {
-    const slot = preset.effects[blockIndex];
-    const moduleName = getModuleName(slot.effectId);
+  for (const slot of preset.effects) {
+    // SysEx targets the physical block, not the playback position — the
+    // effects array is in playback order, so the array index is wrong for
+    // reordered chains. slotIndex is the block identity.
+    const blockIndex = slot.slotIndex;
+    const moduleName = getSlotModule(slot.slotIndex);
     const effectName = getEffectName(slot.effectId);
     const params = getEffectParams(slot.effectId);
     for (let pi = 0; pi < params.length; pi++) {
@@ -61,7 +64,9 @@ function slotKey(page: number, item: number): string {
 }
 
 export function ControllerPanel({ preset, connected, onParamSelect, onMinMax }: ControllerPanelProps) {
-  const [collapsed, setCollapsed] = useState(true);
+  // expanded by default — this panel now lives inside the deck's EXP drawer,
+  // which the user explicitly opened
+  const [collapsed, setCollapsed] = useState(false);
   const [expState, setExpState] = useState<ExpState>({});
 
   const paramOptions = buildParamOptions(preset);
@@ -94,7 +99,7 @@ export function ControllerPanel({ preset, connected, onParamSelect, onMinMax }: 
 
   return (
     <div className="rounded-lg mb-4"
-      style={{ border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)', opacity: connected ? 1 : 0.5 }}>
+      style={{ border: '1px solid rgba(0,0,0,0.10)', background: 'rgba(0,0,0,0.03)', opacity: connected ? 1 : 0.5 }}>
       {/* Header / collapse toggle */}
       <button
         onClick={() => setCollapsed(!collapsed)}
@@ -125,7 +130,7 @@ export function ControllerPanel({ preset, connected, onParamSelect, onMinMax }: 
                   return (
                     <div key={item}
                       className="flex items-center gap-2 py-1 px-2 rounded"
-                      style={{ background: 'rgba(255,255,255,0.02)' }}>
+                      style={{ background: 'rgba(0,0,0,0.03)' }}>
                       {/* Para label */}
                       <span className="font-mono-display text-label font-medium w-12 flex-shrink-0"
                         style={{ color: 'var(--text-muted)' }}>
@@ -138,8 +143,8 @@ export function ControllerPanel({ preset, connected, onParamSelect, onMinMax }: 
                         onChange={e => handleParamChange(page, item, e.target.value)}
                         className="flex-1 text-xs rounded px-1.5 py-1 min-w-0"
                         style={{
-                          background: 'rgba(255,255,255,0.05)',
-                          border: '1px solid rgba(255,255,255,0.1)',
+                          background: 'rgba(0,0,0,0.05)',
+                          border: '1px solid rgba(0,0,0,0.12)',
                           color: !slot.paramValue ? 'var(--text-muted)' : 'var(--text-primary)',
                         }}
                       >
@@ -164,8 +169,8 @@ export function ControllerPanel({ preset, connected, onParamSelect, onMinMax }: 
                           disabled={!slot.paramValue}
                           className="w-12 text-xs text-center rounded px-1 py-0.5"
                           style={{
-                            background: 'rgba(255,255,255,0.05)',
-                            border: '1px solid rgba(255,255,255,0.1)',
+                            background: 'rgba(0,0,0,0.05)',
+                            border: '1px solid rgba(0,0,0,0.12)',
                             color: !slot.paramValue ? 'var(--text-muted)' : 'var(--text-primary)',
                           }}
                         />
@@ -184,8 +189,8 @@ export function ControllerPanel({ preset, connected, onParamSelect, onMinMax }: 
                           disabled={!slot.paramValue}
                           className="w-12 text-xs text-center rounded px-1 py-0.5"
                           style={{
-                            background: 'rgba(255,255,255,0.05)',
-                            border: '1px solid rgba(255,255,255,0.1)',
+                            background: 'rgba(0,0,0,0.05)',
+                            border: '1px solid rgba(0,0,0,0.12)',
                             color: !slot.paramValue ? 'var(--text-muted)' : 'var(--text-primary)',
                           }}
                         />

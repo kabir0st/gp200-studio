@@ -1,6 +1,6 @@
 import { Fragment, type CSSProperties } from 'react';
 import type { EffectSlot } from '@/core/types';
-import { getModuleName } from '@/core/effectNames';
+import { getSlotModule } from '@/core/effectNames';
 import { getBodySpec } from './boardPalette';
 
 interface ChainStripProps {
@@ -20,7 +20,7 @@ export function ChainStrip({ effects }: ChainStripProps) {
         <span className="chain-end">IN</span>
         <span className="chain-arrow" aria-hidden="true">›</span>
         {effects.map((slot, i) => {
-          const moduleName = getModuleName(slot.effectId);
+          const moduleName = getSlotModule(slot.slotIndex);
           const spec = getBodySpec(moduleName);
           const vars = { '--body': spec.body, '--ink': spec.ink } as CSSProperties;
           return (

@@ -162,6 +162,31 @@ export const SysExCodec = {
       effects.push({ slotIndex, enabled, effectId, params });
     }
 
+    // Re-order by the routing table at decoded[108..118] (mirrors the .prst
+    // routing bytes at 0x94..0x9E — the dump payload sits 0x28 before the
+    // file layout, consistent with fxSend/fxReturn at 106/107 and blocks at
+    // 120). Without this, a device preset with a reordered chain displays in
+    // physical order, and saving it back overwrites the user's real routing
+    // with identity order. Same defensive recovery as PRSTDecoder: keep valid
+    // in-range non-duplicate bytes in order, append whatever's missing.
+    if (decoded.length > 118) {
+      const routing: number[] = [];
+      const seen = new Set<number>();
+      for (let i = 0; i < 11; i++) {
+        const v = decoded[108 + i];
+        if (v < 11 && !seen.has(v)) {
+          routing.push(v);
+          seen.add(v);
+        }
+      }
+      for (let si = 0; si < 11; si++) {
+        if (!seen.has(si)) routing.push(si);
+      }
+      const byBlock = [...effects];
+      effects.length = 0;
+      for (const si of routing) effects.push(byBlock[si]);
+    }
+
     return GP200PresetSchema.parse({ version: '1', patchName, author: author || undefined, effects, fxLoopSend, fxLoopReturn, checksum: 0 });
   },
 

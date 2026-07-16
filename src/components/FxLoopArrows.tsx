@@ -44,7 +44,7 @@ export function FxLoopArrows({ send, ret, onSendChange, onReturnChange }: FxLoop
   return (
     <div
       className="relative mb-2 font-mono-display select-none"
-      style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '6px 4px' }}
+      style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.10)', borderRadius: 8, padding: '6px 4px' }}
     >
       <div className="flex items-center justify-between gap-1 text-label uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
         {['PRE', 'WAH', 'BST', 'AMP', 'NR', 'CAB', 'EQ', 'MOD', 'DLY', 'RVB', 'VOL'].map((name, idx) => (

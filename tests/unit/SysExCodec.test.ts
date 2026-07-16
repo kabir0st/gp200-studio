@@ -204,6 +204,28 @@ describe('SysExCodec: parseReadChunks', () => {
     const preset = SysExCodec.parseReadChunks(shuffled);
     expect(preset.patchName).toBe('Pretender');
   });
+
+  it('applies the routing order bytes (reordered chain)', () => {
+    const decoded = buildDecodedPreset('Reordered', 0);
+    // DST (2) moved in front of PRE (0): routing = playback order of slotIndexes
+    const routing = [2, 0, 1, 3, 4, 5, 6, 7, 8, 9, 10];
+    routing.forEach((si, i) => { decoded[108 + i] = si; });
+    const preset = SysExCodec.parseReadChunks(buildFakeChunks(decoded, 0));
+    expect(preset.effects.map((e) => e.slotIndex)).toEqual(routing);
+    // block identity travels with the slot: block 2's effectId is at position 0
+    expect(preset.effects[0].effectId).toBe(0x03000001 + 2);
+  });
+
+  it('recovers a valid permutation from corrupt routing bytes', () => {
+    const decoded = buildDecodedPreset('Corrupt', 0);
+    // duplicate 3 and out-of-range 0x7F: keep valid prefix order, append the rest
+    const bytes = [3, 3, 0x7F, 1, 0, 2, 4, 5, 6, 7, 8];
+    bytes.forEach((b, i) => { decoded[108 + i] = b; });
+    const preset = SysExCodec.parseReadChunks(buildFakeChunks(decoded, 0));
+    const order = preset.effects.map((e) => e.slotIndex);
+    expect([...order].sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(order.slice(0, 6)).toEqual([3, 1, 0, 2, 4, 5]);
+  });
 });
 
 describe('SysExCodec: parsePresetName', () => {

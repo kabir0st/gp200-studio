@@ -18,31 +18,33 @@
   --font-dm-sans: 'DM Sans';
   --font-jetbrains-mono: 'JetBrains Mono';
 
-  --bg-primary: #0f0f0f;
-  --bg-surface: #1a1a1a;
-  --bg-surface-raised: #202020;
-  --bg-elevated: #242424;
-  --bg-card: #1a1a1a;
-  --bg-input: #242424;
-  --bg-deep: #0a0a0a;
-  --bg-hover: #2e2e2e;
-  --text-primary: #e8e4df;
+  /* ── App chrome: LIGHT stage theme (the dark "matrix" theme is gone —
+     dialogs, banners, and browsers share the board's light environment). ── */
+  --bg-primary: #d8d5ce;
+  --bg-surface: #edebe5;
+  --bg-surface-raised: #f2f0ea;
+  --bg-elevated: #f6f5f0;
+  --bg-card: #edebe5;
+  --bg-input: #ffffff;
+  --bg-deep: #ccc9c1;
+  --bg-hover: #e2dfd8;
+  --text-primary: #232220;
   /* Secondary sits a notch above muted so the two are visually distinct and
-     secondary clears WCAG AA (~6:1 on --bg-primary) with headroom; muted stays
-     at the AA threshold for genuinely de-emphasised / large uppercase labels. */
-  --text-secondary: #a8a29a;
-  --text-muted: #8a8580;
-  --border-subtle: #2a2724;
-  --border-active: #3a3530;
-  --accent-amber: #d4a24e;
-  --accent-amber-dim: #8a6a30;
-  --accent-red: #c44e4e;
-  --accent-green: #4ec46a;
-  --glow-amber: rgba(212, 162, 78, 0.15);
-  --glow-red: rgba(196, 78, 78, 0.12);
-  --glow-green: rgba(78, 196, 106, 0.12);
-  --knob-track: #2a2724;
-  --knob-fill: #d4a24e;
+     secondary clears WCAG AA on --bg-surface with headroom; muted stays at
+     the AA threshold for genuinely de-emphasised / large uppercase labels. */
+  --text-secondary: #45423c;
+  --text-muted: #5f5c55;
+  --border-subtle: #cbc7be;
+  --border-active: #aaa69d;
+  --accent-amber: #8a6320;
+  --accent-amber-dim: #6b4e19;
+  --accent-red: #b4423a;
+  --accent-green: #2f7e4f;
+  --glow-amber: rgba(138, 99, 32, 0.18);
+  --glow-red: rgba(180, 66, 58, 0.15);
+  --glow-green: rgba(47, 126, 79, 0.15);
+  --knob-track: #cbc7be;
+  --knob-fill: #8a6320;
 
   /* ── Board view environment (docs/board-design-system.md, LIGHT values) ──
      Skeuomorphic component styles live in src/components/board/board.css;
@@ -66,16 +68,6 @@ body {
   background: var(--bg-primary);
   font-family: var(--font-dm-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-}
-
-/* ── Noise texture overlay ── */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 9999;
 }
 
 /* ── Custom scrollbar ── */
@@ -107,12 +99,12 @@ input[type="range"]::-webkit-slider-thumb {
   border-radius: 50%;
   background: var(--knob-fill);
   margin-top: -6px;
-  box-shadow: 0 0 8px rgba(212, 162, 78, 0.4), 0 1px 3px rgba(0,0,0,0.6);
+  box-shadow: 0 0 8px var(--glow-amber), 0 1px 3px rgba(0, 0, 0, 0.3);
   transition: box-shadow 0.15s;
 }
 
 input[type="range"]::-webkit-slider-thumb:hover {
-  box-shadow: 0 0 14px rgba(212, 162, 78, 0.6), 0 1px 3px rgba(0,0,0,0.6);
+  box-shadow: 0 0 14px var(--glow-amber), 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 input[type="range"]::-moz-range-track {
@@ -127,7 +119,7 @@ input[type="range"]::-moz-range-thumb {
   border: none;
   border-radius: 50%;
   background: var(--knob-fill);
-  box-shadow: 0 0 8px rgba(212, 162, 78, 0.4), 0 1px 3px rgba(0,0,0,0.6);
+  box-shadow: 0 0 8px var(--glow-amber), 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 /* ── Select styling ── */

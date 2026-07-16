@@ -1,9 +1,10 @@
 import { useState, type CSSProperties, type DragEvent } from 'react';
 import type { EffectSlot } from '@/core/types';
-import { getEffectName, getModuleName, getEffectsByModule } from '@/core/effectNames';
+import { getEffectName, getSlotModule, getEffectsByModule } from '@/core/effectNames';
 import { EFFECT_DESCRIPTIONS } from '@/core/effectDescriptions';
 import { getEffectParams } from '@/core/effectParams';
 import { getBodySpec } from './boardPalette';
+import { isWidePedal } from './boardLayout';
 import { type PedalArtEntry } from './pedalManifest';
 import { PedalKnob } from './PedalKnob';
 import { PedalFader } from './PedalFader';
@@ -13,6 +14,8 @@ export interface PedalProps {
   slot: EffectSlot;
   /** array position in the chain (0-based) */
   index: number;
+  /** which visual row this pedal sits on (CableLayer reads data-row) */
+  row: 'front' | 'back';
   art?: PedalArtEntry;
   onToggle: () => void;
   onChangeEffect: (effectId: number) => void;
@@ -34,6 +37,7 @@ export interface PedalProps {
 export function Pedal({
   slot,
   index,
+  row,
   art,
   onToggle,
   onChangeEffect,
@@ -50,11 +54,13 @@ export function Pedal({
   const [dragging, setDragging] = useState(false);
 
   const effectName = getEffectName(slot.effectId);
-  const moduleName = getModuleName(slot.effectId);
+  // module identity comes from the physical block (slot 5 is ALWAYS the cab),
+  // not the effectId — unmapped/zeroed ids must not relabel or recolor a slot
+  const moduleName = getSlotModule(slot.slotIndex);
   // authentic per-effect colors from the artwork spec; module palette as fallback
   const spec = art?.colors ?? getBodySpec(moduleName);
   const defs = getEffectParams(slot.effectId);
-  const wide = defs.filter((d) => d.type === 'knob').length >= 5;
+  const wide = isWidePedal(slot.effectId);
   const effects = getEffectsByModule(moduleName);
   const caption = art?.basedOn ?? EFFECT_DESCRIPTIONS[effectName] ?? '';
 
@@ -76,6 +82,7 @@ export function Pedal({
   if (wide) classes.push('wide');
   if (dragging) classes.push('dragging');
   if (isDragOver) classes.push('drag-over');
+  if (!slot.enabled) classes.push('bypassed');
 
   const footswitch = (
     <button
@@ -92,7 +99,7 @@ export function Pedal({
       className={classes.join(' ')}
       style={bodyVars}
       data-chain={index}
-      data-row={index < 6 ? 'front' : 'back'}
+      data-row={row}
       draggable
       onDragStart={(e) => {
         e.dataTransfer.effectAllowed = 'move';
@@ -186,6 +193,8 @@ export function Pedal({
       </div>
 
       <span className={`p-led${slot.enabled ? ' on' : ''}`} />
+      {/* visual-only: state is announced via the footswitch aria-pressed */}
+      {!slot.enabled && <span className="p-off-tag" aria-hidden="true">BYPASSED</span>}
 
       <div className="p-name">
         <select
@@ -208,7 +217,7 @@ export function Pedal({
       </p>
 
       {wide ? <div className="fs-row">{footswitch}</div> : footswitch}
-      <div className="brand-strip">Preset Forge</div>
+      <div className="brand-strip">GP200 Studio</div>
     </article>
   );
 }

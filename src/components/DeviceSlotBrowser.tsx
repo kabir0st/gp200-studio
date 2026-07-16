@@ -100,7 +100,7 @@ export function DeviceSlotBrowser({
               <span className="font-mono-display shrink-0" style={{ fontSize: '0.7em', color: 'var(--text-muted)' }}>
                 Loading preset names…
               </span>
-              <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+              <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.12)' }}>
                 <div
                   className="h-full rounded-full transition-all"
                   style={{ width: `${(namesLoadProgress / 256) * 100}%`, background: 'var(--accent-amber)' }}
@@ -131,7 +131,7 @@ export function DeviceSlotBrowser({
               <div
                 key={bankNum}
                 className="grid grid-cols-4 rounded mb-1 overflow-hidden"
-                style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+                style={{ border: '1px solid rgba(0,0,0,0.10)' }}
               >
                 {row.map((slot) => {
                   const isSelected = selected === slot;
@@ -169,7 +169,7 @@ export function DeviceSlotBrowser({
                         background: (isMulti ? multiSelected.has(slot) : isSelected)
                           ? 'rgba(212,162,78,0.18)'
                           : isCurrent ? 'rgba(212,162,78,0.07)' : 'transparent',
-                        borderRight: '1px solid rgba(255,255,255,0.06)',
+                        borderRight: '1px solid rgba(0,0,0,0.10)',
                         cursor: 'pointer',
                       }}
                     >
@@ -200,7 +200,7 @@ export function DeviceSlotBrowser({
           <button
             onClick={onCancel}
             className="font-mono-display text-sm px-4 py-2 rounded"
-            style={{ border: '1px solid rgba(255,255,255,0.15)', color: 'var(--text-muted)' }}
+            style={{ border: '1px solid rgba(0,0,0,0.20)', color: 'var(--text-muted)' }}
           >
             Cancel
           </button>

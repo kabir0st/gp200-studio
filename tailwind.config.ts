@@ -31,7 +31,7 @@ const config: Config = {
         'glow-amber': '0 0 12px var(--glow-amber)',
         'glow-red': '0 0 12px var(--glow-red)',
         'glow-green': '0 0 12px var(--glow-green)',
-        card: '0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03)',
+        card: '0 8px 24px rgba(30,30,35,0.18), inset 0 1px 0 rgba(255,255,255,0.5)',
       },
       fontSize: {
         // Named type scale — replaces ad-hoc text-[8px]/[9px]/[10px]/[11px].

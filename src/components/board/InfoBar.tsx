@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { EffectSlot } from '@/core/types';
-import { getEffectName, getModuleName } from '@/core/effectNames';
+import { getEffectName, getSlotModule } from '@/core/effectNames';
 import { EFFECT_DESCRIPTIONS } from '@/core/effectDescriptions';
 import { getBodySpec } from './boardPalette';
 import type { PedalArtEntry } from './pedalManifest';
@@ -25,7 +25,7 @@ export function InfoBar({ slot, art, pinned, onUnpin }: InfoBarProps) {
   }
 
   const effectName = getEffectName(slot.effectId);
-  const moduleName = getModuleName(slot.effectId);
+  const moduleName = getSlotModule(slot.slotIndex);
   const spec = getBodySpec(moduleName);
   const chipVars = { '--body': spec.body, '--ink': spec.ink } as CSSProperties;
   const basedOn = art?.basedOn ?? EFFECT_DESCRIPTIONS[effectName];

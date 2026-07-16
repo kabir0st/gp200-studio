@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { EFFECT_MAP, getEffectName, getModuleName, getEffectsByModule, MODULE_COLORS } from '@/core/effectNames';
+import { EFFECT_MAP, getEffectName, getModuleName, getEffectsByModule, getSlotModule, SLOT_MODULES, MODULE_COLORS } from '@/core/effectNames';
+import { BOARD_BODY } from '@/components/board/boardPalette';
 
 describe('EFFECT_MAP', () => {
   it('contains 305 unique effect codes', () => {
@@ -125,6 +126,30 @@ describe('getEffectsByModule', () => {
       expect(typeof e.effectId).toBe('number');
       expect(typeof e.name).toBe('string');
       expect(e.name.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('getSlotModule', () => {
+  it('maps all 11 physical blocks to the fixed hardware module order', () => {
+    expect(SLOT_MODULES).toHaveLength(11);
+    expect([...SLOT_MODULES]).toEqual(['PRE', 'WAH', 'DST', 'AMP', 'NR', 'CAB', 'EQ', 'MOD', 'DLY', 'RVB', 'VOL']);
+    SLOT_MODULES.forEach((mod, i) => expect(getSlotModule(i)).toBe(mod));
+  });
+
+  it('block 5 is always CAB regardless of effectId', () => {
+    expect(getSlotModule(5)).toBe('CAB');
+  });
+
+  it('falls back to VOL for out-of-range indices', () => {
+    expect(getSlotModule(11)).toBe('VOL');
+    expect(getSlotModule(-1)).toBe('VOL');
+  });
+
+  it('every slot module has a board body spec and colors', () => {
+    for (const mod of SLOT_MODULES) {
+      expect(BOARD_BODY[mod]).toBeDefined();
+      expect(MODULE_COLORS[mod]).toBeDefined();
     }
   });
 });

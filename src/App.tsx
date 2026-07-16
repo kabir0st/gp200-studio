@@ -8,17 +8,12 @@ import { pushPresetToDevice, type PushProgress } from '@/core/devicePush';
 import { EFFECT_MAP } from '@/core/effectNames';
 import type { GP200Preset } from '@/core/types';
 
-import { FileUpload } from '@/components/FileUpload';
+import { Landing } from '@/components/Landing';
 import { PedalBoard } from '@/components/board/PedalBoard';
-import { DeviceStatusBar } from '@/components/DeviceStatusBar';
 import { DeviceSlotBrowser } from '@/components/DeviceSlotBrowser';
 import { FirmwareCompatDialog } from '@/components/FirmwareCompatDialog';
-import { PatchSettingsCard } from '@/components/PatchSettingsCard';
-import { ControllerPanel } from '@/components/ControllerPanel';
-import { AmpHeadPanel } from '@/components/AmpHeadPanel';
-import { FxLoopArrows } from '@/components/FxLoopArrows';
 import { ExportPresetDialog } from '@/components/ExportPresetDialog';
-import { Button } from '@/components/ui/Button';
+import { createDefaultPreset } from '@/core/defaultPreset';
 
 function App() {
   const {
@@ -31,7 +26,6 @@ function App() {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [slotBrowserMode, setSlotBrowserMode] = useState<'pull' | 'push' | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [showAmpHead, setShowAmpHead] = useState(false);
   const [importedFromHLX, setImportedFromHLX] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [firmwareWarningDismissed, setFirmwareWarningDismissed] = useState(false);
@@ -245,6 +239,23 @@ function App() {
     if (midiDevice.namesLoadProgress < 256) midiDevice.loadPresetNames();
   }
 
+  // Landing "open current preset": the auto-load effect only fires on the
+  // connect transition, so after a deck CLOSE the handshake preset is still
+  // cached — fall back to a fresh pull if it isn't.
+  async function handleOpenCurrent() {
+    if (midiDevice.currentPreset) {
+      loadPreset(midiDevice.currentPreset);
+      return;
+    }
+    if (midiDevice.currentSlot === null) return;
+    try {
+      loadPreset(await midiDevice.pullPreset(midiDevice.currentSlot));
+      setLoadError(null);
+    } catch {
+      setLoadError('Failed to load preset from device');
+    }
+  }
+
   // Slot mutation handlers shared by the list view and the board view:
   // update local preset state, mirror to the device when connected.
   const handleSlotToggle = useCallback((slotIndex: number, currentlyEnabled: boolean) => {
@@ -300,67 +311,28 @@ function App() {
 
   if (!preset) {
     return (
-      <div className="p-8 max-w-2xl mx-auto">
-        <div className="mb-8 p-4 rounded-lg border border-accent-amber/20 bg-accent-amber/[0.03]">
-          <DeviceStatusBar
-            midiDevice={midiDevice}
-            currentPresetName={null}
-            hasPreset={false}
-            onPullRequest={() => handleOpenBrowser('pull')}
-            onPushRequest={() => {}}
-          />
-          {midiDevice.status === 'disconnected' && (
-            <p className="text-caption mt-2 text-text-muted">
-              Connect your GP-200 over USB, or load a preset file below.
-            </p>
-          )}
-        </div>
-
-        <h1 className="font-mono-display text-2xl font-bold tracking-tight text-text-primary mb-8">
-          Preset Forge Editor
-        </h1>
-
-        <FileUpload onFile={handleFile} />
-
-        {loadError && (
-          <div className="mt-4 px-4 py-3 rounded-lg font-mono-display text-sm flex items-center justify-between bg-accent-red/10 border border-accent-red/30 text-accent-red">
-            <span>{loadError}</span>
-            <button onClick={() => setLoadError(null)} className="ml-3 font-bold">✕</button>
-          </div>
-        )}
-
-        {slotBrowserMode && (
-          <DeviceSlotBrowser
-            mode={slotBrowserMode}
-            presetNames={midiDevice.presetNames}
-            namesLoadProgress={midiDevice.namesLoadProgress}
-            currentSlot={midiDevice.currentSlot}
-            onConfirm={handlePullConfirm}
-            onCancel={() => setSlotBrowserMode(null)}
-          />
-        )}
-      </div>
+      <Landing
+        midiDevice={midiDevice}
+        onOpenBlank={() => loadPreset(createDefaultPreset())}
+        onOpenCurrent={() => void handleOpenCurrent()}
+        loadError={loadError}
+        onDismissError={() => setLoadError(null)}
+      />
     );
   }
 
   return (
     <div className="w-full">
-      <div className="sticky top-0 z-30 px-4 pt-3 pb-2 bg-bg-primary">
-        <DeviceStatusBar
-          midiDevice={midiDevice}
-          currentPresetName={preset.patchName}
-          hasPreset
-          onPullRequest={() => handleOpenBrowser('pull')}
-          onPushRequest={() => handleOpenBrowser('push')}
-          onSaveToActiveSlot={midiDevice.status === 'connected' ? handleSaveToActiveSlot : undefined}
-          onPresetNameChange={setPatchName}
-          pushProgress={pushProgress}
-        />
-      </div>
-
       {importedFromHLX && (
-        <div className="mx-4 mb-2 px-3 py-1.5 rounded-lg font-mono-display text-caption tracking-wider uppercase inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 text-purple-400">
+        <div className="mx-4 mt-3 mb-2 px-3 py-1.5 rounded-lg font-mono-display text-caption tracking-wider uppercase inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/40 text-purple-800">
           EXPERIMENTAL — imported from Line6 HX Stomp (.hlx)
+        </div>
+      )}
+
+      {loadError && (
+        <div className="mx-4 mt-3 mb-2 px-4 py-3 rounded-lg font-mono-display text-sm flex items-center justify-between bg-accent-red/10 border border-accent-red/30 text-accent-red">
+          <span>{loadError}</span>
+          <button onClick={() => setLoadError(null)} className="ml-3 font-bold">✕</button>
         </div>
       )}
 
@@ -384,77 +356,15 @@ function App() {
           connected={midiDevice.status === 'connected'}
           onLoadRequest={() => handleOpenBrowser('pull')}
           onSaveToActiveSlot={midiDevice.status === 'connected' ? handleSaveToActiveSlot : undefined}
-        />
-      </div>
-
-      {/* everything else lives below the board */}
-      <div className="max-w-6xl mx-auto p-8 pt-6">
-        <div className="flex gap-1 mb-3 flex-wrap items-center">
-          <button
-            onClick={() => setShowAmpHead((v) => !v)}
-            className={`font-mono-display text-label font-bold tracking-wider uppercase px-3 py-1.5 rounded transition-colors border ${
-              showAmpHead ? 'bg-accent-amber/[0.12] border-accent-amber/30 text-accent-amber' : 'bg-white/[0.03] border-white/[0.06] text-text-muted'
-            }`}
-          >
-            AMP
-          </button>
-        </div>
-
-        {showAmpHead && (
-          <AmpHeadPanel
-            preset={preset}
-            onParamChange={(slotIndex, paramIndex, value) => {
-              setParam(slotIndex, paramIndex, value);
-              if (midiDevice.status === 'connected') {
-                const eff = preset.effects.find((e) => e.slotIndex === slotIndex);
-                if (eff) midiDevice.sendParamChange(slotIndex, paramIndex, eff.effectId, value);
-              }
-            }}
-          />
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div className="rounded-xl p-4 flex flex-col gap-3 border border-white/[0.06] bg-white/[0.02]">
-            <label className="text-label uppercase tracking-wider text-text-secondary" htmlFor="patch-name">
-              Patch Name
-            </label>
-            <input
-              id="patch-name"
-              value={preset.patchName}
-              onChange={(e) => setPatchName(e.target.value.slice(0, 16))}
-              maxLength={16}
-              className="w-full rounded px-3 py-2 text-sm bg-bg-input border border-border-active text-text-primary focus:outline-none"
-            />
-            <label className="text-label uppercase tracking-wider text-text-secondary" htmlFor="patch-author">
-              Author
-            </label>
-            <input
-              id="patch-author"
-              value={preset.author ?? ''}
-              onChange={(e) => setAuthor(e.target.value.slice(0, 16))}
-              maxLength={16}
-              className="w-full rounded px-3 py-2 text-sm bg-bg-input border border-border-active text-text-primary focus:outline-none"
-            />
-          </div>
-          <PatchSettingsCard
-            volume={patchVolume}
-            pan={patchPan}
-            tempo={patchTempo}
-            connected={midiDevice.status === 'connected'}
-            onVolumeChange={(v) => { setPatchVolume(v); if (midiDevice.status === 'connected') midiDevice.sendPatchVolume(v); }}
-            onPanChange={(v) => { setPatchPan(v); if (midiDevice.status === 'connected') midiDevice.sendPatchPan(v); }}
-            onTempoChange={(v) => { setPatchTempo(v); if (midiDevice.status === 'connected') midiDevice.sendPatchTempo(v); }}
-          />
-        </div>
-
-        <p role="note" className="md:hidden text-xs rounded-lg px-3 py-2 mb-3 text-text-secondary bg-bg-surface border border-border-subtle">
-          The editor works best on a desktop or large tablet — drag-and-drop reordering and the fine parameter sliders are tricky on small touch screens.
-        </p>
-
-        <FxLoopArrows
-          send={preset.fxLoopSend}
-          ret={preset.fxLoopReturn}
-          onSendChange={(pos) => {
+          onPatchNameChange={setPatchName}
+          onAuthorChange={setAuthor}
+          onVolumeChange={(v) => { setPatchVolume(v); if (midiDevice.status === 'connected') midiDevice.sendPatchVolume(v); }}
+          onPanChange={(v) => { setPatchPan(v); if (midiDevice.status === 'connected') midiDevice.sendPatchPan(v); }}
+          onTempoChange={(v) => { setPatchTempo(v); if (midiDevice.status === 'connected') midiDevice.sendPatchTempo(v); }}
+          onImportFile={handleFile}
+          onExportRequest={() => setShowExportDialog(true)}
+          onCloseRequest={reset}
+          onFxSendChange={(pos) => {
             const clamped = Math.max(1, Math.min(10, pos));
             const nextReturn = Math.max(clamped, preset.fxLoopReturn);
             const sendChanged = clamped !== preset.fxLoopSend;
@@ -466,7 +376,7 @@ function App() {
               if (returnPushed) midiDevice.sendFxLoopMove(order, clamped, nextReturn, 'return');
             }
           }}
-          onReturnChange={(pos) => {
+          onFxReturnChange={(pos) => {
             const clamped = Math.max(1, Math.min(10, pos));
             const nextSend = Math.min(clamped, preset.fxLoopSend);
             const returnChanged = clamped !== preset.fxLoopReturn;
@@ -478,30 +388,14 @@ function App() {
               if (sendPushed) midiDevice.sendFxLoopMove(order, nextSend, clamped, 'send');
             }
           }}
+          onExpParamSelect={(page, item, blockIndex, paramIdx) => midiDevice.sendExpParamSelect(page, item, blockIndex, paramIdx)}
+          onExpMinMax={(page, item, min, max) => midiDevice.sendExpMinMax(page, item, min, max)}
+          onConnectRequest={() => void midiDevice.connect()}
+          onDisconnect={midiDevice.disconnect}
+          onPushRequest={() => handleOpenBrowser('push')}
+          pushProgress={pushProgress}
+          firmware={midiDevice.deviceInfo?.firmwareValues.join('.') || null}
         />
-
-        <div className="flex items-center gap-2 flex-wrap mb-8">
-          <Button variant="primary" onClick={() => setShowExportDialog(true)}>
-            Export .prst
-          </Button>
-          <Button variant="ghost" onClick={reset}>
-            Close preset
-          </Button>
-        </div>
-
-        <ControllerPanel
-          preset={preset}
-          connected={midiDevice.status === 'connected'}
-          onParamSelect={(page, item, blockIndex, paramIdx) => midiDevice.sendExpParamSelect(page, item, blockIndex, paramIdx)}
-          onMinMax={(page, item, min, max) => midiDevice.sendExpMinMax(page, item, min, max)}
-        />
-
-        {loadError && (
-          <div className="mt-4 px-4 py-3 rounded-lg font-mono-display text-sm flex items-center justify-between bg-accent-red/10 border border-accent-red/30 text-accent-red">
-            <span>{loadError}</span>
-            <button onClick={() => setLoadError(null)} className="ml-3 font-bold">✕</button>
-          </div>
-        )}
       </div>
 
       {slotBrowserMode && (

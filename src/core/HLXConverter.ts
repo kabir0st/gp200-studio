@@ -6,25 +6,8 @@
  */
 
 import type { GP200Preset, EffectSlot } from './types';
-import { EFFECT_MAP } from './effectNames';
-
-// ── GP-200 module slot order (fixed signal chain) ──────────────────────
-const GP200_MODULES = ['PRE', 'WAH', 'DST', 'AMP', 'NR', 'CAB', 'EQ', 'MOD', 'DLY', 'RVB', 'VOL'] as const;
-
-// ── Default effect per GP-200 module (used when no better match found) ─
-const MODULE_DEFAULTS: Record<string, number> = {
-  PRE: 0,           // COMP
-  WAH: 0x05000001,  // V-Wah
-  DST: 0x03000000,  // Green OD
-  AMP: 0x07000001,  // Tweedy
-  NR:  27,          // Gate 1
-  CAB: 0x0A000000,  // SUP ZEP
-  EQ:  0x01000035,  // Guitar EQ 1
-  MOD: 0x01000029,  // Detune
-  DLY: 0x0B000000,  // Pure
-  RVB: 0x0C000000,  // Room
-  VOL: 0x06000003,  // Volume
-};
+import { EFFECT_MAP, SLOT_MODULES } from './effectNames';
+import { MODULE_DEFAULTS } from './defaultPreset';
 
 // ── HLX model → GP-200 module classification ──────────────────────────
 interface HLXBlock {
@@ -236,7 +219,7 @@ export function convertHLX(hlx: HLXPreset): GP200Preset {
   })).filter(({ module }) => module !== null) as { block: HLXBlock; module: string }[];
 
   // Build 11 GP-200 effect slots — one per module, in fixed order
-  const effects: EffectSlot[] = GP200_MODULES.map((module, slotIndex) => {
+  const effects: EffectSlot[] = SLOT_MODULES.map((module, slotIndex) => {
     // Find first HLX block that maps to this module
     const match = classified.find(c => c.module === module);
 

@@ -369,6 +369,20 @@ export function getModuleName(effectId: number): string {
   return EFFECT_MAP[effectId]?.module ?? 'Unknown';
 }
 
+/**
+ * Fixed hardware block order: slotIndex → module. The GP-200's 11 blocks are
+ * fixed-function (block 5 is ALWAYS the cab sim, whatever effectId it holds),
+ * so this is the authoritative module source for slot-shaped UI — unlike
+ * getModuleName(effectId), which returns 'Unknown' for unmapped codes and
+ * mislabels slots holding zeroed/foreign ids.
+ */
+export const SLOT_MODULES = ['PRE', 'WAH', 'DST', 'AMP', 'NR', 'CAB', 'EQ', 'MOD', 'DLY', 'RVB', 'VOL'] as const;
+
+/** Returns the module for a physical block index (0–10); 'VOL' for out-of-range. */
+export function getSlotModule(slotIndex: number): string {
+  return SLOT_MODULES[slotIndex] ?? 'VOL';
+}
+
 /** Returns all effects for a given module type, sorted by name. */
 export function getEffectsByModule(module: string): { effectId: number; name: string }[] {
   const results: { effectId: number; name: string }[] = [];

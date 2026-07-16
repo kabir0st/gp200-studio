@@ -1,5 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#0f0f0f"/>
-  <circle cx="16" cy="16" r="9" fill="none" stroke="#d4a24e" stroke-width="2.5"/>
-  <circle cx="16" cy="16" r="2.5" fill="#d4a24e"/>
+  <!-- GP200 Studio mark: the GP-200 floor unit, simplified -->
+  <rect width="32" height="32" rx="7" fill="#232220"/>
+  <!-- LCD -->
+  <rect x="6" y="7" width="13" height="7" rx="1.5" fill="#0c1a0e"/>
+  <rect x="8" y="9.5" width="9" height="2" rx="1" fill="#5df08a"/>
+  <!-- knob -->
+  <circle cx="24.5" cy="10.5" r="3.2" fill="#8a857c"/>
+  <rect x="24" y="7.6" width="1" height="3" rx="0.5" fill="#232220"/>
+  <!-- LED -->
+  <circle cx="24.5" cy="18.5" r="1.4" fill="#d9a13c"/>
+  <!-- footswitches -->
+  <circle cx="9" cy="24" r="3" fill="none" stroke="#b0aca3" stroke-width="1.6"/>
+  <circle cx="19" cy="24" r="3" fill="none" stroke="#b0aca3" stroke-width="1.6"/>
 </svg>

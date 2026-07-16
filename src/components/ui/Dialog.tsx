@@ -11,6 +11,8 @@ interface DialogProps {
   /** Use "alertdialog" for interruptive warnings that demand a decision
    *  (e.g. firmware compatibility) — defaults to "dialog" for everything else. */
   role?: 'dialog' | 'alertdialog';
+  /** "bottom" anchors the panel to the bottom edge (deck drawers); default centers. */
+  placement?: 'center' | 'bottom';
 }
 
 const FOCUSABLE_SELECTOR =
@@ -28,6 +30,7 @@ export function Dialog({
   closeOnOverlayClick = true,
   className = '',
   role = 'dialog',
+  placement = 'center',
 }: DialogProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
@@ -69,7 +72,9 @@ export function Dialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+      className={`fixed inset-0 z-50 bg-black/60 flex justify-center p-4 ${
+        placement === 'bottom' ? 'items-end' : 'items-center'
+      }`}
       onClick={closeOnOverlayClick ? onClose : undefined}
     >
       <Card

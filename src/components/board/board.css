@@ -232,6 +232,40 @@
 .board-view .pedal.wide {
   width: 310px;
 }
+/* bypassed: dark scrim over the whole enclosure (body color stays legible
+   through it) + a BYPASSED tag. pointer-events: none — knobs stay usable
+   while off (pre-dialing is a real workflow); the footswitch is the toggle. */
+.board-view .pedal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: rgba(10, 11, 13, 0.48);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+  z-index: 5;
+}
+.board-view .pedal.bypassed::after {
+  opacity: 1;
+}
+.board-view .p-off-tag {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%) rotate(-6deg);
+  z-index: 6;
+  pointer-events: none;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: #e6e3dd;
+  background: rgba(0, 0, 0, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
 .board-view .pedal.dragging {
   opacity: 0.45;
   cursor: grabbing;
@@ -681,6 +715,7 @@
   gap: 10px;
   font-family: var(--font-jetbrains-mono), monospace;
   min-width: 0;
+  position: relative;
 }
 .board-view .deck-dot {
   width: 9px;
@@ -718,6 +753,16 @@
   padding: 2px 6px;
   white-space: nowrap;
 }
+.board-view .deck-sync {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #8a6320; /* readable amber on chrome, matches landing busy LED family */
+  white-space: nowrap;
+}
+.board-view .deck-sync.done {
+  color: #2f9e5f; /* same green as deck-dot.on */
+}
 .board-view .deck-readouts {
   display: flex;
   align-items: center;
@@ -725,6 +770,90 @@
   flex-wrap: wrap;
   font-family: var(--font-jetbrains-mono), monospace;
   font-size: 10px;
+  color: var(--chrome-muted);
+  position: relative;
+}
+.board-view .deck-name.editable {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.board-view .deck-name.editable:hover {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.board-view .deck-meta-btn {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.board-view .deck-meta-btn:hover {
+  background: color-mix(in srgb, var(--chrome-text) 8%, transparent);
+}
+
+/* ── deck popovers (name/author, patch settings) ── */
+.board-view .deck-pop {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 0;
+  z-index: 30;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--chrome-bg);
+  border: 1px solid var(--chrome-border);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+.board-view .dp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--chrome-muted);
+}
+.board-view .dp-field b {
+  color: var(--chrome-text);
+}
+.board-view .dp-field input[type='text'],
+.board-view .dp-field input:not([type]) {
+  font: 13px var(--font-jetbrains-mono), monospace;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--chrome-text);
+  background: #fff;
+  border: 1px solid var(--chrome-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+.board-view .dp-field input[type='range'] {
+  width: 100%;
+  accent-color: var(--chrome-text);
+}
+.board-view .dp-field input[type='range']:disabled {
+  opacity: 0.45;
+}
+.board-view .dp-note {
+  margin: 0;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
   color: var(--chrome-muted);
 }
 .board-view .deck-meta b {
@@ -843,4 +972,145 @@
   font-family: var(--font-jetbrains-mono), monospace;
   font-size: 9px;
   color: #b45a4e;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   Landing view — same stage vocabulary as the board (light case, chrome
+   panel, JetBrains-mono display type). Two actions only: connect / open.
+   ════════════════════════════════════════════════════════════════════════ */
+.landing-view {
+  min-height: 100vh;
+  background: var(--case);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.landing-panel {
+  width: 100%;
+  max-width: 520px;
+  border-radius: 14px;
+  background: var(--chrome-bg);
+  border: 1px solid var(--chrome-border);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
+  padding: 36px 40px 32px;
+  text-align: center;
+}
+.landing-chips {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 26px;
+}
+.landing-chip {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--body, #444);
+  color: var(--ink, #eee);
+  border: 1px solid color-mix(in srgb, var(--ink, #888) 25%, transparent);
+}
+.landing-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.landing-title {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--chrome-text);
+  margin: 0 0 4px;
+}
+.landing-sub {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--chrome-muted);
+  margin: 0 0 30px;
+}
+.landing-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.landing-btn {
+  position: relative;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 16px 18px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--chrome-border);
+  color: var(--chrome-text);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: border-color 0.1s ease, transform 0.1s ease;
+}
+.landing-btn:hover:not(:disabled) {
+  border-color: var(--chrome-muted);
+  transform: translateY(-1px);
+}
+.landing-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.landing-btn.primary {
+  background: var(--chrome-text);
+  border-color: var(--chrome-text);
+  color: var(--chrome-bg);
+}
+.landing-btn-sub {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+.landing-led {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #b0aca3;
+}
+.landing-led.on {
+  background: #2f9e5f;
+  box-shadow: 0 0 8px 2px rgba(47, 158, 95, 0.5);
+}
+.landing-led.busy {
+  background: #d9a13c;
+  animation: led-pulse 1.2s ease-in-out infinite;
+}
+.landing-msg {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--chrome-muted);
+  margin: 18px 0 0;
+}
+.landing-msg.error {
+  color: #b4423a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.landing-msg.error button {
+  font-weight: 800;
+  cursor: pointer;
 }
