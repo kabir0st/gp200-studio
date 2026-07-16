@@ -1,17 +1,21 @@
-import { useState, type DragEvent } from 'react';
+import { useState, type CSSProperties, type DragEvent } from 'react';
 import type { GP200Preset, EffectSlot } from '@/core/types';
 import type { PushProgress } from '@/core/devicePush';
 import { getSlotModule } from '@/core/effectNames';
+import { bayMinHeight, isWideSlot } from './boardLayout';
+import { useFlipReorder } from './useFlipReorder';
 import { FxLoopArrows } from '@/components/FxLoopArrows';
 import { ControllerPanel } from '@/components/ControllerPanel';
 import { FootswitchPanel } from '@/components/FootswitchPanel';
 import { splitRows } from './boardLayout';
 import { lookupPedalArt, usePedalManifest } from './pedalManifest';
 import { Pedal } from './Pedal';
+import { EffectPicker } from './EffectPicker';
 import { ChainStrip } from './ChainStrip';
 import { InfoBar } from './InfoBar';
 import { CableLayer } from './CableLayer';
 import { SwitcherUnit } from './SwitcherUnit';
+import { BoardTopBar } from './BoardTopBar';
 import { DeckDrawer } from './DeckDrawer';
 import './board.css';
 
@@ -45,9 +49,15 @@ export interface PedalBoardProps {
   onCloseRequest: () => void;
   onFxSendChange: (pos: number) => void;
   onFxReturnChange: (pos: number) => void;
-  onExpParamSelect: (page: number, item: number, blockIndex: number, paramIdx: number) => void;
+  onExpParamSelect: (
+    page: number,
+    item: number,
+    blockIndex: number | null,
+    paramIdx: number,
+  ) => void;
   onExpMinMax: (page: number, item: number, min: number, max: number) => void;
   onCtrlBlockToggle: (ctrlIndex: number, blockIndex: number, on: boolean) => void;
+  onCtrlClear: (ctrlIndex: number) => void;
   onOpenPatchManager: () => void;
   /* device session controls (deck-hosted — there is no separate status bar) */
   onConnectRequest: () => void;
@@ -94,6 +104,7 @@ export function PedalBoard({
   onExpParamSelect,
   onExpMinMax,
   onCtrlBlockToggle,
+  onCtrlClear,
   onOpenPatchManager,
   onConnectRequest,
   onDisconnect,
@@ -107,44 +118,88 @@ export function PedalBoard({
   const [hoverSlot, setHoverSlot] = useState<number | null>(null);
   const [pinnedSlot, setPinnedSlot] = useState<number | null>(null);
   const [openDrawer, setOpenDrawer] = useState<'fxloop' | 'exp' | 'ctrl' | null>(null);
+  const [pickerSlot, setPickerSlot] = useState<number | null>(null);
 
   const inspectKey = pinnedSlot ?? hoverSlot;
   const inspected = inspectKey !== null
     ? preset.effects.find((e) => e.slotIndex === inspectKey) ?? null
     : null;
 
+  const pickerEffect = preset.effects.find((slot) => slot.slotIndex === pickerSlot) ?? null;
+
   const modules = preset.effects.map((e) => getSlotModule(e.slotIndex));
   const orderKey = preset.effects.map((e) => `${e.slotIndex}:${e.effectId}`).join(',');
+
+  // FLIP: capture pedal positions before a reorder, then spring them to place
+  const { scopeRef, capture } = useFlipReorder(orderKey);
+  const handleReorderDrop = (index: number) => {
+    capture();
+    onDrop(index);
+  };
+  const handleReorderMove = (from: number, to: number) => {
+    capture();
+    onMove(from, to);
+  };
 
   // rows balanced by rendered width so a wide AMP can't push the last
   // front-row pedal (usually CAB) off the stage
   const { front, back } = splitRows(preset.effects);
 
-  const renderPedal = (slot: EffectSlot, index: number, row: 'front' | 'back') => (
-    <Pedal
-      key={`slot-${slot.slotIndex}`}
-      slot={slot}
-      index={index}
-      row={row}
-      art={lookupPedalArt(artIndex, slot.effectId)}
-      onToggle={() => onToggle(slot.slotIndex, slot.enabled)}
-      onChangeEffect={(effectId) => onChangeEffect(slot.slotIndex, effectId)}
-      onParamChange={(paramIdx, value) => onParamChange(slot.slotIndex, slot.effectId, paramIdx, value)}
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
-      isDragOver={dragOverIndex === index && dragIndex !== index}
-      onMove={onMove}
-      onInspect={(inspecting) =>
-        setHoverSlot((prev) => (inspecting ? slot.slotIndex : prev === slot.slotIndex ? null : prev))
-      }
-      onPin={() => setPinnedSlot((prev) => (prev === slot.slotIndex ? null : slot.slotIndex))}
-      isPinned={pinnedSlot === slot.slotIndex}
-    />
-  );
+  // each pedal sits in a fixed-size bay (compact/wide, keyed to the slot's module
+  // — see isWideSlot). The pedal keeps its own natural size; the bay absorbs any
+  // difference as padding, so swapping an effect never shifts a neighbour. The bay
+  // (not just the pedal) is the drop target, so you don't have to aim precisely at
+  // the pedal body, and while a drag is in flight every bay shows a drop slot.
+  const renderPedal = (slot: EffectSlot, index: number, row: 'front' | 'back') => {
+    const bayClasses = ['pedal-bay'];
+    if (isWideSlot(slot.slotIndex)) bayClasses.push('wide');
+    if (dragIndex !== null) bayClasses.push('droppable');
+    if (dragIndex === index) bayClasses.push('drag-source');
+    if (dragOverIndex === index && dragIndex !== index) bayClasses.push('drop-target');
+    return (
+      <div
+        key={`slot-${slot.slotIndex}`}
+        className={bayClasses.join(' ')}
+        style={{ '--bay-h': `${bayMinHeight(slot.slotIndex)}px` } as CSSProperties}
+        onDragOver={(e) => onDragOver(e, index)}
+        onDrop={() => handleReorderDrop(index)}
+      >
+        <Pedal
+          slot={slot}
+          index={index}
+          row={row}
+          art={lookupPedalArt(artIndex, slot.effectId)}
+          onToggle={() => onToggle(slot.slotIndex, slot.enabled)}
+          onOpenPicker={() => setPickerSlot(slot.slotIndex)}
+          onParamChange={(paramIdx, value) => onParamChange(slot.slotIndex, slot.effectId, paramIdx, value)}
+          onDragStart={onDragStart}
+          onMove={handleReorderMove}
+          onInspect={(inspecting) =>
+            setHoverSlot((prev) => (inspecting ? slot.slotIndex : prev === slot.slotIndex ? null : prev))
+          }
+          onPin={() => setPinnedSlot((prev) => (prev === slot.slotIndex ? null : slot.slotIndex))}
+          isPinned={pinnedSlot === slot.slotIndex}
+        />
+      </div>
+    );
+  };
 
   return (
     <div className="board-view">
+      <BoardTopBar
+        connected={connected}
+        currentSlot={currentSlot}
+        firmware={firmware}
+        pushProgress={pushProgress}
+        onImportFile={onImportFile}
+        onExportRequest={onExportRequest}
+        onLoadRequest={onLoadRequest}
+        onPushRequest={onPushRequest}
+        onOpenPatchManager={onOpenPatchManager}
+        onConnectRequest={onConnectRequest}
+        onDisconnect={onDisconnect}
+        onCloseRequest={onCloseRequest}
+      />
       <ChainStrip effects={preset.effects} />
       <InfoBar
         slot={inspected}
@@ -153,16 +208,23 @@ export function PedalBoard({
         onUnpin={() => setPinnedSlot(null)}
       />
       <main className="stage">
-        <CableLayer modules={modules} orderKey={orderKey} hidden={dragIndex !== null} />
         <section className="board-deck">
-          {/* reading order = chain order: front row first, remainder below */}
-          <div className="board-row">
-            <span className="flow-badge" aria-hidden="true">IN ›</span>
-            {front.map((slot, i) => renderPedal(slot, i, 'front'))}
-          </div>
-          <div className="board-row">
-            {back.map((slot, i) => renderPedal(slot, i + front.length, 'back'))}
-            <span className="flow-badge" aria-hidden="true">› OUT</span>
+          {/* rows never wrap; the scroll wrapper handles overflow on narrow
+              screens, and the cables live inside it so they scroll in lockstep
+              with the pedals (the top/bottom bars stay put) */}
+          <div className="board-scroll">
+            <div className="board-rows" ref={scopeRef}>
+              <CableLayer modules={modules} orderKey={orderKey} hidden={dragIndex !== null} />
+              {/* reading order = chain order: front row first, remainder below */}
+              <div className="board-row">
+                <span className="flow-badge" aria-hidden="true">IN ›</span>
+                {front.map((slot, i) => renderPedal(slot, i, 'front'))}
+              </div>
+              <div className="board-row">
+                {back.map((slot, i) => renderPedal(slot, i + front.length, 'back'))}
+                <span className="flow-badge" aria-hidden="true">› OUT</span>
+              </div>
+            </div>
           </div>
           <SwitcherUnit
             preset={preset}
@@ -171,25 +233,15 @@ export function PedalBoard({
             patchTempo={patchTempo}
             currentSlot={currentSlot}
             connected={connected}
-            onLoadRequest={onLoadRequest}
             onSaveToActiveSlot={onSaveToActiveSlot}
             onPatchNameChange={onPatchNameChange}
             onAuthorChange={onAuthorChange}
             onVolumeChange={onVolumeChange}
             onPanChange={onPanChange}
             onTempoChange={onTempoChange}
-            onImportFile={onImportFile}
-            onExportRequest={onExportRequest}
-            onCloseRequest={onCloseRequest}
             onOpenFxLoop={() => setOpenDrawer('fxloop')}
             onOpenExp={() => setOpenDrawer('exp')}
             onOpenCtrl={() => setOpenDrawer('ctrl')}
-            onOpenPatchManager={onOpenPatchManager}
-            onConnectRequest={onConnectRequest}
-            onDisconnect={onDisconnect}
-            onPushRequest={onPushRequest}
-            pushProgress={pushProgress}
-            firmware={firmware}
           />
         </section>
       </main>
@@ -213,7 +265,7 @@ export function PedalBoard({
       <DeckDrawer
         open={openDrawer === 'exp'}
         onClose={() => setOpenDrawer(null)}
-        title="EXP Controllers"
+        title="Expression Pedals"
       >
         <ControllerPanel
           preset={preset}
@@ -226,15 +278,27 @@ export function PedalBoard({
       <DeckDrawer
         open={openDrawer === 'ctrl'}
         onClose={() => setOpenDrawer(null)}
-        title="Footswitch CTRL"
+        title="CTRL Footswitches"
       >
         <FootswitchPanel
           preset={preset}
           currentSlot={currentSlot}
           connected={connected}
           onCtrlBlockToggle={onCtrlBlockToggle}
+          onCtrlClear={onCtrlClear}
         />
       </DeckDrawer>
+
+      {pickerEffect && (
+        <EffectPicker
+          open
+          module={getSlotModule(pickerEffect.slotIndex)}
+          currentEffectId={pickerEffect.effectId}
+          artIndex={artIndex}
+          onSelect={(effectId) => onChangeEffect(pickerEffect.slotIndex, effectId)}
+          onClose={() => setPickerSlot(null)}
+        />
+      )}
     </div>
   );
 }

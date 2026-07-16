@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import type { GP200Preset } from '@/core/types';
-import type { PushProgress } from '@/core/devicePush';
 import { SysExCodec } from '@/core/SysExCodec';
 import { getEffectName, getSlotModule } from '@/core/effectNames';
 import { getEffectParams } from '@/core/effectParams';
@@ -13,28 +12,15 @@ interface SwitcherUnitProps {
   patchTempo: number;
   currentSlot: number | null;
   connected: boolean;
-  onLoadRequest: () => void;
   onSaveToActiveSlot?: () => void;
   onPatchNameChange: (name: string) => void;
   onAuthorChange: (author: string) => void;
   onVolumeChange: (value: number) => void;
   onPanChange: (value: number) => void;
   onTempoChange: (bpm: number) => void;
-  onImportFile: (buffer: Uint8Array, filename: string) => void;
-  onExportRequest: () => void;
-  onCloseRequest: () => void;
   onOpenFxLoop: () => void;
   onOpenExp: () => void;
   onOpenCtrl: () => void;
-  /** open the patch-manager side sheet (device slot list) */
-  onOpenPatchManager: () => void;
-  /* device session (the old top status bar, merged into the deck) */
-  onConnectRequest: () => void;
-  onDisconnect: () => void;
-  /** open the slot browser in push mode ("save as" to any slot) */
-  onPushRequest: () => void;
-  pushProgress: PushProgress | null;
-  firmware: string | null;
 }
 
 interface LiveBar {
@@ -55,25 +41,29 @@ function liveBars(preset: GP200Preset): LiveBar[] {
   const bars: LiveBar[] = [];
   for (const slot of preset.effects) {
     const defs = getEffectParams(slot.effectId);
-    const pos = defs.find((d) => d.type === 'knob' && d.name === 'Position');
+    const pos = defs.find((def) => def.type === 'knob' && def.name === 'Position');
     if (pos && pos.type === 'knob') {
-      const v = slot.params[pos.idx] ?? pos.default;
+      const value = slot.params[pos.idx] ?? pos.default;
+      let pct = 0;
+      if (pos.max > pos.min) pct = (value - pos.min) / (pos.max - pos.min);
       bars.push({
         key: `pos-${slot.slotIndex}`,
         label: getEffectName(slot.effectId),
-        pct: pos.max > pos.min ? (v - pos.min) / (pos.max - pos.min) : 0,
-        value: `${Math.round(v)}`,
+        pct,
+        value: `${Math.round(value)}`,
       });
     }
     if (getSlotModule(slot.slotIndex) === 'VOL') {
-      const vol = defs.find((d) => d.type === 'knob' && d.name === 'Volume');
+      const vol = defs.find((def) => def.type === 'knob' && def.name === 'Volume');
       if (vol && vol.type === 'knob') {
-        const v = slot.params[vol.idx] ?? vol.default;
+        const value = slot.params[vol.idx] ?? vol.default;
+        let pct = 0;
+        if (vol.max > vol.min) pct = (value - vol.min) / (vol.max - vol.min);
         bars.push({
           key: `vol-${slot.slotIndex}`,
           label: 'VOL PEDAL',
-          pct: vol.max > vol.min ? (v - vol.min) / (vol.max - vol.min) : 0,
-          value: `${Math.round(v)}`,
+          pct,
+          value: `${Math.round(value)}`,
         });
       }
     }
@@ -81,15 +71,29 @@ function liveBars(preset: GP200Preset): LiveBar[] {
   return bars;
 }
 
+function panLabel(pan: number): string {
+  if (pan === 0) return 'C';
+  if (pan < 0) return `L${Math.abs(pan)}`;
+  return `R${pan}`;
+}
+
+interface DeckPopProps {
+  label: string;
+  onClose: () => void;
+  children: React.ReactNode;
+  /** Wider variant for popovers with side-by-side controls (sliders + buttons). */
+  wide?: boolean;
+}
+
 /** Small anchored popover above the deck: click-outside and Escape close it. */
-function DeckPop({ label, onClose, children }: { label: string; onClose: () => void; children: React.ReactNode }) {
+function DeckPop({ label, onClose, children, wide }: DeckPopProps) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    function onDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    function onDown(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) onClose();
     }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose();
     }
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
@@ -99,14 +103,17 @@ function DeckPop({ label, onClose, children }: { label: string; onClose: () => v
     };
   }, [onClose]);
 
+  let popClass = 'deck-pop';
+  if (wide) popClass = 'deck-pop wide';
   return (
-    <div ref={ref} className="deck-pop" role="group" aria-label={label}>
+    <div ref={ref} className={popClass} role="group" aria-label={label}>
       {children}
     </div>
   );
 }
 
-/** Clean bottom control deck: status · live readouts · audio meters · actions. */
+/** Patch control deck: name/author · volume · pan/tempo · live readouts ·
+ *  meters · routing drawers · save-to-active-slot. */
 export function SwitcherUnit({
   preset,
   patchVolume,
@@ -114,128 +121,176 @@ export function SwitcherUnit({
   patchTempo,
   currentSlot,
   connected,
-  onLoadRequest,
   onSaveToActiveSlot,
   onPatchNameChange,
   onAuthorChange,
   onVolumeChange,
   onPanChange,
   onTempoChange,
-  onImportFile,
-  onExportRequest,
-  onCloseRequest,
   onOpenFxLoop,
   onOpenExp,
   onOpenCtrl,
-  onOpenPatchManager,
-  onConnectRequest,
-  onDisconnect,
-  onPushRequest,
-  pushProgress,
-  firmware,
 }: SwitcherUnitProps) {
   const [openPop, setOpenPop] = useState<'meta' | 'settings' | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const slotLabel = currentSlot !== null ? SysExCodec.slotToLabel(currentSlot) : null;
+  let slotLabel: string | null = null;
+  if (currentSlot !== null) slotLabel = SysExCodec.slotToLabel(currentSlot);
   const canSave = connected && currentSlot !== null && onSaveToActiveSlot !== undefined;
-  const panDisplay = patchPan === 0 ? 'C' : patchPan < 0 ? `L${Math.abs(patchPan)}` : `R${patchPan}`;
+  const panDisplay = panLabel(patchPan);
   const bars = liveBars(preset);
 
-  function handleFilePick(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      onImportFile(new Uint8Array(ev.target!.result as ArrayBuffer), file.name);
-    };
-    reader.readAsArrayBuffer(file);
-    e.target.value = ''; // allow re-importing the same file
+  let volTitle = 'Connect the device to adjust patch volume';
+  if (connected) volTitle = 'Patch volume (live device setting)';
+  let settingsTitle = 'Connect the device to adjust (live-only settings)';
+  if (connected) settingsTitle = 'Adjust patch pan / tempo';
+
+  function toggleMeta() {
+    setOpenPop((prev) => {
+      if (prev === 'meta') return null;
+      return 'meta';
+    });
   }
+
+  function toggleSettings() {
+    setOpenPop((prev) => {
+      if (prev === 'settings') return null;
+      return 'settings';
+    });
+  }
+
+  let saveLabel = 'SAVE';
+  if (slotLabel) saveLabel = `SAVE TO ${slotLabel}`;
 
   return (
     <div className="deck">
       <div className="deck-status">
-        <span className={`deck-dot${connected ? ' on' : ''}`} aria-hidden="true" />
-        <span className="deck-slot">{slotLabel ?? '—'}</span>
         <button
           type="button"
           className="deck-name editable"
           title="Edit patch name & author"
           aria-expanded={openPop === 'meta'}
-          onClick={() => setOpenPop((p) => (p === 'meta' ? null : 'meta'))}
+          onClick={toggleMeta}
         >
           {preset.patchName || 'Untitled'}
         </button>
-        <span className="deck-conn" title={firmware ? `GP-200 firmware ${firmware}` : undefined}>
-          {connected ? `USB-MIDI${firmware ? ` · FW ${firmware}` : ''}` : 'OFFLINE'}
-        </span>
-        {pushProgress && (
-          <span
-            className={`deck-sync${pushProgress.phase === 'done' ? ' done' : ''}`}
-            role="status"
-            aria-live="polite"
-          >
-            {pushProgress.phase === 'done'
-              ? '✓ SENT'
-              : `SYNC ${pushProgress.completed}/${pushProgress.total}`}
-          </span>
-        )}
         {openPop === 'meta' && (
           <DeckPop label="Patch name and author" onClose={() => setOpenPop(null)}>
             <label className="dp-field">
-              <span>Patch name</span>
+              <span>
+                Patch name <b>{`${preset.patchName.length}/16`}</b>
+              </span>
               <input
                 value={preset.patchName}
                 maxLength={16}
                 autoFocus
-                onChange={(e) => onPatchNameChange(e.target.value.slice(0, 16))}
-                onKeyDown={(e) => e.key === 'Enter' && setOpenPop(null)}
+                onChange={(event) => onPatchNameChange(event.target.value.slice(0, 16))}
+                onKeyDown={(event) => event.key === 'Enter' && setOpenPop(null)}
               />
             </label>
             <label className="dp-field">
-              <span>Author</span>
+              <span>
+                Author <b>{`${(preset.author ?? '').length}/16`}</b>
+              </span>
               <input
                 value={preset.author ?? ''}
                 maxLength={16}
-                onChange={(e) => onAuthorChange(e.target.value.slice(0, 16))}
-                onKeyDown={(e) => e.key === 'Enter' && setOpenPop(null)}
+                onChange={(event) => onAuthorChange(event.target.value.slice(0, 16))}
+                onKeyDown={(event) => event.key === 'Enter' && setOpenPop(null)}
               />
             </label>
+            <p className="dp-note">Shown on the device display — 16 characters max.</p>
           </DeckPop>
         )}
       </div>
 
       <div className="deck-readouts">
+        <div className="deck-vol" title={volTitle}>
+          <span className="deck-vol-lbl">VOL</span>
+          <input
+            type="range"
+            className="deck-vol-slider"
+            min={0}
+            max={100}
+            step={1}
+            value={patchVolume}
+            disabled={!connected}
+            aria-label="Patch volume"
+            onChange={(event) => onVolumeChange(Number(event.target.value))}
+          />
+          <b className="deck-vol-val">{patchVolume}</b>
+        </div>
+
         <button
           type="button"
           className="deck-meta-btn"
-          title={connected ? 'Adjust patch volume / pan / tempo' : 'Connect the device to adjust (live-only settings)'}
+          title={settingsTitle}
           aria-expanded={openPop === 'settings'}
-          onClick={() => setOpenPop((p) => (p === 'settings' ? null : 'settings'))}
+          onClick={toggleSettings}
         >
-          <span className="deck-meta">VOL <b>{patchVolume}</b></span>
           <span className="deck-meta">PAN <b>{panDisplay}</b></span>
           <span className="deck-meta">TEMPO <b>{patchTempo}</b></span>
         </button>
         {openPop === 'settings' && (
-          <DeckPop label="Patch settings" onClose={() => setOpenPop(null)}>
-            <label className="dp-field">
-              <span>Patch vol <b>{patchVolume}</b></span>
-              <input type="range" min={0} max={100} step={1} value={patchVolume} disabled={!connected}
-                onChange={(e) => onVolumeChange(Number(e.target.value))} />
-            </label>
-            <label className="dp-field">
+          <DeckPop label="Patch settings" wide onClose={() => setOpenPop(null)}>
+            <div className="dp-field">
               <span>Patch pan <b>{panDisplay}</b></span>
-              <input type="range" min={-50} max={50} step={1} value={patchPan} disabled={!connected}
-                onChange={(e) => onPanChange(Number(e.target.value))} />
-            </label>
-            <label className="dp-field">
+              <div className="dp-row">
+                <input
+                  type="range"
+                  min={-50}
+                  max={50}
+                  step={1}
+                  value={patchPan}
+                  disabled={!connected}
+                  aria-label="Patch pan"
+                  onChange={(event) => onPanChange(Number(event.target.value))}
+                />
+                <button
+                  type="button"
+                  className="dp-btn"
+                  disabled={!connected || patchPan === 0}
+                  onClick={() => onPanChange(0)}
+                >
+                  CENTER
+                </button>
+              </div>
+              <div className="dp-scale" aria-hidden="true">
+                <span>L50</span>
+                <span>C</span>
+                <span>R50</span>
+              </div>
+            </div>
+            <div className="dp-field">
               <span>Tempo <b>{patchTempo} BPM</b></span>
-              <input type="range" min={40} max={250} step={1} value={patchTempo} disabled={!connected}
-                onChange={(e) => onTempoChange(Number(e.target.value))} />
-            </label>
-            {!connected && <p className="dp-note">Live-only device settings — connect to adjust.</p>}
+              <div className="dp-row">
+                <input
+                  type="range"
+                  min={40}
+                  max={250}
+                  step={1}
+                  value={patchTempo}
+                  disabled={!connected}
+                  aria-label="Tempo"
+                  onChange={(event) => onTempoChange(Number(event.target.value))}
+                />
+                <input
+                  type="number"
+                  className="dp-num"
+                  min={40}
+                  max={250}
+                  value={patchTempo}
+                  disabled={!connected}
+                  aria-label="Tempo in BPM"
+                  onChange={(event) => {
+                    const bpm = Math.max(40, Math.min(250, Number(event.target.value)));
+                    onTempoChange(bpm);
+                  }}
+                />
+              </div>
+            </div>
+            {!connected && (
+              <p className="dp-note">Live-only device settings — connect to adjust.</p>
+            )}
           </DeckPop>
         )}
         {bars.map((bar) => (
@@ -250,21 +305,6 @@ export function SwitcherUnit({
       <AudioMeters />
 
       <div className="deck-actions">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".prst,.hlx"
-          className="hidden"
-          aria-hidden="true"
-          tabIndex={-1}
-          onChange={handleFilePick}
-        />
-        <button type="button" className="deck-btn" onClick={() => fileInputRef.current?.click()}>
-          IMPORT
-        </button>
-        <button type="button" className="deck-btn" onClick={onExportRequest}>
-          EXPORT
-        </button>
         <button type="button" className="deck-btn" onClick={onOpenFxLoop}>
           FX LOOP
         </button>
@@ -279,48 +319,16 @@ export function SwitcherUnit({
         >
           CTRL
         </button>
-        {connected ? (
-          <>
-            <button
-              type="button"
-              className="deck-btn"
-              title="Browse and manage all device patches"
-              onClick={onOpenPatchManager}
-            >
-              PATCHES
-            </button>
-            <button type="button" className="deck-btn" onClick={onLoadRequest}>
-              LOAD
-            </button>
-            <button
-              type="button"
-              className="deck-btn primary"
-              disabled={!canSave}
-              onClick={onSaveToActiveSlot}
-            >
-              {slotLabel ? `SAVE TO ${slotLabel}` : 'SAVE'}
-            </button>
-            <button type="button" className="deck-btn" title="Save to another slot" onClick={onPushRequest}>
-              SAVE AS
-            </button>
-            <button
-              type="button"
-              className="deck-btn quiet"
-              title="Disconnect device"
-              aria-label="Disconnect device"
-              onClick={onDisconnect}
-            >
-              ✕
-            </button>
-          </>
-        ) : (
-          <button type="button" className="deck-btn primary" onClick={onConnectRequest}>
-            CONNECT GP-200
+        {connected && (
+          <button
+            type="button"
+            className="deck-btn primary"
+            disabled={!canSave}
+            onClick={onSaveToActiveSlot}
+          >
+            {saveLabel}
           </button>
         )}
-        <button type="button" className="deck-btn quiet" title="Close preset" onClick={onCloseRequest}>
-          CLOSE
-        </button>
       </div>
     </div>
   );

@@ -15,7 +15,14 @@ interface DeckDrawerProps {
  */
 export function DeckDrawer({ open, onClose, title, children }: DeckDrawerProps) {
   return (
-    <Dialog open={open} onClose={onClose} title={title} placement="bottom" className="max-w-4xl">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={title}
+      placement="bottom"
+      maxWidth="max-w-4xl"
+      className="max-h-[85vh] overflow-y-auto"
+    >
       <div className="flex items-center justify-between mb-4">
         <span className="font-mono-display text-label font-bold tracking-wider uppercase text-text-secondary">
           {title}

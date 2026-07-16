@@ -34,7 +34,7 @@ function renderSheet(overrides: Partial<Parameters<typeof PatchManagerSheet>[0]>
 }
 
 describe('PatchManagerSheet', () => {
-  it('renders the 256-slot grid with loaded names', () => {
+  it('renders the patch browser with loaded names', () => {
     renderSheet();
     expect(screen.getByText('Clean')).toBeTruthy();
     expect(screen.getByText('American Idiot')).toBeTruthy();
@@ -43,7 +43,7 @@ describe('PatchManagerSheet', () => {
 
   it('filters slots via search', () => {
     renderSheet();
-    fireEvent.change(screen.getByPlaceholderText('Search patches…'), {
+    fireEvent.change(screen.getByPlaceholderText(/Search patches/), {
       target: { value: 'crunch' },
     });
     expect(screen.getByText('Crunch')).toBeTruthy();

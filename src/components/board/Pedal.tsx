@@ -1,10 +1,10 @@
-import { useState, type CSSProperties, type DragEvent } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type { EffectSlot } from '@/core/types';
-import { getEffectName, getSlotModule, getEffectsByModule } from '@/core/effectNames';
+import { getEffectName, getSlotModule } from '@/core/effectNames';
 import { EFFECT_DESCRIPTIONS } from '@/core/effectDescriptions';
 import { getEffectParams } from '@/core/effectParams';
 import { getBodySpec } from './boardPalette';
-import { isWidePedal } from './boardLayout';
+import { pedalIsWide } from './boardLayout';
 import { type PedalArtEntry } from './pedalManifest';
 import { PedalKnob } from './PedalKnob';
 import { PedalFader } from './PedalFader';
@@ -18,12 +18,10 @@ export interface PedalProps {
   row: 'front' | 'back';
   art?: PedalArtEntry;
   onToggle: () => void;
-  onChangeEffect: (effectId: number) => void;
+  /** open the effect browser for this slot */
+  onOpenPicker: () => void;
   onParamChange: (paramIdx: number, value: number) => void;
   onDragStart: (index: number) => void;
-  onDragOver: (e: DragEvent, index: number) => void;
-  onDrop: (index: number) => void;
-  isDragOver: boolean;
   /** keyboard reorder (grip button arrows) */
   onMove: (from: number, to: number) => void;
   /** hover/focus inspection for the info bar */
@@ -40,12 +38,9 @@ export function Pedal({
   row,
   art,
   onToggle,
-  onChangeEffect,
+  onOpenPicker,
   onParamChange,
   onDragStart,
-  onDragOver,
-  onDrop,
-  isDragOver,
   onMove,
   onInspect,
   onPin,
@@ -60,8 +55,10 @@ export function Pedal({
   // authentic per-effect colors from the artwork spec; module palette as fallback
   const spec = art?.colors ?? getBodySpec(moduleName);
   const defs = getEffectParams(slot.effectId);
-  const wide = isWidePedal(slot.effectId);
-  const effects = getEffectsByModule(moduleName);
+  // the pedal keeps its natural size, but never wider than its fixed bay — so
+  // swapping an effect only changes the padding inside the bay, never a
+  // neighbour's position (see pedalIsWide)
+  const wide = pedalIsWide(slot.slotIndex, slot.effectId);
   const caption = art?.basedOn ?? EFFECT_DESCRIPTIONS[effectName] ?? '';
 
   // amps get a control-panel strip (knobs live on the panel, like the hardware)
@@ -81,7 +78,6 @@ export function Pedal({
   const classes = ['pedal'];
   if (wide) classes.push('wide');
   if (dragging) classes.push('dragging');
-  if (isDragOver) classes.push('drag-over');
   if (!slot.enabled) classes.push('bypassed');
 
   const footswitch = (
@@ -107,13 +103,13 @@ export function Pedal({
         onDragStart(index);
       }}
       onDragEnd={() => setDragging(false)}
-      onDragOver={(e) => onDragOver(e, index)}
-      onDrop={() => onDrop(index)}
       onMouseEnter={() => onInspect(true)}
       onMouseLeave={() => onInspect(false)}
       onFocusCapture={() => onInspect(true)}
       onBlurCapture={() => onInspect(false)}
     >
+      {/* knurled dot grip — signals the whole pedal is draggable */}
+      <span className="pedal-grip" aria-hidden="true" />
       <span className="jack in" data-jack="in" />
       <span className="jack out" data-jack="out" />
       <span className="screw tl" /><span className="screw tr" />
@@ -197,20 +193,15 @@ export function Pedal({
       {!slot.enabled && <span className="p-off-tag" aria-hidden="true">BYPASSED</span>}
 
       <div className="p-name">
-        <select
-          value={slot.effectId}
-          aria-label={`${moduleName} effect`}
-          onChange={(e) => onChangeEffect(Number(e.target.value))}
+        <button
+          type="button"
+          className="p-name-btn"
+          aria-label={`Change ${moduleName} effect: ${effectName}`}
+          aria-haspopup="dialog"
+          onClick={onOpenPicker}
         >
-          {effects.map((eff) => (
-            <option key={eff.effectId} value={eff.effectId}>
-              {eff.name}
-            </option>
-          ))}
-          {!effects.some((e) => e.effectId === slot.effectId) && (
-            <option value={slot.effectId}>{effectName}</option>
-          )}
-        </select>
+          {effectName}
+        </button>
       </div>
       <p className="p-desc" title={caption}>
         {caption}

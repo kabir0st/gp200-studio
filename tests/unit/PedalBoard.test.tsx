@@ -5,7 +5,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { PRSTDecoder } from '@/core/PRSTDecoder';
 import { getEffectName } from '@/core/effectNames';
 import { PedalBoard } from '@/components/board/PedalBoard';
-import { isWidePedal, splitRows } from '@/components/board/boardLayout';
+import { isWidePedal, isWideSlot, splitRows } from '@/components/board/boardLayout';
 
 // jsdom has no ResizeObserver (CableLayer uses it to re-measure jacks)
 class ResizeObserverStub {
@@ -52,6 +52,7 @@ function renderBoard(overrides: Partial<Parameters<typeof PedalBoard>[0]> = {}) 
     onExpParamSelect: vi.fn(),
     onExpMinMax: vi.fn(),
     onCtrlBlockToggle: vi.fn(),
+    onCtrlClear: vi.fn(),
     onOpenPatchManager: vi.fn(),
     onConnectRequest: vi.fn(),
     onDisconnect: vi.fn(),
@@ -162,6 +163,29 @@ describe('PedalBoard (render smoke test)', () => {
     expect(save).toBeDisabled(); // no onSaveToActiveSlot handler passed
     fireEvent.click(screen.getByRole('button', { name: 'LOAD' }));
     expect(connected.props.onLoadRequest).toHaveBeenCalled();
+  });
+
+  it('every pedal sits in a fixed-size bay; wide bays match the slot module', () => {
+    const { container, preset } = renderBoard();
+    const bays = container.querySelectorAll('.pedal-bay');
+    expect(bays).toHaveLength(11);
+    // every pedal is wrapped by a bay (the bay is what holds the fixed footprint)
+    for (const bay of bays) expect(bay.querySelector('article.pedal')).not.toBeNull();
+    // a bay is wide iff its slot's module is wide — stable, effect-independent
+    const wideBays = [...bays].filter((b) => b.classList.contains('wide')).length;
+    const wideSlots = preset.effects.filter((e) => isWideSlot(e.slotIndex)).length;
+    expect(wideBays).toBe(wideSlots);
+    // every pedal shows the drag-grip affordance
+    expect(container.querySelectorAll('article.pedal .pedal-grip')).toHaveLength(11);
+  });
+
+  it('isWideSlot is keyed to the fixed module, not the chosen effect', () => {
+    // AMP (slot 3) is a wide module; CAB (5) and VOL (10) are always compact.
+    // Because it takes only slotIndex, swapping effects can never change it —
+    // that stability is what keeps neighbours from reflowing on an effect swap.
+    expect(isWideSlot(3)).toBe(true);
+    expect(isWideSlot(5)).toBe(false);
+    expect(isWideSlot(10)).toBe(false);
   });
 
   it('chain reads top-left to bottom-right with IN/OUT marked', () => {

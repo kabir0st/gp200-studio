@@ -14,6 +14,10 @@ interface DialogProps {
   /** "bottom" anchors the panel to the bottom edge (deck drawers); "right"
    *  makes it a full-height side sheet (patch manager); default centers. */
   placement?: 'center' | 'bottom' | 'right';
+  /** Tailwind max-width utility for the panel. Appending a max-w-* via
+   *  className does NOT reliably override the default (stylesheet order
+   *  wins, not class order) — wide dialogs must set it here. */
+  maxWidth?: string;
 }
 
 const OVERLAY_PLACEMENT: Record<'center' | 'bottom' | 'right', string> = {
@@ -44,6 +48,7 @@ export function Dialog({
   className = '',
   role = 'dialog',
   placement = 'center',
+  maxWidth = 'max-w-md',
 }: DialogProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
@@ -81,6 +86,23 @@ export function Dialog({
     };
   }, [open, onClose]);
 
+  // Lock background page scroll while open so wheel/touch stays inside the modal.
+  // The page scroller is <html>, so lock it there; compensate for the vanished
+  // scrollbar with padding so the layout behind the overlay doesn't shift.
+  useEffect(() => {
+    if (!open) return;
+    const root = document.documentElement;
+    const scrollbarWidth = window.innerWidth - root.clientWidth;
+    const prevOverflow = root.style.overflow;
+    const prevPaddingRight = root.style.paddingRight;
+    root.style.overflow = 'hidden';
+    if (scrollbarWidth > 0) root.style.paddingRight = `${scrollbarWidth}px`;
+    return () => {
+      root.style.overflow = prevOverflow;
+      root.style.paddingRight = prevPaddingRight;
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return (
@@ -94,7 +116,7 @@ export function Dialog({
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className={`max-w-md w-full p-6 focus:outline-none ${PANEL_PLACEMENT[placement]} ${className}`}
+        className={`${maxWidth} w-full p-6 focus:outline-none ${PANEL_PLACEMENT[placement]} ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {children}

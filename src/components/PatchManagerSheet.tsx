@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
-import { SlotGrid } from './SlotGrid';
+import { PatchPicker } from './PatchPicker';
 import { SysExCodec } from '@/core/SysExCodec';
 
 export interface BulkExportProgress {
@@ -55,7 +55,6 @@ export function PatchManagerSheet({
   onRenameSlot,
   onRefreshNames,
 }: PatchManagerSheetProps) {
-  const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<number | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -76,6 +75,10 @@ export function PatchManagerSheet({
   function handleSelect(slot: number) {
     setSelected(slot);
     setRenaming(false);
+  }
+
+  function handleActivateFromPicker(slot: number) {
+    if (connected) onActivate(slot);
   }
 
   async function runBusy(action: () => Promise<void>) {
@@ -131,6 +134,7 @@ export function PatchManagerSheet({
       onClose={onClose}
       title="Patch Manager"
       placement="right"
+      maxWidth="max-w-2xl"
       className="flex flex-col p-0"
       closeOnOverlayClick={!busy && !bulkRunning}
     >
@@ -202,32 +206,15 @@ export function PatchManagerSheet({
         </p>
       )}
 
-      {/* Search */}
-      <div
-        className="px-4 py-2 flex-shrink-0"
-        style={{ borderBottom: '1px solid var(--border-active)' }}
-      >
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search patches…"
-          className="w-full bg-transparent font-mono-display text-sm outline-none"
-          style={{ color: 'var(--text-primary)' }}
-        />
-      </div>
-
-      {/* Slot grid */}
-      <div className="flex-1 min-h-0 flex flex-col">
-        <SlotGrid
+      {/* Patch browser */}
+      <div className="flex-1 min-h-0 flex flex-col px-2 pb-2">
+        <PatchPicker
           presetNames={presetNames}
           namesLoadProgress={namesLoadProgress}
           currentSlot={currentSlot}
           selected={selected}
-          search={search}
           onSelect={handleSelect}
-          onActivate={(slot) => {
-            if (connected) onActivate(slot);
-          }}
+          onActivate={handleActivateFromPicker}
         />
       </div>
 

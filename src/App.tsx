@@ -42,7 +42,8 @@ function slotFilename(slot: number, name: string | null): string {
 function App() {
   const {
     preset, loadPreset, setPatchName, setAuthor, toggleEffect, changeEffect,
-    reorderEffects, setParam, setFxLoopSend, setFxLoopReturn, setCtrlBlock, reset,
+    reorderEffects, setParam, setFxLoopSend, setFxLoopReturn, setCtrlBlock,
+    setCtrlMask, setExpAssignment, reset,
   } = usePreset();
   const midiDevice = useMidiDevice();
 
@@ -439,7 +440,7 @@ function App() {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full h-screen flex flex-col overflow-hidden">
       {importedFromHLX && (
         <div className="mx-4 mt-3 mb-2 px-3 py-1.5 rounded-lg font-mono-display text-caption tracking-wider uppercase inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/40 text-purple-800">
           EXPERIMENTAL — imported from Line6 HX Stomp (.hlx)
@@ -454,7 +455,10 @@ function App() {
       )}
 
       {/* THE view: full-bleed pedalboard */}
-      <div onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}>
+      <div
+        className="flex-1 min-h-0 flex flex-col"
+        onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+      >
         <PedalBoard
           preset={preset}
           onToggle={handleSlotToggle}
@@ -505,9 +509,22 @@ function App() {
               if (sendPushed) midiDevice.sendFxLoopMove(order, nextSend, clamped, 'send');
             }
           }}
-          onExpParamSelect={(page, item, blockIndex, paramIdx) => midiDevice.sendExpParamSelect(page, item, blockIndex, paramIdx)}
-          onExpMinMax={(page, item, min, max) => midiDevice.sendExpMinMax(page, item, min, max)}
+          onExpParamSelect={(page, item, blockIndex, paramIdx) => {
+            // Persist with the patch; also apply live when a device is attached
+            // (there is no live "unassign" message — that lands on SAVE).
+            setExpAssignment(page, item, { blockIndex, paramIndex: paramIdx });
+            if (midiDevice.status === 'connected' && blockIndex !== null) {
+              midiDevice.sendExpParamSelect(page, item, blockIndex, paramIdx);
+            }
+          }}
+          onExpMinMax={(page, item, min, max) => {
+            setExpAssignment(page, item, { min, max });
+            if (midiDevice.status === 'connected') {
+              midiDevice.sendExpMinMax(page, item, min, max);
+            }
+          }}
           onCtrlBlockToggle={setCtrlBlock}
+          onCtrlClear={(ctrlIndex) => setCtrlMask(ctrlIndex, 0)}
           onOpenPatchManager={handleOpenPatchManager}
           onConnectRequest={() => void midiDevice.connect()}
           onDisconnect={midiDevice.disconnect}

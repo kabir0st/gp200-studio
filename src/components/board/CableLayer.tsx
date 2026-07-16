@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react';
+import { motionDurations } from '@/lib/motion';
 
 interface CableLayerProps {
   /** module names in chain order — labels the cross-row stub cables */
@@ -87,9 +88,18 @@ export function CableLayer({ modules, orderKey, hidden }: CableLayerProps) {
     };
 
     measure();
+    // re-measure after the reorder FLIP settles so cables meet the pedals at
+    // their final rest positions (the animation is transform-based, so a
+    // ResizeObserver won't catch it on its own)
+    const raf = requestAnimationFrame(measure);
+    const settle = window.setTimeout(measure, motionDurations.base * 1000 + 60);
     const ro = new ResizeObserver(measure);
     ro.observe(stage);
-    return () => ro.disconnect();
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(settle);
+      ro.disconnect();
+    };
   }, [modules, orderKey]);
 
   return (
@@ -99,14 +109,41 @@ export function CableLayer({ modules, orderKey, hidden }: CableLayerProps) {
       viewBox={`0 0 ${size.w || 1} ${size.h || 1}`}
       aria-hidden="true"
     >
+      <defs>
+        {/* soft ground shadow so wires read as lifted off the board */}
+        <filter id="cable-shadow" x="-20%" y="-20%" width="140%" height="160%">
+          <feDropShadow dx="0" dy="2.5" stdDeviation="2" floodColor="#000" floodOpacity="0.35" />
+        </filter>
+        {/* rubber sheath: dark core with a lengthwise highlight */}
+        <linearGradient id="cable-sheath" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#3a3a3d" />
+          <stop offset="45%" stopColor="#1a1a1c" />
+          <stop offset="100%" stopColor="#0a0a0b" />
+        </linearGradient>
+        <radialGradient id="plug-metal" cx="35%" cy="30%" r="75%">
+          <stop offset="0%" stopColor="#f0f0f0" />
+          <stop offset="55%" stopColor="#a8a8a8" />
+          <stop offset="100%" stopColor="#4a4a4a" />
+        </radialGradient>
+      </defs>
       {segments.map((seg, i) => (
-        <g key={i}>
-          <path d={seg.d} fill="none" stroke="#0b0b0b" strokeWidth={5} strokeLinecap="round" opacity={0.9} />
-          <path d={seg.d} fill="none" stroke="#454545" strokeWidth={2} strokeLinecap="round" />
+        <g key={i} filter="url(#cable-shadow)">
+          {/* casing → sheath → glossy sheen for a rounded rubber cable */}
+          <path d={seg.d} fill="none" stroke="#050505" strokeWidth={6.5} strokeLinecap="round" />
+          <path d={seg.d} fill="none" stroke="url(#cable-sheath)" strokeWidth={5} strokeLinecap="round" />
+          <path
+            d={seg.d}
+            fill="none"
+            stroke="#8f9094"
+            strokeWidth={1.2}
+            strokeLinecap="round"
+            opacity={0.5}
+          />
           {seg.plugs.map((p, j) => (
             <g key={j}>
-              <circle cx={p.x} cy={p.y} r={4.5} fill="#b8b8b8" stroke="#3a3a3a" />
-              <circle cx={p.x} cy={p.y} r={2} fill="#2a2a2a" />
+              <circle cx={p.x} cy={p.y} r={5} fill="url(#plug-metal)" stroke="#2c2c2c" strokeWidth={0.75} />
+              <circle cx={p.x} cy={p.y} r={2} fill="#1e1e1e" />
+              <circle cx={p.x - 1.3} cy={p.y - 1.3} r={0.9} fill="#fff" opacity={0.7} />
             </g>
           ))}
           {seg.label && (

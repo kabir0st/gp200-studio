@@ -1,19 +1,102 @@
 import type { EffectSlot } from '@/core/types';
 import { getEffectParams } from '@/core/effectParams';
+import { getEffectsByModule, getSlotModule } from '@/core/effectNames';
 
-/** Wide-format enclosure (amp-style panel): 5+ knobs don't fit a compact body. */
+/** Knob-type params for an effect — the density that drives enclosure width. */
+function knobCount(effectId: number): number {
+  return getEffectParams(effectId).filter((d) => d.type === 'knob').length;
+}
+
+/**
+ * Wide-format enclosure (amp-style panel): 5+ knobs don't fit a compact body.
+ * This is the *pedal's own* size and stays per-effect, so every effect keeps its
+ * natural look. Neighbours don't reflow because the fixed-size bay (isWideSlot)
+ * absorbs the difference — not because the pedal itself is forced to a size.
+ */
 export function isWidePedal(effectId: number): boolean {
-  return getEffectParams(effectId).filter((d) => d.type === 'knob').length >= 5;
+  return knobCount(effectId) >= 5;
+}
+
+// The *bay* (fixed slot cell) is keyed to the module, not the current effect. A
+// slot's module (getSlotModule) is fixed, so the bay size is invariant across
+// effect switches — swapping effects only changes the padding inside the bay,
+// never a neighbour's position.
+//
+// A module's bay is wide only if it is *predominantly* wide (≥40% of its effects).
+// Reserving a wide bay for every module that has any wide effect would make 8 of
+// 11 slots double-width and overflow the two-row board; instead the few wide
+// effects inside a mostly-compact module render compact (see pedalIsWide) so they
+// still fit their bay without pushing neighbours. AMP/DST/EQ/DLY/RVB clear the bar.
+const WIDE_BAY_FRACTION = 0.4;
+const wideModuleCache = new Map<string, boolean>();
+function isWideModule(module: string): boolean {
+  const cached = wideModuleCache.get(module);
+  if (cached !== undefined) return cached;
+  const effects = getEffectsByModule(module);
+  const wideN = effects.filter((e) => isWidePedal(e.effectId)).length;
+  const wide = effects.length > 0 && wideN / effects.length >= WIDE_BAY_FRACTION;
+  wideModuleCache.set(module, wide);
+  return wide;
+}
+
+/** Wide bay for a slot — stable across effect changes (see above). */
+export function isWideSlot(slotIndex: number): boolean {
+  return isWideModule(getSlotModule(slotIndex));
+}
+
+/**
+ * Whether the pedal body renders wide. A pedal is wide only when its own effect
+ * is wide *and* its bay is wide — so a rare wide effect in a mostly-compact
+ * module (bay is compact) renders compact instead of overflowing/overlapping its
+ * neighbours. In a wide bay, compact effects still render compact and float with
+ * padding. Either way the body never exceeds its bay, so nothing reflows.
+ */
+export function pedalIsWide(slotIndex: number, effectId: number): boolean {
+  return isWideSlot(slotIndex) && isWidePedal(effectId);
+}
+
+// Fixed bay *height*, reserved per module so switching an effect within a slot
+// never grows the bay (which would push the row below). Reserving the tallest
+// effect *per module* — rather than one global max — keeps short slots (CAB,
+// VOL) from carrying the delay module's 3-row footprint. Derived from live
+// effect data so new/changed effects stay covered; verified against measured
+// pedal heights (see scripts note in the plan).
+const BAY_CHROME = 196; // header + LED + name + desc + footswitch + brand + padding
+const BAY_ROW = 82; // one control row
+const COMPACT_INNER = 148; // usable width inside a 172px body
+const WIDE_INNER = 286; // usable width inside a 310px body
+
+function controlsPerRow(module: string, wide: boolean): number {
+  const inner = wide ? WIDE_INNER : COMPACT_INNER;
+  const unit = module === 'EQ' ? 30 : 48; // EQ renders narrow faders, the rest knobs
+  return Math.max(1, Math.floor(inner / unit));
+}
+
+const bayHeightCache = new Map<string, number>();
+export function bayMinHeight(slotIndex: number): number {
+  const module = getSlotModule(slotIndex);
+  const cached = bayHeightCache.get(module);
+  if (cached !== undefined) return cached;
+  const perRow = controlsPerRow(module, isWideModule(module));
+  const maxControls = getEffectsByModule(module).reduce(
+    (max, e) => Math.max(max, getEffectParams(e.effectId).length),
+    1,
+  );
+  const rows = Math.max(1, Math.ceil(maxControls / perRow));
+  const height = BAY_CHROME + rows * BAY_ROW;
+  bayHeightCache.set(module, height);
+  return height;
 }
 
 /**
  * Split the chain into the two visual rows, balancing by rendered width
  * (wide pedal = 2 units, compact = 1) instead of a fixed 6/5 count — a
  * double-width AMP would otherwise push the front row past the stage edge.
- * Chain order is preserved; only the break point moves.
+ * Chain order is preserved; only the break point moves. Width is slot-derived,
+ * so the split is stable when an effect is swapped (only reorder moves it).
  */
 export function splitRows(effects: EffectSlot[]): { front: EffectSlot[]; back: EffectSlot[] } {
-  const unit = (slot: EffectSlot) => (isWidePedal(slot.effectId) ? 2 : 1);
+  const unit = (slot: EffectSlot) => (isWideSlot(slot.slotIndex) ? 2 : 1);
   const total = effects.reduce((sum, slot) => sum + unit(slot), 0);
   const half = Math.ceil(total / 2);
 

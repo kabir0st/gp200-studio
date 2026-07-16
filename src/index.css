@@ -62,6 +62,12 @@
   --pedal-shadow: 0 10px 20px rgba(0, 0, 0, 0.28);
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   margin: 0;
   color: var(--text-primary);

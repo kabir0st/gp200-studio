@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
-import type { GP200Preset } from '@/core/types';
+import type { ExpAssignment, GP200Preset } from '@/core/types';
 import { getEffectParams } from '@/core/effectParams';
-import { defaultCtrlAssignments } from '@/core/controlRecords';
+import { defaultCtrlAssignments, defaultExpAssignments } from '@/core/controlRecords';
 
 interface PresetActions {
   preset: GP200Preset | null;
@@ -16,6 +16,14 @@ interface PresetActions {
   setFxLoopReturn: (pos: number) => void;
   /** Assign/unassign one effect block on a CTRL footswitch (bit in the mask). */
   setCtrlBlock: (ctrlIndex: number, blockIndex: number, on: boolean) => void;
+  /** Replace a CTRL footswitch's whole 11-bit block mask (0 = clear). */
+  setCtrlMask: (ctrlIndex: number, blockMask: number) => void;
+  /** Merge fields into one EXP assignment record (page 0-2, item 0-2). */
+  setExpAssignment: (
+    page: number,
+    item: number,
+    updates: Partial<Pick<ExpAssignment, 'blockIndex' | 'paramIndex' | 'min' | 'max'>>,
+  ) => void;
   reset: () => void;
 }
 
@@ -134,6 +142,41 @@ export function usePreset(): PresetActions {
     });
   }, []);
 
+  const setCtrlMask = useCallback((ctrlIndex: number, blockMask: number) => {
+    if (ctrlIndex < 0 || ctrlIndex > 7) return;
+    const nextMask = blockMask & 0x7FF;
+    setPreset((prev) => {
+      if (!prev) return null;
+      const ctrlAssignments = (prev.ctrlAssignments ?? defaultCtrlAssignments()).map(
+        (assignment) => {
+          if (assignment.ctrlIndex !== ctrlIndex) return assignment;
+          return { ...assignment, blockMask: nextMask };
+        },
+      );
+      return { ...prev, ctrlAssignments };
+    });
+  }, []);
+
+  const setExpAssignment = useCallback((
+    page: number,
+    item: number,
+    updates: Partial<Pick<ExpAssignment, 'blockIndex' | 'paramIndex' | 'min' | 'max'>>,
+  ) => {
+    if (page < 0 || page > 2 || item < 0 || item > 2) return;
+    setPreset((prev) => {
+      if (!prev) return null;
+      // Materialize the device-default records on first edit — presets whose
+      // tail couldn't be decoded (factory files) start from the fw defaults.
+      const expAssignments = (prev.expAssignments ?? defaultExpAssignments()).map(
+        (assignment) => {
+          if (assignment.page !== page || assignment.item !== item) return assignment;
+          return { ...assignment, ...updates };
+        },
+      );
+      return { ...prev, expAssignments };
+    });
+  }, []);
+
   const reset = useCallback(() => {
     setPreset(null);
   }, []);
@@ -141,7 +184,7 @@ export function usePreset(): PresetActions {
   return {
     preset, loadPreset, setPatchName, setAuthor,
     toggleEffect, changeEffect, reorderEffects, setParam,
-    setFxLoopSend, setFxLoopReturn, setCtrlBlock,
+    setFxLoopSend, setFxLoopReturn, setCtrlBlock, setCtrlMask, setExpAssignment,
     reset,
   };
 }
