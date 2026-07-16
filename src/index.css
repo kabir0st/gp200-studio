@@ -44,22 +44,20 @@
   --knob-track: #2a2724;
   --knob-fill: #d4a24e;
 
-  /* ── Board view environment (docs/board-design-system.md, dark values) ──
+  /* ── Board view environment (docs/board-design-system.md, LIGHT values) ──
      Skeuomorphic component styles live in src/components/board/board.css;
-     only the environment tokens are declared here (one token home). Light
-     theme is deferred — these are the dark-theme values only. */
-  --case: #26282b;
-  --board: #17181a;
-  --chrome-bg: #1b1d1f;
-  --chrome-border: #101112;
-  --chrome-text: #e6e3dd;
-  --chrome-muted: #8f8a84;
-  --strip-bg: #151719;
-  --stub-ink: #9a9da0;
-  --pedal-shadow: 0 12px 24px rgba(0, 0, 0, 0.55);
-  --unit-shadow: 0 14px 28px rgba(0, 0, 0, 0.5);
-  --lcd-bg: #0c1a0e;
-  --lcd-text: #5df08a;
+     only the environment tokens are declared here (one token home). The
+     board is light-mode for stage readability; the colorful pedal bodies
+     come from the artwork manifest, not from these tokens. */
+  --case: #d8d5ce;
+  --board: #c9c5bd;
+  --chrome-bg: #edebe5;
+  --chrome-border: #bdb9b0;
+  --chrome-text: #232220;
+  --chrome-muted: #5f5c55;
+  --strip-bg: #f2f0ea;
+  --stub-ink: #3c3a35;
+  --pedal-shadow: 0 10px 20px rgba(0, 0, 0, 0.28);
 }
 
 body {

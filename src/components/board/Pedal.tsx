@@ -4,7 +4,7 @@ import { getEffectName, getModuleName, getEffectsByModule } from '@/core/effectN
 import { EFFECT_DESCRIPTIONS } from '@/core/effectDescriptions';
 import { getEffectParams } from '@/core/effectParams';
 import { getBodySpec } from './boardPalette';
-import { pedalArtUrl, type PedalArtEntry } from './pedalManifest';
+import { type PedalArtEntry } from './pedalManifest';
 import { PedalKnob } from './PedalKnob';
 import { PedalFader } from './PedalFader';
 import { ComboSelect, MiniSwitch } from './MiniSwitch';
@@ -30,12 +30,6 @@ export interface PedalProps {
   isPinned: boolean;
 }
 
-const ART_GLYPH = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M13 2 L5 13 H11 L9 22 L19 9 H13 Z" />
-  </svg>
-);
-
 /** One effect slot rendered as a physical pedal (docs/board-design-system.md). */
 export function Pedal({
   slot,
@@ -54,7 +48,6 @@ export function Pedal({
   isPinned,
 }: PedalProps) {
   const [dragging, setDragging] = useState(false);
-  const [artFailed, setArtFailed] = useState(false);
 
   const effectName = getEffectName(slot.effectId);
   const moduleName = getModuleName(slot.effectId);
@@ -193,17 +186,6 @@ export function Pedal({
       </div>
 
       <span className={`p-led${slot.enabled ? ' on' : ''}`} />
-
-      <div className={`art-zone${!art || artFailed ? ' no-art' : ''}`} aria-hidden="true">
-        {art && !artFailed ? (
-          <img src={pedalArtUrl(art)} alt="" draggable={false} onError={() => setArtFailed(true)} />
-        ) : (
-          <>
-            {ART_GLYPH}
-            <span className="art-cap">ART · {effectName}</span>
-          </>
-        )}
-      </div>
 
       <div className="p-name">
         <select

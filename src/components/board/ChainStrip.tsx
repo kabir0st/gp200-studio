@@ -5,18 +5,20 @@ import { getBodySpec } from './boardPalette';
 
 interface ChainStripProps {
   effects: EffectSlot[];
-  patchVolume: number;
-  patchPan: number;
-  patchTempo: number;
 }
 
-/** Slim chip-per-slot signal-chain readout above the board. */
-export function ChainStrip({ effects, patchVolume, patchPan, patchTempo }: ChainStripProps) {
-  const panDisplay = patchPan === 0 ? 'C' : patchPan < 0 ? `L${Math.abs(patchPan)}` : `R${patchPan}`;
+/**
+ * Slim chip-per-slot signal-chain readout above the board. Chips are
+ * numbered to match the #n on each pedal, bracketed by IN and OUT so the
+ * signal direction is explicit.
+ */
+export function ChainStrip({ effects }: ChainStripProps) {
   return (
     <div className="chain-strip">
       <span className="strip-lbl">Signal Chain</span>
       <div className="chain">
+        <span className="chain-end">IN</span>
+        <span className="chain-arrow" aria-hidden="true">›</span>
         {effects.map((slot, i) => {
           const moduleName = getModuleName(slot.effectId);
           const spec = getBodySpec(moduleName);
@@ -25,17 +27,15 @@ export function ChainStrip({ effects, patchVolume, patchPan, patchTempo }: Chain
             <Fragment key={slot.slotIndex}>
               {i > 0 && <span className="chain-arrow" aria-hidden="true">›</span>}
               <span className={`chain-node${slot.enabled ? '' : ' off'}`} style={vars}>
+                <span className="cn-num">{i + 1}</span>
                 {moduleName}
                 <span className="sr-only">{slot.enabled ? ' on' : ' bypassed'}</span>
               </span>
             </Fragment>
           );
         })}
-      </div>
-      <div className="patch-meta">
-        <span>VOL <b>{patchVolume}</b></span>
-        <span>PAN <b>{panDisplay}</b></span>
-        <span>TEMPO <b>{patchTempo} BPM</b></span>
+        <span className="chain-arrow" aria-hidden="true">›</span>
+        <span className="chain-end">OUT</span>
       </div>
     </div>
   );

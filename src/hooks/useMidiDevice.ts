@@ -66,7 +66,8 @@ export interface UseMidiDeviceReturn {
   sendExpMinMax: (page: number, item: number, min: number, max: number) => void;
   setOnDeviceChange: (cb: ((slot: number | null) => void) | null) => void;
   setOnDeviceToggle: (cb: ((blockIndex: number, enabled: boolean) => void) | null) => void;
-  setOnDeviceEffectChange: (cb: ((blockIndex: number, effectId: number) => void) | null) => void;
+  // Callback returns whether the change was applied (drives FX-state suppression)
+  setOnDeviceEffectChange: (cb: ((blockIndex: number, effectId: number) => boolean) | null) => void;
   setOnDeviceParamChange: (cb: ((blockIndex: number, paramIndex: number, value: number) => void) | null) => void;
 }
 
@@ -218,9 +219,18 @@ export function useMidiDevice(): UseMidiDeviceReturn {
       const variant = (p[19] << 4) | p[20];
       const effectId = (moduleType << 24) | variant;
       console.log(`[GP-200] device effect change: block=${blockIndex} effectId=0x${effectId.toString(16).padStart(8,'0')}`);
-      onDeviceEffectChangeRef.current?.(blockIndex, effectId);
-      // Suppress FX state responses that follow (they report stale toggle states).
-      suppressFxFor(500);
+      // Hardware footswitch toggles also emit sub=0x0C frames with the
+      // module/variant fields zeroed — decoded blindly that's "effect changed
+      // to 0x00000000" (COMP) and the pedal morphs. An all-zero id IS that
+      // ack shape, so drop it here (cost: a hardware switch to COMP itself
+      // isn't mirrored — it re-syncs on the next slot change or pull). The
+      // applied-callback further validates (known id, same module, actually
+      // different); suppress the follow-up FX-state messages ONLY after a
+      // real swap, so hardware toggle messages still reach onDeviceToggle.
+      if (effectId !== 0) {
+        const applied = onDeviceEffectChangeRef.current?.(blockIndex, effectId) ?? false;
+        if (applied) suppressFxFor(500);
+      }
     }
     // sub=0x10 D→H: toggle OR knob notification (46 bytes)
     // Discriminator: bytes[29:37] all zeros = knob notification, otherwise = toggle

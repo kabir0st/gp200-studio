@@ -96,9 +96,19 @@ describe('PedalBoard (render smoke test)', () => {
 
   it('SAVE is disabled while offline; LOAD requests the slot browser', () => {
     const { props, container } = renderBoard();
-    const save = [...container.querySelectorAll('button.hw-btn')].find((b) => b.textContent?.startsWith('SAVE'))!;
+    const save = [...container.querySelectorAll('button.deck-btn')].find((b) => b.textContent?.startsWith('SAVE'))!;
     expect(save).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'LOAD' }));
     expect(props.onLoadRequest).toHaveBeenCalled();
+  });
+
+  it('chain reads top-left to bottom-right: #1–#6 in the first row, IN/OUT marked', () => {
+    const { container } = renderBoard();
+    const rows = container.querySelectorAll('.board-row');
+    const firstRowNums = [...rows[0].querySelectorAll('[data-chain]')].map((p) => Number(p.getAttribute('data-chain')));
+    expect(firstRowNums).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(rows[0].querySelector('.flow-badge')?.textContent).toContain('IN');
+    expect(rows[1].querySelector('.flow-badge')?.textContent).toContain('OUT');
+    expect(container.querySelectorAll('.chain-end')).toHaveLength(2);
   });
 });

@@ -1,0 +1,70 @@
+import { useEffect, useRef } from 'react';
+import { useAudioMeter } from '@/hooks/useAudioMeter';
+
+/**
+ * Live audio in/out meters fed by the GP-200's USB audio interface —
+ * groundwork for the loop station. Bar widths are driven directly from a
+ * rAF loop (no React state per frame). MON routes the input to the
+ * speakers; the OUT meter follows that monitoring path.
+ */
+export function AudioMeters() {
+  const meter = useAudioMeter();
+  const { active, getLevels } = meter;
+  const inBar = useRef<HTMLSpanElement>(null);
+  const outBar = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!active) return;
+    let raf = 0;
+    const tick = () => {
+      const { input, output } = getLevels();
+      if (inBar.current) inBar.current.style.width = `${(input * 100).toFixed(1)}%`;
+      if (outBar.current) outBar.current.style.width = `${(output * 100).toFixed(1)}%`;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [active, getLevels]);
+
+  if (!meter.active) {
+    return (
+      <div className="audio-meters">
+        <button
+          type="button"
+          className="deck-btn"
+          disabled={meter.starting}
+          onClick={() => void meter.enable()}
+          title="Capture the GP-200's USB audio for live metering"
+        >
+          {meter.starting ? 'AUDIO…' : 'AUDIO IN'}
+        </button>
+        {meter.error && <span className="am-error" title={meter.error}>audio unavailable</span>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="audio-meters" title={meter.deviceLabel ?? undefined}>
+      <div className="am-row">
+        <span className="am-lbl">IN</span>
+        <span className="am-track"><span ref={inBar} className="am-fill" /></span>
+      </div>
+      <div className="am-row">
+        <span className="am-lbl">OUT</span>
+        <span className="am-track"><span ref={outBar} className="am-fill out" /></span>
+      </div>
+      <button
+        type="button"
+        className={`deck-btn mon${meter.monitoring ? ' on' : ''}`}
+        aria-pressed={meter.monitoring}
+        onClick={() => meter.setMonitoring(!meter.monitoring)}
+        title="Monitor the input through this computer's speakers"
+      >
+        MON
+      </button>
+      <button type="button" className="deck-btn quiet" onClick={meter.disable} title="Stop audio capture">
+        ✕
+      </button>
+    </div>
+  );
+}

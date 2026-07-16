@@ -5,10 +5,10 @@ import { PRSTDecoder } from '@/core/PRSTDecoder';
 import { PRSTEncoder } from '@/core/PRSTEncoder';
 import { convertHLX } from '@/core/HLXConverter';
 import { pushPresetToDevice, type PushProgress } from '@/core/devicePush';
+import { EFFECT_MAP } from '@/core/effectNames';
 import type { GP200Preset } from '@/core/types';
 
 import { FileUpload } from '@/components/FileUpload';
-import { EffectSlot } from '@/components/EffectSlot';
 import { PedalBoard } from '@/components/board/PedalBoard';
 import { DeviceStatusBar } from '@/components/DeviceStatusBar';
 import { DeviceSlotBrowser } from '@/components/DeviceSlotBrowser';
@@ -19,8 +19,6 @@ import { AmpHeadPanel } from '@/components/AmpHeadPanel';
 import { FxLoopArrows } from '@/components/FxLoopArrows';
 import { ExportPresetDialog } from '@/components/ExportPresetDialog';
 import { Button } from '@/components/ui/Button';
-
-type ViewMode = 'list' | 'pedals';
 
 function App() {
   const {
@@ -33,7 +31,6 @@ function App() {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [slotBrowserMode, setSlotBrowserMode] = useState<'pull' | 'push' | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('pedals');
   const [showAmpHead, setShowAmpHead] = useState(false);
   const [importedFromHLX, setImportedFromHLX] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -46,6 +43,12 @@ function App() {
 
   const [pushProgress, setPushProgress] = useState<PushProgress | null>(null);
   const pushAbortRef = useRef<AbortController | null>(null);
+
+  // Synchronous view of the preset for device-message validation callbacks
+  // (the callbacks are registered once per connection, so they'd otherwise
+  // close over a stale preset).
+  const presetRef = useRef<GP200Preset | null>(preset);
+  presetRef.current = preset;
 
   // Reset the firmware warning once the device disconnects, so reconnecting
   // to a different (or updated) device shows the warning fresh if it applies.
@@ -121,8 +124,33 @@ function App() {
 
   useEffect(() => {
     if (midiDevice.status !== 'connected') return;
-    midiDevice.setOnDeviceEffectChange((blockIndex, effectId) => changeEffect(blockIndex, effectId));
+    // Hardware footswitch toggles emit effect-change-shaped frames with the
+    // effect id zeroed out (decodes to COMP). Validate before applying: the
+    // id must exist, the block's module can't change on hardware, and a
+    // same-id "change" is a toggle ack, not a swap — applying it would reset
+    // the params to defaults. Return value tells the dispatcher whether to
+    // suppress the FX-state messages that follow a real swap.
+    midiDevice.setOnDeviceEffectChange((blockIndex, effectId) => {
+      const slot = presetRef.current?.effects.find((e) => e.slotIndex === blockIndex);
+      const next = EFFECT_MAP[effectId];
+      if (!slot || !next) return false;
+      if (slot.effectId === effectId) return false;
+      const cur = EFFECT_MAP[slot.effectId];
+      if (cur && cur.module !== next.module) return false;
+      changeEffect(blockIndex, effectId);
+      return true;
+    });
     return () => midiDevice.setOnDeviceEffectChange(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [midiDevice.status]);
+
+  // Once connected, mirror the device's active preset into the editor — the
+  // handshake already pulled it (midiDevice.currentPreset); the user shouldn't
+  // have to press LOAD to see what their pedal is doing.
+  useEffect(() => {
+    if (midiDevice.status === 'connected' && midiDevice.currentPreset) {
+      loadPreset(midiDevice.currentPreset);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [midiDevice.status]);
 
@@ -316,8 +344,8 @@ function App() {
   }
 
   return (
-    <div className={`mx-auto ${viewMode === 'pedals' ? 'max-w-[1480px]' : 'max-w-2xl'}`}>
-      <div className="sticky top-0 z-30 px-8 pt-3 pb-2 bg-bg-primary">
+    <div className="w-full">
+      <div className="sticky top-0 z-30 px-4 pt-3 pb-2 bg-bg-primary">
         <DeviceStatusBar
           midiDevice={midiDevice}
           currentPresetName={preset.patchName}
@@ -330,14 +358,37 @@ function App() {
         />
       </div>
 
-      <div className="p-8 pt-2">
-        {importedFromHLX && (
-          <div className="mb-4 px-3 py-1.5 rounded-lg font-mono-display text-caption tracking-wider uppercase inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 text-purple-400">
-            EXPERIMENTAL — imported from Line6 HX Stomp (.hlx)
-          </div>
-        )}
+      {importedFromHLX && (
+        <div className="mx-4 mb-2 px-3 py-1.5 rounded-lg font-mono-display text-caption tracking-wider uppercase inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 text-purple-400">
+          EXPERIMENTAL — imported from Line6 HX Stomp (.hlx)
+        </div>
+      )}
 
-        {/* Section toggles + view mode */}
+      {/* THE view: full-bleed pedalboard */}
+      <div onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}>
+        <PedalBoard
+          preset={preset}
+          onToggle={handleSlotToggle}
+          onChangeEffect={handleSlotEffectChange}
+          onParamChange={handleSlotParamChange}
+          onMove={moveSlot}
+          dragIndex={dragIndex}
+          dragOverIndex={dragOverIndex}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          patchVolume={patchVolume}
+          patchPan={patchPan}
+          patchTempo={patchTempo}
+          currentSlot={midiDevice.currentSlot}
+          connected={midiDevice.status === 'connected'}
+          onLoadRequest={() => handleOpenBrowser('pull')}
+          onSaveToActiveSlot={midiDevice.status === 'connected' ? handleSaveToActiveSlot : undefined}
+        />
+      </div>
+
+      {/* everything else lives below the board */}
+      <div className="max-w-6xl mx-auto p-8 pt-6">
         <div className="flex gap-1 mb-3 flex-wrap items-center">
           <button
             onClick={() => setShowAmpHead((v) => !v)}
@@ -347,27 +398,6 @@ function App() {
           >
             AMP
           </button>
-          <div className="flex-1" />
-          <div className="flex gap-0.5">
-            <button
-              onClick={() => setViewMode('list')}
-              aria-pressed={viewMode === 'list'}
-              className={`flex items-center gap-1.5 font-mono-display text-label font-bold tracking-wider uppercase px-3 py-1.5 rounded-l transition-all duration-150 border ${
-                viewMode === 'list' ? 'bg-accent-amber/[0.12] border-accent-amber/30 text-accent-amber' : 'bg-white/[0.03] border-white/[0.06] text-text-muted'
-              }`}
-            >
-              List
-            </button>
-            <button
-              onClick={() => setViewMode('pedals')}
-              aria-pressed={viewMode === 'pedals'}
-              className={`flex items-center gap-1.5 font-mono-display text-label font-bold tracking-wider uppercase px-3 py-1.5 rounded-r transition-all duration-150 border ${
-                viewMode === 'pedals' ? 'bg-accent-amber/[0.12] border-accent-amber/30 text-accent-amber' : 'bg-white/[0.03] border-white/[0.06] text-text-muted'
-              }`}
-            >
-              Board
-            </button>
-          </div>
         </div>
 
         {showAmpHead && (
@@ -449,53 +479,6 @@ function App() {
             }
           }}
         />
-
-        <div
-          className={viewMode === 'pedals' ? 'mb-8' : 'flex flex-col gap-2 mb-8'}
-          onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
-        >
-          {viewMode === 'pedals' ? (
-            <PedalBoard
-              preset={preset}
-              onToggle={handleSlotToggle}
-              onChangeEffect={handleSlotEffectChange}
-              onParamChange={handleSlotParamChange}
-              onMove={moveSlot}
-              dragIndex={dragIndex}
-              dragOverIndex={dragOverIndex}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              patchVolume={patchVolume}
-              patchPan={patchPan}
-              patchTempo={patchTempo}
-              currentSlot={midiDevice.currentSlot}
-              connected={midiDevice.status === 'connected'}
-              onLoadRequest={() => handleOpenBrowser('pull')}
-              onSaveToActiveSlot={midiDevice.status === 'connected' ? handleSaveToActiveSlot : undefined}
-            />
-          ) : (
-            preset.effects.map((slot, i) => (
-              <EffectSlot
-                key={`slot-${slot.slotIndex}`}
-                slot={slot}
-                index={i}
-                onToggle={() => handleSlotToggle(slot.slotIndex, slot.enabled)}
-                onChangeEffect={(_index: number, effectId: number) => handleSlotEffectChange(slot.slotIndex, effectId)}
-                onParamChange={(_index: number, paramIndex: number, value: number) =>
-                  handleSlotParamChange(slot.slotIndex, slot.effectId, paramIndex, value)}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                isDragOver={dragOverIndex === i && dragIndex !== i}
-                onMoveUp={(index: number) => moveSlot(index, index - 1)}
-                onMoveDown={(index: number) => moveSlot(index, index + 1)}
-                canMoveUp={i > 0}
-                canMoveDown={i < preset.effects.length - 1}
-              />
-            ))
-          )}
-        </div>
 
         <div className="flex items-center gap-2 flex-wrap mb-8">
           <Button variant="primary" onClick={() => setShowExportDialog(true)}>

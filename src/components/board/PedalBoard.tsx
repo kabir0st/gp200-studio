@@ -93,12 +93,7 @@ export function PedalBoard({
 
   return (
     <div className="board-view">
-      <ChainStrip
-        effects={preset.effects}
-        patchVolume={patchVolume}
-        patchPan={patchPan}
-        patchTempo={patchTempo}
-      />
+      <ChainStrip effects={preset.effects} />
       <InfoBar
         slot={inspected}
         art={inspected ? lookupPedalArt(artIndex, inspected.effectId) : undefined}
@@ -108,14 +103,20 @@ export function PedalBoard({
       <main className="stage">
         <CableLayer modules={modules} orderKey={orderKey} hidden={dragIndex !== null} />
         <section className="board-deck">
+          {/* reading order = chain order: #1–#6 on the top row, #7–#11 below */}
           <div className="board-row">
-            {preset.effects.slice(6).map((slot, i) => renderPedal(slot, i + 6))}
-          </div>
-          <div className="board-row">
+            <span className="flow-badge" aria-hidden="true">IN ›</span>
             {preset.effects.slice(0, 6).map((slot, i) => renderPedal(slot, i))}
           </div>
+          <div className="board-row">
+            {preset.effects.slice(6).map((slot, i) => renderPedal(slot, i + 6))}
+            <span className="flow-badge" aria-hidden="true">› OUT</span>
+          </div>
           <SwitcherUnit
-            patchName={preset.patchName}
+            preset={preset}
+            patchVolume={patchVolume}
+            patchPan={patchPan}
+            patchTempo={patchTempo}
             currentSlot={currentSlot}
             connected={connected}
             onLoadRequest={onLoadRequest}

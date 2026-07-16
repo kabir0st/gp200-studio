@@ -14,7 +14,10 @@ interface MidiOutput {
 // - knob turn    → onDeviceParamChange(blockIndex, paramIndex, value)
 type OnDeviceChange = (slot: number | null) => void;
 type OnDeviceToggle = (blockIndex: number, enabled: boolean) => void;
-type OnDeviceEffectChange = (blockIndex: number, effectId: number) => void;
+// Returns whether the change was actually applied — hardware toggles produce
+// sub=0x0C frames that decode to bogus effect changes, and the dispatcher must
+// only suppress follow-up FX-state messages after a REAL effect swap.
+type OnDeviceEffectChange = (blockIndex: number, effectId: number) => boolean;
 type OnDeviceParamChange = (blockIndex: number, paramIndex: number, value: number) => void;
 
 export interface DeviceCallbackRefs {
