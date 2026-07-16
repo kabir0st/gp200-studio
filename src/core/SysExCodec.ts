@@ -1,5 +1,6 @@
 import type { GP200Preset } from './types';
 import { GP200PresetSchema } from './types';
+import { CONTROL_RECORDS_DUMP_OFFSET, parseControlRecords } from './controlRecords';
 
 export const SysExCodec = {
   /**
@@ -80,6 +81,21 @@ export const SysExCodec = {
       0x00, 0x00,                                        // [43-44] padding
       0xF7,                                              // [45]    end
     ]);
+  },
+
+  /**
+   * Name-only slot read: identical request shape to buildReadRequest but
+   * sub=0x20 instead of 0x10. The device answers with a single sub=0x18
+   * chunk (offset 0) whose decoded[28:44] is the preset name — the same
+   * layout parsePresetName already handles. Documented for firmware 1.8.0
+   * (toneforge sysex-protocol.md); much faster than pulling all 7 chunks
+   * when enumerating all 256 slots, so callers should probe once and fall
+   * back to buildReadRequest on timeout.
+   */
+  buildNameReadRequest(slot: number): Uint8Array {
+    const msg = this.buildReadRequest(slot);
+    msg[9] = 0x20;
+    return msg;
   },
 
   parsePresetName(sysexMsg: Uint8Array): string {
@@ -187,7 +203,19 @@ export const SysExCodec = {
       for (const si of routing) effects.push(byBlock[si]);
     }
 
-    return GP200PresetSchema.parse({ version: '1', patchName, author: author || undefined, effects, fxLoopSend, fxLoopReturn, checksum: 0 });
+    // Controller/EXP assignment records. Dump payload mirrors the file
+    // layout shifted -0x28 (name 0x44→28, blocks 0xA0→120), so the tail
+    // records sit at 0x3B0-0x28 = 0x388. The strict record validation in
+    // parseControlRecords makes a wrong offset yield undefined rather than
+    // garbage, so attaching is safe even before hardware confirmation.
+    const controls = parseControlRecords(decoded, CONTROL_RECORDS_DUMP_OFFSET);
+
+    return GP200PresetSchema.parse({
+      version: '1', patchName, author: author || undefined, effects,
+      fxLoopSend, fxLoopReturn, checksum: 0,
+      expAssignments: controls?.exp,
+      ctrlAssignments: controls?.ctrl,
+    });
   },
 
   parseReadChunks(chunks: Uint8Array[]): GP200Preset {

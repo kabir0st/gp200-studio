@@ -40,15 +40,24 @@ export interface UseMidiDeviceReturn {
   namesLoadProgress: number;
   deviceInfo: { deviceType: number; firmwareValues: number[]; versionAccepted: boolean } | null;
   currentPreset: GP200Preset | null;
-  cabIrNames: { section: number; page: number; block: number; name: string; rawData: Uint8Array }[];
+  /** Controller/EXP assignment readback collected during the handshake
+   *  (0x11/0x1C query → 0x12/0x1C response). Raw substrate for decoding
+   *  device-truth CTRL/EXP assignments. */
+  assignmentInfo: { section: number; page: number; block: number; name: string; rawData: Uint8Array }[];
 
   connect: () => Promise<void>;
   disconnect: () => void;
   loadPresetNames: () => Promise<void>;
+  /** Clear cached names (except the already-pulled current bank) and re-enumerate. */
+  refreshNames: () => Promise<void>;
   pullPreset: (slot: number) => Promise<GP200Preset>;
   pushPreset: (preset: GP200Preset, slot: number) => Promise<void>;
   writePresetToSlot: (preset: GP200Preset, slot: number) => Promise<void>;
   saveToSlot: (presetName: string, slot?: number) => Promise<void>;
+  /** Rename a slot without touching its effect data. Briefly switches the
+   *  device to the target slot (required to load the editing buffer), then
+   *  save-commits under the new name and restores the previous slot. */
+  renameSlot: (slot: number, name: string) => Promise<void>;
   sendToggle: (blockIndex: number, enabled: boolean) => void;
   sendParamChange: (blockIndex: number, paramIndex: number, effectId: number, value: number) => void;
   sendReorder: (order: number[], send: number, ret: number) => void;
@@ -149,7 +158,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   const wasConnectedRef = useRef(false);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef(0);
-  const [cabIrNames, setAssignments] = useState<UseMidiDeviceReturn['cabIrNames']>([]);
+  const [assignmentInfo, setAssignments] = useState<UseMidiDeviceReturn['assignmentInfo']>([]);
 
   const outputRef          = useRef<GP200Output | null>(null);
   const inputRef           = useRef<GP200Input | null>(null);
@@ -157,6 +166,10 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   const currentSlotRef     = useRef<number | null>(null);
   const namesLoadAbortRef  = useRef<boolean>(false);
   const namesLoadRunningRef = useRef<boolean>(false);
+  // Whether the fast name-only read (sub=0x20, documented for fw 1.8.0) works
+  // on this device. null = untested; probed once per connection, then either
+  // used for every slot or permanently bypassed in favor of full reads.
+  const fastNameReadRef    = useRef<boolean | null>(null);
 
   // Delegate all send operations, device-initiated callback registration,
   // and FX-state echo suppression to useMidiSend. The parent hook keeps
@@ -187,15 +200,27 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   const onMidiMessage = useCallback((event: { data: unknown }) => {
     const data = getBytes(event.data);
     // sub=0x08 D→H: multipurpose — preset change echo vs FX state response
-    // Distinguish by data[14]: 0x08 = preset change echo, other = FX state response
+    // Distinguish by data[14]: 0x08 = preset change echo, other = FX state response.
+    // CAUTION: hardware footswitch presses ALSO emit data[14]=0x08 frames whose
+    // slot nibbles decode to the CURRENT slot, so data[14] alone is not a
+    // sufficient discriminator (no capture of the full frame yet — see
+    // docs/protocol-capture.md).
     if (isSysEx(data, 0x12, 0x08) && data.length >= 28) {
       if (data[14] === 0x08) {
         // Preset change echo — slot nibble-encoded at data[25:26]
         const slot = ((data[25] & 0x0F) << 4) | (data[26] & 0x0F);
-        if (slot >= 0 && slot < 256) {
+        if (slot >= 0 && slot < 256 && slot !== currentSlotRef.current) {
           console.log(`[GP-200] device slot change: ${slot} (${SysExCodec.slotToLabel(slot)})`);
           setCurrentSlot(slot); currentSlotRef.current = slot;
           onDeviceChangeRef.current?.(slot);
+        } else if (slot === currentSlotRef.current) {
+          // Same-slot "change" frame: emitted on hardware footswitch presses.
+          // Acting on it would re-pull the slot's FLASH copy and clobber
+          // unsaved live edits (the device's edit buffer keeps them). Ignore.
+          // Cost: re-selecting the same patch on the device won't force a
+          // re-pull — it re-syncs on the next real slot change or manual LOAD.
+          const hex = Array.from(data.subarray(10, 28), (b) => b.toString(16).padStart(2, '0')).join(' ');
+          console.log(`[GP-200] same-slot change frame ignored (slot=${slot}, data[10..27]=${hex})`);
         }
       } else if (suppressFxCountRef.current === 0) {
         // FX state response — device reports effect toggle from hardware
@@ -334,7 +359,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
         // Step 9: Assignment polling (non-critical, short timeout, bail on first failure)
         setHandshakeStep('Controller…');
         const ASSIGN_TIMEOUT = 300;
-        const assignmentEntries: UseMidiDeviceReturn['cabIrNames'] = [];
+        const assignmentEntries: UseMidiDeviceReturn['assignmentInfo'] = [];
         const assignmentPlan = [
           { section: 0, pages: [[0, 16], [1, 4]] },
           { section: 1, pages: [[0, 10]] },
@@ -407,6 +432,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     setDeviceInfo(null);
     setCurrentPreset(null);
     setAssignments([]);
+    fastNameReadRef.current = null;
   }, []);
 
   /** Abort background name loading and wait for it to stop */
@@ -576,26 +602,16 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     setCurrentSlot(slot); currentSlotRef.current = slot;
   }, [pauseNameLoading]);
 
-  const loadPresetNames = useCallback(async (): Promise<void> => {
-    if (!outputRef.current || !inputRef.current) return;
-    if (namesLoadRunningRef.current) return; // already running
-    namesLoadRunningRef.current = true;
-    namesLoadAbortRef.current = false;
-    const NAME_TIMEOUT = 500; // 500ms per slot (device responds in ~20ms normally)
-    const BATCH_SIZE = 8;     // Update UI every 8 slots instead of every slot
-
-    for (let s = 0; s < 256; s++) {
-      if (namesLoadAbortRef.current) break;
-      if (presetNamesRef.current[s] !== null) {
-        setNamesLoadProgress(s + 1);
-        continue;
-      }
-      const name = await new Promise<string | null>((resolve) => {
-        const slotNum = s;
+  /** Request one slot's name. Fast path (sub=0x20 name-only read, fw 1.8.0)
+   *  when useFast; full 7-chunk read request otherwise — either way the
+   *  first sub=0x18 chunk with offset 0 carries the name. */
+  const requestSlotName = useCallback(
+    (slot: number, useFast: boolean, timeoutMs: number): Promise<string | null> => {
+      return new Promise<string | null>((resolve) => {
         const timer = setTimeout(() => {
           if (inputRef.current) inputRef.current.onmidimessage = onMidiMessage;
           resolve(null);
-        }, NAME_TIMEOUT);
+        }, timeoutMs);
         if (inputRef.current) {
           inputRef.current.onmidimessage = (event: { data: unknown }) => {
             const data = getBytes(event.data);
@@ -610,8 +626,46 @@ export function useMidiDevice(): UseMidiDeviceReturn {
             }
           };
         }
-        outputRef.current!.send(SysExCodec.buildReadRequest(slotNum));
+        let req: Uint8Array;
+        if (useFast) req = SysExCodec.buildNameReadRequest(slot);
+        else req = SysExCodec.buildReadRequest(slot);
+        outputRef.current!.send(req);
       });
+    },
+    [onMidiMessage],
+  );
+
+  const loadPresetNames = useCallback(async (): Promise<void> => {
+    if (!outputRef.current || !inputRef.current) return;
+    if (namesLoadRunningRef.current) return; // already running
+    namesLoadRunningRef.current = true;
+    namesLoadAbortRef.current = false;
+    const FULL_TIMEOUT = 500; // device responds in ~20ms normally
+    const FAST_TIMEOUT = 250; // single-chunk response — fail over quickly
+    const BATCH_SIZE = 8;     // Update UI every 8 slots instead of every slot
+
+    for (let s = 0; s < 256; s++) {
+      if (namesLoadAbortRef.current) break;
+      if (presetNamesRef.current[s] !== null) {
+        setNamesLoadProgress(s + 1);
+        continue;
+      }
+      let name: string | null = null;
+      if (fastNameReadRef.current !== false) {
+        name = await requestSlotName(s, true, FAST_TIMEOUT);
+        if (name !== null) {
+          fastNameReadRef.current = true;
+        } else if (fastNameReadRef.current === null && !namesLoadAbortRef.current) {
+          // Probe failed on first use — the firmware may not support the
+          // name-only read. Retry this slot with a full read; if THAT works
+          // the fast path is dead for this connection, not the device.
+          const fallback = await requestSlotName(s, false, FULL_TIMEOUT);
+          if (fallback !== null) fastNameReadRef.current = false;
+          name = fallback;
+        }
+      } else {
+        name = await requestSlotName(s, false, FULL_TIMEOUT);
+      }
       if (namesLoadAbortRef.current) break;
       presetNamesRef.current[s] = name;
       // Batch UI updates: only re-render every BATCH_SIZE slots or on the last slot
@@ -624,7 +678,46 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     setPresetNames([...presetNamesRef.current]);
     if (inputRef.current) inputRef.current.onmidimessage = onMidiMessage;
     namesLoadRunningRef.current = false;
-  }, [onMidiMessage]);
+  }, [onMidiMessage, requestSlotName]);
+
+  const refreshNames = useCallback(async (): Promise<void> => {
+    await pauseNameLoading();
+    // Keep the names the handshake already pulled (current bank) — those came
+    // from full reads moments ago; clear everything else for re-enumeration.
+    const bankBase = (() => {
+      if (currentSlotRef.current === null) return -1;
+      return Math.floor(currentSlotRef.current / 4) * 4;
+    })();
+    for (let s = 0; s < 256; s++) {
+      const inCurrentBank = bankBase >= 0 && s >= bankBase && s < bankBase + 4;
+      if (!inCurrentBank) presetNamesRef.current[s] = null;
+    }
+    setPresetNames([...presetNamesRef.current]);
+    setNamesLoadProgress(0);
+    await loadPresetNames();
+  }, [pauseNameLoading, loadPresetNames]);
+
+  const renameSlot = useCallback(async (slot: number, name: string): Promise<void> => {
+    await pauseNameLoading();
+    if (!outputRef.current) throw new Error('Not connected');
+    const output = outputRef.current;
+    const previousSlot = currentSlotRef.current;
+    // Preset-change loads the slot into the device's editing buffer; the
+    // save-commit then persists that buffer under the new name. Effect data
+    // is untouched because nothing else was edited in between.
+    output.send(SysExCodec.buildPresetChange(slot));
+    await new Promise(r => setTimeout(r, 200));
+    output.send(SysExCodec.buildSaveCommit(name, slot));
+    await new Promise(r => setTimeout(r, 300));
+    presetNamesRef.current[slot] = name;
+    setPresetNames([...presetNamesRef.current]);
+    setCurrentSlot(slot); currentSlotRef.current = slot;
+    if (previousSlot !== null && previousSlot !== slot) {
+      output.send(SysExCodec.buildPresetChange(previousSlot));
+      await new Promise(r => setTimeout(r, 200));
+      setCurrentSlot(previousSlot); currentSlotRef.current = previousSlot;
+    }
+  }, [pauseNameLoading]);
 
   // All send* helpers + device-callback setters come from useMidiSend (see
   // the top of the hook where `send` is instantiated). The return value at
@@ -654,8 +747,9 @@ export function useMidiDevice(): UseMidiDeviceReturn {
 
   return {
     status, handshakeStep, errorMessage, deviceName, currentSlot, presetNames, namesLoadProgress,
-    deviceInfo, currentPreset, cabIrNames,
-    connect, disconnect, loadPresetNames, pullPreset, pushPreset, writePresetToSlot, saveToSlot,
+    deviceInfo, currentPreset, assignmentInfo,
+    connect, disconnect, loadPresetNames, refreshNames,
+    pullPreset, pushPreset, writePresetToSlot, saveToSlot, renameSlot,
     // Send operations + device-callback registration are owned by useMidiSend.
     sendEffectChange: send.sendEffectChange,
     sendToggle: send.sendToggle,

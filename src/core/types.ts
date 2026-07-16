@@ -8,6 +8,33 @@ export const EffectSlotSchema = z.object({
   params: z.array(z.number()).length(15),
 });
 
+/**
+ * One EXP pedal assignment record (.prst tail, TLV type 0x000C).
+ * The GP-200 has 3 EXP pages (0=EXP1 Mode A, 1=EXP1 Mode B, 2=EXP2), each
+ * with 3 assignable "Para" items — 9 records per preset, saved with the patch.
+ */
+export const ExpAssignmentSchema = z.object({
+  page: z.number().int().min(0).max(2),
+  item: z.number().int().min(0).max(2),
+  /** Fixed block index (0=PRE..10=VOL) the assigned param lives in; null = unassigned (0xFF). */
+  blockIndex: z.number().int().min(0).max(10).nullable(),
+  /** u16 in the file. Effect params are 0..14; special targets (Patch Volume/
+   *  Tempo in the official editor) may use values beyond that — don't clamp. */
+  paramIndex: z.number().int().min(0).max(0xFFFF),
+  min: z.number(),
+  max: z.number(),
+});
+
+/**
+ * One CTRL footswitch assignment record (.prst tail, TLV type 0x000F).
+ * Each of the 8 CTRL footswitches stores an 11-bit mask — bit n toggles the
+ * fixed effect block n (0=PRE..10=VOL). Saved with the patch.
+ */
+export const CtrlAssignmentSchema = z.object({
+  ctrlIndex: z.number().int().min(0).max(7),
+  blockMask: z.number().int().min(0).max(0x7FF),
+});
+
 export const GP200PresetSchema = z.object({
   version: z.string(),
   patchName: z.string().max(16), // .prst offset 0x44, 16 bytes null-terminated
@@ -27,7 +54,18 @@ export const GP200PresetSchema = z.object({
    * import, tests); the encoder then builds a buffer from scratch.
    */
   rawSource: z.instanceof(Uint8Array).optional(),
+  /**
+   * EXP pedal assignments decoded from the .prst tail records (see
+   * controlRecords.ts). Absent when the tail couldn't be parsed (factory
+   * 1176-byte files, malformed tails) — the raw bytes still round-trip
+   * via rawSource.
+   */
+  expAssignments: z.array(ExpAssignmentSchema).length(9).optional(),
+  /** CTRL 1–8 footswitch assignments decoded from the .prst tail records. */
+  ctrlAssignments: z.array(CtrlAssignmentSchema).length(8).optional(),
 });
 
 export type EffectSlot = z.infer<typeof EffectSlotSchema>;
+export type ExpAssignment = z.infer<typeof ExpAssignmentSchema>;
+export type CtrlAssignment = z.infer<typeof CtrlAssignmentSchema>;
 export type GP200Preset = z.infer<typeof GP200PresetSchema>;

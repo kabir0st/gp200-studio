@@ -11,9 +11,22 @@ interface DialogProps {
   /** Use "alertdialog" for interruptive warnings that demand a decision
    *  (e.g. firmware compatibility) — defaults to "dialog" for everything else. */
   role?: 'dialog' | 'alertdialog';
-  /** "bottom" anchors the panel to the bottom edge (deck drawers); default centers. */
-  placement?: 'center' | 'bottom';
+  /** "bottom" anchors the panel to the bottom edge (deck drawers); "right"
+   *  makes it a full-height side sheet (patch manager); default centers. */
+  placement?: 'center' | 'bottom' | 'right';
 }
+
+const OVERLAY_PLACEMENT: Record<'center' | 'bottom' | 'right', string> = {
+  center: 'justify-center items-center p-4',
+  bottom: 'justify-center items-end p-4',
+  right: 'justify-end items-stretch',
+};
+
+const PANEL_PLACEMENT: Record<'center' | 'bottom' | 'right', string> = {
+  center: '',
+  bottom: '',
+  right: 'h-full rounded-none overflow-y-auto',
+};
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -72,9 +85,7 @@ export function Dialog({
 
   return (
     <div
-      className={`fixed inset-0 z-50 bg-black/60 flex justify-center p-4 ${
-        placement === 'bottom' ? 'items-end' : 'items-center'
-      }`}
+      className={`fixed inset-0 z-50 bg-black/60 flex ${OVERLAY_PLACEMENT[placement]}`}
       onClick={closeOnOverlayClick ? onClose : undefined}
     >
       <Card
@@ -83,7 +94,7 @@ export function Dialog({
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className={`max-w-md w-full p-6 focus:outline-none ${className}`}
+        className={`max-w-md w-full p-6 focus:outline-none ${PANEL_PLACEMENT[placement]} ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {children}

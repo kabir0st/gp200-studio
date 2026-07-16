@@ -51,6 +51,8 @@ function renderBoard(overrides: Partial<Parameters<typeof PedalBoard>[0]> = {}) 
     onFxReturnChange: vi.fn(),
     onExpParamSelect: vi.fn(),
     onExpMinMax: vi.fn(),
+    onCtrlBlockToggle: vi.fn(),
+    onOpenPatchManager: vi.fn(),
     onConnectRequest: vi.fn(),
     onDisconnect: vi.fn(),
     onPushRequest: vi.fn(),

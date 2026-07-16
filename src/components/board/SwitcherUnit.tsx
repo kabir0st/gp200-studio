@@ -25,6 +25,9 @@ interface SwitcherUnitProps {
   onCloseRequest: () => void;
   onOpenFxLoop: () => void;
   onOpenExp: () => void;
+  onOpenCtrl: () => void;
+  /** open the patch-manager side sheet (device slot list) */
+  onOpenPatchManager: () => void;
   /* device session (the old top status bar, merged into the deck) */
   onConnectRequest: () => void;
   onDisconnect: () => void;
@@ -123,6 +126,8 @@ export function SwitcherUnit({
   onCloseRequest,
   onOpenFxLoop,
   onOpenExp,
+  onOpenCtrl,
+  onOpenPatchManager,
   onConnectRequest,
   onDisconnect,
   onPushRequest,
@@ -266,8 +271,24 @@ export function SwitcherUnit({
         <button type="button" className="deck-btn" onClick={onOpenExp}>
           EXP
         </button>
+        <button
+          type="button"
+          className="deck-btn"
+          title="Assign CTRL footswitches to effect blocks"
+          onClick={onOpenCtrl}
+        >
+          CTRL
+        </button>
         {connected ? (
           <>
+            <button
+              type="button"
+              className="deck-btn"
+              title="Browse and manage all device patches"
+              onClick={onOpenPatchManager}
+            >
+              PATCHES
+            </button>
             <button type="button" className="deck-btn" onClick={onLoadRequest}>
               LOAD
             </button>

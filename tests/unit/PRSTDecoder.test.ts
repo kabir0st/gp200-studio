@@ -211,3 +211,31 @@ describe('PRSTDecoder mit echten .prst Dateien', () => {
     expect(preset.author).toBe('Galtone Studio');
   });
 });
+
+describe('PRSTDecoder: controller/EXP assignment records', () => {
+  const fixturePath = join(process.cwd(), 'prst/63-B American Idiot.prst');
+
+  it.skipIf(!existsSync(fixturePath))('decodes CTRL footswitch masks from a real file', () => {
+    const data = new Uint8Array(readFileSync(fixturePath));
+    const preset = new PRSTDecoder(data).decode();
+    expect(preset.ctrlAssignments).toBeDefined();
+    const masks = preset.ctrlAssignments!.map((assignment) => assignment.blockMask);
+    expect(masks).toEqual([0x01, 0, 0, 0, 0x83, 0x82, 0x86, 0x8C]);
+  });
+
+  it.skipIf(!existsSync(fixturePath))('decodes EXP assignments from a real file', () => {
+    const data = new Uint8Array(readFileSync(fixturePath));
+    const preset = new PRSTDecoder(data).decode();
+    expect(preset.expAssignments).toHaveLength(9);
+    expect(preset.expAssignments![0]).toEqual(
+      { page: 0, item: 0, blockIndex: 10, paramIndex: 0, max: 100, min: 0 },
+    );
+  });
+
+  it('leaves assignment fields absent when the tail is unrecognized', () => {
+    const buf = buildTestBuffer(); // tail is all zeros — not a record stream
+    const preset = new PRSTDecoder(buf).decode();
+    expect(preset.ctrlAssignments).toBeUndefined();
+    expect(preset.expAssignments).toBeUndefined();
+  });
+});

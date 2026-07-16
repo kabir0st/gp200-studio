@@ -6,16 +6,29 @@
  * Usage: node scripts/generate-effect-params.mjs
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const XML_PATH = join(
-  process.env.HOME,
-  '.wine/drive_c/Program Files/Valeton/GP-200/Resource/GP-200/File/algorithm.xml'
-);
+// Candidate locations of the official editor's algorithm.xml — a Windows
+// install seen from WSL, or a local Wine install. First hit wins; override
+// with GP200_ALGORITHM_XML.
+const XML_CANDIDATES = [
+  process.env.GP200_ALGORITHM_XML,
+  '/mnt/c/Program Files/Valeton/GP-200/Resource/GP-200/File/algorithm.xml',
+  join(
+    process.env.HOME ?? '',
+    '.wine/drive_c/Program Files/Valeton/GP-200/Resource/GP-200/File/algorithm.xml',
+  ),
+].filter(Boolean);
 const OUT_PATH = join(__dirname, '..', 'src', 'core', 'effectParams.ts');
+
+const XML_PATH = XML_CANDIDATES.find((candidate) => existsSync(candidate));
+if (!XML_PATH) {
+  console.error('algorithm.xml not found. Checked:\n  ' + XML_CANDIDATES.join('\n  '));
+  process.exit(1);
+}
 
 const xml = readFileSync(XML_PATH, 'utf-8');
 

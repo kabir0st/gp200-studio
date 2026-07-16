@@ -1,5 +1,6 @@
 import { BinaryParser } from './BinaryParser';
 import { GP200PresetSchema, type GP200Preset } from './types';
+import { CONTROL_RECORDS_FILE_OFFSET, parseControlRecords } from './controlRecords';
 
 // Confirmed offsets from reverse engineering real .prst files (2026-03-16)
 export const PRST_MAGIC = 'TSRP';
@@ -123,10 +124,18 @@ export class PRSTDecoder {
       this.buffer.byteOffset + this.buffer.byteLength,
     ));
 
+    // Controller/EXP assignment records in the tail after the effect blocks.
+    // Defensive like the routing recovery above: an unknown tail layout
+    // (factory 1176-byte files, future firmware) yields undefined and the
+    // bytes still round-trip via rawSource.
+    const controls = parseControlRecords(this.buffer, CONTROL_RECORDS_FILE_OFFSET);
+
     return GP200PresetSchema.parse({
       version, patchName, author: author || undefined, effects,
       fxLoopSend, fxLoopReturn,
       checksum, rawSource,
+      expAssignments: controls?.exp,
+      ctrlAssignments: controls?.ctrl,
     });
   }
 }

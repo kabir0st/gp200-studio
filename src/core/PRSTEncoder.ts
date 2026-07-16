@@ -1,5 +1,10 @@
 import { BufferGenerator } from './BufferGenerator';
 import { GP200PresetSchema, type GP200Preset } from './types';
+import {
+  CONTROL_RECORDS_FILE_OFFSET,
+  applyControlRecords,
+  buildDefaultTail,
+} from './controlRecords';
 
 // Mirror of PRSTDecoder offsets — confirmed against real .prst files from GP-200
 const PRST_MAGIC         = 'TSRP';
@@ -143,9 +148,35 @@ export class PRSTEncoder {
     }
 
 
-    // ── Checksum (0x4C6-0x4C7) ───────────────────────────────────────────
+    // ── Controls tail (0x3B0-0x4C5): EXP + CTRL assignment records ──────
     const buf = gen.toArrayBuffer();
     const bytes = new Uint8Array(buf);
+    if (hasRaw) {
+      // Overwrite modeled assignment fields inside the round-tripped records;
+      // headers, unknown records, and footer keep the original bytes. Skipped
+      // (with a warning) when the tail layout is unrecognized.
+      const applied = applyControlRecords(
+        bytes,
+        CONTROL_RECORDS_FILE_OFFSET,
+        preset.expAssignments,
+        preset.ctrlAssignments,
+      );
+      if (!applied && (preset.expAssignments || preset.ctrlAssignments)) {
+        console.warn(
+          '[PRSTEncoder] control-record tail not recognized — ' +
+          'EXP/CTRL assignments passed through from rawSource unchanged',
+        );
+      }
+    } else {
+      // Synthetic preset: emit the full canonical tail (matches a factory-
+      // fresh fw 1.8.0 export byte-for-byte when assignments are defaults).
+      bytes.set(
+        buildDefaultTail(preset.expAssignments, preset.ctrlAssignments),
+        CONTROL_RECORDS_FILE_OFFSET,
+      );
+    }
+
+    // ── Checksum (0x4C6-0x4C7) ───────────────────────────────────────────
     let sum = 0;
     for (let i = 0; i < OFFSET_CHECKSUM; i++) {
       sum += bytes[i];

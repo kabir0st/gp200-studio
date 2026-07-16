@@ -4,6 +4,7 @@ import type { PushProgress } from '@/core/devicePush';
 import { getSlotModule } from '@/core/effectNames';
 import { FxLoopArrows } from '@/components/FxLoopArrows';
 import { ControllerPanel } from '@/components/ControllerPanel';
+import { FootswitchPanel } from '@/components/FootswitchPanel';
 import { splitRows } from './boardLayout';
 import { lookupPedalArt, usePedalManifest } from './pedalManifest';
 import { Pedal } from './Pedal';
@@ -46,6 +47,8 @@ export interface PedalBoardProps {
   onFxReturnChange: (pos: number) => void;
   onExpParamSelect: (page: number, item: number, blockIndex: number, paramIdx: number) => void;
   onExpMinMax: (page: number, item: number, min: number, max: number) => void;
+  onCtrlBlockToggle: (ctrlIndex: number, blockIndex: number, on: boolean) => void;
+  onOpenPatchManager: () => void;
   /* device session controls (deck-hosted — there is no separate status bar) */
   onConnectRequest: () => void;
   onDisconnect: () => void;
@@ -90,6 +93,8 @@ export function PedalBoard({
   onFxReturnChange,
   onExpParamSelect,
   onExpMinMax,
+  onCtrlBlockToggle,
+  onOpenPatchManager,
   onConnectRequest,
   onDisconnect,
   onPushRequest,
@@ -101,7 +106,7 @@ export function PedalBoard({
   // hover inspects, ⓘ pins; both keyed by slotIndex (stable across reorders)
   const [hoverSlot, setHoverSlot] = useState<number | null>(null);
   const [pinnedSlot, setPinnedSlot] = useState<number | null>(null);
-  const [openDrawer, setOpenDrawer] = useState<'fxloop' | 'exp' | null>(null);
+  const [openDrawer, setOpenDrawer] = useState<'fxloop' | 'exp' | 'ctrl' | null>(null);
 
   const inspectKey = pinnedSlot ?? hoverSlot;
   const inspected = inspectKey !== null
@@ -178,6 +183,8 @@ export function PedalBoard({
             onCloseRequest={onCloseRequest}
             onOpenFxLoop={() => setOpenDrawer('fxloop')}
             onOpenExp={() => setOpenDrawer('exp')}
+            onOpenCtrl={() => setOpenDrawer('ctrl')}
+            onOpenPatchManager={onOpenPatchManager}
             onConnectRequest={onConnectRequest}
             onDisconnect={onDisconnect}
             onPushRequest={onPushRequest}
@@ -213,6 +220,19 @@ export function PedalBoard({
           connected={connected}
           onParamSelect={onExpParamSelect}
           onMinMax={onExpMinMax}
+        />
+      </DeckDrawer>
+
+      <DeckDrawer
+        open={openDrawer === 'ctrl'}
+        onClose={() => setOpenDrawer(null)}
+        title="Footswitch CTRL"
+      >
+        <FootswitchPanel
+          preset={preset}
+          currentSlot={currentSlot}
+          connected={connected}
+          onCtrlBlockToggle={onCtrlBlockToggle}
         />
       </DeckDrawer>
     </div>

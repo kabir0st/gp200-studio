@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { GP200Preset } from '@/core/types';
 import { getEffectParams } from '@/core/effectParams';
+import { defaultCtrlAssignments } from '@/core/controlRecords';
 
 interface PresetActions {
   preset: GP200Preset | null;
@@ -13,6 +14,8 @@ interface PresetActions {
   setParam: (slotIndex: number, paramIdx: number, value: number) => void;
   setFxLoopSend: (pos: number) => void;
   setFxLoopReturn: (pos: number) => void;
+  /** Assign/unassign one effect block on a CTRL footswitch (bit in the mask). */
+  setCtrlBlock: (ctrlIndex: number, blockIndex: number, on: boolean) => void;
   reset: () => void;
 }
 
@@ -112,6 +115,25 @@ export function usePreset(): PresetActions {
     });
   }, []);
 
+  const setCtrlBlock = useCallback((ctrlIndex: number, blockIndex: number, on: boolean) => {
+    if (ctrlIndex < 0 || ctrlIndex > 7 || blockIndex < 0 || blockIndex > 10) return;
+    setPreset((prev) => {
+      if (!prev) return null;
+      // Materialize a default all-zero assignment set on first edit — presets
+      // whose tail couldn't be decoded (factory files) start from a clean map.
+      const ctrlAssignments = (prev.ctrlAssignments ?? defaultCtrlAssignments()).map(
+        (assignment) => {
+          if (assignment.ctrlIndex !== ctrlIndex) return assignment;
+          const bit = 1 << blockIndex;
+          let blockMask = assignment.blockMask & ~bit;
+          if (on) blockMask = assignment.blockMask | bit;
+          return { ...assignment, blockMask };
+        },
+      );
+      return { ...prev, ctrlAssignments };
+    });
+  }, []);
+
   const reset = useCallback(() => {
     setPreset(null);
   }, []);
@@ -119,7 +141,7 @@ export function usePreset(): PresetActions {
   return {
     preset, loadPreset, setPatchName, setAuthor,
     toggleEffect, changeEffect, reorderEffects, setParam,
-    setFxLoopSend, setFxLoopReturn,
+    setFxLoopSend, setFxLoopReturn, setCtrlBlock,
     reset,
   };
 }

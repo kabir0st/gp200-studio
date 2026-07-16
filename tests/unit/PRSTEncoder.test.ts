@@ -195,3 +195,74 @@ describe('PRSTEncoder', () => {
     expect(reencoded[0x93]).toBe(9);
   });
 });
+
+describe('PRSTEncoder: controller/EXP assignment records', () => {
+  const fixturePath = join(process.cwd(), 'prst/63-B American Idiot.prst');
+  function loadCommitted(): Uint8Array {
+    return new Uint8Array(readFileSync(fixturePath));
+  }
+
+  it.skipIf(!existsSync(fixturePath))(
+    'untouched decode → encode stays byte-exact including the controls tail',
+    () => {
+      const original = loadCommitted();
+      const preset = new PRSTDecoder(original).decode();
+      const encoded = new Uint8Array(new PRSTEncoder().encode(preset));
+      expect(Array.from(encoded)).toEqual(Array.from(original));
+    },
+  );
+
+  it.skipIf(!existsSync(fixturePath))(
+    'flipping one CTRL bit changes only the mask byte (checksum unchanged mod 256 window)',
+    () => {
+      const original = loadCommitted();
+      const preset = new PRSTDecoder(original).decode();
+      const ctrl = preset.ctrlAssignments!.map((assignment) => ({ ...assignment }));
+      // CTRL 2 (index 1) is 0x00 in the fixture — set bit 3 (AMP)
+      ctrl[1] = { ctrlIndex: 1, blockMask: 0x08 };
+      const encoded = new Uint8Array(
+        new PRSTEncoder().encode({ ...preset, ctrlAssignments: ctrl }),
+      );
+      const diffs: number[] = [];
+      for (let i = 0; i < original.length; i++) {
+        if (encoded[i] !== original[i]) diffs.push(i);
+      }
+      // mask low byte + recomputed checksum byte(s)
+      expect(diffs.length).toBeGreaterThanOrEqual(2);
+      expect(diffs.length).toBeLessThanOrEqual(3);
+      expect(diffs[0]).toBeGreaterThanOrEqual(0x460);
+      expect(diffs[0]).toBeLessThan(0x4C0);
+      for (const off of diffs.slice(1)) {
+        expect(off).toBeGreaterThanOrEqual(0x4C6);
+      }
+      // and the flip survives a re-decode
+      const reDecoded = new PRSTDecoder(encoded).decode();
+      expect(reDecoded.ctrlAssignments![1].blockMask).toBe(0x08);
+    },
+  );
+
+  it('synthetic preset (no rawSource) emits the canonical default controls tail', () => {
+    const encoded = new Uint8Array(new PRSTEncoder().encode(samplePreset));
+    const reDecoded = new PRSTDecoder(encoded).decode();
+    expect(reDecoded.ctrlAssignments).toBeDefined();
+    expect(reDecoded.ctrlAssignments!.every((assignment) => assignment.blockMask === 0))
+      .toBe(true);
+    // Default EXP wiring: EXP1-A Para1 → VOL block, EXP1-B Para1 → WAH param 3
+    expect(reDecoded.expAssignments![0].blockIndex).toBe(10);
+    const modeB = reDecoded.expAssignments!.find(
+      (assignment) => assignment.page === 1 && assignment.item === 0,
+    );
+    expect(modeB!.blockIndex).toBe(1);
+    expect(modeB!.paramIndex).toBe(3);
+  });
+
+  it('synthetic preset honors explicit ctrlAssignments', () => {
+    const ctrl = Array.from({ length: 8 }, (_, ctrlIndex) => ({ ctrlIndex, blockMask: 0 }));
+    ctrl[5] = { ctrlIndex: 5, blockMask: 0x201 };
+    const encoded = new Uint8Array(
+      new PRSTEncoder().encode({ ...samplePreset, ctrlAssignments: ctrl }),
+    );
+    const reDecoded = new PRSTDecoder(encoded).decode();
+    expect(reDecoded.ctrlAssignments![5].blockMask).toBe(0x201);
+  });
+});

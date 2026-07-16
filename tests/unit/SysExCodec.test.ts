@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { SysExCodec } from '@/core/SysExCodec';
+import { buildDefaultTail } from '@/core/controlRecords';
 import type { GP200Preset } from '@/core/types';
 
 /** Build a synthetic 1176-byte decoded preset buffer */
@@ -1176,5 +1177,61 @@ describe('SysExCodec: param-change display-value field (#80)', () => {
     expect(dec[14]).toBe(0x3b);      // display-value low byte (was hardcoded 0x6F)
     expect(dec[15]).toBe(0x40);      // display-value high byte (was 0x00)
     expect(new DataView(dec.buffer).getFloat32(20, true)).toBe(27); // float32 still set
+  });
+});
+
+describe('SysExCodec: buildNameReadRequest', () => {
+  it('is identical to buildReadRequest except sub=0x20', () => {
+    const full = SysExCodec.buildReadRequest(0x3E);
+    const nameOnly = SysExCodec.buildNameReadRequest(0x3E);
+    expect(nameOnly.length).toBe(full.length);
+    expect(nameOnly[8]).toBe(0x11);
+    expect(nameOnly[9]).toBe(0x20);
+    for (let i = 0; i < full.length; i++) {
+      if (i === 9) continue;
+      expect(nameOnly[i]).toBe(full[i]);
+    }
+    expect(nameOnly[nameOnly.length - 1]).toBe(0xF7);
+  });
+
+  it('nibble-encodes the slot at [25-26], [37-38], [41-42]', () => {
+    const msg = SysExCodec.buildNameReadRequest(0xFE);
+    for (const off of [25, 37, 41]) {
+      expect(msg[off]).toBe(0x0F);
+      expect(msg[off + 1]).toBe(0x0E);
+    }
+  });
+});
+
+describe('SysExCodec: control records in device dumps', () => {
+  it('attaches CTRL/EXP assignments when the dump carries tail records', () => {
+    const decoded = buildDecodedPreset('CtrlPreset', 9);
+    // Tail records at dump offset 0x388 (file 0x3B0 − 0x28). A 1176-byte
+    // dump fits all records but not the 6-byte footer — mirror that.
+    const ctrl = Array.from({ length: 8 }, (_, ctrlIndex) => ({ ctrlIndex, blockMask: 0 }));
+    ctrl[4] = { ctrlIndex: 4, blockMask: 0x83 };
+    const tail = buildDefaultTail(undefined, ctrl);
+    decoded.set(tail.subarray(0, 1176 - 0x388), 0x388);
+    const preset = SysExCodec.parsePresetFromDecoded(decoded);
+    expect(preset.ctrlAssignments).toBeDefined();
+    expect(preset.ctrlAssignments![4].blockMask).toBe(0x83);
+    expect(preset.expAssignments![0].blockIndex).toBe(10);
+  });
+
+  it('leaves assignments absent for a dump without tail records', () => {
+    const decoded = buildDecodedPreset('NoCtrl', 3);
+    const preset = SysExCodec.parsePresetFromDecoded(decoded);
+    expect(preset.ctrlAssignments).toBeUndefined();
+    expect(preset.expAssignments).toBeUndefined();
+  });
+
+  it('survives a full chunked read round-trip', () => {
+    const decoded = buildDecodedPreset('Chunky', 12);
+    const ctrl = Array.from({ length: 8 }, (_, ctrlIndex) => ({ ctrlIndex, blockMask: 0 }));
+    ctrl[0] = { ctrlIndex: 0, blockMask: 0x7FF };
+    const tail = buildDefaultTail(undefined, ctrl);
+    decoded.set(tail.subarray(0, 1176 - 0x388), 0x388);
+    const preset = SysExCodec.parseReadChunks(buildFakeChunks(decoded, 12));
+    expect(preset.ctrlAssignments![0].blockMask).toBe(0x7FF);
   });
 });
