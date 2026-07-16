@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 64" role="img">
+<defs><linearGradient id="u51" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#8a60cf"/><stop offset="1" stop-color="#5d3898"/></linearGradient></defs>
+<ellipse cx="80" cy="58" rx="34.8" ry="4" fill="rgba(0,0,0,.30)"/><rect x="51" y="8" width="58" height="50" rx="6" fill="url(#u51)" stroke="rgba(0,0,0,.5)" stroke-width=".8"/><rect x="52" y="9" width="56" height="48" rx="5" fill="none" stroke="rgba(255,255,255,.16)" stroke-width=".8"/><path d="M 71 32 V 21 M 67.5 24.5 L 71 20 L 74.5 24.5" fill="none" stroke="#f2ede2" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M 89 20 V 31 M 85.5 27.5 L 89 32 L 92.5 27.5" fill="none" stroke="#f2ede2" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" opacity=".65"/><text x="80" y="49" font-family="JetBrains Mono, ui-monospace, Menlo, monospace" font-size="6" font-weight="700" letter-spacing="0.4" text-anchor="middle" fill="#f2ede2">OCTA</text>
+</svg>

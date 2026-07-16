@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 64" role="img">
+<defs><linearGradient id="b136" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#c24d4d"/><stop offset="1" stop-color="#902525"/></linearGradient><radialGradient id="k137" cx=".35" cy=".3" r=".9">
+<stop offset="0" stop-color="#e2ddd3"/><stop offset="1" stop-color="#77746c"/></radialGradient><radialGradient id="k138" cx=".35" cy=".3" r=".9">
+<stop offset="0" stop-color="#e2ddd3"/><stop offset="1" stop-color="#77746c"/></radialGradient></defs>
+<ellipse cx="80" cy="60" rx="26.04" ry="4" fill="rgba(0,0,0,.30)"/><circle cx="80" cy="33" r="27" fill="url(#b136)" stroke="rgba(0,0,0,.55)" stroke-width="1"/><circle cx="80" cy="33" r="25.5" fill="none" stroke="rgba(255,255,255,.22)" stroke-width=".8"/><circle cx="68" cy="22" r="5.5" fill="url(#k137)" stroke="rgba(0,0,0,.5)" stroke-width=".6"/><line x1="68" y1="22" x2="68" y2="17.5" stroke="#1c1207" stroke-width="1.1" stroke-linecap="round" transform="rotate(24 68 22)"/><circle cx="92" cy="22" r="5.5" fill="url(#k138)" stroke="rgba(0,0,0,.5)" stroke-width=".6"/><line x1="92" y1="22" x2="92" y2="17.5" stroke="#1c1207" stroke-width="1.1" stroke-linecap="round" transform="rotate(24 92 22)"/><circle cx="80" cy="45" r="5" fill="#c9c9c9" stroke="#333" stroke-width=".8"/><circle cx="80" cy="45" r="3" fill="#8f8f8f"/><text x="80" y="35.5" font-family="JetBrains Mono, ui-monospace, Menlo, monospace" font-size="6.4" font-weight="700" letter-spacing="0.4" text-anchor="middle" fill="#f2ede2">FUZZ</text>
+</svg>

@@ -1,0 +1,198 @@
+/* Self-hosted via @fontsource (npm-bundled font files, no runtime request to
+   fonts.googleapis.com / fonts.gstatic.com — GDPR, matches the old repo's
+   next/font/google self-hosting rationale). @import must precede all other
+   rules, including @tailwind. */
+@import '@fontsource/dm-sans/400.css';
+@import '@fontsource/dm-sans/500.css';
+@import '@fontsource/dm-sans/600.css';
+@import '@fontsource/dm-sans/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-dm-sans: 'DM Sans';
+  --font-jetbrains-mono: 'JetBrains Mono';
+
+  --bg-primary: #0f0f0f;
+  --bg-surface: #1a1a1a;
+  --bg-surface-raised: #202020;
+  --bg-elevated: #242424;
+  --bg-card: #1a1a1a;
+  --bg-input: #242424;
+  --bg-deep: #0a0a0a;
+  --bg-hover: #2e2e2e;
+  --text-primary: #e8e4df;
+  /* Secondary sits a notch above muted so the two are visually distinct and
+     secondary clears WCAG AA (~6:1 on --bg-primary) with headroom; muted stays
+     at the AA threshold for genuinely de-emphasised / large uppercase labels. */
+  --text-secondary: #a8a29a;
+  --text-muted: #8a8580;
+  --border-subtle: #2a2724;
+  --border-active: #3a3530;
+  --accent-amber: #d4a24e;
+  --accent-amber-dim: #8a6a30;
+  --accent-red: #c44e4e;
+  --accent-green: #4ec46a;
+  --glow-amber: rgba(212, 162, 78, 0.15);
+  --glow-red: rgba(196, 78, 78, 0.12);
+  --glow-green: rgba(78, 196, 106, 0.12);
+  --knob-track: #2a2724;
+  --knob-fill: #d4a24e;
+
+  /* ── Board view environment (docs/board-design-system.md, dark values) ──
+     Skeuomorphic component styles live in src/components/board/board.css;
+     only the environment tokens are declared here (one token home). Light
+     theme is deferred — these are the dark-theme values only. */
+  --case: #26282b;
+  --board: #17181a;
+  --chrome-bg: #1b1d1f;
+  --chrome-border: #101112;
+  --chrome-text: #e6e3dd;
+  --chrome-muted: #8f8a84;
+  --strip-bg: #151719;
+  --stub-ink: #9a9da0;
+  --pedal-shadow: 0 12px 24px rgba(0, 0, 0, 0.55);
+  --unit-shadow: 0 14px 28px rgba(0, 0, 0, 0.5);
+  --lcd-bg: #0c1a0e;
+  --lcd-text: #5df08a;
+}
+
+body {
+  margin: 0;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Noise texture overlay ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── Custom scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border-active); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ── Range slider (knob tracks) ── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  height: 28px;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--knob-track);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--knob-fill);
+  margin-top: -6px;
+  box-shadow: 0 0 8px rgba(212, 162, 78, 0.4), 0 1px 3px rgba(0,0,0,0.6);
+  transition: box-shadow 0.15s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 14px rgba(212, 162, 78, 0.6), 0 1px 3px rgba(0,0,0,0.6);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--knob-track);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: var(--knob-fill);
+  box-shadow: 0 0 8px rgba(212, 162, 78, 0.4), 0 1px 3px rgba(0,0,0,0.6);
+}
+
+/* ── Select styling ── */
+select {
+  color: var(--text-primary);
+}
+
+select option {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+/* ── LED glow animation ── */
+@keyframes led-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.led-active {
+  animation: led-pulse 2s ease-in-out infinite;
+}
+
+/* ── Slot enter animation ── */
+@keyframes slot-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slot-enter {
+  animation: slot-enter 0.3s ease-out both;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .font-mono-display {
+    font-family: var(--font-jetbrains-mono), monospace;
+  }
+}
+
+/* ── Global keyboard focus ring (WCAG 2.1 AA) ─────────────────────────── */
+/* Amber outline + glow for keyboard navigation. focus-visible only — mouse
+   clicks don't trigger it, keeping the UI calm. Components that need a
+   custom ring can opt out per-case with focus-visible:outline-none. */
+:focus-visible {
+  outline: 2px solid var(--accent-amber);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--glow-amber);
+  border-radius: 4px;
+}
+
+/* ── Reduced motion (WCAG 2.3.3) ──────────────────────────────────────── */
+/* Honour the OS "reduce motion" preference: kill the LED pulse + slot-enter
+   reveal and collapse transitions to near-instant. Users with vestibular
+   disorders opt out of the pedalboard's ambient motion without losing state. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

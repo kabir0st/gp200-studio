@@ -1,0 +1,2504 @@
+[
+  {
+    "name": "COMP",
+    "module": "PRE",
+    "slug": "comp",
+    "file": "comp.svg",
+    "type": "Compressor",
+    "basedOn": "Ross™ Compressor",
+    "blurb": "Evens out your dynamics — quiet notes come up, loud peaks get tamed, sustain increases."
+  },
+  {
+    "name": "COMP4",
+    "module": "PRE",
+    "slug": "comp4",
+    "file": "comp4.svg",
+    "type": "Compressor",
+    "basedOn": "Keeley® Compressor Plus (4-knob)",
+    "blurb": "Evens out your dynamics — quiet notes come up, loud peaks get tamed, sustain increases."
+  },
+  {
+    "name": "S-Comp",
+    "module": "PRE",
+    "slug": "s-comp",
+    "file": "s-comp.svg",
+    "type": "Compressor",
+    "basedOn": "Valeton original — fully adjustable studio-style compressor",
+    "blurb": "Evens out your dynamics — quiet notes come up, loud peaks get tamed, sustain increases."
+  },
+  {
+    "name": "AC Boost",
+    "module": "PRE",
+    "slug": "ac-boost",
+    "file": "ac-boost.svg",
+    "type": "Boost",
+    "basedOn": "Xotic® AC Booster",
+    "blurb": "Pushes your signal harder into the next stage for more volume or drive."
+  },
+  {
+    "name": "B-Boost",
+    "module": "PRE",
+    "slug": "b-boost",
+    "file": "b-boost.svg",
+    "type": "Boost",
+    "basedOn": "Xotic® BB Preamp",
+    "blurb": "Pushes your signal harder into the next stage for more volume or drive."
+  },
+  {
+    "name": "P-Boost",
+    "module": "PRE",
+    "slug": "p-boost",
+    "file": "p-boost.svg",
+    "type": "Boost",
+    "basedOn": "Xotic® RC Booster",
+    "blurb": "Pushes your signal harder into the next stage for more volume or drive."
+  },
+  {
+    "name": "14 Boost",
+    "module": "PRE",
+    "slug": "14-boost",
+    "file": "14-boost.svg",
+    "type": "Boost",
+    "basedOn": "Fortin® Grind boost",
+    "blurb": "Pushes your signal harder into the next stage for more volume or drive."
+  },
+  {
+    "name": "Micro Boost",
+    "module": "PRE",
+    "slug": "micro-boost",
+    "file": "micro-boost.svg",
+    "type": "Boost",
+    "basedOn": "MXR® M133 Micro Amp",
+    "blurb": "Pushes your signal harder into the next stage for more volume or drive."
+  },
+  {
+    "name": "FAT BB",
+    "module": "PRE",
+    "slug": "fat-bb",
+    "file": "fat-bb.svg",
+    "type": "Boost",
+    "basedOn": "Fulltone® Fat Boost",
+    "blurb": "Pushes your signal harder into the next stage for more volume or drive."
+  },
+  {
+    "name": "Boost",
+    "module": "PRE",
+    "slug": "boost",
+    "file": "boost.svg",
+    "type": "Boost",
+    "basedOn": "Xotic® EP Booster",
+    "blurb": "Pushes your signal harder into the next stage for more volume or drive."
+  },
+  {
+    "name": "Gate 1",
+    "module": "NR",
+    "slug": "gate-1",
+    "file": "gate-1.svg",
+    "type": "Gate",
+    "basedOn": "ISP® Decimator™",
+    "blurb": "Cuts noise and hum when you stop playing."
+  },
+  {
+    "name": "Gate 2",
+    "module": "NR",
+    "slug": "gate-2",
+    "file": "gate-2.svg",
+    "type": "Gate",
+    "basedOn": "Valeton original — gate with attack/release control",
+    "blurb": "Cuts noise and hum when you stop playing."
+  },
+  {
+    "name": "Gate 3",
+    "module": "NR",
+    "slug": "gate-3",
+    "file": "gate-3.svg",
+    "type": "Gate",
+    "basedOn": "Valeton original — inverse expander dynamics gate",
+    "blurb": "Cuts noise and hum when you stop playing."
+  },
+  {
+    "name": "AC Refiner",
+    "module": "PRE",
+    "slug": "ac-refiner",
+    "file": "ac-refiner.svg",
+    "type": "Acoustic",
+    "basedOn": "Valeton original — natural acoustic enhancer",
+    "blurb": "Shapes an electric signal to behave like an acoustic instrument."
+  },
+  {
+    "name": "AC Sim",
+    "module": "PRE",
+    "slug": "ac-sim",
+    "file": "ac-sim.svg",
+    "type": "Acoustic",
+    "basedOn": "Boss® AC-2 Acoustic Simulator",
+    "blurb": "Shapes an electric signal to behave like an acoustic instrument."
+  },
+  {
+    "name": "T-Wah",
+    "module": "PRE",
+    "slug": "t-wah",
+    "file": "t-wah.svg",
+    "type": "Filter",
+    "basedOn": "Valeton original — touch (envelope) wah",
+    "blurb": "Sweeps a resonant filter across your signal for vocal, synth-like motion."
+  },
+  {
+    "name": "A-WAH",
+    "module": "PRE",
+    "slug": "a-wah",
+    "file": "a-wah.svg",
+    "type": "Filter",
+    "basedOn": "Valeton original — variable auto wah",
+    "blurb": "Sweeps a resonant filter across your signal for vocal, synth-like motion."
+  },
+  {
+    "name": "Step Filter",
+    "module": "PRE",
+    "slug": "step-filter",
+    "file": "step-filter.svg",
+    "type": "Filter",
+    "basedOn": "Valeton original — 4-step synth filter sequencer",
+    "blurb": "Sweeps a resonant filter across your signal for vocal, synth-like motion."
+  },
+  {
+    "name": "OCTA",
+    "module": "PRE",
+    "slug": "octa",
+    "file": "octa.svg",
+    "type": "Pitch",
+    "basedOn": "Valeton original — polyphonic octaver",
+    "blurb": "Shifts or harmonizes the pitch of what you play."
+  },
+  {
+    "name": "Pitch",
+    "module": "PRE",
+    "slug": "pitch",
+    "file": "pitch.svg",
+    "type": "Pitch",
+    "basedOn": "Valeton original — polyphonic pitch shifter (dry CTRL)",
+    "blurb": "Shifts or harmonizes the pitch of what you play."
+  },
+  {
+    "name": "P-Bend",
+    "module": "PRE",
+    "slug": "p-bend",
+    "file": "p-bend.svg",
+    "type": "Pitch",
+    "basedOn": "Valeton original — polyphonic bend with wet/dry CTRL",
+    "blurb": "Shifts or harmonizes the pitch of what you play."
+  },
+  {
+    "name": "Detune",
+    "module": "MOD",
+    "slug": "detune",
+    "file": "detune.svg",
+    "type": "Pitch",
+    "basedOn": "Valeton original — micro pitch-shift doubler",
+    "blurb": "Shifts or harmonizes the pitch of what you play."
+  },
+  {
+    "name": "Bit Smash",
+    "module": "MOD",
+    "slug": "bit-smash",
+    "file": "bit-smash.svg",
+    "type": "Special",
+    "basedOn": "Valeton original — bitcrusher / sample reducer",
+    "blurb": "A creative sound-design effect."
+  },
+  {
+    "name": "Ring Mod",
+    "module": "PRE",
+    "slug": "ring-mod",
+    "file": "ring-mod.svg",
+    "type": "Special",
+    "basedOn": "Valeton original — ring modulator (bells & chimes)",
+    "blurb": "A creative sound-design effect."
+  },
+  {
+    "name": "Saturate",
+    "module": "PRE",
+    "slug": "saturate",
+    "file": "saturate.svg",
+    "type": "Special",
+    "basedOn": "Valeton original — vintage tape saturation",
+    "blurb": "A creative sound-design effect."
+  },
+  {
+    "name": "Guitar EQ 1",
+    "module": "EQ",
+    "slug": "guitar-eq-1",
+    "file": "guitar-eq-1.svg",
+    "type": "EQ",
+    "basedOn": "5-band guitar EQ (125 Hz – 4 kHz)",
+    "blurb": "Cuts or boosts frequency bands to sculpt your tone."
+  },
+  {
+    "name": "Guitar EQ 2",
+    "module": "EQ",
+    "slug": "guitar-eq-2",
+    "file": "guitar-eq-2.svg",
+    "type": "EQ",
+    "basedOn": "5-band guitar EQ (100 Hz – 6 kHz)",
+    "blurb": "Cuts or boosts frequency bands to sculpt your tone."
+  },
+  {
+    "name": "Bass EQ 1",
+    "module": "EQ",
+    "slug": "bass-eq-1",
+    "file": "bass-eq-1.svg",
+    "type": "EQ",
+    "basedOn": "5-band bass EQ",
+    "blurb": "Cuts or boosts frequency bands to sculpt your tone."
+  },
+  {
+    "name": "Bass EQ 2",
+    "module": "EQ",
+    "slug": "bass-eq-2",
+    "file": "bass-eq-2.svg",
+    "type": "EQ",
+    "basedOn": "5-band bass EQ",
+    "blurb": "Cuts or boosts frequency bands to sculpt your tone."
+  },
+  {
+    "name": "Mess EQ",
+    "module": "EQ",
+    "slug": "mess-eq",
+    "file": "mess-eq.svg",
+    "type": "EQ",
+    "basedOn": "Mesa/Boogie® amp-style 5-band graphic EQ",
+    "blurb": "Cuts or boosts frequency bands to sculpt your tone."
+  },
+  {
+    "name": "Hyper EQ",
+    "module": "EQ",
+    "slug": "hyper-eq",
+    "file": "hyper-eq.svg",
+    "type": "EQ",
+    "basedOn": "10-band graphic EQ for any instrument",
+    "blurb": "Cuts or boosts frequency bands to sculpt your tone."
+  },
+  {
+    "name": "Hammy",
+    "module": "PRE",
+    "slug": "hammy",
+    "file": "hammy.svg",
+    "type": "Pitch",
+    "basedOn": "DigiTech® Whammy™ pitch treadle",
+    "blurb": "Shifts or harmonizes the pitch of what you play."
+  },
+  {
+    "name": "Harmonizer 1",
+    "module": "PRE",
+    "slug": "harmonizer-1",
+    "file": "harmonizer-1.svg",
+    "type": "Pitch",
+    "basedOn": "Valeton original — single-voice auto harmonizer",
+    "blurb": "Shifts or harmonizes the pitch of what you play."
+  },
+  {
+    "name": "Harmonizer 2",
+    "module": "PRE",
+    "slug": "harmonizer-2",
+    "file": "harmonizer-2.svg",
+    "type": "Pitch",
+    "basedOn": "Valeton original — dual-voice auto harmonizer",
+    "blurb": "Shifts or harmonizes the pitch of what you play."
+  },
+  {
+    "name": "Green OD",
+    "module": "DST",
+    "slug": "green-od",
+    "file": "green-od.svg",
+    "type": "Overdrive",
+    "basedOn": "Ibanez® TS-808 Tube Screamer",
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+  },
+  {
+    "name": "OD 9",
+    "module": "PRE",
+    "slug": "od-9",
+    "file": "od-9.svg",
+    "type": "Overdrive",
+    "basedOn": "Ibanez® TS9 Tube Screamer",
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+  },
+  {
+    "name": "Yellow OD",
+    "module": "PRE",
+    "slug": "yellow-od",
+    "file": "yellow-od.svg",
+    "type": "Overdrive",
+    "basedOn": "Boss® OD-1 OverDrive (2-knob)",
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+  },
+  {
+    "name": "Swarm",
+    "module": "DST",
+    "slug": "swarm",
+    "file": "swarm.svg",
+    "type": "Overdrive",
+    "basedOn": "Providence® SOV-2 Stampede OD",
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+  },
+  {
+    "name": "Super OD",
+    "module": "PRE",
+    "slug": "super-od",
+    "file": "super-od.svg",
+    "type": "Overdrive",
+    "basedOn": "Boss® SD-1 Super OverDrive",
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+  },
+  {
+    "name": "Scream OD",
+    "module": "DST",
+    "slug": "scream-od",
+    "file": "scream-od.svg",
+    "type": "Overdrive",
+    "basedOn": "Valeton's take on the Tube Screamer® circuit, extra switches",
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+  },
+  {
+    "name": "Blues OD",
+    "module": "PRE",
+    "slug": "blues-od",
+    "file": "blues-od.svg",
+    "type": "Overdrive",
+    "basedOn": "Boss® BD-2 Blues Driver",
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+  },
+  {
+    "name": "Force",
+    "module": "DST",
+    "slug": "force",
+    "file": "force.svg",
+    "type": "Overdrive",
+    "basedOn": "Fulltone® OCD",
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+  },
+  {
+    "name": "Tube",
+    "module": "DST",
+    "slug": "tube",
+    "file": "tube--dst.svg",
+    "type": "Overdrive",
+    "basedOn": "BK Butler® Tube Driver",
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+  },
+  {
+    "name": "Blues Master",
+    "module": "DST",
+    "slug": "blues-master",
+    "file": "blues-master.svg",
+    "type": "Overdrive",
+    "basedOn": "Marshall® BluesBreaker",
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+  },
+  {
+    "name": "Master OD",
+    "module": "DST",
+    "slug": "master-od",
+    "file": "master-od.svg",
+    "type": "Overdrive",
+    "basedOn": "Marshall® JCM800-in-a-box (clean to driven)",
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+  },
+  {
+    "name": "TaiChi OD",
+    "module": "DST",
+    "slug": "taichi-od",
+    "file": "taichi-od.svg",
+    "type": "Overdrive",
+    "basedOn": "Hermida® Zendrive",
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+  },
+  {
+    "name": "Penesas",
+    "module": "PRE",
+    "slug": "penesas",
+    "file": "penesas.svg",
+    "type": "Overdrive",
+    "basedOn": "Klon® Centaur",
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+  },
+  {
+    "name": "Precise OD",
+    "module": "DST",
+    "slug": "precise-od",
+    "file": "precise-od.svg",
+    "type": "Overdrive",
+    "basedOn": "Horizon Devices® Precision Drive",
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+  },
+  {
+    "name": "Timmy OD",
+    "module": "DST",
+    "slug": "timmy-od",
+    "file": "timmy-od.svg",
+    "type": "Overdrive",
+    "basedOn": "Paul Cochrane® Timmy V2/V3",
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+  },
+  {
+    "name": "Lazaro",
+    "module": "DST",
+    "slug": "lazaro",
+    "file": "lazaro.svg",
+    "type": "Fuzz",
+    "basedOn": "Electro-Harmonix® Big Muff Pi",
+    "blurb": "Aggressive square-wave clipping — thick, saturated, woolly sustain."
+  },
+  {
+    "name": "Red Haze",
+    "module": "DST",
+    "slug": "red-haze",
+    "file": "red-haze.svg",
+    "type": "Fuzz",
+    "basedOn": "Dallas-Arbiter® Fuzz Face",
+    "blurb": "Aggressive square-wave clipping — thick, saturated, woolly sustain."
+  },
+  {
+    "name": "Sora Fuzz",
+    "module": "DST",
+    "slug": "sora-fuzz",
+    "file": "sora-fuzz.svg",
+    "type": "Fuzz",
+    "basedOn": "Sola Sound® Tone Bender",
+    "blurb": "Aggressive square-wave clipping — thick, saturated, woolly sustain."
+  },
+  {
+    "name": "Plustortion",
+    "module": "DST",
+    "slug": "plustortion",
+    "file": "plustortion.svg",
+    "type": "Distortion",
+    "basedOn": "MXR® M104 Distortion+",
+    "blurb": "Hard clipping with more gain and edge than an overdrive."
+  },
+  {
+    "name": "SM Dist",
+    "module": "DST",
+    "slug": "sm-dist",
+    "file": "sm-dist.svg",
+    "type": "Distortion",
+    "basedOn": "Boss® DS-1 Distortion",
+    "blurb": "Hard clipping with more gain and edge than an overdrive."
+  },
+  {
+    "name": "Darktale",
+    "module": "DST",
+    "slug": "darktale",
+    "file": "darktale.svg",
+    "type": "Distortion",
+    "basedOn": "ProCo™ RAT (early LM308 op-amp)",
+    "blurb": "Hard clipping with more gain and edge than an overdrive."
+  },
+  {
+    "name": "Chief",
+    "module": "DST",
+    "slug": "chief",
+    "file": "chief.svg",
+    "type": "Distortion",
+    "basedOn": "Marshall® Guv'nor",
+    "blurb": "Hard clipping with more gain and edge than an overdrive."
+  },
+  {
+    "name": "Master Dist",
+    "module": "DST",
+    "slug": "master-dist",
+    "file": "master-dist.svg",
+    "type": "Distortion",
+    "basedOn": "Marshall® Shredmaster",
+    "blurb": "Hard clipping with more gain and edge than an overdrive."
+  },
+  {
+    "name": "La Charger",
+    "module": "DST",
+    "slug": "la-charger",
+    "file": "la-charger.svg",
+    "type": "Distortion",
+    "basedOn": "MI Audio® Crunch Box",
+    "blurb": "Hard clipping with more gain and edge than an overdrive."
+  },
+  {
+    "name": "Revolt",
+    "module": "DST",
+    "slug": "revolt",
+    "file": "revolt.svg",
+    "type": "Distortion",
+    "basedOn": "Suhr® Riot",
+    "blurb": "Hard clipping with more gain and edge than an overdrive."
+  },
+  {
+    "name": "Flex OD",
+    "module": "DST",
+    "slug": "flex-od",
+    "file": "flex-od.svg",
+    "type": "Bass Drive",
+    "basedOn": "Valeton original — drive for guitar and bass",
+    "blurb": "Drive voiced for bass — keeps the low end intact while adding grit."
+  },
+  {
+    "name": "Bass OD",
+    "module": "DST",
+    "slug": "bass-od",
+    "file": "bass-od.svg",
+    "type": "Bass Drive",
+    "basedOn": "Valeton original — bass OD / distortion / boost",
+    "blurb": "Drive voiced for bass — keeps the low end intact while adding grit."
+  },
+  {
+    "name": "Black Bass",
+    "module": "DST",
+    "slug": "black-bass",
+    "file": "black-bass.svg",
+    "type": "Bass Preamp",
+    "basedOn": "Darkglass® Microtubes B7K",
+    "blurb": "Full tone-shaping preamp voiced for bass guitar."
+  },
+  {
+    "name": "Empire OD",
+    "module": "DST",
+    "slug": "empire-od",
+    "file": "empire-od.svg",
+    "type": "Overdrive",
+    "basedOn": "Analog Man® Prince of Tone",
+    "blurb": "Soft, tube-style clipping — warm crunch that cleans up with your volume knob."
+  },
+  {
+    "name": "Bass Hammer",
+    "module": "DST",
+    "slug": "bass-hammer",
+    "file": "bass-hammer.svg",
+    "type": "Bass Preamp",
+    "basedOn": "Bass preamp (likely Aguilar® Tone Hammer)",
+    "blurb": "Full tone-shaping preamp voiced for bass guitar."
+  },
+  {
+    "name": "Flagman Dist",
+    "module": "DST",
+    "slug": "flagman-dist",
+    "file": "flagman-dist.svg",
+    "type": "Distortion",
+    "basedOn": "Friedman® BE-OD",
+    "blurb": "Hard clipping with more gain and edge than an overdrive."
+  },
+  {
+    "name": "A-Chorus",
+    "module": "MOD",
+    "slug": "a-chorus",
+    "file": "a-chorus.svg",
+    "type": "Chorus",
+    "basedOn": "Boss® CE-3 Chorus",
+    "blurb": "Doubles your signal with slight detune and motion — wide and lush."
+  },
+  {
+    "name": "G-Chorus",
+    "module": "MOD",
+    "slug": "g-chorus",
+    "file": "g-chorus.svg",
+    "type": "Chorus",
+    "basedOn": "Roland® CE-1 Chorus Ensemble",
+    "blurb": "Doubles your signal with slight detune and motion — wide and lush."
+  },
+  {
+    "name": "C-Chorus",
+    "module": "MOD",
+    "slug": "c-chorus",
+    "file": "c-chorus.svg",
+    "type": "Chorus",
+    "basedOn": "Boss® DC-2 Dimension C",
+    "blurb": "Doubles your signal with slight detune and motion — wide and lush."
+  },
+  {
+    "name": "B-Chorus",
+    "module": "MOD",
+    "slug": "b-chorus",
+    "file": "b-chorus.svg",
+    "type": "Chorus",
+    "basedOn": "Chorus voiced for bass (Boss® CEB-3 style)",
+    "blurb": "Doubles your signal with slight detune and motion — wide and lush."
+  },
+  {
+    "name": "M-Chorus",
+    "module": "MOD",
+    "slug": "m-chorus",
+    "file": "m-chorus.svg",
+    "type": "Chorus",
+    "basedOn": "Boss® CH-1 Super Chorus",
+    "blurb": "Doubles your signal with slight detune and motion — wide and lush."
+  },
+  {
+    "name": "Jet",
+    "module": "MOD",
+    "slug": "jet",
+    "file": "jet.svg",
+    "type": "Flanger",
+    "basedOn": "Boss® BF-2 Flanger",
+    "blurb": "A swept comb filter — the classic jet-plane whoosh."
+  },
+  {
+    "name": "B-Jet",
+    "module": "MOD",
+    "slug": "b-jet",
+    "file": "b-jet.svg",
+    "type": "Flanger",
+    "basedOn": "Boss® BF-2 style flanger for bass",
+    "blurb": "A swept comb filter — the classic jet-plane whoosh."
+  },
+  {
+    "name": "N-Jet",
+    "module": "MOD",
+    "slug": "n-jet",
+    "file": "n-jet.svg",
+    "type": "Flanger",
+    "basedOn": "Negative-feedback flanger — \"underwater\" voicing",
+    "blurb": "A swept comb filter — the classic jet-plane whoosh."
+  },
+  {
+    "name": "Trem Jet",
+    "module": "MOD",
+    "slug": "trem-jet",
+    "file": "trem-jet.svg",
+    "type": "Flanger",
+    "basedOn": "Valeton original — flanger + tremolo combo",
+    "blurb": "A swept comb filter — the classic jet-plane whoosh."
+  },
+  {
+    "name": "V-Roto",
+    "module": "MOD",
+    "slug": "v-roto",
+    "file": "v-roto.svg",
+    "type": "Vibrato",
+    "basedOn": "Boss® VB-2 Vibrato (BBD)",
+    "blurb": "Cyclic pitch modulation — wobbles the note itself."
+  },
+  {
+    "name": "G-Roto",
+    "module": "MOD",
+    "slug": "g-roto",
+    "file": "g-roto.svg",
+    "type": "Vibrato",
+    "basedOn": "Roland® CE-1 (vibrato mode)",
+    "blurb": "Cyclic pitch modulation — wobbles the note itself."
+  },
+  {
+    "name": "Vibrato",
+    "module": "MOD",
+    "slug": "vibrato",
+    "file": "vibrato.svg",
+    "type": "Vibrato",
+    "basedOn": "Boss® VB-2 style, wider range",
+    "blurb": "Cyclic pitch modulation — wobbles the note itself."
+  },
+  {
+    "name": "Vibrato T",
+    "module": "MOD",
+    "slug": "vibrato-t",
+    "file": "vibrato-t.svg",
+    "type": "Vibrato",
+    "basedOn": "Valeton original — touch-sensitive vibrato",
+    "blurb": "Cyclic pitch modulation — wobbles the note itself."
+  },
+  {
+    "name": "O-Phase",
+    "module": "MOD",
+    "slug": "o-phase",
+    "file": "o-phase.svg",
+    "type": "Phaser",
+    "basedOn": "MXR® M101 Phase 90",
+    "blurb": "Sweeping notch filters — a swirling, liquid motion."
+  },
+  {
+    "name": "G-Phase",
+    "module": "MOD",
+    "slug": "g-phase",
+    "file": "g-phase.svg",
+    "type": "Phaser",
+    "basedOn": "Boss® PH-1 Phaser",
+    "blurb": "Sweeping notch filters — a swirling, liquid motion."
+  },
+  {
+    "name": "S-Phase",
+    "module": "MOD",
+    "slug": "s-phase",
+    "file": "s-phase.svg",
+    "type": "Phaser",
+    "basedOn": "Electro-Harmonix® Small Stone",
+    "blurb": "Sweeping notch filters — a swirling, liquid motion."
+  },
+  {
+    "name": "Pan Phase",
+    "module": "MOD",
+    "slug": "pan-phase",
+    "file": "pan-phase.svg",
+    "type": "Phaser",
+    "basedOn": "Valeton original — phaser + tremolo/pan blend",
+    "blurb": "Sweeping notch filters — a swirling, liquid motion."
+  },
+  {
+    "name": "M-Vibe",
+    "module": "MOD",
+    "slug": "m-vibe",
+    "file": "m-vibe.svg",
+    "type": "Phaser",
+    "basedOn": "Voodoo Lab® Micro Vibe",
+    "blurb": "Sweeping notch filters — a swirling, liquid motion."
+  },
+  {
+    "name": "Vibe",
+    "module": "MOD",
+    "slug": "vibe",
+    "file": "vibe.svg",
+    "type": "Phaser",
+    "basedOn": "Shin-Ei® Uni-Vibe",
+    "blurb": "Sweeping notch filters — a swirling, liquid motion."
+  },
+  {
+    "name": "O-Trem",
+    "module": "MOD",
+    "slug": "o-trem",
+    "file": "o-trem.svg",
+    "type": "Tremolo",
+    "basedOn": "Demeter® TRM-1 Tremulator",
+    "blurb": "Cyclic volume modulation — rhythmic pulsing."
+  },
+  {
+    "name": "Sine Trem",
+    "module": "MOD",
+    "slug": "sine-trem",
+    "file": "sine-trem.svg",
+    "type": "Tremolo",
+    "basedOn": "Valeton original — sine-wave tremolo",
+    "blurb": "Cyclic volume modulation — rhythmic pulsing."
+  },
+  {
+    "name": "Triangle Trem",
+    "module": "MOD",
+    "slug": "triangle-trem",
+    "file": "triangle-trem.svg",
+    "type": "Tremolo",
+    "basedOn": "Valeton original — triangle-wave tremolo",
+    "blurb": "Cyclic volume modulation — rhythmic pulsing."
+  },
+  {
+    "name": "Bias Trem",
+    "module": "MOD",
+    "slug": "bias-trem",
+    "file": "bias-trem.svg",
+    "type": "Tremolo",
+    "basedOn": "Valeton original — tube-bias style tremolo",
+    "blurb": "Cyclic volume modulation — rhythmic pulsing."
+  },
+  {
+    "name": "Auto Swell",
+    "module": "PRE",
+    "slug": "auto-swell",
+    "file": "auto-swell.svg",
+    "type": "Special",
+    "basedOn": "Valeton original — violin-style auto volume swell",
+    "blurb": "A creative sound-design effect."
+  },
+  {
+    "name": "Hold",
+    "module": "PRE",
+    "slug": "hold",
+    "file": "hold.svg",
+    "type": "Special",
+    "basedOn": "Valeton original — holds a note like a short loop",
+    "blurb": "A creative sound-design effect."
+  },
+  {
+    "name": "Freeze",
+    "module": "PRE",
+    "slug": "freeze",
+    "file": "freeze.svg",
+    "type": "Special",
+    "basedOn": "Valeton original — sustains the sound at the moment of activation",
+    "blurb": "A creative sound-design effect."
+  },
+  {
+    "name": "V-Wah",
+    "module": "WAH",
+    "slug": "v-wah",
+    "file": "v-wah.svg",
+    "type": "Wah",
+    "basedOn": "VOX® V846",
+    "blurb": "A sweepable band-pass filter — the classic crying vowel sound."
+  },
+  {
+    "name": "S-Wah",
+    "module": "WAH",
+    "slug": "s-wah",
+    "file": "s-wah.svg",
+    "type": "Wah",
+    "basedOn": "Valeton original — classic wah voicing",
+    "blurb": "A sweepable band-pass filter — the classic crying vowel sound."
+  },
+  {
+    "name": "B-Wah",
+    "module": "WAH",
+    "slug": "b-wah",
+    "file": "b-wah.svg",
+    "type": "Wah",
+    "basedOn": "Valeton original — wah voiced for bass",
+    "blurb": "A sweepable band-pass filter — the classic crying vowel sound."
+  },
+  {
+    "name": "C-Wah",
+    "module": "WAH",
+    "slug": "c-wah",
+    "file": "c-wah.svg",
+    "type": "Wah",
+    "basedOn": "Dunlop® Cry Baby® (classic 60's)",
+    "blurb": "A sweepable band-pass filter — the classic crying vowel sound."
+  },
+  {
+    "name": "P-Wah",
+    "module": "WAH",
+    "slug": "p-wah",
+    "file": "p-wah.svg",
+    "type": "Wah",
+    "basedOn": "Dunlop® JP95 John Petrucci signature wah",
+    "blurb": "A sweepable band-pass filter — the classic crying vowel sound."
+  },
+  {
+    "name": "Volume",
+    "module": "VOL",
+    "slug": "volume",
+    "file": "volume.svg",
+    "type": "Volume",
+    "basedOn": "Volume pedal block",
+    "blurb": "Master level control placed anywhere in the chain."
+  },
+  {
+    "name": "Tweedy",
+    "module": "AMP",
+    "slug": "tweedy",
+    "file": "tweedy.svg",
+    "type": "Clean Amp",
+    "basedOn": "Fender® Tweed Deluxe",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "Bellman 59N",
+    "module": "AMP",
+    "slug": "bellman-59n",
+    "file": "bellman-59n.svg",
+    "type": "Clean Amp",
+    "basedOn": "Fender® '59 Bassman (normal channel)",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "Dark Twin",
+    "module": "AMP",
+    "slug": "dark-twin",
+    "file": "dark-twin--amp.svg",
+    "type": "Clean Amp",
+    "basedOn": "Fender® '65 Twin Reverb",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "Dark DLX",
+    "module": "AMP",
+    "slug": "dark-dlx",
+    "file": "dark-dlx.svg",
+    "type": "Clean Amp",
+    "basedOn": "Fender® Deluxe Reverb",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "Dark Vibra",
+    "module": "AMP",
+    "slug": "dark-vibra",
+    "file": "dark-vibra.svg",
+    "type": "Clean Amp",
+    "basedOn": "Fender® Vibroverb 6G16 (1963)",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "Silver Twin",
+    "module": "AMP",
+    "slug": "silver-twin",
+    "file": "silver-twin.svg",
+    "type": "Clean Amp",
+    "basedOn": "Fender® Silverface Twin Reverb",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "SUPDual CL",
+    "module": "AMP",
+    "slug": "supdual-cl",
+    "file": "supdual-cl.svg",
+    "type": "Clean Amp",
+    "basedOn": "Supro® Dual-Tone 1624T (CH1)",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "Foxy 15TB",
+    "module": "AMP",
+    "slug": "foxy-15tb",
+    "file": "foxy-15tb.svg",
+    "type": "Clean Amp",
+    "basedOn": "VOX® AC-100 (vintage)",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "Foxy 30N",
+    "module": "AMP",
+    "slug": "foxy-30n",
+    "file": "foxy-30n.svg",
+    "type": "Clean Amp",
+    "basedOn": "VOX® AC30HW (clean)",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "J-120 CL",
+    "module": "AMP",
+    "slug": "j-120-cl",
+    "file": "j-120-cl.svg",
+    "type": "Clean Amp",
+    "basedOn": "Roland® JC-120 Jazz Chorus",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "Match CL",
+    "module": "AMP",
+    "slug": "match-cl",
+    "file": "match-cl.svg",
+    "type": "Clean Amp",
+    "basedOn": "Matchless™ Chieftain 212 (clean)",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "L-Star CL",
+    "module": "AMP",
+    "slug": "l-star-cl",
+    "file": "l-star-cl.svg",
+    "type": "Clean Amp",
+    "basedOn": "Mesa/Boogie® Lone Star (CH1)",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "BogSV CL",
+    "module": "AMP",
+    "slug": "bogsv-cl",
+    "file": "bogsv-cl.svg",
+    "type": "Clean Amp",
+    "basedOn": "Bogner® Shiva 20th Anniversary (clean)",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "Z38 CL",
+    "module": "AMP",
+    "slug": "z38-cl",
+    "file": "z38-cl.svg",
+    "type": "Clean Amp",
+    "basedOn": "Dr. Z® Maz 38 Sr. (clean)",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "Knights CL",
+    "module": "AMP",
+    "slug": "knights-cl",
+    "file": "knights-cl.svg",
+    "type": "Clean Amp",
+    "basedOn": "Grindrod® Pendragon PG20C (clean, bright off)",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "Bad-KT CL",
+    "module": "AMP",
+    "slug": "bad-kt-cl",
+    "file": "bad-kt-cl.svg",
+    "type": "Clean Amp",
+    "basedOn": "Bad Cat® Hot Cat 30 (clean)",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "Solo100 CL",
+    "module": "AMP",
+    "slug": "solo100-cl",
+    "file": "solo100-cl.svg",
+    "type": "Clean Amp",
+    "basedOn": "Soldano® SLO-100 (clean)",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "Bellman 59B",
+    "module": "AMP",
+    "slug": "bellman-59b",
+    "file": "bellman-59b.svg",
+    "type": "Drive Amp",
+    "basedOn": "Fender® '59 Bassman (bright channel)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "Foxy 30TB",
+    "module": "AMP",
+    "slug": "foxy-30tb",
+    "file": "foxy-30tb.svg",
+    "type": "Drive Amp",
+    "basedOn": "VOX® AC30HW (top boost, driven)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "SUPDual OD",
+    "module": "AMP",
+    "slug": "supdual-od",
+    "file": "supdual-od.svg",
+    "type": "Drive Amp",
+    "basedOn": "Supro® Dual-Tone 1624T (CH2)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "UK 45",
+    "module": "AMP",
+    "slug": "uk-45",
+    "file": "uk-45.svg",
+    "type": "Drive Amp",
+    "basedOn": "Marshall® JTM45 (normal channel)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "UK 45+",
+    "module": "AMP",
+    "slug": "uk-45-plus",
+    "file": "uk-45-plus.svg",
+    "type": "Drive Amp",
+    "basedOn": "Marshall® JTM45 \"Plexi\"",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "UK 45JP",
+    "module": "AMP",
+    "slug": "uk-45jp",
+    "file": "uk-45jp.svg",
+    "type": "Drive Amp",
+    "basedOn": "Marshall® JTM45 (channels jumpered)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "UK 50",
+    "module": "AMP",
+    "slug": "uk-50",
+    "file": "uk-50.svg",
+    "type": "Drive Amp",
+    "basedOn": "Marshall® JMP50 (normal channel)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "UK 50+",
+    "module": "AMP",
+    "slug": "uk-50-plus",
+    "file": "uk-50-plus.svg",
+    "type": "Drive Amp",
+    "basedOn": "Marshall® JMP50 (1966)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "UK 50JP",
+    "module": "AMP",
+    "slug": "uk-50jp",
+    "file": "uk-50jp.svg",
+    "type": "Drive Amp",
+    "basedOn": "Marshall® JMP50 (channels jumpered)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "UK SLP",
+    "module": "AMP",
+    "slug": "uk-slp",
+    "file": "uk-slp.svg",
+    "type": "Drive Amp",
+    "basedOn": "Marshall® 1959HW Super Lead Plexi (mid-60's)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "UK 800",
+    "module": "AMP",
+    "slug": "uk-800",
+    "file": "uk-800.svg",
+    "type": "Drive Amp",
+    "basedOn": "Marshall® JCM800",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "Mess2C+ 1",
+    "module": "AMP",
+    "slug": "mess2c-plus-1",
+    "file": "mess2c-plus-1.svg",
+    "type": "Drive Amp",
+    "basedOn": "Mesa/Boogie® Mark IIC+ (voicing 1)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "Mess2C+ 2",
+    "module": "AMP",
+    "slug": "mess2c-plus-2",
+    "file": "mess2c-plus-2.svg",
+    "type": "Drive Amp",
+    "basedOn": "Mesa/Boogie® Mark IIC+ (voicing 2)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "Mess2C+ 3",
+    "module": "AMP",
+    "slug": "mess2c-plus-3",
+    "file": "mess2c-plus-3.svg",
+    "type": "Drive Amp",
+    "basedOn": "Mesa/Boogie® Mark IIC+ (voicing 3)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "BogSV OD",
+    "module": "AMP",
+    "slug": "bogsv-od",
+    "file": "bogsv-od.svg",
+    "type": "Drive Amp",
+    "basedOn": "Bogner® Shiva 20th Anniversary (overdrive)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "Juice30 OD",
+    "module": "AMP",
+    "slug": "juice30-od",
+    "file": "juice30-od.svg",
+    "type": "Drive Amp",
+    "basedOn": "Orange® AD30 (dirty channel)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "Flagman 1",
+    "module": "AMP",
+    "slug": "flagman-1",
+    "file": "flagman-1.svg",
+    "type": "Drive Amp",
+    "basedOn": "Friedman® BE-100 (plexi channel)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "Flagman 2",
+    "module": "AMP",
+    "slug": "flagman-2",
+    "file": "flagman-2.svg",
+    "type": "Drive Amp",
+    "basedOn": "Friedman® BE-100 Deluxe (plexi channel)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "Bog BlueV",
+    "module": "AMP",
+    "slug": "bog-bluev",
+    "file": "bog-bluev.svg",
+    "type": "Drive Amp",
+    "basedOn": "Bogner® Ecstasy (blue channel, vintage)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "Bog BlueM",
+    "module": "AMP",
+    "slug": "bog-bluem",
+    "file": "bog-bluem.svg",
+    "type": "Drive Amp",
+    "basedOn": "Bogner® Ecstasy (blue channel, modern)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "Solo100 OD",
+    "module": "AMP",
+    "slug": "solo100-od",
+    "file": "solo100-od.svg",
+    "type": "Drive Amp",
+    "basedOn": "Soldano® SLO-100 (crunch)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "Match OD",
+    "module": "AMP",
+    "slug": "match-od",
+    "file": "match-od.svg",
+    "type": "Drive Amp",
+    "basedOn": "Matchless™ Chieftain 212 (overdrive)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "Z38 OD",
+    "module": "AMP",
+    "slug": "z38-od",
+    "file": "z38-od.svg",
+    "type": "Drive Amp",
+    "basedOn": "Dr. Z® Maz 38 Sr. (overdrive)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "L-Star OD",
+    "module": "AMP",
+    "slug": "l-star-od",
+    "file": "l-star-od.svg",
+    "type": "Drive Amp",
+    "basedOn": "Mesa/Boogie® Lone Star (CH2)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "Bad-KT OD",
+    "module": "AMP",
+    "slug": "bad-kt-od",
+    "file": "bad-kt-od.svg",
+    "type": "Drive Amp",
+    "basedOn": "Bad Cat® Hot Cat 30 (overdrive)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "UK 900",
+    "module": "AMP",
+    "slug": "uk-900",
+    "file": "uk-900.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "Marshall® JCM900",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "Juice R100",
+    "module": "AMP",
+    "slug": "juice-r100",
+    "file": "juice-r100.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "Orange® Rockerverb 100 (dirty channel)",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "Mess4 LD",
+    "module": "AMP",
+    "slug": "mess4-ld",
+    "file": "mess4-ld.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "Mesa/Boogie® Mark IV (lead 1)",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "Mess4 LD 2",
+    "module": "AMP",
+    "slug": "mess4-ld-2",
+    "file": "mess4-ld-2.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "Mesa/Boogie® Mark IV (lead 2)",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "Mess4 LD 3",
+    "module": "AMP",
+    "slug": "mess4-ld-3",
+    "file": "mess4-ld-3.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "Mesa/Boogie® Mark IV (lead 3)",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "Solo100 LD",
+    "module": "AMP",
+    "slug": "solo100-ld",
+    "file": "solo100-ld.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "Soldano® SLO-100 (overdrive)",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "EV 51",
+    "module": "AMP",
+    "slug": "ev-51",
+    "file": "ev-51.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "Peavey® 5150 (lead channel)",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "Flagman+ 1",
+    "module": "AMP",
+    "slug": "flagman-plus-1",
+    "file": "flagman-plus-1.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "Friedman® BE-100 (brown-eye channel)",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "Flagman+ 2",
+    "module": "AMP",
+    "slug": "flagman-plus-2",
+    "file": "flagman-plus-2.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "Friedman® BE-100 Deluxe (brown-eye channel)",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "Eagle 120",
+    "module": "AMP",
+    "slug": "eagle-120",
+    "file": "eagle-120.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "ENGL® Savage 120",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "Eagle 120+",
+    "module": "AMP",
+    "slug": "eagle-120-plus",
+    "file": "eagle-120-plus.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "ENGL® Savage 120 (boosted)",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "Power LD",
+    "module": "AMP",
+    "slug": "power-ld",
+    "file": "power-ld.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "ENGL® Powerball II E645/2 (CH4)",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "Dizz VH",
+    "module": "AMP",
+    "slug": "dizz-vh",
+    "file": "dizz-vh.svg",
+    "type": "Clean Amp",
+    "basedOn": "Diezel® VH4 (CH1 clean)",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "Dizz VH S",
+    "module": "AMP",
+    "slug": "dizz-vh-s",
+    "file": "dizz-vh-s.svg",
+    "type": "Drive Amp",
+    "basedOn": "Diezel® VH4 (CH2 crunch)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "Mess DualV",
+    "module": "AMP",
+    "slug": "mess-dualv",
+    "file": "mess-dualv.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "Mesa/Boogie® Dual Rectifier (vintage mode)",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "Mess DualM",
+    "module": "AMP",
+    "slug": "mess-dualm",
+    "file": "mess-dualm.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "Mesa/Boogie® Dual Rectifier (modern mode)",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "Dizz VH+",
+    "module": "AMP",
+    "slug": "dizz-vh-plus",
+    "file": "dizz-vh-plus.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "Diezel® VH4 (CH3 heavy)",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "Dizz VH+ S",
+    "module": "AMP",
+    "slug": "dizz-vh-plus-s",
+    "file": "dizz-vh-plus-s.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "Diezel® VH4 (CH4 ultra)",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "Bog RedV",
+    "module": "AMP",
+    "slug": "bog-redv",
+    "file": "bog-redv.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "Bogner® Ecstasy (red channel, vintage)",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "Bog RedM",
+    "module": "AMP",
+    "slug": "bog-redm",
+    "file": "bog-redm.svg",
+    "type": "Hi-Gain Amp",
+    "basedOn": "Bogner® Ecstasy (red channel, modern)",
+    "blurb": "High-gain amp voicing — saturated, compressed and huge."
+  },
+  {
+    "name": "Classic Bass",
+    "module": "AMP",
+    "slug": "classic-bass",
+    "file": "classic-bass.svg",
+    "type": "Bass Amp",
+    "basedOn": "Ampeg® SVT",
+    "blurb": "Bass amplifier voicing — deep lows and punchy mids."
+  },
+  {
+    "name": "Foxy Bass",
+    "module": "AMP",
+    "slug": "foxy-bass",
+    "file": "foxy-bass.svg",
+    "type": "Bass Amp",
+    "basedOn": "VOX® AC-100 bass (vintage)",
+    "blurb": "Bass amplifier voicing — deep lows and punchy mids."
+  },
+  {
+    "name": "Mess Bass",
+    "module": "AMP",
+    "slug": "mess-bass",
+    "file": "mess-bass.svg",
+    "type": "Bass Amp",
+    "basedOn": "Mesa/Boogie® Bass 400",
+    "blurb": "Bass amplifier voicing — deep lows and punchy mids."
+  },
+  {
+    "name": "Knights CL+",
+    "module": "AMP",
+    "slug": "knights-cl-plus",
+    "file": "knights-cl-plus.svg",
+    "type": "Clean Amp",
+    "basedOn": "Grindrod® Pendragon PG20C (clean, bright on)",
+    "blurb": "Clean guitar amplifier voicing — headroom, sparkle and body."
+  },
+  {
+    "name": "Knights OD",
+    "module": "AMP",
+    "slug": "knights-od",
+    "file": "knights-od.svg",
+    "type": "Drive Amp",
+    "basedOn": "Grindrod® Pendragon PG20C (overdrive)",
+    "blurb": "Amp pushed into natural tube breakup — crunch and midrange growl."
+  },
+  {
+    "name": "Mini Bass",
+    "module": "AMP",
+    "slug": "mini-bass",
+    "file": "mini-bass.svg",
+    "type": "Bass Amp",
+    "basedOn": "Ampeg® B-15 \"Flip Top\"",
+    "blurb": "Bass amplifier voicing — deep lows and punchy mids."
+  },
+  {
+    "name": "Bass Pre",
+    "module": "AMP",
+    "slug": "bass-pre",
+    "file": "bass-pre.svg",
+    "type": "Bass Amp",
+    "basedOn": "Alembic™ F-2B tube preamp",
+    "blurb": "Bass amplifier voicing — deep lows and punchy mids."
+  },
+  {
+    "name": "AC Pre",
+    "module": "AMP",
+    "slug": "ac-pre",
+    "file": "ac-pre.svg",
+    "type": "Acoustic Preamp",
+    "basedOn": "AER® Colourizer 2 (EQ F1: 90 Hz – 1.6 kHz)",
+    "blurb": "Preamp voicing for acoustic instruments."
+  },
+  {
+    "name": "AC Pre 2",
+    "module": "AMP",
+    "slug": "ac-pre-2",
+    "file": "ac-pre-2.svg",
+    "type": "Acoustic Preamp",
+    "basedOn": "AER® Colourizer 2 (EQ F2: 680 Hz – 11 kHz)",
+    "blurb": "Preamp voicing for acoustic instruments."
+  },
+  {
+    "name": "SUP ZEP",
+    "module": "CAB",
+    "slug": "sup-zep",
+    "file": "sup-zep.svg",
+    "type": "Cabinet",
+    "basedOn": "Supro® 1×6\" cab (oval speaker)",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "TWD CP",
+    "module": "CAB",
+    "slug": "twd-cp",
+    "file": "twd-cp.svg",
+    "type": "Cabinet",
+    "basedOn": "Vintage Fender® Champ 1×8\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "TWD PRC",
+    "module": "CAB",
+    "slug": "twd-prc",
+    "file": "twd-prc.svg",
+    "type": "Cabinet",
+    "basedOn": "Vintage Fender® Princeton 1×10\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "DARK LUX",
+    "module": "CAB",
+    "slug": "dark-lux",
+    "file": "dark-lux.svg",
+    "type": "Cabinet",
+    "basedOn": "Vintage Fender® Deluxe 1×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "DARK VIT",
+    "module": "CAB",
+    "slug": "dark-vit",
+    "file": "dark-vit.svg",
+    "type": "Cabinet",
+    "basedOn": "Vintage Fender® Vibrolux 1×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "ROUT",
+    "module": "CAB",
+    "slug": "rout",
+    "file": "rout.svg",
+    "type": "Cabinet",
+    "basedOn": "Carr® Rambler 1×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "BogSV",
+    "module": "CAB",
+    "slug": "bogsv",
+    "file": "bogsv.svg",
+    "type": "Cabinet",
+    "basedOn": "Bogner® Shiva 1×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Bad-KT",
+    "module": "CAB",
+    "slug": "bad-kt",
+    "file": "bad-kt.svg",
+    "type": "Cabinet",
+    "basedOn": "Bad Cat® Hot Cat 1×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "FOXY 1",
+    "module": "CAB",
+    "slug": "foxy-1",
+    "file": "foxy-1.svg",
+    "type": "Cabinet",
+    "basedOn": "Vintage VOX® AC15 1×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "D STAR",
+    "module": "CAB",
+    "slug": "d-star",
+    "file": "d-star.svg",
+    "type": "Cabinet",
+    "basedOn": "Mesa/Boogie® Lone Star 1×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "TOM OPEN",
+    "module": "CAB",
+    "slug": "tom-open",
+    "file": "tom-open.svg",
+    "type": "Cabinet",
+    "basedOn": "Swart® Atomic Space 1×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "TWD LUX",
+    "module": "CAB",
+    "slug": "twd-lux",
+    "file": "twd-lux.svg",
+    "type": "Cabinet",
+    "basedOn": "Fender® Tweed Deluxe 1×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "US STO",
+    "module": "CAB",
+    "slug": "us-sto",
+    "file": "us-sto.svg",
+    "type": "Cabinet",
+    "basedOn": "1980's Mesa/Boogie® 1×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "ACE",
+    "module": "CAB",
+    "slug": "ace",
+    "file": "ace.svg",
+    "type": "Cabinet",
+    "basedOn": "Morgan® AC20 Deluxe 1×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "UK G12",
+    "module": "CAB",
+    "slug": "uk-g12",
+    "file": "uk-g12.svg",
+    "type": "Cabinet",
+    "basedOn": "Marshall® 1×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "FOXY 2",
+    "module": "CAB",
+    "slug": "foxy-2",
+    "file": "foxy-2.svg",
+    "type": "Cabinet",
+    "basedOn": "Vintage VOX® AC30 2×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Match",
+    "module": "CAB",
+    "slug": "match",
+    "file": "match.svg",
+    "type": "Cabinet",
+    "basedOn": "Matchless® Chieftain 2×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "J-120",
+    "module": "CAB",
+    "slug": "j-120",
+    "file": "j-120.svg",
+    "type": "Cabinet",
+    "basedOn": "Roland® Jazz Chorus 2×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Dark Twin",
+    "module": "CAB",
+    "slug": "dark-twin",
+    "file": "dark-twin--cab.svg",
+    "type": "Cabinet",
+    "basedOn": "Vintage Fender® '65 Twin Reverb 2×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "UK GRN 1",
+    "module": "CAB",
+    "slug": "uk-grn-1",
+    "file": "uk-grn-1.svg",
+    "type": "Cabinet",
+    "basedOn": "Marshall® 2550 Silver Jubilee 2×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "TWD SUP",
+    "module": "CAB",
+    "slug": "twd-sup",
+    "file": "twd-sup.svg",
+    "type": "Cabinet",
+    "basedOn": "Custom Fender® Tweed 2×10\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "BOUTI",
+    "module": "CAB",
+    "slug": "bouti",
+    "file": "bouti.svg",
+    "type": "Cabinet",
+    "basedOn": "Unique custom 2×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Bellman 1",
+    "module": "CAB",
+    "slug": "bellman-1",
+    "file": "bellman-1.svg",
+    "type": "Cabinet",
+    "basedOn": "Vintage Fender® \"Piggyback\" Bassman 2×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "SUP",
+    "module": "CAB",
+    "slug": "sup",
+    "file": "sup.svg",
+    "type": "Cabinet",
+    "basedOn": "Supro® 1624T 2×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "MATT TWD",
+    "module": "CAB",
+    "slug": "matt-twd",
+    "file": "matt-twd.svg",
+    "type": "Cabinet",
+    "basedOn": "Matchless® 2×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "SUP Star",
+    "module": "CAB",
+    "slug": "sup-star",
+    "file": "sup-star.svg",
+    "type": "Cabinet",
+    "basedOn": "Mesa/Boogie® Lone Star 2×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Freed",
+    "module": "CAB",
+    "slug": "freed",
+    "file": "freed.svg",
+    "type": "Cabinet",
+    "basedOn": "Fryette® Deliverance 2×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Dark CS",
+    "module": "CAB",
+    "slug": "dark-cs",
+    "file": "dark-cs.svg",
+    "type": "Cabinet",
+    "basedOn": "Custom-modified Fender® 2×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "DB Rock",
+    "module": "CAB",
+    "slug": "db-rock",
+    "file": "db-rock.svg",
+    "type": "Cabinet",
+    "basedOn": "Two-Rock® 2×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Blue SK",
+    "module": "CAB",
+    "slug": "blue-sk",
+    "file": "blue-sk.svg",
+    "type": "Cabinet",
+    "basedOn": "Custom 2×12\" w/ Celestion® Alnico Blue",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Bellman 2",
+    "module": "CAB",
+    "slug": "bellman-2",
+    "file": "bellman-2.svg",
+    "type": "Cabinet",
+    "basedOn": "Fender® '59 Bassman 4×10\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "UK LD",
+    "module": "CAB",
+    "slug": "uk-ld",
+    "file": "uk-ld.svg",
+    "type": "Cabinet",
+    "basedOn": "Marshall® 1960AV 4×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "UK TD",
+    "module": "CAB",
+    "slug": "uk-td",
+    "file": "uk-td.svg",
+    "type": "Cabinet",
+    "basedOn": "'68 Marshall® basketweave 4×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "UK MD",
+    "module": "CAB",
+    "slug": "uk-md",
+    "file": "uk-md.svg",
+    "type": "Cabinet",
+    "basedOn": "Custom-modified Marshall® 4×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "UK GRN 2",
+    "module": "CAB",
+    "slug": "uk-grn-2",
+    "file": "uk-grn-2.svg",
+    "type": "Cabinet",
+    "basedOn": "Vintage Marshall® 4×12\" w/ Celestion® Greenbacks",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "EV",
+    "module": "CAB",
+    "slug": "ev",
+    "file": "ev.svg",
+    "type": "Cabinet",
+    "basedOn": "Peavey® 6505 4×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Mess",
+    "module": "CAB",
+    "slug": "mess",
+    "file": "mess.svg",
+    "type": "Cabinet",
+    "basedOn": "Mesa/Boogie® Rectifier 4×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Bog",
+    "module": "CAB",
+    "slug": "bog",
+    "file": "bog.svg",
+    "type": "Cabinet",
+    "basedOn": "Bogner® 4×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Eagle",
+    "module": "CAB",
+    "slug": "eagle",
+    "file": "eagle.svg",
+    "type": "Cabinet",
+    "basedOn": "ENGL® 4×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Uban",
+    "module": "CAB",
+    "slug": "uban",
+    "file": "uban.svg",
+    "type": "Cabinet",
+    "basedOn": "Bogner® Über Kab 4×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Solo",
+    "module": "CAB",
+    "slug": "solo",
+    "file": "solo.svg",
+    "type": "Cabinet",
+    "basedOn": "Soldano® 4×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Juice",
+    "module": "CAB",
+    "slug": "juice",
+    "file": "juice.svg",
+    "type": "Cabinet",
+    "basedOn": "Orange® PPC412 4×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "H-WAY",
+    "module": "CAB",
+    "slug": "h-way",
+    "file": "h-way.svg",
+    "type": "Cabinet",
+    "basedOn": "Vintage Hiwatt® SE4123 4×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "UK Dark",
+    "module": "CAB",
+    "slug": "uk-dark",
+    "file": "uk-dark.svg",
+    "type": "Cabinet",
+    "basedOn": "1968 Marshall® 4×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Way",
+    "module": "CAB",
+    "slug": "way",
+    "file": "way.svg",
+    "type": "Cabinet",
+    "basedOn": "Vintage WEM® 4×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Dumb",
+    "module": "CAB",
+    "slug": "dumb",
+    "file": "dumb.svg",
+    "type": "Cabinet",
+    "basedOn": "Dumble® 4×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Dizz",
+    "module": "CAB",
+    "slug": "dizz",
+    "file": "dizz.svg",
+    "type": "Cabinet",
+    "basedOn": "Diezel® 4×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "TRP",
+    "module": "CAB",
+    "slug": "trp",
+    "file": "trp.svg",
+    "type": "Cabinet",
+    "basedOn": "Hughes & Kettner® Triamp 4×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "UK 75",
+    "module": "CAB",
+    "slug": "uk-75",
+    "file": "uk-75.svg",
+    "type": "Cabinet",
+    "basedOn": "Marshall® 4×12\" w/ Celestion® G12T-75",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "King",
+    "module": "CAB",
+    "slug": "king",
+    "file": "king.svg",
+    "type": "Cabinet",
+    "basedOn": "Mesa/Boogie® Road King 4×12\"",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "ADM 1",
+    "module": "CAB",
+    "slug": "adm-1",
+    "file": "adm-1.svg",
+    "type": "Cabinet",
+    "basedOn": "David Eden® 1×15\" bass cab",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Workman 1",
+    "module": "CAB",
+    "slug": "workman-1",
+    "file": "workman-1.svg",
+    "type": "Cabinet",
+    "basedOn": "SWR® 1×15\" bass cab",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "F-TOP",
+    "module": "CAB",
+    "slug": "f-top",
+    "file": "f-top.svg",
+    "type": "Cabinet",
+    "basedOn": "Ampeg® PF-115HE 1×15\" bass cab",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "US BASS",
+    "module": "CAB",
+    "slug": "us-bass",
+    "file": "us-bass.svg",
+    "type": "Cabinet",
+    "basedOn": "Mesa/Boogie® 2×10\" bass cab",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "MATT",
+    "module": "CAB",
+    "slug": "matt",
+    "file": "matt.svg",
+    "type": "Cabinet",
+    "basedOn": "Markbass® 2×10\" bass cab",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "ADM 2",
+    "module": "CAB",
+    "slug": "adm-2",
+    "file": "adm-2.svg",
+    "type": "Cabinet",
+    "basedOn": "David Eden® 4×10\" bass cab",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "AMPG 1",
+    "module": "CAB",
+    "slug": "ampg-1",
+    "file": "ampg-1.svg",
+    "type": "Cabinet",
+    "basedOn": "Ampeg® SVT-410HE 4×10\" bass cab",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "Workman 2",
+    "module": "CAB",
+    "slug": "workman-2",
+    "file": "workman-2.svg",
+    "type": "Cabinet",
+    "basedOn": "SWR® Workingman's 4×10\" bass cab",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "HACK",
+    "module": "CAB",
+    "slug": "hack",
+    "file": "hack.svg",
+    "type": "Cabinet",
+    "basedOn": "Hartke® 4×12\" (aluminum cones)",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "AMPG 2",
+    "module": "CAB",
+    "slug": "ampg-2",
+    "file": "ampg-2.svg",
+    "type": "Cabinet",
+    "basedOn": "Ampeg® SVT-810E 8×10\" fridge",
+    "blurb": "Speaker cabinet simulation — the final voicing stage of the rig."
+  },
+  {
+    "name": "AC",
+    "module": "CAB",
+    "slug": "ac",
+    "file": "ac.svg",
+    "type": "Acoustic IR",
+    "basedOn": "Dreadnought acoustic simulation 1",
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+  },
+  {
+    "name": "AC Dream",
+    "module": "CAB",
+    "slug": "ac-dream",
+    "file": "ac-dream.svg",
+    "type": "Acoustic IR",
+    "basedOn": "Dreadnought acoustic simulation 2",
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+  },
+  {
+    "name": "OM",
+    "module": "CAB",
+    "slug": "om",
+    "file": "om.svg",
+    "type": "Acoustic IR",
+    "basedOn": "OM-body acoustic simulation",
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+  },
+  {
+    "name": "JUMBO",
+    "module": "CAB",
+    "slug": "jumbo",
+    "file": "jumbo.svg",
+    "type": "Acoustic IR",
+    "basedOn": "Jumbo acoustic simulation",
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+  },
+  {
+    "name": "Bird",
+    "module": "CAB",
+    "slug": "bird",
+    "file": "bird.svg",
+    "type": "Acoustic IR",
+    "basedOn": "Iconic \"H-Bird\" acoustic simulation",
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+  },
+  {
+    "name": "GA",
+    "module": "CAB",
+    "slug": "ga",
+    "file": "ga.svg",
+    "type": "Acoustic IR",
+    "basedOn": "Grand Auditorium acoustic simulation",
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+  },
+  {
+    "name": "Classic AC",
+    "module": "CAB",
+    "slug": "classic-ac",
+    "file": "classic-ac.svg",
+    "type": "Acoustic IR",
+    "basedOn": "Classical (nylon) guitar simulation",
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+  },
+  {
+    "name": "Mandolin",
+    "module": "CAB",
+    "slug": "mandolin",
+    "file": "mandolin.svg",
+    "type": "Acoustic IR",
+    "basedOn": "Mandolin simulation",
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+  },
+  {
+    "name": "Fretless Bass",
+    "module": "CAB",
+    "slug": "fretless-bass",
+    "file": "fretless-bass.svg",
+    "type": "Acoustic IR",
+    "basedOn": "Fretless acoustic bass simulation",
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+  },
+  {
+    "name": "Double Bass",
+    "module": "CAB",
+    "slug": "double-bass",
+    "file": "double-bass.svg",
+    "type": "Acoustic IR",
+    "basedOn": "Double bass simulation",
+    "blurb": "Body impulse response — makes the signal resonate like the real instrument."
+  },
+  {
+    "name": "User IR",
+    "module": "CAB",
+    "slug": "user-ir",
+    "file": "user-ir.svg",
+    "type": "User IR",
+    "basedOn": "Your imported IR (44.1 kHz / 1024-sample WAV)",
+    "blurb": "Plays your own imported impulse-response WAV files."
+  },
+  {
+    "name": "Pure",
+    "module": "DLY",
+    "slug": "pure",
+    "file": "pure.svg",
+    "type": "Delay",
+    "basedOn": "Valeton original — pristine digital delay",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Analog",
+    "module": "DLY",
+    "slug": "analog",
+    "file": "analog.svg",
+    "type": "Delay",
+    "basedOn": "Warm BBD-style analog delay",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Tape",
+    "module": "DLY",
+    "slug": "tape",
+    "file": "tape.svg",
+    "type": "Delay",
+    "basedOn": "Roland® RE-201 Space Echo",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Dual Echo",
+    "module": "DLY",
+    "slug": "dual-echo",
+    "file": "dual-echo.svg",
+    "type": "Delay",
+    "basedOn": "Dual L/R delay (Andy Timmons \"Halo\"-style)",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Ping Pong",
+    "module": "DLY",
+    "slug": "ping-pong",
+    "file": "ping-pong.svg",
+    "type": "Delay",
+    "basedOn": "Valeton original — stereo bouncing repeats",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Slapback",
+    "module": "DLY",
+    "slug": "slapback",
+    "file": "slapback.svg",
+    "type": "Delay",
+    "basedOn": "Classic 50s-style short slapback echo",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Sweep Echo",
+    "module": "DLY",
+    "slug": "sweep-echo",
+    "file": "sweep-echo.svg",
+    "type": "Delay",
+    "basedOn": "Valeton original — filter-swept repeats",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Ring Echo",
+    "module": "DLY",
+    "slug": "ring-echo",
+    "file": "ring-echo.svg",
+    "type": "Delay",
+    "basedOn": "Valeton original — ring-modulated repeats",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Tube",
+    "module": "DLY",
+    "slug": "tube",
+    "file": "tube--dly.svg",
+    "type": "Delay",
+    "basedOn": "Binson® Echorec magnetic-drum echo",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "M-Echo",
+    "module": "DLY",
+    "slug": "m-echo",
+    "file": "m-echo.svg",
+    "type": "Delay",
+    "basedOn": "4-head multi-tap tape echo machine",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Sweet Echo",
+    "module": "DLY",
+    "slug": "sweet-echo",
+    "file": "sweet-echo.svg",
+    "type": "Delay",
+    "basedOn": "Maxon® AD900 Analog Delay",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "999 Echo",
+    "module": "DLY",
+    "slug": "999-echo",
+    "file": "999-echo.svg",
+    "type": "Delay",
+    "basedOn": "Vintage 80's rack delay (likely Boss® RDD-10)",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Vintage Rack",
+    "module": "DLY",
+    "slug": "vintage-rack",
+    "file": "vintage-rack.svg",
+    "type": "Delay",
+    "basedOn": "Vintage 1980's rack-mount digital delay",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "BBD Delay S",
+    "module": "DLY",
+    "slug": "bbd-delay-s",
+    "file": "bbd-delay-s.svg",
+    "type": "Delay",
+    "basedOn": "Boss® DM-3 stereo analog delay (BBD)",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Digital Delay S",
+    "module": "DLY",
+    "slug": "digital-delay-s",
+    "file": "digital-delay-s.svg",
+    "type": "Delay",
+    "basedOn": "Boss® DD-3 stereo digital delay",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Tape Delay S",
+    "module": "DLY",
+    "slug": "tape-delay-s",
+    "file": "tape-delay-s.svg",
+    "type": "Delay",
+    "basedOn": "Roland® RE-201 Space Echo (stereo)",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Lofi Echo",
+    "module": "DLY",
+    "slug": "lofi-echo",
+    "file": "lofi-echo.svg",
+    "type": "Delay",
+    "basedOn": "Valeton original — degraded lo-fi repeats",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Rev Echo",
+    "module": "DLY",
+    "slug": "rev-echo",
+    "file": "rev-echo.svg",
+    "type": "Delay",
+    "basedOn": "Valeton original — reversed-feedback delay",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Ambience 1",
+    "module": "DLY",
+    "slug": "ambience-1",
+    "file": "ambience-1.svg",
+    "type": "Delay",
+    "basedOn": "Electro-Harmonix® Deluxe Memory Man (multi-tap voicing 1)",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Ambience 2",
+    "module": "DLY",
+    "slug": "ambience-2",
+    "file": "ambience-2.svg",
+    "type": "Delay",
+    "basedOn": "Electro-Harmonix® Deluxe Memory Man (multi-tap voicing 2)",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Broken Delay",
+    "module": "DLY",
+    "slug": "broken-delay",
+    "file": "broken-delay.svg",
+    "type": "Delay",
+    "basedOn": "Valeton original — glitch/stutter fragment delay",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Ice Delay",
+    "module": "DLY",
+    "slug": "ice-delay",
+    "file": "ice-delay.svg",
+    "type": "Delay",
+    "basedOn": "Valeton original — crystalline ambient delay",
+    "blurb": "Repeats your signal — from slapback echoes to long ambient trails."
+  },
+  {
+    "name": "Room",
+    "module": "RVB",
+    "slug": "room",
+    "file": "room.svg",
+    "type": "Reverb",
+    "basedOn": "Room simulation",
+    "blurb": "Adds the reflections of a physical space around your sound."
+  },
+  {
+    "name": "Hall",
+    "module": "RVB",
+    "slug": "hall",
+    "file": "hall.svg",
+    "type": "Reverb",
+    "basedOn": "Concert-hall simulation",
+    "blurb": "Adds the reflections of a physical space around your sound."
+  },
+  {
+    "name": "Church",
+    "module": "RVB",
+    "slug": "church",
+    "file": "church.svg",
+    "type": "Reverb",
+    "basedOn": "Church / cathedral simulation",
+    "blurb": "Adds the reflections of a physical space around your sound."
+  },
+  {
+    "name": "Plate",
+    "module": "RVB",
+    "slug": "plate",
+    "file": "plate.svg",
+    "type": "Reverb",
+    "basedOn": "EMT® 140 studio plate",
+    "blurb": "Adds the reflections of a physical space around your sound."
+  },
+  {
+    "name": "Spring",
+    "module": "RVB",
+    "slug": "spring",
+    "file": "spring.svg",
+    "type": "Reverb",
+    "basedOn": "Roland® RE-201 spring tank",
+    "blurb": "Adds the reflections of a physical space around your sound."
+  },
+  {
+    "name": "N-Star",
+    "module": "RVB",
+    "slug": "n-star",
+    "file": "n-star.svg",
+    "type": "Reverb",
+    "basedOn": "Valeton original — lush bright decays",
+    "blurb": "Adds the reflections of a physical space around your sound."
+  },
+  {
+    "name": "Deepsea",
+    "module": "RVB",
+    "slug": "deepsea",
+    "file": "deepsea.svg",
+    "type": "Reverb",
+    "basedOn": "Valeton original — huge deep decays",
+    "blurb": "Adds the reflections of a physical space around your sound."
+  },
+  {
+    "name": "Sweet Space",
+    "module": "RVB",
+    "slug": "sweet-space",
+    "file": "sweet-space.svg",
+    "type": "Reverb",
+    "basedOn": "Valeton original — lush modulated reverb",
+    "blurb": "Adds the reflections of a physical space around your sound."
+  },
+  {
+    "name": "Shimmer",
+    "module": "RVB",
+    "slug": "shimmer",
+    "file": "shimmer.svg",
+    "type": "Reverb",
+    "basedOn": "Valeton original — octave-up shimmer trails",
+    "blurb": "Adds the reflections of a physical space around your sound."
+  },
+  {
+    "name": "Studio",
+    "module": "RVB",
+    "slug": "studio",
+    "file": "studio.svg",
+    "type": "Reverb",
+    "basedOn": "Recording-studio room simulation",
+    "blurb": "Adds the reflections of a physical space around your sound."
+  },
+  {
+    "name": "Club",
+    "module": "RVB",
+    "slug": "club",
+    "file": "club.svg",
+    "type": "Reverb",
+    "basedOn": "Small club simulation",
+    "blurb": "Adds the reflections of a physical space around your sound."
+  },
+  {
+    "name": "Concert",
+    "module": "RVB",
+    "slug": "concert",
+    "file": "concert.svg",
+    "type": "Reverb",
+    "basedOn": "Concert venue simulation",
+    "blurb": "Adds the reflections of a physical space around your sound."
+  },
+  {
+    "name": "Arena",
+    "module": "RVB",
+    "slug": "arena",
+    "file": "arena.svg",
+    "type": "Reverb",
+    "basedOn": "Arena simulation",
+    "blurb": "Adds the reflections of a physical space around your sound."
+  },
+  {
+    "name": "Amp Spring",
+    "module": "RVB",
+    "slug": "amp-spring",
+    "file": "amp-spring.svg",
+    "type": "Reverb",
+    "basedOn": "Solid-state combo amp spring reverb",
+    "blurb": "Adds the reflections of a physical space around your sound."
+  },
+  {
+    "name": "Tube Spring",
+    "module": "RVB",
+    "slug": "tube-spring",
+    "file": "tube-spring.svg",
+    "type": "Reverb",
+    "basedOn": "60's Fender® tube spring reverb unit",
+    "blurb": "Adds the reflections of a physical space around your sound."
+  },
+  {
+    "name": "SnapTone",
+    "module": "AMP",
+    "slug": "snaptone",
+    "file": "snaptone--amp.svg",
+    "type": "NAM Player",
+    "basedOn": "Neural Amp Modeler capture player (amp captures)",
+    "blurb": "Plays Neural Amp Modeler captures imported from the community."
+  },
+  {
+    "name": "SnapTone",
+    "module": "DST",
+    "slug": "snaptone",
+    "file": "snaptone--dst.svg",
+    "type": "NAM Player",
+    "basedOn": "Neural Amp Modeler capture player (drive captures)",
+    "blurb": "Plays Neural Amp Modeler captures imported from the community."
+  }
+]

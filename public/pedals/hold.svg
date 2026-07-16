@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 64" role="img">
+<defs><linearGradient id="u267" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#eee7d9"/><stop offset="1" stop-color="#b3ada1"/></linearGradient></defs>
+<ellipse cx="80" cy="58" rx="34.8" ry="4" fill="rgba(0,0,0,.30)"/><rect x="51" y="8" width="58" height="50" rx="6" fill="url(#u267)" stroke="rgba(0,0,0,.5)" stroke-width=".8"/><rect x="52" y="9" width="56" height="48" rx="5" fill="none" stroke="rgba(255,255,255,.16)" stroke-width=".8"/><circle cx="80" cy="26" r="8" fill="none" stroke="#1c1712" stroke-width="1.6"/><path d="M 77.6 22.5 v 7 M 82.4 22.5 v 7" stroke="#1c1712" stroke-width="1.8" stroke-linecap="round"/><text x="80" y="49" font-family="JetBrains Mono, ui-monospace, Menlo, monospace" font-size="6" font-weight="700" letter-spacing="0.4" text-anchor="middle" fill="#1c1712">HOLD</text>
+</svg>

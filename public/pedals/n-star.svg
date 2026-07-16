@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 64" role="img">
+<defs><linearGradient id="u703" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#52cfdd"/><stop offset="1" stop-color="#2c98a4"/></linearGradient></defs>
+<ellipse cx="80" cy="58" rx="34.8" ry="4" fill="rgba(0,0,0,.30)"/><rect x="51" y="8" width="58" height="50" rx="6" fill="url(#u703)" stroke="rgba(0,0,0,.5)" stroke-width=".8"/><rect x="52" y="9" width="56" height="48" rx="5" fill="none" stroke="rgba(255,255,255,.16)" stroke-width=".8"/><path d="M 72 19 Q 73.26 24.74 79 26 Q 73.26 27.26 72 33 Q 70.74 27.26 65 26 Q 70.74 24.74 72 19 Z" fill="#1c1712" opacity="0.95"/><path d="M 87 16.5 Q 87.81 20.19 91.5 21 Q 87.81 21.81 87 25.5 Q 86.19 21.81 82.5 21 Q 86.19 20.19 87 16.5 Z" fill="#1c1712" opacity="0.6"/><path d="M 90 28 Q 90.54 30.46 93 31 Q 90.54 31.54 90 34 Q 89.46 31.54 87 31 Q 89.46 30.46 90 28 Z" fill="#1c1712" opacity="0.4"/><text x="80" y="49" font-family="JetBrains Mono, ui-monospace, Menlo, monospace" font-size="6" font-weight="700" letter-spacing="0.4" text-anchor="middle" fill="#1c1712">N-STAR</text>
+</svg>

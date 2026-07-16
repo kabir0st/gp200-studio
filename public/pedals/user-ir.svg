@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 64" role="img">
+<defs><linearGradient id="u626" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#525456"/><stop offset="1" stop-color="#2c2e30"/></linearGradient></defs>
+<ellipse cx="80" cy="58" rx="34.8" ry="4" fill="rgba(0,0,0,.30)"/><rect x="51" y="8" width="58" height="50" rx="6" fill="url(#u626)" stroke="rgba(0,0,0,.5)" stroke-width=".8"/><rect x="52" y="9" width="56" height="48" rx="5" fill="none" stroke="rgba(255,255,255,.16)" stroke-width=".8"/><path d="M 62 26 h 6 l 3 -8 l 4 14 l 4 -11 l 3 5 h 16" fill="none" stroke="#dfe4e6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><text x="80" y="49" font-family="JetBrains Mono, ui-monospace, Menlo, monospace" font-size="6" font-weight="700" letter-spacing="0.4" text-anchor="middle" fill="#dfe4e6">USER IR</text>
+</svg>
