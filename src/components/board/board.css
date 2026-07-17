@@ -1215,6 +1215,23 @@
 .board-view .audio-meters .am-row.muted {
   opacity: 0.45;
 }
+.board-view .audio-meters .am-out-select {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  max-width: 150px;
+  padding: 6px 4px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid var(--chrome-border);
+  color: var(--chrome-text);
+  cursor: pointer;
+  text-overflow: ellipsis;
+}
+.board-view .audio-meters .am-out-select:hover {
+  border-color: var(--chrome-muted);
+}
 .board-view .audio-meters .am-error {
   font-family: var(--font-jetbrains-mono), monospace;
   font-size: 9px;

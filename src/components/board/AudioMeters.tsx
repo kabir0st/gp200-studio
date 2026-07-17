@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ChangeEvent } from 'react';
 import { useAudioEngine } from '@/components/AudioEngineProvider';
 
 /**
@@ -44,6 +44,10 @@ export function AudioMeters() {
     );
   }
 
+  const handleOutputChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    meter.setOutputDevice(event.target.value);
+  };
+
   let monButtonClass = 'deck-btn mon';
   let outRowClass = 'am-row';
   let outRowTitle: string | undefined;
@@ -65,6 +69,22 @@ export function AudioMeters() {
         <span className="am-lbl">OUT</span>
         <span className="am-track"><span ref={outBar} className="am-fill out" /></span>
       </div>
+      {meter.outputDevices.length > 0 && (
+        <select
+          className="am-out-select"
+          value={meter.outputDeviceId}
+          onChange={handleOutputChange}
+          aria-label="Audio output device"
+          title="Playback device for MONITOR and the loop station — pick the GP-200 to avoid the OS default output's latency"
+        >
+          <option value="">SYSTEM OUT</option>
+          {meter.outputDevices.map((device) => (
+            <option key={device.deviceId} value={device.deviceId}>
+              {device.label}
+            </option>
+          ))}
+        </select>
+      )}
       <button
         type="button"
         className={monButtonClass}

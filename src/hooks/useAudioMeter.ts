@@ -7,6 +7,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 // user gesture (the board auto-enables on open); Chrome then creates the
 // AudioContext suspended, so enable() resumes it on the first interaction.
 
+export interface AudioOutputOption {
+  deviceId: string;
+  label: string;
+}
+
 export interface AudioMeterApi {
   /** capture running */
   active: boolean;
@@ -17,9 +22,18 @@ export interface AudioMeterApi {
   error: string | null;
   /** input → speakers monitoring path on/off (OUT meter follows this) */
   monitoring: boolean;
+  /**
+   * Selectable playback devices ([] when AudioContext.setSinkId is
+   * unsupported); routing to the GP-200's own output avoids the latency of
+   * the OS default device.
+   */
+  outputDevices: AudioOutputOption[];
+  /** current playback device id; '' = system default */
+  outputDeviceId: string;
   enable: () => Promise<void>;
   disable: () => void;
   setMonitoring: (on: boolean) => void;
+  setOutputDevice: (deviceId: string) => void;
   /** current levels 0..1 (perceptual, dB-mapped); read inside rAF, not state */
   getLevels: () => { input: number; output: number };
   /** the live AudioContext, or null while inactive; shared with the looper */
@@ -29,6 +43,34 @@ export interface AudioMeterApi {
 }
 
 const DEVICE_HINT = /gp-?200|valeton/i;
+const OUTPUT_STORAGE_KEY = 'gp200-studio.audio-output-device';
+
+// AudioContext.setSinkId is Chromium-only and not yet in TS's lib.dom; the
+// app is Chrome/Edge-only anyway, but detect it so the API degrades to an
+// empty device list where it's absent.
+interface SinkCapableContext extends AudioContext {
+  setSinkId?: (sinkId: string) => Promise<void>;
+}
+
+function sinkSelectionSupported(): boolean {
+  return 'setSinkId' in AudioContext.prototype;
+}
+
+function loadSavedOutputDevice(): string {
+  try {
+    return localStorage.getItem(OUTPUT_STORAGE_KEY) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+function saveOutputDevice(deviceId: string): void {
+  try {
+    localStorage.setItem(OUTPUT_STORAGE_KEY, deviceId);
+  } catch {
+    // Private mode / storage disabled: the choice just won't persist.
+  }
+}
 
 function levelFrom(analyser: AnalyserNode, buf: Float32Array<ArrayBuffer>): number {
   analyser.getFloatTimeDomainData(buf);
@@ -45,7 +87,12 @@ export function useAudioMeter(): AudioMeterApi {
   const [deviceLabel, setDeviceLabel] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [monitoring, setMonitoringState] = useState(false);
+  const [outputDevices, setOutputDevices] = useState<AudioOutputOption[]>([]);
+  const [outputDeviceId, setOutputDeviceId] = useState<string>(loadSavedOutputDevice);
 
+  // The wanted sink, readable from stable callbacks without stale closures.
+  const desiredSinkRef = useRef<string>(loadSavedOutputDevice());
+  const deviceChangeCleanupRef = useRef<(() => void) | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
@@ -55,9 +102,49 @@ export function useAudioMeter(): AudioMeterApi {
   const bufRef = useRef<Float32Array<ArrayBuffer> | null>(null);
   const resumeCleanupRef = useRef<(() => void) | null>(null);
 
+  const applySink = useCallback((ctx: AudioContext, deviceId: string) => {
+    const sinkCtx: SinkCapableContext = ctx;
+    if (!sinkCtx.setSinkId) return;
+    // '' restores the system default. On failure (device vanished mid-call)
+    // fall back to the default instead of leaving a dead selection around.
+    void sinkCtx.setSinkId(deviceId).catch(() => {
+      desiredSinkRef.current = '';
+      setOutputDeviceId('');
+      saveOutputDevice('');
+    });
+  }, []);
+
+  // Re-read the audiooutput list (labels are readable once getUserMedia has
+  // been granted). Drops Chromium's virtual 'default'/'communications'
+  // entries; the UI offers the system default as its own '' option.
+  const refreshOutputDevices = useCallback(async (): Promise<AudioOutputOption[]> => {
+    if (!sinkSelectionSupported()) return [];
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const outputs = devices
+        .filter((device) => device.kind === 'audiooutput')
+        .filter((device) => device.deviceId !== 'default' && device.deviceId !== 'communications')
+        .map((device) => ({ deviceId: device.deviceId, label: device.label || 'audio output' }));
+      setOutputDevices(outputs);
+      const wanted = desiredSinkRef.current;
+      const wantedGone =
+        wanted !== '' && !outputs.some((output) => output.deviceId === wanted);
+      if (wantedGone) {
+        desiredSinkRef.current = '';
+        setOutputDeviceId('');
+        if (ctxRef.current) applySink(ctxRef.current, '');
+      }
+      return outputs;
+    } catch {
+      return [];
+    }
+  }, [applySink]);
+
   const disable = useCallback(() => {
     resumeCleanupRef.current?.();
     resumeCleanupRef.current = null;
+    deviceChangeCleanupRef.current?.();
+    deviceChangeCleanupRef.current = null;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     sourceRef.current = null;
@@ -134,12 +221,37 @@ export function useAudioMeter(): AudioMeterApi {
       bufRef.current = new Float32Array(inAnalyser.fftSize);
       setDeviceLabel(stream.getAudioTracks()[0]?.label || 'audio input');
       setActive(true);
+
+      // Playback routing: restore the saved output device (if still present)
+      // and keep the device list fresh while capture runs.
+      const outputs = await refreshOutputDevices();
+      const wanted = desiredSinkRef.current;
+      if (wanted && outputs.some((output) => output.deviceId === wanted)) {
+        applySink(ctx, wanted);
+      }
+      if (sinkSelectionSupported()) {
+        const onDeviceChange = () => {
+          void refreshOutputDevices();
+        };
+        navigator.mediaDevices.addEventListener('devicechange', onDeviceChange);
+        deviceChangeCleanupRef.current = () => {
+          navigator.mediaDevices.removeEventListener('devicechange', onDeviceChange);
+        };
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Audio capture failed');
     } finally {
       setStarting(false);
     }
-  }, [active, starting]);
+  }, [active, starting, applySink, refreshOutputDevices]);
+
+  const setOutputDevice = useCallback((deviceId: string) => {
+    desiredSinkRef.current = deviceId;
+    setOutputDeviceId(deviceId);
+    saveOutputDevice(deviceId);
+    const ctx = ctxRef.current;
+    if (ctx) applySink(ctx, deviceId);
+  }, [applySink]);
 
   const setMonitoring = useCallback((on: boolean) => {
     const gain = monitorGainRef.current;
@@ -162,6 +274,8 @@ export function useAudioMeter(): AudioMeterApi {
 
   return {
     active, starting, deviceLabel, error, monitoring,
-    enable, disable, setMonitoring, getLevels, getContext, getSource,
+    outputDevices, outputDeviceId,
+    enable, disable, setMonitoring, setOutputDevice,
+    getLevels, getContext, getSource,
   };
 }
