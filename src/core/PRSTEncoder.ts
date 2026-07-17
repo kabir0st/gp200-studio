@@ -134,7 +134,7 @@ export class PRSTEncoder {
       if (!hasRaw) {
         gen.writeUint8(base + 0, 0x14);
         gen.writeUint8(base + 2, 0x44);
-        gen.writeUint8(base + 7, 0x0F);
+        gen.writeUint8(base + 6, 0x0F);
       }
       gen.writeUint8(base + 4, slot.slotIndex);
       gen.writeUint8(base + 5, slot.enabled ? 1 : 0);
@@ -152,7 +152,7 @@ export class PRSTEncoder {
         gen.writeUint8(base + 0, 0x14);
         gen.writeUint8(base + 2, 0x44);
         gen.writeUint8(base + 4, i);
-        gen.writeUint8(base + 7, 0x0F);
+        gen.writeUint8(base + 6, 0x0F);
       }
     }
 

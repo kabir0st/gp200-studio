@@ -115,6 +115,19 @@ describe('PRSTEncoder', () => {
     expect(encoded[0x15]).toBe(0x05);
   });
 
+  it('writes the 0x0F block marker at offset +6 (not +7) on all 11 blocks', () => {
+    // Regression: the synthetic (no-rawSource) path used to write the marker at
+    // base+7, producing `00 0F` where real Valeton files have `0F 00`. That
+    // malformed every effect-block header and the official GP-200 editor
+    // rejected the file. See prst/*.prst: block+6 is always 0x0F, block+7 0x00.
+    const bytes = new Uint8Array(new PRSTEncoder().encode(samplePreset));
+    for (let i = 0; i < 11; i++) {
+      const base = 0xa0 + i * 0x48;
+      expect(bytes[base + 6]).toBe(0x0f);
+      expect(bytes[base + 7]).toBe(0x00);
+    }
+  });
+
   it('round-trips float32 param values', () => {
     const preset: GP200Preset = {
       ...samplePreset,
