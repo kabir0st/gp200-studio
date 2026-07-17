@@ -16,6 +16,11 @@ dist-ssr
 CLAUDE.md
 .claude/
 
+# Internal notes and local fixtures (kept out of the public repo)
+docs/
+mockups/
+prst/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

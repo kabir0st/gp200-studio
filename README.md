@@ -24,7 +24,7 @@ The old repo is frozen, not actively developed further; this repo is the intende
 ## Stack
 
 - Vite + React 19 + TypeScript (strict)
-- Tailwind CSS v3. See [`docs/design-system.md`](docs/design-system.md) for the color/type/component conventions
+- Tailwind CSS v3
 - GSAP (`gsap` + `@gsap/react`) as the animation backbone. See [`src/lib/motion.ts`](src/lib/motion.ts) and [`src/hooks/useGsapTimeline.ts`](src/hooks/useGsapTimeline.ts). Not wired into any component yet.
 - Vitest for unit tests
 - Cloudflare Workers static assets for deployment (`wrangler.jsonc`)
@@ -74,9 +74,8 @@ src/
 │
 ├── components/
 │   ├── board/           # The pedalboard: the only effects view (PedalBoard, Pedal, knobs/faders,
-│   │                    #   SwitcherUnit bottom deck, DeckDrawer sheets, cable layer, looper panel);
-│   │                    #   see docs/board-design-system.md
-│   ├── ui/              # Shared primitives: Button, Card, Dialog, Badge; see docs/design-system.md
+│   │                    #   SwitcherUnit bottom deck, DeckDrawer sheets, cable layer, looper panel)
+│   ├── ui/              # Shared primitives: Button, Card, Dialog, Badge
 │   ├── Landing.tsx           # Entry view: connect device or open a blank preset
 │   ├── PatchManagerSheet.tsx # Full 256-slot device patch management side sheet
 │   ├── DeviceSlotBrowser.tsx # Slot-pick dialogs (load/save-as)
@@ -90,22 +89,13 @@ src/
 
 `App.tsx` is the sole composition root: no router, no global store; it wires `usePreset()` and `useMidiDevice()` together imperatively.
 
-Test fixtures: `prst/*.prst` (real 1224-byte preset files used by the unit tests in `tests/unit/`).
+Test fixtures: real 1224-byte `.prst` preset files under a local (non-committed) `prst/` directory; unit tests that need them live in `tests/unit/`.
 
 ## USB-MIDI device communication
 
-Reverse-engineered SysEx protocol, unchanged from the source repo; capture notes live in [`docs/protocol-capture.md`](docs/protocol-capture.md). Web MIDI only works in Chrome/Edge (no Firefox/Safari). Never call `loadPresetNames()` without its abort mechanism; it can trigger a firmware-update popup on the device.
+Reverse-engineered SysEx protocol, unchanged from the source repo. Web MIDI only works in Chrome/Edge (no Firefox/Safari). Never call `loadPresetNames()` without its abort mechanism; it can trigger a firmware-update popup on the device.
 
 `scripts/generate-effect-params.mjs` regenerates `src/core/effectParams.ts` from Valeton's own `algorithm.xml`. That file isn't part of this repo (or the source repo); it's read from a local install of Valeton's editor software. You only need this script if effect parameter definitions ever need to be regenerated from a newer firmware/algorithm release.
-
-## Reference docs
-
-| Topic | File |
-|---|---|
-| Design system (color, type, components, motion, a11y) | [`docs/design-system.md`](docs/design-system.md) |
-| Pedalboard view design system | [`docs/board-design-system.md`](docs/board-design-system.md) |
-| SysEx protocol capture notes | [`docs/protocol-capture.md`](docs/protocol-capture.md) |
-| Pedal/effect icon scoping (board faceplate art shipped; badge glyphs unbuilt) | [`docs/pedal-icons.md`](docs/pedal-icons.md) |
 
 ## Credits
 
