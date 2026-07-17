@@ -137,14 +137,14 @@ export function Guide({ onBack }: GuideProps) {
             {NAV.map((entry) => {
               const active = entry.id === activeId;
               const activeClass = active
-                ? 'border-accent-amber text-accent-amber bg-[var(--glow-amber)] font-bold'
-                : 'border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-hover';
+                ? 'text-text-primary bg-bg-hover font-bold'
+                : 'text-text-secondary hover:text-text-primary hover:bg-bg-hover';
               return (
                 <li key={entry.id}>
                   <a
                     href={`#${entry.id}`}
                     aria-current={active ? 'true' : undefined}
-                    className={`block border-l-2 pl-3 pr-2 py-1.5 rounded-r text-sm leading-snug transition-colors ${activeClass}`}
+                    className={`block px-3 py-1.5 rounded text-sm leading-snug transition-colors ${activeClass}`}
                   >
                     {entry.label}
                   </a>
@@ -163,7 +163,10 @@ export function Guide({ onBack }: GuideProps) {
               your browser, then push changes live to a connected GP-200 over
               USB-MIDI.
             </p>
-            <Card className="p-4 mt-4 border-l-4 border-l-accent-amber max-w-4xl">
+            <Card className="p-4 mt-4 max-w-4xl">
+              <p className="font-mono-display text-micro font-bold tracking-widest uppercase text-text-muted mb-1.5">
+                Note
+              </p>
               <p className="font-mono-display text-caption tracking-wide text-text-secondary m-0">
                 Device features (live sync, patch management, saving to the unit)
                 need a GP-200 connected over USB in{' '}
