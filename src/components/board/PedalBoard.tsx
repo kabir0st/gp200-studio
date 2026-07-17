@@ -69,7 +69,7 @@ export interface PedalBoardProps {
   onLooperBindingsChange: (next: LooperBindings) => void;
   onEnableAudio: () => void;
   audioStarting: boolean;
-  /* device session controls (deck-hosted — there is no separate status bar) */
+  /* device session controls (deck-hosted; there is no separate status bar) */
   onConnectRequest: () => void;
   onDisconnect: () => void;
   onPushRequest: () => void;
@@ -81,7 +81,7 @@ export interface PedalBoardProps {
  * The skeuomorphic board view: chain strip → info bar → stage (cables +
  * two pedal rows + switcher). Chain order = effects array order; the first
  * 6 pedals sit on the front row, the rest on the back row (rows are purely
- * visual — the signal path is the array order, made legible by the cables).
+ * visual; the signal path is the array order, made legible by the cables).
  */
 export function PedalBoard({
   preset,
@@ -162,7 +162,7 @@ export function PedalBoard({
   const { front, back } = splitRows(preset.effects);
 
   // each pedal sits in a fixed-size bay (compact/wide, keyed to the slot's module
-  // — see isWideSlot). The pedal keeps its own natural size; the bay absorbs any
+  // (see isWideSlot). The pedal keeps its own natural size; the bay absorbs any
   // difference as padding, so swapping an effect never shifts a neighbour. The bay
   // (not just the pedal) is the drop target, so you don't have to aim precisely at
   // the pedal body, and while a drag is in flight every bay shows a drop slot.
@@ -244,7 +244,7 @@ export function PedalBoard({
             </div>
           </div>
         </section>
-        {/* Floating control deck — sits outside the board chassis so it can
+        {/* Floating control deck: sits outside the board chassis so it can
             stick to the bottom of the scroll stage and float over the rows. */}
         <SwitcherUnit
           preset={preset}

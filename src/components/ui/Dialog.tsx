@@ -9,14 +9,14 @@ interface DialogProps {
   closeOnOverlayClick?: boolean;
   className?: string;
   /** Use "alertdialog" for interruptive warnings that demand a decision
-   *  (e.g. firmware compatibility) — defaults to "dialog" for everything else. */
+   *  (e.g. firmware compatibility); defaults to "dialog" for everything else. */
   role?: 'dialog' | 'alertdialog';
   /** "bottom" anchors the panel to the bottom edge (deck drawers); "right"
    *  makes it a full-height side sheet (patch manager); default centers. */
   placement?: 'center' | 'bottom' | 'right';
   /** Tailwind max-width utility for the panel. Appending a max-w-* via
    *  className does NOT reliably override the default (stylesheet order
-   *  wins, not class order) — wide dialogs must set it here. */
+   *  wins, not class order); wide dialogs must set it here. */
   maxWidth?: string;
 }
 
@@ -35,7 +35,7 @@ const PANEL_PLACEMENT: Record<'center' | 'bottom' | 'right', string> = {
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-/** Shared dialog shell — see docs/design-system.md "Components > Dialog".
+/** Shared dialog shell (see docs/design-system.md "Components > Dialog").
  *  Owns overlay, Escape-to-close, and a focus trap so every dialog in the
  *  app (confirm, warn, save, firmware-compat, ...) shares one a11y contract
  *  instead of reimplementing it. */

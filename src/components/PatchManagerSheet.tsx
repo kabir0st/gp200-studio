@@ -72,7 +72,7 @@ export function PatchManagerSheet({
 
   let selectedLabel = '';
   if (selected !== null) selectedLabel = SysExCodec.slotToLabel(selected);
-  let currentLabel = '—';
+  let currentLabel = '-';
   if (currentSlot !== null) currentLabel = SysExCodec.slotToLabel(currentSlot);
 
   function handleSelect(slot: number) {
@@ -365,7 +365,7 @@ export function PatchManagerSheet({
         />
       </div>
 
-      {/* Overwrite confirmation — inline (a nested Dialog would double-bind
+      {/* Overwrite confirmation, inline (a nested Dialog would double-bind
           the document Escape handler and close the whole sheet) */}
       {confirmImportSlot !== null && (
         <div
@@ -379,7 +379,7 @@ export function PatchManagerSheet({
         >
           <p className="font-mono-display text-sm mb-2" style={{ color: 'var(--text-primary)' }}>
             Overwrite {SysExCodec.slotToLabel(confirmImportSlot)}
-            {' '}“{presetNames[confirmImportSlot] ?? '—'}” on the device?
+            {' '}“{presetNames[confirmImportSlot] ?? '-'}” on the device?
             This cannot be undone.
           </p>
           <div className="flex justify-end gap-2">

@@ -9,7 +9,7 @@ interface GuideProps {
   onBack: () => void;
 }
 
-/** Sidebar nav entries — id matches each <Section id>. */
+/** Sidebar nav entries: id matches each <Section id>. */
 const NAV: { id: string; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'editor', label: 'The pedalboard editor' },
@@ -28,7 +28,7 @@ interface ShotProps {
   caption: string;
 }
 
-/** A screenshot figure — full-width within the content column. */
+/** A screenshot figure, full-width within the content column. */
 function Shot({ src, alt, caption }: ShotProps) {
   // Resolve root-relative `/guide/*` paths against the Vite base URL so the
   // images load under the app's subfolder deploy (afterhour.uk/gp200studio/).
@@ -72,7 +72,7 @@ function Section({ id, title, children }: SectionProps) {
 }
 
 /**
- * Full-page help/guide — a sibling of Landing (no router; App gates on a
+ * Full-page help/guide, a sibling of Landing (no router; App gates on a
  * `view` flag). Two-column: a sticky left nav (scrollspy) + a wide content
  * column with large screenshots. Built on Tailwind + shared primitives so it
  * doesn't depend on PedalBoard's static stylesheet import.
@@ -119,7 +119,7 @@ export function Guide({ onBack }: GuideProps) {
             tabIndex={-1}
             className="font-mono-display text-base font-bold tracking-wide flex-1 focus:outline-none"
           >
-            GP200 Studio — Guide
+            GP200 Studio: Guide
           </h1>
           <Button variant="secondary" size="sm" onClick={onBack}>
             ← Back
@@ -128,7 +128,7 @@ export function Guide({ onBack }: GuideProps) {
       </header>
 
       <div className="flex items-start">
-        {/* Left nav — fills the left gutter; sticky under the header */}
+        {/* Left nav: fills the left gutter; sticky under the header */}
         <nav
           aria-label="Guide sections"
           className="hidden lg:block w-60 shrink-0 sticky top-[57px] self-start max-h-[calc(100vh-57px)] overflow-y-auto border-r border-border-subtle px-4 py-6"
@@ -157,7 +157,7 @@ export function Guide({ onBack }: GuideProps) {
           </ul>
         </nav>
 
-        {/* Content — wide, large screenshots, no wasted centering */}
+        {/* Content: wide, large screenshots, no wasted centering */}
         <main className="flex-1 min-w-0 px-6 sm:px-10 py-9 max-w-[1600px]">
           <Section id="overview" title="Overview">
             <p>
@@ -173,7 +173,7 @@ export function Guide({ onBack }: GuideProps) {
               <p className="font-mono-display text-caption tracking-wide text-text-secondary m-0">
                 Device features (live sync, patch management, saving to the unit)
                 need a GP-200 connected over USB in{' '}
-                <strong>Chrome or Edge</strong> — Web MIDI isn't available in
+                <strong>Chrome or Edge</strong>. Web MIDI isn't available in
                 Firefox or Safari. Offline, you can still edit patches and
                 import/export files.
               </p>
@@ -181,7 +181,7 @@ export function Guide({ onBack }: GuideProps) {
             <Shot
               src="/guide/01-landing.png"
               alt="GP200 Studio landing screen with Connect and Open editor buttons"
-              caption="The landing screen — connect your GP-200 or open the editor with a blank preset."
+              caption="The landing screen: connect your GP-200 or open the editor with a blank preset."
             />
           </Section>
 
@@ -191,7 +191,7 @@ export function Guide({ onBack }: GuideProps) {
               two rows, with patch cables showing the flow from input to output.
               The chain strip at the top is a compact overview of the whole chain;
               hovering a pedal (or clicking its <strong>i</strong>) shows its
-              details in the info bar. The rows are visual only — the real order is
+              details in the info bar. The rows are visual only; the real order is
               the chain order shown in the strip.
             </p>
             <Shot
@@ -209,25 +209,25 @@ export function Guide({ onBack }: GuideProps) {
           <Section id="pedals" title="Changing & managing pedals">
             <p>
               The GP-200 has a fixed set of effect blocks. You don't add or remove
-              blocks — you change what each block holds and how it sounds:
+              blocks; you change what each block holds and how it sounds:
             </p>
             <ul className="list-disc pl-5 space-y-1.5">
               <li>
-                <strong>Bypass on/off</strong> — click a pedal's footswitch. A
+                <strong>Bypass on/off</strong>: click a pedal's footswitch. A
                 bypassed pedal dims and shows a <em>BYPASSED</em> tag.
               </li>
               <li>
-                <strong>Replace the effect</strong> — click the pedal's name to
+                <strong>Replace the effect</strong>: click the pedal's name to
                 open the effect browser, then pick a new effect for that block.
                 The browser is scoped to that block's module (drive, mod, delay…)
                 with categories and search.
               </li>
               <li>
-                <strong>Edit parameters</strong> — turn the pedal's knobs, move its
+                <strong>Edit parameters</strong>: turn the pedal's knobs, move its
                 faders, or flip its switches. EQ blocks show faders.
               </li>
               <li>
-                <strong>Reorder</strong> — drag a pedal into another bay, or focus
+                <strong>Reorder</strong>: drag a pedal into another bay, or focus
                 its <strong>#n</strong> chain number and use the Left/Right arrow
                 keys.
               </li>
@@ -264,11 +264,11 @@ export function Guide({ onBack }: GuideProps) {
             <Shot
               src="/guide/05-deck-fxloop.png"
               alt="The FX loop drawer with draggable send and return arrows"
-              caption="FX LOOP drawer — drag SEND and RETURN to route the external loop."
+              caption="FX LOOP drawer: drag SEND and RETURN to route the external loop."
             />
 
             <h3 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-6">
-              EXP — expression pedals
+              EXP: expression pedals
             </h3>
             <p>
               Assign the expression pedals across three pages (EXP1 Mode A, EXP1
@@ -279,26 +279,26 @@ export function Guide({ onBack }: GuideProps) {
             <Shot
               src="/guide/06-deck-exp.png"
               alt="The expression pedal assignment drawer"
-              caption="EXP drawer — map an expression pedal to a knob with Heel/Toe sweep values."
+              caption="EXP drawer: map an expression pedal to a knob with Heel/Toe sweep values."
             />
 
             <h3 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-6">
-              CTRL — footswitches
+              CTRL: footswitches
             </h3>
             <p>
               Assign the eight CTRL footswitches. Pick a footswitch, then tap the
-              effect blocks it should toggle — one switch can stomp several pedals
+              effect blocks it should toggle; one switch can stomp several pedals
               at once. Colored dots show what each switch controls; Clear resets a
               switch.
             </p>
             <Shot
               src="/guide/07-deck-ctrl.png"
               alt="The CTRL footswitch assignment drawer"
-              caption="CTRL drawer — bind each footswitch to a set of effect blocks."
+              caption="CTRL drawer: bind each footswitch to a set of effect blocks."
             />
 
             <h3 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-6">
-              LOOP — loop station
+              LOOP: loop station
             </h3>
             <p>
               A multi-track looper that records the GP-200's USB audio (you'll be
@@ -310,23 +310,23 @@ export function Guide({ onBack }: GuideProps) {
             <Shot
               src="/guide/08-deck-loop.png"
               alt="The loop station drawer with multi-track controls"
-              caption="LOOP drawer — a multi-track looper over the GP-200's USB audio."
+              caption="LOOP drawer: a multi-track looper over the GP-200's USB audio."
             />
           </Section>
 
           <Section id="patches" title="Managing patches">
             <p>
               When a device is connected, the <strong>PATCHES</strong> button in
-              the top bar opens the patch manager — a side sheet listing all 256
+              the top bar opens the patch manager, a side sheet listing all 256
               device slots (64 banks × A–D) with names and search. Per slot you
               can:
             </p>
             <ul className="list-disc pl-5 space-y-1.5">
-              <li><strong>Activate</strong> — switch the unit to that slot.</li>
-              <li><strong>Open</strong> — pull the slot into the editor.</li>
-              <li><strong>Export</strong> — download the slot as a <code>.prst</code> file.</li>
-              <li><strong>Import</strong> — write a <code>.prst</code> into the slot (with an overwrite prompt).</li>
-              <li><strong>Rename</strong> — rename the slot (16 characters).</li>
+              <li><strong>Activate</strong>: switch the unit to that slot.</li>
+              <li><strong>Open</strong>: pull the slot into the editor.</li>
+              <li><strong>Export</strong>: download the slot as a <code>.prst</code> file.</li>
+              <li><strong>Import</strong>: write a <code>.prst</code> into the slot (with an overwrite prompt).</li>
+              <li><strong>Rename</strong>: rename the slot (16 characters).</li>
             </ul>
             <p>
               You can also bulk-export the selected bank, or all 256 patches, to a
@@ -336,7 +336,7 @@ export function Guide({ onBack }: GuideProps) {
             </p>
             <p className="text-text-muted text-caption">
               Patch management is a device-connected feature, so it isn't pictured
-              here — connect a GP-200 to see your slots.
+              here; connect a GP-200 to see your slots.
             </p>
           </Section>
 
@@ -348,8 +348,8 @@ export function Guide({ onBack }: GuideProps) {
               unit's current preset loads into the editor automatically.
             </p>
             <p>
-              From then on, every edit — toggles, effect swaps, knob turns,
-              reorders — streams to the device live, so the board is a real-time
+              From then on, every edit (toggles, effect swaps, knob turns,
+              reorders) streams to the device live, so the board is a real-time
               remote for the pedal. The top bar shows a connection dot, the current
               slot, firmware, and a SYNC counter while pushing. Changes you make on
               the hardware flow back into the editor too.
@@ -360,7 +360,7 @@ export function Guide({ onBack }: GuideProps) {
             <p>
               <strong>IMPORT</strong> (top bar) accepts native GP-200{' '}
               <code>.prst</code> presets and, experimentally,{' '}
-              <strong>Line6 HX Stomp <code>.hlx</code></strong> files — HLX is
+              <strong>Line6 HX Stomp <code>.hlx</code></strong> files; HLX is
               best-effort and <em>import-only</em>. <strong>EXPORT</strong> names
               the patch and downloads it as a <code>.prst</code>. Importing while
               connected also previews the patch live on the device.
@@ -368,7 +368,7 @@ export function Guide({ onBack }: GuideProps) {
             <Shot
               src="/guide/09-export-dialog.png"
               alt="The export dialog naming the patch before download"
-              caption="EXPORT — name the patch and author, then download a .prst file."
+              caption="EXPORT: name the patch and author, then download a .prst file."
             />
           </Section>
 

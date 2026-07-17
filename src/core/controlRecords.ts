@@ -1,19 +1,19 @@
 import type { CtrlAssignment, ExpAssignment } from './types';
 
 /**
- * TLV record walker for the .prst "controls" tail — the region between the
+ * TLV record walker for the .prst "controls" tail, the region between the
  * last effect block (0x3B0) and the checksum (0x4C6) that stores EXP pedal
  * and CTRL footswitch assignments. Layout hex-verified against the committed
  * fixtures (prst/*.prst, firmware 1.8.0 exports):
  *
  *   0x3B0  8 zero bytes (padding)
- *   0x3B8  9 × 16-byte EXP records   — header 0C 00 0C 00 (type 0x000C, size 12)
+ *   0x3B8  9 × 16-byte EXP records:  header 0C 00 0C 00 (type 0x000C, size 12)
  *          payload: [slotId u8 = page<<4|item][blockIndex u8, FF=unassigned]
  *                   [paramIndex u16 LE][max f32 LE][min f32 LE]
- *   0x448  3 × 8-byte unknown records — header 10 00 04 00 (type 0x0010, size 4)
- *          payload: [id u8][value u8][0000] — semantics unknown (fixtures:
+ *   0x448  3 × 8-byte unknown records: header 10 00 04 00 (type 0x0010, size 4)
+ *          payload: [id u8][value u8][0000]; semantics unknown (fixtures:
  *          FF FF 0B); round-tripped opaquely, never modeled.
- *   0x460  8 × 12-byte CTRL records  — header 0F 00 08 00 (type 0x000F, size 8)
+ *   0x460  8 × 12-byte CTRL records: header 0F 00 08 00 (type 0x000F, size 8)
  *          payload: [ctrlIndex u8 0–7][blockMask u16 LE][5 zero bytes]
  *          bit n of blockMask = fixed block n (0=PRE..10=VOL), matching the
  *          official editor's "ctrlTarget: PRE-WAH-DST-AMP-NR-CAB-EQ-MOD-DLY-
@@ -23,7 +23,7 @@ import type { CtrlAssignment, ExpAssignment } from './types';
  *
  * Shared by PRSTDecoder, PRSTEncoder, and SysExCodec (device dumps use the
  * same layout shifted -0x28) so the codecs can't drift apart. All functions
- * are defensive: malformed tails yield `undefined`, never a throw — factory
+ * are defensive: malformed tails yield `undefined`, never a throw; factory
  * 1176-byte files have an unknown tail layout and must keep decoding.
  */
 
@@ -81,10 +81,10 @@ interface RecordPosition {
 function walkRecords(bytes: Uint8Array, startOffset: number): RecordPosition[] | undefined {
   const positions: RecordPosition[] = [];
   let off = startOffset;
-  // Skip leading zero padding (8 bytes in real files — tolerate any even amount).
+  // Skip leading zero padding (8 bytes in real files; tolerate any even amount).
   while (off + 1 < bytes.length && bytes[off] === 0 && bytes[off + 1] === 0) {
     off += 2;
-    if (off - startOffset > 32) return undefined; // padding runaway — not a record stream
+    if (off - startOffset > 32) return undefined; // padding runaway, not a record stream
   }
   const EXPECTED_SIZE: Record<number, number> = {
     [TYPE_EXP]: EXP_PAYLOAD_SIZE,
@@ -107,7 +107,7 @@ function walkRecords(bytes: Uint8Array, startOffset: number): RecordPosition[] |
 /**
  * Parse EXP + CTRL assignments from a controls tail. Returns undefined when
  * the region doesn't contain the expected record counts (unknown firmware
- * layout, factory files) — callers then leave the preset fields absent and
+ * layout, factory files); callers then leave the preset fields absent and
  * rely on rawSource passthrough.
  */
 export function parseControlRecords(
@@ -130,7 +130,7 @@ export function parseControlRecords(
       // Value tolerance: keep the raw block byte as-is. 0..10 = a modeled
       // block, 0xFF = unassigned (null), 11..254 = an unmodeled/special target
       // (e.g. EXP → Patch Volume). Previously any 11..254 aborted the WHOLE
-      // parse, silently dropping every EXP *and* CTRL assignment — so a single
+      // parse, silently dropping every EXP *and* CTRL assignment, so a single
       // special EXP target made the footswitch panel read "nothing assigned."
       const rawBlock = bytes[p + 1];
       const blockIndex: number | null = rawBlock === 0xFF ? null : rawBlock;
@@ -159,10 +159,10 @@ export function parseControlRecords(
 
 /**
  * Overwrite the assignment payload fields of an existing record stream in
- * place (rawSource-based encoding). Only the modeled fields change — record
+ * place (rawSource-based encoding). Only the modeled fields change; record
  * headers, unknown 0x0010 records, and the footer keep their original bytes.
  * Returns false when the stream can't be walked or any requested assignment
- * found no matching record — callers then know the export dropped modeled
+ * found no matching record; callers then know the export dropped modeled
  * data and can fall back / warn instead of silently losing assignments.
  */
 export function applyControlRecords(
@@ -282,7 +282,7 @@ export function buildDefaultTail(
     }
   }
 
-  // Three unknown 0x0010 records — constant values from every observed export.
+  // Three unknown 0x0010 records: constant values from every observed export.
   const UNKNOWN10_VALUES = [0xFF, 0xFF, 0x0B];
   for (let id = 0; id < UNKNOWN10_VALUES.length; id++) {
     writeU16LE(tail, off, TYPE_UNKNOWN10);

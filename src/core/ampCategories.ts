@@ -8,7 +8,7 @@
  *
  * Multiple Valeton models can map to the same real amp (e.g. "Mess DualV"
  * + "Mess DualM" both → Mesa/Boogie® Dual Rectifier® modes), so a slug
- * can resolve to multiple Valeton names — the listing query uses an
+ * can resolve to multiple Valeton names; the listing query uses an
  * array-overlap filter against Preset.effects.
  */
 import { EFFECT_MAP } from './effectNames';
@@ -61,7 +61,7 @@ function buildCategories(): AmpCategory[] {
   return Array.from(bySlug.values()).sort((a, b) => a.slug.localeCompare(b.slug));
 }
 
-// Build once at module load — the data is static (from algorithm.xml).
+// Build once at module load; the data is static (from algorithm.xml).
 const CATEGORIES: AmpCategory[] = buildCategories();
 const BY_SLUG = new Map(CATEGORIES.map((c) => [c.slug, c]));
 

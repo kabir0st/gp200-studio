@@ -8,7 +8,7 @@
  * domain), which stays untouched.
  *
  * Keys are the real module names from EFFECT_MAP. The design doc's original
- * `BST` row had no matching module in the data — it was replaced by the DST
+ * `BST` row had no matching module in the data; it was replaced by the DST
  * spec below (red distortion-family body).
  */
 

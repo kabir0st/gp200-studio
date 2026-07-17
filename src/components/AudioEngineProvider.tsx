@@ -1,7 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { useAudioMeter, type AudioMeterApi } from '@/hooks/useAudioMeter';
 
-// The GP-200 is a single USB audio device — only one AudioContext / getUserMedia
+// The GP-200 is a single USB audio device, so only one AudioContext / getUserMedia
 // open should exist for it. Both the AudioMeters and the loop station consume
 // the same instance through this context, so they share one context + one input
 // stream (two opens on the same device risk a device-open conflict and double

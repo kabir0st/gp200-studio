@@ -10,7 +10,7 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   moduleColor: ModuleColor;
 }
 
-/** Module badge — see docs/design-system.md "Components > Badge". */
+/** Module badge (see docs/design-system.md "Components > Badge"). */
 export function Badge({ moduleColor, className = '', style, children, ...props }: BadgeProps) {
   return (
     <span
@@ -27,7 +27,7 @@ export function Badge({ moduleColor, className = '', style, children, ...props }
   );
 }
 
-/** LED status dot — pulses via the .led-active CSS keyframe (see src/index.css), not GSAP. */
+/** LED status dot: pulses via the .led-active CSS keyframe (see src/index.css), not GSAP. */
 export function Led({ active, className = '' }: { active: boolean; className?: string }) {
   return (
     <span

@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { motionDurations } from '@/lib/motion';
 
 interface CableLayerProps {
-  /** module names in chain order — labels the cross-row stub cables */
+  /** module names in chain order: labels the cross-row stub cables */
   modules: string[];
   /** joined slotIndex order; any change (reorder) re-measures the jacks */
   orderKey: string;

@@ -1,6 +1,6 @@
 /**
  * Minimal STORE-only (no compression) ZIP writer for bundling bulk .prst
- * exports into a single download. Framework-agnostic on purpose — a full
+ * exports into a single download. Framework-agnostic on purpose: a full
  * JSZip dependency is overkill for "concatenate N small binary files", and
  * firing 256 separate downloads trips popup blocking.
  *
@@ -38,7 +38,7 @@ export function crc32(data: Uint8Array): number {
 const LOCAL_HEADER_SIZE = 30;
 const CENTRAL_HEADER_SIZE = 46;
 const EOCD_SIZE = 22;
-/** version 2.0 — STORE needs nothing newer */
+/** version 2.0, STORE needs nothing newer */
 const VERSION = 20;
 /** general-purpose flag: bit 11 = UTF-8 filenames */
 const FLAG_UTF8 = 0x0800;
@@ -72,7 +72,7 @@ export function createZip(entries: ZipEntry[]): Uint8Array<ArrayBuffer> {
     view.setUint16(pos + 4, VERSION, true);
     view.setUint16(pos + 6, FLAG_UTF8, true);
     view.setUint16(pos + 8, 0, true);                 // method 0 = STORE
-    view.setUint16(pos + 10, 0, true);                // mod time (zeroed — deterministic)
+    view.setUint16(pos + 10, 0, true);                // mod time (zeroed for determinism)
     view.setUint16(pos + 12, 0, true);                // mod date
     view.setUint32(pos + 14, file.crc, true);
     view.setUint32(pos + 18, file.data.length, true); // compressed size (= raw for STORE)

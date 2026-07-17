@@ -26,7 +26,7 @@ function polar(cx: number, cy: number, r: number, deg: number): [number, number]
 
 /**
  * Skeuomorphic rotary knob: 270° sweep, vertical pointer drag, double-click
- * reset, arrow-key steps. The pointer position IS the value — no value arc.
+ * reset, arrow-key steps. The pointer position IS the value. No value arc.
  */
 export function PedalKnob({ param, value, onChange, knobStyle, ink, pedalName }: PedalKnobProps) {
   const style = KNOB_STYLES[knobStyle];

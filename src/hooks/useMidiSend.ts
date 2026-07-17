@@ -1,7 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { SysExCodec } from '@/core/SysExCodec';
 
-// Minimal output shape — the same interface useMidiDevice uses internally.
+// Minimal output shape: the same interface useMidiDevice uses internally.
 // Kept local to avoid a cross-import just for a 1-field type.
 interface MidiOutput {
   send: (data: Uint8Array | number[]) => void;
@@ -14,12 +14,12 @@ interface MidiOutput {
 // - knob turn    → onDeviceParamChange(blockIndex, paramIndex, value)
 type OnDeviceChange = (slot: number | null) => void;
 type OnDeviceToggle = (blockIndex: number, enabled: boolean) => void;
-// Returns whether the change was actually applied — hardware toggles produce
+// Returns whether the change was actually applied. Hardware toggles produce
 // sub=0x0C frames that decode to bogus effect changes, and the dispatcher must
 // only suppress follow-up FX-state messages after a REAL effect swap.
 type OnDeviceEffectChange = (blockIndex: number, effectId: number) => boolean;
 type OnDeviceParamChange = (blockIndex: number, paramIndex: number, value: number) => void;
-// Real-time hardware controls (footswitch press, EXP-pedal position) — the
+// Real-time hardware controls (footswitch press, EXP-pedal position); the
 // loop station binds these. Wire format pending capture (docs/protocol-capture.md).
 type OnFootswitch = (fsNumber: number, state: boolean) => void;
 type OnExpPosition = (value: number) => void; // 0..127
@@ -87,7 +87,7 @@ interface UseMidiSendOpts {
  *   - the FX-state echo suppression counter (bug-fixed in PR1)
  *   - the 4 device-initiated callback registration slots
  *
- * Extracted from useMidiDevice (2026-04-11, clean-code PR3) — the parent
+ * Extracted from useMidiDevice (2026-04-11, clean-code PR3). The parent
  * hook previously weighed 727 LOC and mixed connection lifecycle with
  * send helpers. This hook receives only an outputRef and an optional
  * slot-change sync callback; it owns everything else locally.
@@ -112,10 +112,10 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
   // are echoes, not hardware changes). Counter, not a boolean + single timer:
   // rapid overlapping sends would otherwise clear each other's timers and end
   // suppression too early. Each call increments the counter and schedules its
-  // own decrement — the ref is "suppressed" while > 0.
+  // own decrement; the ref is "suppressed" while > 0.
   const suppressFxCountRef = useRef(0);
 
-  // Plain functions, not useCallback — they only close over the stable ref
+  // Plain functions, not useCallback; they only close over the stable ref
   // and we pass them by reference, never depend on them in useEffect deps.
   function suppressFxFor(ms: number) {
     suppressFxCountRef.current += 1;
@@ -176,7 +176,7 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
 
   const sendSlotChange = useCallback((slot: number) => {
     if (!outputRef.current) return;
-    // sub=0x08 with slot at byte[26] — confirmed via capture 222343
+    // sub=0x08 with slot at byte[26], confirmed via capture 222343
     const msg = SysExCodec.buildPresetChange(slot);
     console.log(`[GP-200] slot change: ${slot} (${SysExCodec.slotToLabel(slot)})`);
     outputRef.current.send(msg);
@@ -233,7 +233,7 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
     (page: number, item: number, blockIndex: number, paramIdx: number) => {
       if (!outputRef.current) return;
       suppressFxBriefly();
-      // Only navigation — confirmed: capture 204352 sends ONLY sub=0x18 for param change
+      // Only navigation; confirmed: capture 204352 sends ONLY sub=0x18 for param change
       // decoded[12]=item<<4 selects Para slot (0/1/2), confirmed: capture 200517
       const msg = SysExCodec.buildExpNavigation(page, item, blockIndex, paramIdx);
       console.log(`[GP-200] EXP nav: page=${page} item=${item} block=${blockIndex} param=${paramIdx}`);
@@ -247,7 +247,7 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
       if (!outputRef.current) return;
       suppressFxBriefly();
       const out = outputRef.current;
-      // Min (section=0) + Max (section=1) — confirmed: capture 203838
+      // Min (section=0) + Max (section=1); confirmed: capture 203838
       out.send(SysExCodec.buildExpAssignment(0, page, item, min));
       out.send(SysExCodec.buildExpAssignment(1, page, item, max));
     },

@@ -1,5 +1,5 @@
 /**
- * GP200 Studio mark — the Valeton GP-200 floor unit, simplified to five
+ * GP200 Studio mark: the Valeton GP-200 floor unit, simplified to five
  * shapes: enclosure, LCD, knobs, LED, footswitches. Colors are fixed like the
  * pedals themselves (physical object, renders identically in both themes;
  * LCD stays green-phosphor per docs/board-design-system.md).

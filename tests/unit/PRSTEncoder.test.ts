@@ -10,7 +10,7 @@ function loadRealFixture(name: string): Uint8Array | null {
   return existsSync(p) ? new Uint8Array(readFileSync(p)) : null;
 }
 
-/** A preset with 11 effect slots — the real GP-200 format always has exactly 11 */
+/** A preset with 11 effect slots; the real GP-200 format always has exactly 11 */
 const EMPTY_PARAMS = Array(15).fill(0);
 const samplePreset: GP200Preset = {
   version: '1',
@@ -174,7 +174,7 @@ describe('PRSTEncoder', () => {
 
   it('writes fxLoopSend/Return for rawSource-based preset (user edit)', () => {
     // Encode a synthetic preset first, then re-decode and re-encode with edited
-    // fxLoop values — this exercises the rawSource path (the second encode has
+    // fxLoop values. This exercises the rawSource path (the second encode has
     // rawSource set from the first decode).
     const initial = new PRSTEncoder().encode({
       version: '1',
@@ -218,7 +218,7 @@ describe('PRSTEncoder: controller/EXP assignment records', () => {
       const original = loadCommitted();
       const preset = new PRSTDecoder(original).decode();
       const ctrl = preset.ctrlAssignments!.map((assignment) => ({ ...assignment }));
-      // CTRL 2 (index 1) is 0x00 in the fixture — set bit 3 (AMP)
+      // CTRL 2 (index 1) is 0x00 in the fixture, so set bit 3 (AMP)
       ctrl[1] = { ctrlIndex: 1, blockMask: 0x08 };
       const encoded = new Uint8Array(
         new PRSTEncoder().encode({ ...preset, ctrlAssignments: ctrl }),

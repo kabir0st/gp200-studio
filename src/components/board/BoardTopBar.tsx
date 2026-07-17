@@ -32,7 +32,7 @@ function syncLabel(pushProgress: PushProgress): string {
 /**
  * Sticky top bar owning the non-patch file + device actions (import/export,
  * device load/save-as, patch manager, connect/close) and the session status
- * readout — split out of the deck so the bottom deck holds only patch edits.
+ * readout, split out of the deck so the bottom deck holds only patch edits.
  */
 export function BoardTopBar({
   connected,
@@ -51,7 +51,7 @@ export function BoardTopBar({
 }: BoardTopBarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  let slotLabel = '—';
+  let slotLabel = '-';
   if (currentSlot !== null) slotLabel = SysExCodec.slotToLabel(currentSlot);
   let firmwareTitle: string | undefined;
   if (firmware) firmwareTitle = `GP-200 firmware ${firmware}`;

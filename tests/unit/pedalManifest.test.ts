@@ -32,7 +32,7 @@ describe('lookupPedalArt', () => {
   });
 
   it('returns undefined for effects without artwork and for a null index', () => {
-    expect(lookupPedalArt(index, 26)).toBeUndefined(); // PRE Boost — not in fixture
+    expect(lookupPedalArt(index, 26)).toBeUndefined(); // PRE Boost, not in fixture
     expect(lookupPedalArt(null, 0)).toBeUndefined();
   });
 });
@@ -62,7 +62,7 @@ describe('generated manifest.json (public/pedals/)', () => {
 
   it('amp-head effects carry a control-panel color, others never do', () => {
     // not all AMP-module effects are drawn as amp heads (bass preamps are
-    // racks/stomps) — but the bulk are, and only AMP entries may have a panel
+    // racks/stomps), but the bulk are, and only AMP entries may have a panel
     const withPanel = manifest.filter((e) => e.colors?.panel !== undefined);
     expect(withPanel.length).toBeGreaterThan(40);
     expect(withPanel.every((e) => e.module === 'AMP')).toBe(true);

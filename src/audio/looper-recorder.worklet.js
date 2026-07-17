@@ -1,6 +1,6 @@
 // AudioWorklet processor that taps its single input and streams raw Float32 PCM
 // (mono, channel 0) to the main thread. Runs on the audio render thread for
-// sample-accurate capture — the loop station assembles the posted chunks into an
+// sample-accurate capture; the loop station assembles the posted chunks into an
 // AudioBuffer. Pure sink: it produces no output.
 //
 // This file runs in AudioWorkletGlobalScope: plain JS only, no imports, no TS.
@@ -32,7 +32,7 @@ class LooperRecorderProcessor extends AudioWorkletProcessor {
     if (!input || input.length === 0) return true;
     const channel = input[0];
     if (!channel || channel.length === 0) return true;
-    // Copy into a fresh transferable buffer — the input array is reused by the
+    // Copy into a fresh transferable buffer; the input array is reused by the
     // engine after process() returns, so we must not post it directly.
     const samples = new Float32Array(channel.length);
     samples.set(channel);

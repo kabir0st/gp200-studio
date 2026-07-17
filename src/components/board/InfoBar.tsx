@@ -6,7 +6,7 @@ import { getBodySpec } from './boardPalette';
 import type { PedalArtEntry } from './pedalManifest';
 
 interface InfoBarProps {
-  /** the slot being inspected (pinned wins over hover) — null shows the hint */
+  /** the slot being inspected (pinned wins over hover); null shows the hint */
   slot: EffectSlot | null;
   art?: PedalArtEntry;
   pinned: boolean;
@@ -19,7 +19,7 @@ export function InfoBar({ slot, art, pinned, onUnpin }: InfoBarProps) {
     return (
       <div className="info-bar" role="status" aria-live="polite">
         <span className="i-glyph" aria-hidden="true">i</span>
-        <span className="i-empty">Hover a pedal — or click its ⓘ — to see what it's based on.</span>
+        <span className="i-empty">Hover a pedal, or click its ⓘ, to see what it's based on.</span>
       </div>
     );
   }

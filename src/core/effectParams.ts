@@ -2,7 +2,7 @@
  * GP-200 Effect Parameter Definitions
  *
  * Auto-generated from algorithm.xml by scripts/generate-effect-params.mjs
- * DO NOT EDIT MANUALLY — re-run the script to update.
+ * DO NOT EDIT MANUALLY. Re-run the script to update.
  */
 
 export interface KnobParam {

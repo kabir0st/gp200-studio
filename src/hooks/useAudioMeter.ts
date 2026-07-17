@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 // The GP-200 is a USB audio interface as well as a MIDI device. This hook
-// captures its audio input (Web Audio) and exposes live in/out levels —
+// captures its audio input (Web Audio) and exposes live in/out levels:
 // the metering + capture foundation for the planned loop station.
 // Everything is torn down on disable/unmount; no audio runs until the user
 // clicks enable (getUserMedia + AudioContext both need a gesture anyway).
@@ -19,11 +19,11 @@ export interface AudioMeterApi {
   enable: () => Promise<void>;
   disable: () => void;
   setMonitoring: (on: boolean) => void;
-  /** current levels 0..1 (perceptual, dB-mapped) — read inside rAF, not state */
+  /** current levels 0..1 (perceptual, dB-mapped); read inside rAF, not state */
   getLevels: () => { input: number; output: number };
-  /** the live AudioContext, or null while inactive — shared with the looper */
+  /** the live AudioContext, or null while inactive; shared with the looper */
   getContext: () => AudioContext | null;
-  /** the GP-200 input source node, or null while inactive — the looper taps this */
+  /** the GP-200 input source node, or null while inactive; the looper taps this */
   getSource: () => MediaStreamAudioSourceNode | null;
 }
 

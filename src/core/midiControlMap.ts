@@ -1,7 +1,7 @@
 // Decoders for the GP-200's real-time footswitch / expression-pedal frames.
 //
 // STATUS: the exact wire format is PENDING a USB capture (see
-// docs/protocol-capture.md §4 — footswitch presses and EXP-pedal sweep). The
+// docs/protocol-capture.md §4, footswitch presses and EXP-pedal sweep). The
 // cheapest hypothesis, consistent with the device exposing standard MIDI clock
 // I/O, is that both arrive as **standard Control Change** messages rather than
 // SysEx. This module implements that path with PLACEHOLDER CC numbers so the

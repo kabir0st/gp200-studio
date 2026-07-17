@@ -14,7 +14,7 @@ export interface PresetPushSender {
 }
 
 export interface PushProgress {
-  /** completed work units — one per block per pass */
+  /** completed work units, one per block per pass */
   completed: number;
   /** total work units = blocks × 2 passes */
   total: number;
@@ -29,7 +29,7 @@ export interface PresetPushOptions {
   interParamDelayMs?: number;
   /** ms after a block's toggle before moving on to the next block */
   interBlockDelayMs?: number;
-  /** Injectable sleep — overridden in tests to record timing without waiting. */
+  /** Injectable sleep, overridden in tests to record timing without waiting. */
   sleep?: (ms: number) => Promise<void>;
   /**
    * Aborts the push mid-flight. A full push takes ~15s; if the user loads
@@ -62,11 +62,11 @@ const defaultSleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
  * #80 follow-up: a fixed settle alone cannot win the race. A param write targets
  * a parameter *inside* the algorithm the effect-change just selected; if it
  * arrives before the device finished loading that algorithm it is dropped and
- * the default value remains. Load time is variable — the simplest effect (EQ)
+ * the default value remains. Load time is variable; the simplest effect (EQ)
  * was ready right at 250ms (lost only its first param), complex algorithms
  * (amp/chorus/reverb) need longer (lost most params). Two defences:
  *   1. settle 400ms after each effect change (was 250).
- *   2. a SECOND param pass after every block is configured — by then all 11
+ *   2. a SECOND param pass after every block is configured; by then all 11
  *      algorithms are loaded and settled, so any write that raced a still-
  *      loading block in pass 1 lands for sure on the re-send.
  */
@@ -100,7 +100,7 @@ export async function pushPresetToDevice(
     }
     // Re-send param 0 at the end of the block's burst. The device swallows the
     // FIRST param-change of a block (it opens the block's edit context), so
-    // param 0 — always sent first — never lands during a load, even though the
+    // param 0 (always sent first) never lands during a load, even though the
     // identical message works when sent alone (manual knob edit). Re-sending it
     // after the others, when the context is already open, makes it stick (#80).
     if (eff.params.length > 0 && eff.params[0] !== undefined) {
@@ -109,7 +109,7 @@ export async function pushPresetToDevice(
     }
   };
 
-  // Pass 1: per block — effect type, settle, params, toggle.
+  // Pass 1: per block, effect type, settle, params, toggle.
   for (let i = 0; i < decoded.effects.length; i++) {
     if (signal?.aborted) return;
     const eff = decoded.effects[i];
@@ -123,7 +123,7 @@ export async function pushPresetToDevice(
     onProgress?.({ completed, total, phase: 'configuring' });
   }
 
-  // Pass 2: every algorithm is loaded now — re-send all params so writes that
+  // Pass 2: every algorithm is loaded now, so re-send all params so writes that
   // raced a still-loading block in pass 1 are applied (#80).
   for (let i = 0; i < decoded.effects.length; i++) {
     if (signal?.aborted) return;

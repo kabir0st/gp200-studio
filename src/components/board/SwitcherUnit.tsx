@@ -33,7 +33,7 @@ interface LiveBar {
 }
 
 /**
- * Live treadle readouts: any pedal with a "Position" param (Whammy, wahs —
+ * Live treadle readouts: any pedal with a "Position" param (Whammy, wahs,
  * driven by the hardware expression pedal) plus the VOL block's volume.
  * These move in real time because hardware knob/expression messages already
  * mirror into preset state.
@@ -200,7 +200,7 @@ export function SwitcherUnit({
                 onKeyDown={(event) => event.key === 'Enter' && setOpenPop(null)}
               />
             </label>
-            <p className="dp-note">Shown on the device display — 16 characters max.</p>
+            <p className="dp-note">Shown on the device display. 16 characters max.</p>
           </DeckPop>
         )}
       </div>
@@ -291,7 +291,7 @@ export function SwitcherUnit({
               </div>
             </div>
             {!connected && (
-              <p className="dp-note">Live-only device settings — connect to adjust.</p>
+              <p className="dp-note">Live-only device settings. Connect to adjust.</p>
             )}
           </DeckPop>
         )}

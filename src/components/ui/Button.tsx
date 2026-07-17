@@ -24,7 +24,7 @@ const SIZE_CLASSES: Record<Size, string> = {
   lg: 'px-6 py-2.5 text-sm',
 };
 
-/** Shared button primitive — see docs/design-system.md "Components > Button". */
+/** Shared button primitive (see docs/design-system.md "Components > Button"). */
 export function Button({
   variant = 'primary',
   size = 'md',

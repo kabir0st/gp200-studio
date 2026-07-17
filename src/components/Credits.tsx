@@ -10,7 +10,7 @@ const LINKS: { href: string; label: string }[] = [
   { href: 'https://www.linkedin.com/in/kabirtamari/', label: 'LinkedIn' },
 ];
 
-/** Author credit block — one source shared by Landing and Guide so the byline
+/** Author credit block: one source shared by Landing and Guide so the byline
  *  and links stay identical. Styling comes from the passed className. */
 export function Credits({ className = '' }: CreditsProps) {
   return (

@@ -11,7 +11,7 @@
  *   icon-512.png            512×512 (PWA manifest)
  *
  * The OG card is original vector/HTML art evoking the GP-200 floor unit (colors,
- * LCD, footswitches) — no Valeton logos or trademarks, matching the rule in
+ * LCD, footswitches), with no Valeton logos or trademarks, matching the rule in
  * scripts/generate-pedal-art.mjs. Brand fonts (JetBrains Mono, DM Sans) are
  * embedded as base64 @font-face so the render is self-contained and doesn't
  * depend on Chromium's system fonts.
@@ -117,7 +117,7 @@ function ogHtml() {
     </div>
     <div class="mid">
       <div class="tagline">Edit &amp; push <span class="em">GP-200</span> presets<br>live from your browser.</div>
-      <div class="sub">Load, tweak and export <b>.prst</b> preset files and send changes to the pedal over USB-MIDI — no install, no account, no backend.</div>
+      <div class="sub">Load, tweak and export <b>.prst</b> preset files and send changes to the pedal over USB-MIDI. No install, no account, no backend.</div>
     </div>
     <div class="bottom">
       <div class="chips">${CHIPS.map((c) => `<span class="chip">${c}</span>`).join('')}</div>

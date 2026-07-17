@@ -11,7 +11,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-// Candidate locations of the official editor's algorithm.xml — a Windows
+// Candidate locations of the official editor's algorithm.xml: a Windows
 // install seen from WSL, or a local Wine install. First hit wins; override
 // with GP200_ALGORITHM_XML.
 const XML_CANDIDATES = [
@@ -130,7 +130,7 @@ let ts = `/**
  * GP-200 Effect Parameter Definitions
  *
  * Auto-generated from algorithm.xml by scripts/generate-effect-params.mjs
- * DO NOT EDIT MANUALLY — re-run the script to update.
+ * DO NOT EDIT MANUALLY. Re-run the script to update.
  */
 
 export interface KnobParam {

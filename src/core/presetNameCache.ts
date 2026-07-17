@@ -1,7 +1,7 @@
 /**
  * localStorage cache for the GP-200's 256 slot names, so the Patch Manager can
  * show names instantly on connect instead of waiting for the ~5s background
- * SysEx scan. This is the app's only browser-persistence layer — durable state
+ * SysEx scan. This is the app's only browser-persistence layer; durable state
  * otherwise lives on the device flash or in downloaded .prst/.zip files.
  *
  * The device exposes no unique serial over MIDI, so the cache is keyed on the
@@ -15,7 +15,7 @@
 
 export const TOTAL_SLOTS = 256;
 
-/** Bump when the envelope shape changes — older caches are then discarded. */
+/** Bump when the envelope shape changes; older caches are then discarded. */
 const CACHE_VERSION = 1;
 
 interface CacheEnvelope {
@@ -68,6 +68,6 @@ export function saveCachedNames(key: string, names: (string | null)[]): void {
   try {
     localStorage.setItem(key, JSON.stringify(envelope));
   } catch {
-    // Private mode / quota exceeded / storage disabled — cache is best-effort.
+    // Private mode / quota exceeded / storage disabled: cache is best-effort.
   }
 }

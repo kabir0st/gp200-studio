@@ -6,7 +6,7 @@ import {
   buildDefaultTail,
 } from './controlRecords';
 
-// Mirror of PRSTDecoder offsets — confirmed against real .prst files from GP-200
+// Mirror of PRSTDecoder offsets, confirmed against real .prst files from GP-200
 const PRST_MAGIC         = 'TSRP';
 const DEVICE_ID          = '2-PG';
 const TOTAL_SIZE         = 1224;
@@ -59,7 +59,7 @@ export class PRSTEncoder {
 
     // ── File header (0x00-0x2F) ──────────────────────────────────────────
     // When a rawSource is present, all file-header and pre-name-metadata
-    // bytes are already correct — skip re-seeding them so we don't change
+    // bytes are already correct, so skip re-seeding them so we don't change
     // values the editor doesn't own (timestamp, pre-meta constants).
     if (!preset.rawSource) {
       gen.writeAscii(OFFSET_MAGIC, PRST_MAGIC, 4);
@@ -112,7 +112,7 @@ export class PRSTEncoder {
     gen.writeUint8(OFFSET_FX_SEND, preset.fxLoopSend);
     gen.writeUint8(OFFSET_FX_RETURN, preset.fxLoopReturn);
 
-    // Per-patch VOL/PAN/TEMPO — likewise always written (editor-owned). For a
+    // Per-patch VOL/PAN/TEMPO, likewise always written (editor-owned). For a
     // rawSource preset these equal the decoded bytes unless the user edited
     // them, so a straight round-trip stays byte-exact.
     gen.writeUint16LE(OFFSET_PATCH_TEMPO, preset.patchTempo);
@@ -172,7 +172,7 @@ export class PRSTEncoder {
       );
       if (!applied && (preset.expAssignments || preset.ctrlAssignments)) {
         console.warn(
-          '[PRSTEncoder] control-record tail not recognized — ' +
+          '[PRSTEncoder] control-record tail not recognized; ' +
           'EXP/CTRL assignments passed through from rawSource unchanged',
         );
       }

@@ -5,7 +5,7 @@ interface FxLoopArrowsProps {
   send: number;
   /** Current RETURN position (1..10). */
   ret: number;
-  /** Called when the user drags or keyboard-shifts SEND. New position is unclamped — parent clamps + push-constraints. */
+  /** Called when the user drags or keyboard-shifts SEND. New position is unclamped; parent clamps + push-constraints. */
   onSendChange: (pos: number) => void;
   onReturnChange: (pos: number) => void;
 }

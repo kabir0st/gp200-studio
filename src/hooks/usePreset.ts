@@ -69,7 +69,7 @@ export function usePreset(): PresetActions {
         ...prev,
         effects: prev.effects.map((slot) => {
           if (slot.slotIndex !== slotIndex) return slot;
-          // Fresh 15-float params array — don't leak values from the previous
+          // Fresh 15-float params array; don't leak values from the previous
           // effect (different effects have different param counts; stale
           // floats in unused slots confuse the device).
           const params = Array<number>(15).fill(0);
@@ -89,7 +89,7 @@ export function usePreset(): PresetActions {
       const [moved] = effects.splice(fromIndex, 1);
       effects.splice(toIndex, 0, moved);
       // slotIndex is the PRST block identity (0..10 = PRE..VOL) and MUST stay
-      // constant per slot. Only array order changes — the encoder reads
+      // constant per slot. Only array order changes; the encoder reads
       // slotIndex to place each block at its canonical byte offset.
       return { ...prev, effects };
     });
@@ -133,7 +133,7 @@ export function usePreset(): PresetActions {
     if (ctrlIndex < 0 || ctrlIndex > 7 || blockIndex < 0 || blockIndex > 10) return;
     setPreset((prev) => {
       if (!prev) return null;
-      // Materialize a default all-zero assignment set on first edit — presets
+      // Materialize a default all-zero assignment set on first edit; presets
       // whose tail couldn't be decoded (factory files) start from a clean map.
       const ctrlAssignments = (prev.ctrlAssignments ?? defaultCtrlAssignments()).map(
         (assignment) => {
@@ -186,7 +186,7 @@ export function usePreset(): PresetActions {
     if (page < 0 || page > 2 || item < 0 || item > 2) return;
     setPreset((prev) => {
       if (!prev) return null;
-      // Materialize the device-default records on first edit — presets whose
+      // Materialize the device-default records on first edit; presets whose
       // tail couldn't be decoded (factory files) start from the fw defaults.
       const expAssignments = (prev.expAssignments ?? defaultExpAssignments()).map(
         (assignment) => {

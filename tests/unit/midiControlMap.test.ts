@@ -8,7 +8,7 @@ import {
 
 // NOTE: the CC constants are placeholders pending a USB capture. These tests
 // exercise the decode LOGIC against whatever the constants currently are, so
-// they keep passing when the captured numbers are filled in — and lock the
+// they keep passing when the captured numbers are filled in, and lock the
 // EXP-vs-footswitch routing + on/off threshold behavior against regression.
 
 describe('decodeControlChange', () => {

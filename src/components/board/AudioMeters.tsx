@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useAudioEngine } from '@/components/AudioEngineProvider';
 
 /**
- * Live audio in/out meters fed by the GP-200's USB audio interface —
+ * Live audio in/out meters fed by the GP-200's USB audio interface,
  * groundwork for the loop station. Bar widths are driven directly from a
  * rAF loop (no React state per frame). MON routes the input to the
  * speakers; the OUT meter follows that monitoring path. Reads the shared

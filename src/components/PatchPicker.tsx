@@ -80,11 +80,11 @@ function bankLabel(bank: number): string {
 function slotName(name: string | null, namesLoadProgress: number): string {
   if (name !== null) return name;
   if (namesLoadProgress < TOTAL_SLOTS) return '…';
-  return '—';
+  return '-';
 }
 
 /**
- * Rich patch browser — a bank rail + search + scrolling list of labelled
+ * Rich patch browser: a bank rail + search + scrolling list of labelled
  * rows, modelled on EffectPicker. Presentational: selection lives in the
  * host (DeviceSlotBrowser modal, PatchManagerSheet side sheet).
  */

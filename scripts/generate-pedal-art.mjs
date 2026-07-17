@@ -14,7 +14,7 @@
  * DST "Tube" vs DLY "Tube"), both get a `--{module}` suffix.
  *
  * All artwork is original vector art *evoking* the real hardware (colors,
- * proportions, control layout) — no brand logos or trademarks are drawn.
+ * proportions, control layout), with no brand logos or trademarks drawn.
  *
  * Usage: node scripts/generate-pedal-art.mjs
  */
@@ -48,7 +48,7 @@ const slugify = (s) => s.toLowerCase().replace(/\+/g, ' plus').replace(/[^a-z0-9
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 /* ────────────────────────────────────────────────────────────────────────
- * 2. SVG helpers — canvas is 160 × 64 (art-zone aspect from the mockup)
+ * 2. SVG helpers: canvas is 160 × 64 (art-zone aspect from the mockup)
  * ──────────────────────────────────────────────────────────────────────── */
 const W = 160, H = 64;
 const FONT = 'JetBrains Mono, ui-monospace, Menlo, monospace';
@@ -108,7 +108,7 @@ function label(x, y, text, size, fill, { weight = 700, ls = 0.5, anchor = 'middl
  * ════════════════════════════════════════════════════════════════════════ */
 
 /**
- * STOMP — mini pedal, front view, centered on canvas.
+ * STOMP: mini pedal, front view, centered on canvas.
  * spec: { body, body2?, ink, label, sub?, knobs, knobCap?, shape?, led?,
  *         plate?  (darker bottom footswitch zone, boss-style),
  *         motif?  (extra art fn key), wide? }
@@ -161,7 +161,7 @@ function tplStomp(s) {
   const led = s.led || '#ff4040';
   out += `<circle cx="${x + pw / 2}" cy="${y + 17.5}" r="1.8" fill="${led}"/><circle cx="${x + pw / 2}" cy="${y + 17.5}" r="3.1" fill="${led}" opacity=".25"/>`;
 
-  // label (always in the middle band — the footswitch owns the bottom)
+  // label (always in the middle band; the footswitch owns the bottom)
   const ly = y + 31;
   const size = s.label.length > 9 ? 4.6 : s.label.length > 6 ? 5.4 : 6.6;
   out += label(W / 2, ly, s.label, size, s.ink, { ls: 0.4 });
@@ -183,7 +183,7 @@ function tplStomp(s) {
 }
 
 /**
- * ROCKER — expression/wah/volume pedal, 3-quarter side view.
+ * ROCKER: expression/wah/volume pedal, 3-quarter side view.
  * spec: { body, ink, label, tread? }
  */
 function tplRocker(s) {
@@ -208,7 +208,7 @@ function tplRocker(s) {
 }
 
 /**
- * GRAPHIC EQ — pedal with vertical slider bank.
+ * GRAPHIC EQ: pedal with vertical slider bank.
  * spec: { body, ink, label, bands, sliderColor?, vals? }
  */
 function tplEq(s) {
@@ -277,7 +277,7 @@ function patternDefs(kind, id, base) {
 }
 
 /**
- * AMP — amp head/combo front.
+ * AMP: amp head/combo front.
  * spec: { tolex (hex or pattern name), panel, panelText, grille (pattern), label,
  *         knobs?, piping?, logoStyle?, face? ('grille'|'panelfull'), combo? }
  */
@@ -318,7 +318,7 @@ function tplAmp(s) {
     if (s.piping) out += `<rect x="${x + 5}" y="${gy}" width="${aw - 10}" height="${gh}" rx="2" fill="none" stroke="${s.piping}" stroke-width="1"/>`;
   }
 
-  // knobs on panel — start after the logo text so long labels never collide
+  // knobs on panel, starting after the logo text so long labels never collide
   const nk = s.knobs ?? 7;
   const lsize = s.label.length > 7 ? 5 : 6.2;
   const kx0 = Math.max(x + 40, x + 13 + s.label.length * lsize * 0.68), kx1 = x + aw - 12;
@@ -338,7 +338,7 @@ function tplAmp(s) {
 }
 
 /**
- * CAB — speaker cabinet front.
+ * CAB: speaker cabinet front.
  * spec: { tolex, grille, cols, rows, size (speaker label e.g. 4x12), ink?, piping?, exposed? }
  */
 function tplCab(s) {
@@ -372,7 +372,7 @@ function tplCab(s) {
       const alpha = s.exposed ? 1 : 0.55;
       out += `<circle cx="${sx}" cy="${sy}" r="${r}" fill="rgba(10,10,10,${alpha * 0.8})" stroke="rgba(0,0,0,.6)" stroke-width=".8"/>`;
       out += `<circle cx="${sx}" cy="${sy}" r="${r * 0.72}" fill="none" stroke="rgba(255,255,255,${0.14 * alpha + 0.06})" stroke-width="1"/>`;
-      // dust cap — tintable (Markbass yellow, Hartke aluminum)
+      // dust cap, tintable (Markbass yellow, Hartke aluminum)
       const cap = s.cone || 'rgba(40,40,42,1)';
       out += `<circle cx="${sx}" cy="${sy}" r="${r * 0.3}" fill="${cap.startsWith('#') ? cap : cap}" opacity="${s.cone ? 0.9 : alpha}" stroke="rgba(255,255,255,.12)" stroke-width=".6"/>`;
     }
@@ -388,7 +388,7 @@ function tplCab(s) {
 }
 
 /**
- * ACOUSTIC — instrument silhouette (for CAB-module acoustic IRs).
+ * ACOUSTIC: instrument silhouette (for CAB-module acoustic IRs).
  * spec: { shape: dread|om|jumbo|classical|mandolin|fretless|doublebass, wood, label }
  */
 function tplAcoustic(s) {
@@ -433,7 +433,7 @@ function tplAcoustic(s) {
 }
 
 /**
- * RACK — 1U 19" rack unit.
+ * RACK: 1U 19" rack unit.
  * spec: { face, ink, label, display?, displayColor?, knobs? }
  */
 function tplRack(s) {
@@ -466,7 +466,7 @@ function tplRack(s) {
 }
 
 /**
- * TAPE — tape echo machine (RE-201 style) or Echorec drum.
+ * TAPE: tape echo machine (RE-201 style) or Echorec drum.
  * spec: { body, panel, ink, label, kind: 'reels'|'drum' }
  */
 function tplTape(s) {
@@ -507,7 +507,7 @@ function tplTape(s) {
 }
 
 /**
- * UTIL — abstract module card for Valeton-original / software-native effects.
+ * UTIL: abstract module card for Valeton-original / software-native effects.
  * spec: { body, ink, label, motif }
  */
 function tplUtil(s) {
@@ -572,7 +572,7 @@ const MOTIFS = {
 const TEMPLATES = { stomp: tplStomp, rocker: tplRocker, eq: tplEq, amp: tplAmp, cab: tplCab, acoustic: tplAcoustic, rack: tplRack, tape: tplTape, util: tplUtil };
 
 /* ════════════════════════════════════════════════════════════════════════
- * 4. MAIN — merge effect list with specs, emit SVGs + manifest
+ * 4. MAIN: merge effect list with specs, emit SVGs + manifest
  * ════════════════════════════════════════════════════════════════════════ */
 import { SPECS, TYPE_BLURBS } from './pedal-art-specs.mjs';
 
@@ -582,7 +582,7 @@ const MODULE_BODY = {
   CAB: '#3a3d3f', EQ: '#f1f1ec', MOD: '#2f6fd8', DLY: '#5a5fd8', RVB: '#2fb9c9', VOL: '#2e2e33',
 };
 
-/* per-module LED colors (specs don't carry LEDs — the board view does) */
+/* per-module LED colors (specs don't carry LEDs; the board view does) */
 const MODULE_LED = {
   PRE: '#ff4d4d', WAH: '#ff4d4d', DST: '#ff4d4d', AMP: '#ffa23f', NR: '#4dff88',
   CAB: '#ffa23f', EQ: '#ff4d4d', MOD: '#4da6ff', DLY: '#4da6ff', RVB: '#4dffe0', VOL: '#ffffff',
@@ -604,7 +604,7 @@ const inkOn = (bg) => (relLum(bg) > 135 ? '#1c1712' : '#f2ede2');
 const knobStyleOn = (bg) => (relLum(bg) > 135 ? 'dark' : 'cream');
 
 /**
- * Body colors the board view paints the whole pedal with — the enclosure
+ * Body colors the board view paints the whole pedal with: the enclosure
  * gradient, text ink, knob style, LED, and (amps) the control-panel strip.
  * Derived from the same spec that drew the SVG so pedal and artwork match.
  */
@@ -676,7 +676,7 @@ function main() {
     let spec = SPECS[key];
     if (!spec) {
       missing.push(key);
-      spec = { t: 'util', body: MODULE_BODY[e.module] ?? '#666', ink: '#1c1712', label: e.name.toUpperCase(), motif: 'sine', type: 'Special', basedOn: '—' };
+      spec = { t: 'util', body: MODULE_BODY[e.module] ?? '#666', ink: '#1c1712', label: e.name.toUpperCase(), motif: 'sine', type: 'Special', basedOn: '-' };
       const lum = parseInt(spec.body.slice(1), 16);
       const y = 0.299 * ((lum >> 16) & 255) + 0.587 * ((lum >> 8) & 255) + 0.114 * (lum & 255);
       if (y < 135) spec.ink = '#f2ede2';
@@ -692,7 +692,7 @@ function main() {
       slug,
       file,
       type: spec.type ?? 'Special',
-      basedOn: spec.basedOn ?? '—',
+      basedOn: spec.basedOn ?? '-',
       blurb: spec.blurb ?? TYPE_BLURBS[spec.type] ?? '',
       colors: bodyColorsFor(spec, e.module),
     });
@@ -702,7 +702,7 @@ function main() {
   const liveKeys = new Set(effects.map((e) => `${e.module}:${e.name}`));
   const stale = Object.keys(SPECS).filter((k) => !liveKeys.has(k));
 
-  // every effect must get its own file — collisions are a hard error
+  // every effect must get its own file; collisions are a hard error
   const files = manifest.map((m) => m.file);
   const dupes = files.filter((f, i) => files.indexOf(f) !== i);
   if (dupes.length) throw new Error(`file collisions: ${[...new Set(dupes)].join(', ')}`);

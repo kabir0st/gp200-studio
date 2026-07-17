@@ -9,11 +9,11 @@ type TimelineBuilder = (tl: gsap.core.Timeline, ctx: { reduced: boolean }) => vo
 
 /**
  * Scoped GSAP timeline with automatic revert-on-cleanup (React 19 safe) and
- * its own prefers-reduced-motion handling — CSS's
+ * its own prefers-reduced-motion handling, because CSS's
  * `@media (prefers-reduced-motion: reduce)` block (src/index.css) doesn't
  * apply to GSAP-driven properties, since GSAP bypasses `animation-duration`.
  *
- * No component uses this yet — this is infrastructure only. See
+ * No component uses this yet; this is infrastructure only. See
  * docs/design-system.md "Motion" for when to reach for GSAP vs. plain CSS.
  */
 export function useGsapTimeline(

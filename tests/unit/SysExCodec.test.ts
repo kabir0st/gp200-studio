@@ -301,7 +301,7 @@ describe('SysExCodec: buildWriteChunks', () => {
   });
 
   it('write header contains static 0x27 markers at key positions', () => {
-    // Static markers — same for any slot (slot is in SysEx chunk header byte[10])
+    // Static markers, same for any slot (slot is in SysEx chunk header byte[10])
     const chunks = SysExCodec.buildWriteChunks(samplePreset, 0);
     const nibbles = chunks.flatMap(c => Array.from(c.slice(13, c.length - 1)));
     const decoded = SysExCodec.nibbleDecode(new Uint8Array(nibbles));
@@ -555,13 +555,13 @@ describe('SysExCodec: parseStateDump', () => {
 
 describe('SysExCodec: EXP Assignment', () => {
   it('buildExpNavigation produces 62-byte message matching Valeton format', () => {
-    // VOL-Volume (block=10, param=0) on EXP1A — must match capture 204352/211645
+    // VOL-Volume (block=10, param=0) on EXP1A: must match capture 204352/211645
     const msg = SysExCodec.buildExpNavigation(0, 0, 10, 0);
     expect(msg.length).toBe(62);
     expect(msg[8]).toBe(0x12); // CMD
     expect(msg[9]).toBe(0x18); // sub
     expect(msg[61]).toBe(0xF7);
-    // Nibble-decoded byte[2] should be 0x04 (not 0x40 — off-by-one analysis was wrong)
+    // Nibble-decoded byte[2] should be 0x04 (not 0x40; off-by-one analysis was wrong)
     const decoded2 = (msg[13 + 4] << 4) | msg[13 + 5];
     expect(decoded2).toBe(0x04);
     // decoded[13] should be blockIndex=10=0x0A (not 0xA0)
@@ -743,7 +743,7 @@ describe('SysExCodec: buildReorderEffects', () => {
 
   it('NR↔AMP swap matches capture (gp200-capture-20260319-101714)', () => {
     // Reorder 1: PRE, WAH, BOOST, NR(4), AMP(3), CAB, EQ, MOD, DLY, RVB, VOL
-    // Capture shows decoded[14]=0x04, decoded[15]=0x04 — pass send=4, ret=4
+    // Capture shows decoded[14]=0x04, decoded[15]=0x04, so pass send=4, ret=4
     const msg = SysExCodec.buildReorderEffects([0, 1, 2, 4, 3, 5, 6, 7, 8, 9, 10], 4, 4);
     // Exact bytes from USB capture gp200-capture-20260319-101714 Pkt 457 (t=35.9s)
     const expected = new Uint8Array([
@@ -963,7 +963,7 @@ describe('SysExCodec: author in read/write chunks', () => {
     'TestName'.split('').forEach((c, i) => { decoded[28 + i] = c.charCodeAt(0); });
     // Author at [44:60]
     'TestAuthor'.split('').forEach((c, i) => { decoded[44 + i] = c.charCodeAt(0); });
-    // Effect blocks at [120:912] — need markers
+    // Effect blocks at [120:912], which need markers
     for (let b = 0; b < 11; b++) {
       const base = 120 + b * 72;
       decoded[base] = 0x14; decoded[base + 2] = 0x44;
@@ -975,7 +975,7 @@ describe('SysExCodec: author in read/write chunks', () => {
   });
 
   // Bounds-check regression tests. parsePresetFromDecoded must never throw on
-  // truncated or empty device responses — it returns a valid preset with empty
+  // truncated or empty device responses; it returns a valid preset with empty
   // fields and 11 disabled effect slots. These tests lock the behavior in so a
   // future refactor can't remove the length guards without failing CI.
   it('parsePresetFromDecoded handles empty buffer without throwing', () => {
@@ -987,14 +987,14 @@ describe('SysExCodec: author in read/write chunks', () => {
   });
 
   it('parsePresetFromDecoded handles buffer too short for name', () => {
-    // 20 bytes — not enough for the name read at decoded[28..43]
+    // 20 bytes, not enough for the name read at decoded[28..43]
     const preset = SysExCodec.parsePresetFromDecoded(new Uint8Array(20));
     expect(preset.patchName).toBe('');
     expect(preset.effects).toHaveLength(11);
   });
 
   it('parsePresetFromDecoded handles buffer with name but no author', () => {
-    // 44 bytes — enough for name, not for author
+    // 44 bytes, enough for name, not for author
     const decoded = new Uint8Array(44);
     'Nm'.split('').forEach((c, i) => { decoded[28 + i] = c.charCodeAt(0); });
     const preset = SysExCodec.parsePresetFromDecoded(decoded);
@@ -1004,7 +1004,7 @@ describe('SysExCodec: author in read/write chunks', () => {
   });
 
   it('parsePresetFromDecoded handles partial effect blocks', () => {
-    // 200 bytes — enough for name+author, but only ~1 partial effect block
+    // 200 bytes, enough for name+author, but only ~1 partial effect block
     // Loop must not read DataView past the end
     const decoded = new Uint8Array(200);
     const preset = SysExCodec.parsePresetFromDecoded(decoded);
@@ -1138,10 +1138,10 @@ describe('SysExCodec: buildWriteChunks fxLoop', () => {
 });
 
 /**
- * Param Change display-value field (decoded[14:16]) — #80.
+ * Param Change display-value field (decoded[14:16]): #80.
  *
  * Decoding the real Valeton knob-sweep capture (gp200-capture-20260412-143552.pcap,
- * 1086 param writes) showed decoded[14:16] is NOT a constant 0x6F "marker" — it is a
+ * 1086 param writes) showed decoded[14:16] is NOT a constant 0x6F "marker"; it is a
  * logarithmic display-value field that the device reads for the *first* parameter of a
  * block. The fit, verified across params 1/5/6 and value range 0..19929 (±1 LSB):
  *
@@ -1207,7 +1207,7 @@ describe('SysExCodec: control records in device dumps', () => {
   it('attaches CTRL/EXP assignments when the dump carries tail records', () => {
     const decoded = buildDecodedPreset('CtrlPreset', 9);
     // Tail records at dump offset 0x388 (file 0x3B0 − 0x28). A 1176-byte
-    // dump fits all records but not the 6-byte footer — mirror that.
+    // dump fits all records but not the 6-byte footer, so mirror that.
     const ctrl = Array.from({ length: 8 }, (_, ctrlIndex) => ({ ctrlIndex, blockMask: 0 }));
     ctrl[4] = { ctrlIndex: 4, blockMask: 0x83 };
     const tail = buildDefaultTail(undefined, ctrl);

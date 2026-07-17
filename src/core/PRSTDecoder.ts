@@ -11,7 +11,7 @@ const OFFSET_VERSION     = 0x15;  // 1 byte: version minor (e.g. 1)
 const OFFSET_PATCH_TEMPO = 0x36;  // u16 LE, BPM (default 120)
 const OFFSET_PATCH_VOLUME = 0x38; // u8, 0..100 (default 50)
 const OFFSET_PATCH_PAN   = 0x3C;  // s8, 0 = center, - = L, + = R
-const OFFSET_PATCH_NAME  = 0x44;  // null-terminated, max 16 bytes (not 32 — author follows)
+const OFFSET_PATCH_NAME  = 0x44;  // null-terminated, max 16 bytes (not 32; author follows)
 const PATCH_NAME_MAX     = 16;
 const OFFSET_AUTHOR      = 0x54;  // null-terminated, max 16 bytes
 const AUTHOR_MAX         = 16;
@@ -20,10 +20,10 @@ const OFFSET_CHECKSUM    = 0x4C6; // BE uint16 (last 2 bytes of 1224-byte file)
 const EFFECT_BLOCK_COUNT  = 11;    // GP-200 has 11 effect slots
 const EFFECT_BLOCK_START  = 0xa0;  // first block offset
 const EFFECT_BLOCK_SIZE   = 0x48;  // 72 bytes per block
-// FX-loop insertion points — live inside the routing section header (0x8C..0x9F).
+// FX-loop insertion points live inside the routing section header (0x8C..0x9F).
 const OFFSET_FX_SEND       = 0x92;  // 1 byte: FX-loop SEND position (1..10)
 const OFFSET_FX_RETURN     = 0x93;  // 1 byte: FX-loop RETURN position (1..10)
-// Routing section — 11 playback-order bytes at 0x94..0x9E inside the
+// Routing section: 11 playback-order bytes at 0x94..0x9E inside the
 // 0x8C header block. Each byte is the slotIndex (block type) that runs
 // at playback position i.
 const OFFSET_ROUTING_ORDER = 0x94;
@@ -69,7 +69,7 @@ export class PRSTDecoder {
       const effectId  = this.parser.readUint32LE(base + MODEL_OFFSET);
       const params: number[] = [];
       for (let p = 0; p < PARAMS_COUNT; p++) {
-        // Substitute 0 for NaN/Infinity — real .prst files in the wild
+        // Substitute 0 for NaN/Infinity; real .prst files in the wild
         // (e.g. guitarpatches.com uploads) sometimes store NaN bytes for
         // unused slots. Zod rejects NaN, so the whole decode would fail.
         // Clamping to 0 is lossless for downloads (we always serve the
@@ -88,7 +88,7 @@ export class PRSTDecoder {
     // Defensive reconstruction: keep every valid, in-range, non-duplicate byte
     // in file order, then append any slots the routing left out (from
     // out-of-range or duplicated bytes) in canonical order. The result is
-    // ALWAYS a complete 0..10 permutation — no block is dropped or duplicated.
+    // ALWAYS a complete 0..10 permutation, with no block dropped or duplicated.
     // Previously a single corrupt byte failed the strict all-11 check and
     // collapsed the WHOLE reorder back to default order, silently losing a
     // real reordering for atypical files (#90). Recovering the valid portion
@@ -112,7 +112,7 @@ export class PRSTDecoder {
     const fxLoopSend = rawSend >= 1 && rawSend <= 10 ? rawSend : 4;
     const fxLoopReturn = rawReturn >= 1 && rawReturn <= 10 ? rawReturn : 4;
 
-    // Per-patch VOL/PAN/TEMPO — defensively clamped like the FX-loop bytes so
+    // Per-patch VOL/PAN/TEMPO, defensively clamped like the FX-loop bytes so
     // an unexpected value can't fail the whole decode.
     const rawVol = this.parser.readUint8(OFFSET_PATCH_VOLUME);
     const patchVolume = rawVol <= 100 ? rawVol : 50;
@@ -122,7 +122,7 @@ export class PRSTDecoder {
     const patchPan = panSigned >= -50 && panSigned <= 50 ? panSigned : 0;
 
     // User presets (1224 bytes) carry a BE16 checksum at 0x4C6. Factory
-    // presets (1176 bytes) don't have room for that footer — the checksum
+    // presets (1176 bytes) don't have room for that footer; the checksum
     // offset (1222) is past the end of the buffer. Skip the read and use 0
     // as a placeholder for factory files; downloads still serve the exact
     // original S3 bytes, and the hardware regenerates its own checksum

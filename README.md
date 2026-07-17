@@ -1,18 +1,18 @@
 # Preset Forge Editor
 
-Browser-based editor for Valeton GP-200 guitar-pedal preset files (`.prst`). Load a preset, edit effect parameters, push changes live to a connected GP-200 over USB-MIDI, save/export the result — all client-side, no backend.
+Browser-based editor for Valeton GP-200 guitar-pedal preset files (`.prst`). Load a preset, edit effect parameters, push changes live to a connected GP-200 over USB-MIDI, save/export the result, all client-side, no backend.
 
 ## Why this repo exists
 
-This is a focused rebuild of the editor surface from [`gp200editor`](https://github.com/phash/gp200editor), a Next.js app that also has a preset gallery, accounts, sharing, and community features. The reverse-engineered protocol work (`.prst` binary format, SysEx MIDI protocol, 305-effect mapping) was already pure, framework-agnostic TypeScript with zero coupling to Next.js — and Web MIDI has never touched a backend either (`navigator.requestMIDIAccess()` + `MIDIOutput.send()` are 100% browser APIs). So the hard, valuable part of that project ported here with zero rewrite risk. Everything else (auth, database, gallery, sharing) was deliberately left behind — this app doesn't have or need a backend.
+This is a focused rebuild of the editor surface from [`gp200editor`](https://github.com/phash/gp200editor), a Next.js app that also has a preset gallery, accounts, sharing, and community features. The reverse-engineered protocol work (`.prst` binary format, SysEx MIDI protocol, 305-effect mapping) was already pure, framework-agnostic TypeScript with zero coupling to Next.js, and Web MIDI has never touched a backend either (`navigator.requestMIDIAccess()` + `MIDIOutput.send()` are 100% browser APIs). So the hard, valuable part of that project ported here with zero rewrite risk. Everything else (auth, database, gallery, sharing) was deliberately left behind. This app doesn't have or need a backend.
 
 The old repo is frozen, not actively developed further; this repo is the intended future for the editor itself. Gallery/auth/sharing/community features, if ever revived, would live in `gp200editor`, not here.
 
 ## Stack
 
 - Vite + React 19 + TypeScript (strict)
-- Tailwind CSS v3 — see [`docs/design-system.md`](docs/design-system.md) for the color/type/component conventions
-- GSAP (`gsap` + `@gsap/react`) as the animation backbone — see [`src/lib/motion.ts`](src/lib/motion.ts) and [`src/hooks/useGsapTimeline.ts`](src/hooks/useGsapTimeline.ts). Not wired into any component yet.
+- Tailwind CSS v3. See [`docs/design-system.md`](docs/design-system.md) for the color/type/component conventions
+- GSAP (`gsap` + `@gsap/react`) as the animation backbone. See [`src/lib/motion.ts`](src/lib/motion.ts) and [`src/hooks/useGsapTimeline.ts`](src/hooks/useGsapTimeline.ts). Not wired into any component yet.
 - Vitest for unit tests
 - No backend, no database, no auth, no i18n framework (English-only)
 
@@ -32,7 +32,7 @@ npm run test:watch      # vitest (watch mode)
 
 ```
 src/
-├── core/              # Pure TypeScript, zero framework dependency — ported verbatim
+├── core/              # Pure TypeScript, zero framework dependency, ported verbatim
 │   ├── types.ts               # Zod schemas: GP200Preset, EffectSlot
 │   ├── BinaryParser.ts        # DataView-based reader
 │   ├── BufferGenerator.ts     # DataView-based writer
@@ -54,7 +54,7 @@ src/
 │   └── useGsapTimeline.ts  # GSAP animation backbone (infrastructure only, unused so far)
 │
 ├── components/
-│   ├── ui/              # Shared primitives: Button, Card, Dialog, Badge — see docs/design-system.md
+│   ├── ui/              # Shared primitives: Button, Card, Dialog, Badge; see docs/design-system.md
 │   └── ...               # Editor components (EffectSlot, ControllerPanel, AmpHeadPanel, ...)
 │
 └── lib/
@@ -65,9 +65,9 @@ Test fixtures: `prst/*.prst` (real 1224-byte preset files used by the ported uni
 
 ## USB-MIDI device communication
 
-Reverse-engineered SysEx protocol, unchanged from the source repo. Web MIDI only works in Chrome/Edge (no Firefox/Safari). Never call `loadPresetNames()` without its abort mechanism — it can trigger a firmware-update popup on the device.
+Reverse-engineered SysEx protocol, unchanged from the source repo. Web MIDI only works in Chrome/Edge (no Firefox/Safari). Never call `loadPresetNames()` without its abort mechanism; it can trigger a firmware-update popup on the device.
 
-`scripts/generate-effect-params.mjs` regenerates `src/core/effectParams.ts` from Valeton's own `algorithm.xml` — that file isn't part of this repo (or the source repo); it's read from a local install of Valeton's editor software. You only need this script if effect parameter definitions ever need to be regenerated from a newer firmware/algorithm release.
+`scripts/generate-effect-params.mjs` regenerates `src/core/effectParams.ts` from Valeton's own `algorithm.xml`. That file isn't part of this repo (or the source repo); it's read from a local install of Valeton's editor software. You only need this script if effect parameter definitions ever need to be regenerated from a newer firmware/algorithm release.
 
 ## Reference docs
 

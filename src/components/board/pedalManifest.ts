@@ -4,7 +4,7 @@
  * `public/pedals/manifest.json` is written by scripts/generate-pedal-art.mjs
  * alongside the per-effect SVGs; it is fetched at runtime (kept out of the JS
  * bundle so the generator output stays the single source of truth). Entries
- * are keyed by display name + module — the same identity as EFFECT_MAP — so a
+ * are keyed by display name + module, the same identity as EFFECT_MAP, so a
  * slot's art is found via getEffectName/getModuleName.
  */
 import { useEffect, useState } from 'react';

@@ -10,7 +10,7 @@ gsap.registerPlugin(Flip);
  * of snapping. Call `capture()` synchronously *before* the reorder mutation (while
  * the DOM still holds the old order); when `orderKey` then changes, a layout effect
  * replays the position delta. Effect swaps also bump `orderKey` but never call
- * `capture()`, so they animate nothing (their bays don't move — see isWideSlot).
+ * `capture()`, so they animate nothing (their bays don't move, see isWideSlot).
  *
  * `prefers-reduced-motion` short-circuits `capture()` → no animation, instant reflow.
  * GSAP-driven props aren't covered by the CSS reduced-motion block, so this is the

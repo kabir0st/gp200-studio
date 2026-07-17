@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════════════════
-   Board view — skeuomorphic pedalboard styles (docs/board-design-system.md).
+   Board view: skeuomorphic pedalboard styles (docs/board-design-system.md).
    Light stage environment; the colorful pedal bodies arrive via inline CSS
    custom properties set from the artwork manifest / boardPalette.ts:
    --body, --body-deep, --ink, --led (sanctioned pattern).
@@ -72,7 +72,7 @@
   border-bottom: 1px solid var(--chrome-border);
   font-family: var(--font-jetbrains-mono), monospace;
   font-size: 11px;
-  /* FIXED height — content changes on hover must never shift the layout */
+  /* FIXED height: content changes on hover must never shift the layout */
   height: 36px;
   overflow: hidden;
   flex-shrink: 0;
@@ -209,7 +209,7 @@
     inset 0 0 0 4px #e6e3dc,
     0 24px 48px rgba(0, 0, 0, 0.25);
 }
-/* horizontal scroll wrapper — keeps the two rows intact on narrow screens
+/* horizontal scroll wrapper: keeps the two rows intact on narrow screens
    instead of wrapping pedals onto extra lines; the cables live inside it so
    they scroll together with the pedals */
 .board-view .board-scroll {
@@ -241,7 +241,7 @@
 /* ── pedal bay ──
    Fixed-size cell per slot. The pedal keeps its own natural size and sits at the
    bottom-centre; the bay absorbs any width/height difference as padding, so
-   swapping an effect only changes the padding — never a neighbour's position.
+   swapping an effect only changes the padding, never a neighbour's position.
    Width/height are keyed to the slot's module (isWideSlot), which is stable, so
    the whole row's footprint is constant across effect changes. */
 .board-view .pedal-bay {
@@ -251,7 +251,7 @@
   justify-content: center;
   flex: none;
   width: 172px;
-  /* per-module reserved height (bayMinHeight) — set inline; falls back if unset */
+  /* per-module reserved height (bayMinHeight): set inline; falls back if unset */
   min-height: var(--bay-h, 342px);
 }
 .board-view .pedal-bay.wide {
@@ -316,7 +316,7 @@
   width: 310px;
 }
 /* bypassed: dark scrim over the whole enclosure (body color stays legible
-   through it) + a BYPASSED tag. pointer-events: none — knobs stay usable
+   through it) + a BYPASSED tag. pointer-events: none; knobs stay usable
    while off (pre-dialing is a real workflow); the footswitch is the toggle. */
 .board-view .pedal::after {
   content: '';
@@ -856,7 +856,7 @@
   margin-left: auto;
 }
 
-/* ── control deck (clean, modern — no LCD glow, no decorative stomps) ── */
+/* ── control deck (clean, modern, no LCD glow, no decorative stomps) ── */
 /* Floating control deck: sticks to the bottom of the scroll stage and floats
    over the board rows. */
 .board-view .deck {
@@ -1219,7 +1219,7 @@
 }
 
 /* ════════════════════════════════════════════════════════════════════════
-   Landing view — same stage vocabulary as the board (light case, chrome
+   Landing view: same stage vocabulary as the board (light case, chrome
    panel, JetBrains-mono display type). Two actions only: connect / open.
    ════════════════════════════════════════════════════════════════════════ */
 .landing-view {

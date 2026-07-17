@@ -10,7 +10,7 @@ import {
 // `new URL(..., import.meta.url)` (not a `?url` import): Vite always emits this
 // as a real, separately-fetchable asset file. A `?url` import to a small file
 // gets inlined as a data: URL under the 4 KB limit, and Chromium's
-// audioWorklet.addModule() rejects data: URLs — this pattern avoids that.
+// audioWorklet.addModule() rejects data: URLs; this pattern avoids that.
 const recorderWorkletUrl = new URL('../audio/looper-recorder.worklet.js', import.meta.url).href;
 
 // Multi-track loop station built on the shared audio engine (useAudioMeter via
@@ -35,13 +35,13 @@ export interface LooperTrack {
 }
 
 export interface LooperApi {
-  /** audio engine is active — the looper can record/play */
+  /** audio engine is active; the looper can record/play */
   ready: boolean;
   tracks: LooperTrack[];
   isRecording: boolean;
   recordArmedTrack: number | null;
   masterLoopLengthSec: number | null;
-  /** 0..1 within the master loop — read inside rAF, not React state */
+  /** 0..1 within the master loop; read inside rAF, not React state */
   getPlayhead: () => number;
   startRecord: (trackId: number) => void;
   stopRecord: () => void;

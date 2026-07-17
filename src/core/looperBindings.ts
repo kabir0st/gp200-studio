@@ -1,5 +1,5 @@
 // Pure mapping from physical GP-200 controls (footswitches, EXP pedal) to loop
-// station actions. No Web Audio, no React — just the binding model + resolvers,
+// station actions. No Web Audio, no React, just the binding model + resolvers,
 // so the glue in App.tsx and the LooperPanel share one testable source of truth.
 
 export type LooperAction =
@@ -41,7 +41,7 @@ export function applyExp(value: number): number {
   return Math.min(1, Math.max(0, value / 127));
 }
 
-// The subset of the looper API the dispatcher needs — kept minimal so it can be
+// The subset of the looper API the dispatcher needs, kept minimal so it can be
 // mocked in tests and so LooperApi satisfies it structurally.
 export interface LooperControls {
   isRecording: boolean;

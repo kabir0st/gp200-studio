@@ -10,7 +10,7 @@ import { AudioEngineProvider } from '@/components/AudioEngineProvider';
 import { defaultLooperBindings } from '@/core/looperBindings';
 import type { LooperApi } from '@/hooks/useLooper';
 
-// Minimal looper stub — the smoke tests never open the Loop Station drawer, so
+// Minimal looper stub: the smoke tests never open the Loop Station drawer, so
 // an inert API that satisfies the type is enough. AudioEngineProvider is inert
 // at mount (no getUserMedia until enable()), so wrapping is jsdom-safe.
 const fakeLooper: LooperApi = {
@@ -123,7 +123,7 @@ describe('PedalBoard (render smoke test)', () => {
     expect(back.length).toBeGreaterThan(0);
   });
 
-  it('every slot renders its fixed hardware module — CAB is always on the board', () => {
+  it('every slot renders its fixed hardware module; CAB is always on the board', () => {
     const { container } = renderBoard();
     const chips = [...container.querySelectorAll('article.pedal .module-chip')].map((c) => c.textContent);
     expect(chips).toContain('CAB');
@@ -199,7 +199,7 @@ describe('PedalBoard (render smoke test)', () => {
     expect(bays).toHaveLength(11);
     // every pedal is wrapped by a bay (the bay is what holds the fixed footprint)
     for (const bay of bays) expect(bay.querySelector('article.pedal')).not.toBeNull();
-    // a bay is wide iff its slot's module is wide — stable, effect-independent
+    // a bay is wide iff its slot's module is wide: stable, effect-independent
     const wideBays = [...bays].filter((b) => b.classList.contains('wide')).length;
     const wideSlots = preset.effects.filter((e) => isWideSlot(e.slotIndex)).length;
     expect(wideBays).toBe(wideSlots);
@@ -209,7 +209,7 @@ describe('PedalBoard (render smoke test)', () => {
 
   it('isWideSlot is keyed to the fixed module, not the chosen effect', () => {
     // AMP (slot 3) is a wide module; CAB (5) and VOL (10) are always compact.
-    // Because it takes only slotIndex, swapping effects can never change it —
+    // Because it takes only slotIndex, swapping effects can never change it;
     // that stability is what keeps neighbours from reflowing on an effect swap.
     expect(isWideSlot(3)).toBe(true);
     expect(isWideSlot(5)).toBe(false);

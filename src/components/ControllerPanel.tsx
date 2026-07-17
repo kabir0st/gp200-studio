@@ -69,7 +69,7 @@ interface ParaCardProps {
 
 /**
  * One assignable "Para" slot: pick the pedal, pick one of its knobs, then
- * set the heel/toe sweep — the values the knob lands on with the expression
+ * set the heel/toe sweep: the values the knob lands on with the expression
  * pedal fully up / fully down.
  */
 function ParaCard({ preset, assignment, onParamSelect, onMinMax }: ParaCardProps) {
@@ -83,13 +83,13 @@ function ParaCard({ preset, assignment, onParamSelect, onMinMax }: ParaCardProps
     if (effectId !== null) paramDefs = getEffectParams(effectId);
   }
   // Special device targets (e.g. Patch Volume in the official editor) use
-  // param indices past the effect's knob list — keep them selectable.
+  // param indices past the effect's knob list, so keep them selectable.
   const paramBeyondList = assigned && paramIndex >= paramDefs.length;
 
   const moduleName = assigned ? getSlotModule(blockIndex) : null;
   const accent = moduleName !== null ? MODULE_COLORS[moduleName]?.accent : undefined;
 
-  let summary = 'Not assigned — pick a pedal to control.';
+  let summary = 'Not assigned. Pick a pedal to control.';
   if (assigned && moduleName !== null) {
     const paramName = paramDefs[paramIndex]?.name ?? `device target #${paramIndex}`;
     summary = `Sweeps ${moduleName} ${paramName} from ${min} (heel) to ${max} (toe).`;
@@ -180,7 +180,7 @@ function ParaCard({ preset, assignment, onParamSelect, onMinMax }: ParaCardProps
           >
             {paramDefs.map((paramDef, paramIdx) => (
               // paramIdx is the protocol value the device expects for this
-              // knob (position in the effect's param list) — it IS the data.
+              // knob (position in the effect's param list); it IS the data.
               <option key={paramDef.name} value={paramIdx}>
                 {paramDef.name}
               </option>
@@ -188,7 +188,7 @@ function ParaCard({ preset, assignment, onParamSelect, onMinMax }: ParaCardProps
             {paramBeyondList && (
               <option value={paramIndex}>{`Device target #${paramIndex}`}</option>
             )}
-            {!assigned && <option value="0">—</option>}
+            {!assigned && <option value="0">-</option>}
           </select>
         </label>
       </div>
@@ -266,9 +266,9 @@ export function ControllerPanel({
     };
   });
 
-  let liveHint = 'Offline — assignments save with the patch; connect to also hear them live.';
+  let liveHint = 'Offline: assignments save with the patch; connect to also hear them live.';
   if (connected) {
-    liveHint = 'Connected — changes apply to the device immediately; SAVE to persist them.';
+    liveHint = 'Connected: changes apply to the device immediately; SAVE to persist them.';
   }
 
   return (
@@ -304,7 +304,7 @@ export function ControllerPanel({
       </div>
 
       <p className="text-xs mt-2 mb-3" style={{ color: 'var(--text-secondary)' }}>
-        {pageInfo.hint}. Each Para slot ties the pedal&apos;s travel to one knob —
+        {pageInfo.hint}. Each Para slot ties the pedal&apos;s travel to one knob.
         Heel is the value with the pedal up, Toe with it pressed down.
       </p>
 

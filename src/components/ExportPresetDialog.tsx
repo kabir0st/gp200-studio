@@ -13,7 +13,7 @@ interface ExportPresetDialogProps {
   onConfirm: (name: string, author?: string) => void;
 }
 
-/** Minimal "name this preset, then download" dialog — replaces the old gallery-publish
+/** Minimal "name this preset, then download" dialog that replaces the old gallery-publish
  *  flow (style/note/audio-snippet/publish checkbox), which has no equivalent in this
  *  backend-less app. See docs/design-system.md "Components > Dialog". */
 export function ExportPresetDialog({ open, onClose, initialName, initialAuthor, onConfirm }: ExportPresetDialogProps) {

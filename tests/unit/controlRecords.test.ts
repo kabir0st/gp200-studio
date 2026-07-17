@@ -94,7 +94,7 @@ describe('buildDefaultTail', () => {
   });
 
   // Regression: a single unmodeled value used to abort the whole parse via
-  // `return undefined`, silently dropping every EXP *and* CTRL assignment — so
+  // `return undefined`, silently dropping every EXP *and* CTRL assignment, so
   // the footswitch panel read "nothing assigned" even when CTRLs were mapped.
   it('keeps all records when one EXP targets a special (unmodeled) block byte', () => {
     const exp = defaultExpAssignments();

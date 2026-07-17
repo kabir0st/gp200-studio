@@ -11,18 +11,18 @@ export const EffectSlotSchema = z.object({
 /**
  * One EXP pedal assignment record (.prst tail, TLV type 0x000C).
  * The GP-200 has 3 EXP pages (0=EXP1 Mode A, 1=EXP1 Mode B, 2=EXP2), each
- * with 3 assignable "Para" items — 9 records per preset, saved with the patch.
+ * with 3 assignable "Para" items: 9 records per preset, saved with the patch.
  */
 export const ExpAssignmentSchema = z.object({
   page: z.number().int().min(0).max(2),
   item: z.number().int().min(0).max(2),
   /** Block byte the assigned param lives in. 0..10 = modeled fixed blocks
    *  (PRE..VOL); 11..254 = an unmodeled/special target (e.g. Patch Volume/Tempo
-   *  in the official editor) — kept verbatim so it round-trips; null = 0xFF
+   *  in the official editor), kept verbatim so it round-trips; null = 0xFF
    *  (unassigned). Only 0..10 render as a pedal in the EXP panel. */
   blockIndex: z.number().int().min(0).max(254).nullable(),
   /** u16 in the file. Effect params are 0..14; special targets (Patch Volume/
-   *  Tempo in the official editor) may use values beyond that — don't clamp. */
+   *  Tempo in the official editor) may use values beyond that. Don't clamp. */
   paramIndex: z.number().int().min(0).max(0xFFFF),
   min: z.number(),
   max: z.number(),
@@ -30,7 +30,7 @@ export const ExpAssignmentSchema = z.object({
 
 /**
  * One CTRL footswitch assignment record (.prst tail, TLV type 0x000F).
- * Each of the 8 CTRL footswitches stores an 11-bit mask — bit n toggles the
+ * Each of the 8 CTRL footswitches stores an 11-bit mask: bit n toggles the
  * fixed effect block n (0=PRE..10=VOL). Saved with the patch.
  */
 export const CtrlAssignmentSchema = z.object({
@@ -62,15 +62,15 @@ export const GP200PresetSchema = z.object({
    * Original raw file bytes (1224 or 1176). When present, the encoder uses
    * this as the starting buffer and overwrites only the fields the editor
    * models (name, author, effect blocks, routing, checksum). Everything else
-   * — controller/EXP assignments, pre-name metadata, routing header extras
-   * — round-trips byte-exact. Absent for synthetically-built presets (HLX
+   * (controller/EXP assignments, pre-name metadata, routing header extras)
+   * round-trips byte-exact. Absent for synthetically-built presets (HLX
    * import, tests); the encoder then builds a buffer from scratch.
    */
   rawSource: z.instanceof(Uint8Array).optional(),
   /**
    * EXP pedal assignments decoded from the .prst tail records (see
    * controlRecords.ts). Absent when the tail couldn't be parsed (factory
-   * 1176-byte files, malformed tails) — the raw bytes still round-trip
+   * 1176-byte files, malformed tails); the raw bytes still round-trip
    * via rawSource.
    */
   expAssignments: z.array(ExpAssignmentSchema).length(9).optional(),

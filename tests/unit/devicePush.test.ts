@@ -94,7 +94,7 @@ describe('pushPresetToDevice', () => {
     const nonSleep = events.filter((e) => !e.startsWith('sleep:'));
 
     // The device swallows the FIRST param-change of a block's burst (it opens the
-    // block's edit context), so param 0 — always sent first — never lands unless
+    // block's edit context), so param 0 (always sent first) never lands unless
     // re-sent. Within block 0's pass-1 params, the sequence must be 0,1,0.
     const fx0 = nonSleep.indexOf('fx:0:17');
     const toggle0 = nonSleep.indexOf('toggle:0:true');
@@ -110,7 +110,7 @@ describe('pushPresetToDevice', () => {
 
     // Real USB captures show the GP-200 never receives two *different* params
     // closer than ~124ms, and even same-target knob sweeps never go below ~19ms.
-    // Our former 8ms burst is a pattern the device never sees in the wild — it
+    // Our former 8ms burst is a pattern the device never sees in the wild; it
     // swallows it. Each param write is now followed by a 40ms gap by default,
     // comfortably above the device's processing window (#80).
     events.forEach((e, i) => {

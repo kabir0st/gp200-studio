@@ -25,7 +25,7 @@ const DEFAULT_ENABLED = new Set(['AMP', 'CAB', 'VOL']);
 /**
  * A blank "INIT" preset for opening the editor without a device or file:
  * all 11 blocks with their module's default effect at default params.
- * No rawSource — PRSTEncoder builds a full buffer from scratch for these.
+ * No rawSource; PRSTEncoder builds a full buffer from scratch for these.
  */
 export function createDefaultPreset(): GP200Preset {
   const effects = SLOT_MODULES.map((module, slotIndex) => {

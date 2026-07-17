@@ -1,5 +1,5 @@
 // Pure timing math for the multi-track looper. Framework-agnostic: no Web Audio,
-// no React — just the sample/second arithmetic that keeps tracks phase-locked.
+// no React, just the sample/second arithmetic that keeps tracks phase-locked.
 //
 // Model: the first recorded track sets the MASTER loop length. Every later track
 // is quantized to a whole multiple of that master length and launched on the next

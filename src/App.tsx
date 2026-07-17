@@ -62,7 +62,7 @@ function App() {
 
   // Loop-station hardware bindings. State drives the LooperPanel UI; the ref
   // mirror is what the once-per-connection MIDI callbacks read (so they see the
-  // current map without re-registering) — same pattern as presetRef below.
+  // current map without re-registering); same pattern as presetRef below.
   const [looperBindings, setLooperBindings] = useState<LooperBindings>(defaultLooperBindings);
   const looperBindingsRef = useRef(looperBindings);
   looperBindingsRef.current = looperBindings;
@@ -130,7 +130,7 @@ function App() {
     } finally {
       if (pushAbortRef.current === ac) pushAbortRef.current = null;
     }
-    // midiDevice is a fresh object every render (see useMidiDevice/useMidiSend) —
+    // midiDevice is a fresh object every render (see useMidiDevice/useMidiSend);
     // depending on midiDevice.status alone avoids re-creating this callback (and
     // therefore re-triggering effects that depend on it) on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -166,7 +166,7 @@ function App() {
   }, [midiDevice.status]);
 
   // Mirror hardware-initiated changes (knob turns, on-device toggles/effect
-  // swaps, slot changes) back into local state — the device is the source of
+  // swaps, slot changes) back into local state; the device is the source of
   // truth for its own editing buffer, which isn't reflected in saved data.
   useEffect(() => {
     if (midiDevice.status !== 'connected') return;
@@ -180,7 +180,7 @@ function App() {
     // Hardware footswitch toggles emit effect-change-shaped frames with the
     // effect id zeroed out (decodes to COMP). Validate before applying: the
     // id must exist, the block's module can't change on hardware, and a
-    // same-id "change" is a toggle ack, not a swap — applying it would reset
+    // same-id "change" is a toggle ack, not a swap; applying it would reset
     // the params to defaults. Return value tells the dispatcher whether to
     // suppress the FX-state messages that follow a real swap.
     midiDevice.setOnDeviceEffectChange((blockIndex, effectId) => {
@@ -197,7 +197,7 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [midiDevice.status]);
 
-  // Once connected, mirror the device's active preset into the editor — the
+  // Once connected, mirror the device's active preset into the editor; the
   // handshake already pulled it (midiDevice.currentPreset); the user shouldn't
   // have to press LOAD to see what their pedal is doing.
   useEffect(() => {
@@ -249,7 +249,7 @@ function App() {
         const fresh = await midiDevice.pullPreset(slot);
         loadPreset(fresh);
       } catch {
-        // Device slot switched but the read failed — keep showing the last
+        // Device slot switched but the read failed, so keep showing the last
         // loaded preset rather than clearing the editor.
       }
     });
@@ -341,11 +341,11 @@ function App() {
         downloadBlob(createZip(entries), 'gp200-patches.zip');
       }
       if (failed > 0) {
-        setLoadError(`Bulk export finished — ${failed} slot(s) could not be read`);
+        setLoadError(`Bulk export finished: ${failed} slot(s) could not be read`);
       }
     } finally {
       setBulkProgress(null);
-      // pullPreset paused the background name enumeration — resume it.
+      // pullPreset paused the background name enumeration; resume it.
       if (midiDevice.status === 'connected' && midiDevice.namesLoadProgress < 256) {
         void midiDevice.loadPresetNames();
       }
@@ -416,7 +416,7 @@ function App() {
 
   // Landing "open current preset": the auto-load effect only fires on the
   // connect transition, so after a deck CLOSE the handshake preset is still
-  // cached — fall back to a fresh pull if it isn't.
+  // cached; fall back to a fresh pull if it isn't.
   async function handleOpenCurrent() {
     if (midiDevice.currentPreset) {
       loadPreset(midiDevice.currentPreset);
@@ -458,7 +458,7 @@ function App() {
   }, []);
 
   // Shared by drag-and-drop and keyboard reordering. slotIndex (the immutable
-  // PRST block identity) is preserved by reorderEffects — only array order changes.
+  // PRST block identity) is preserved by reorderEffects; only array order changes.
   const moveSlot = useCallback((fromIndex: number, toIndex: number) => {
     if (!preset) return;
     if (fromIndex === toIndex || toIndex < 0 || toIndex >= preset.effects.length) return;
@@ -505,7 +505,7 @@ function App() {
     <div className="w-full h-screen flex flex-col overflow-hidden">
       {importedFromHLX && (
         <div className="mx-4 mt-3 mb-2 px-3 py-1.5 rounded-lg font-mono-display text-caption tracking-wider uppercase inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/40 text-purple-800">
-          EXPERIMENTAL — imported from Line6 HX Stomp (.hlx)
+          EXPERIMENTAL: imported from Line6 HX Stomp (.hlx)
         </div>
       )}
 
@@ -573,7 +573,7 @@ function App() {
           }}
           onExpParamSelect={(page, item, blockIndex, paramIdx) => {
             // Persist with the patch; also apply live when a device is attached
-            // (there is no live "unassign" message — that lands on SAVE).
+            // (there is no live "unassign" message; that lands on SAVE).
             setExpAssignment(page, item, { blockIndex, paramIndex: paramIdx });
             if (midiDevice.status === 'connected' && blockIndex !== null) {
               midiDevice.sendExpParamSelect(page, item, blockIndex, paramIdx);

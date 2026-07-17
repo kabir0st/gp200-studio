@@ -159,11 +159,11 @@ describe('PRSTDecoder', () => {
   it('recovers a partial routing order when one byte is corrupt, instead of collapsing to default order (#90)', () => {
     // A valid reorder [3,1,4,0,2,5,6,7,8,9,10] but position 0 is corrupted to 0xFF.
     // The old all-or-nothing check discarded the WHOLE reorder on a single bad
-    // byte and fell back to default order — the #90 symptom for atypical files.
+    // byte and fell back to default order: the #90 symptom for atypical files.
     const routing = [0xff, 1, 4, 0, 2, 5, 6, 7, 8, 9, 10];
     const decoded = new PRSTDecoder(buildTestBufferWithRouting(routing)).decode();
     // Valid entries kept in file order; the one omitted slot (3) appended last.
-    // No block dropped or duplicated — a full 0..10 permutation is guaranteed.
+    // No block dropped or duplicated: a full 0..10 permutation is guaranteed.
     expect(decoded.effects.map((e) => e.slotIndex)).toEqual([1, 4, 0, 2, 5, 6, 7, 8, 9, 10, 3]);
   });
 
@@ -233,7 +233,7 @@ describe('PRSTDecoder: controller/EXP assignment records', () => {
   });
 
   it('leaves assignment fields absent when the tail is unrecognized', () => {
-    const buf = buildTestBuffer(); // tail is all zeros — not a record stream
+    const buf = buildTestBuffer(); // tail is all zeros, not a record stream
     const preset = new PRSTDecoder(buf).decode();
     expect(preset.ctrlAssignments).toBeUndefined();
     expect(preset.expAssignments).toBeUndefined();

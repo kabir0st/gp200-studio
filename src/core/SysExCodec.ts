@@ -59,7 +59,7 @@ export const SysExCodec = {
   },
 
   buildReadRequest(slot: number): Uint8Array {
-    // CMD=0x11, sub=0x10, 46 bytes — corrected from USB capture 2026-03-19
+    // CMD=0x11, sub=0x10, 46 bytes. Corrected from USB capture 2026-03-19
     // Slot nibble-encoded (high first) at positions [25-26], [37-38], [41-42]
     const sh = (slot >> 4) & 0x0F;
     const sl = slot & 0x0F;
@@ -86,7 +86,7 @@ export const SysExCodec = {
   /**
    * Name-only slot read: identical request shape to buildReadRequest but
    * sub=0x20 instead of 0x10. The device answers with a single sub=0x18
-   * chunk (offset 0) whose decoded[28:44] is the preset name — the same
+   * chunk (offset 0) whose decoded[28:44] is the preset name, the same
    * layout parsePresetName already handles. Documented for firmware 1.8.0
    * (toneforge sysex-protocol.md); much faster than pulling all 7 chunks
    * when enumerating all 256 slots, so callers should probe once and fall
@@ -188,7 +188,7 @@ export const SysExCodec = {
     }
 
     // Re-order by the routing table at decoded[108..118] (mirrors the .prst
-    // routing bytes at 0x94..0x9E — the dump payload sits 0x28 before the
+    // routing bytes at 0x94..0x9E; the dump payload sits 0x28 before the
     // file layout, consistent with fxSend/fxReturn at 106/107 and blocks at
     // 120). Without this, a device preset with a reordered chain displays in
     // physical order, and saving it back overwrites the user's real routing
@@ -234,7 +234,7 @@ export const SysExCodec = {
 
   /**
    * @deprecated Chunk offsets overlap (0/311/622/1061/1372 with chunk size
-   * 366) and block 10 (VOL) is only partially populated — hardware testing
+   * 366) and block 10 (VOL) is only partially populated; hardware testing
    * confirmed this pathway is unreliable. Prefer the writePresetToSlot flow
    * (buildToggle + buildParam + buildSaveCommit) which the device handles
    * correctly. Kept only for USB-capture replay during protocol research.
@@ -242,7 +242,7 @@ export const SysExCodec = {
   buildWriteChunks(preset: GP200Preset, slot: number): Uint8Array[] {
     const SYSEX_HEADER = [0xF0, 0x21, 0x25, 0x7E, 0x47, 0x50, 0x2D, 0x32, 0x12, 0x20];
 
-    // Build 876-byte decoded write payload — extended from 732 to include
+    // Build 876-byte decoded write payload, extended from 732 to include
     // all 11 effect blocks (previously blocks 9=RVB and 10=VOL were omitted,
     // causing silent data loss when those effects were modified).
     // 876 bytes nibble-encoded = 1752 nibble bytes, split into 5 chunks (4×366 + 1×288).
@@ -257,7 +257,7 @@ export const SysExCodec = {
     const payload = new Uint8Array(PAYLOAD_SIZE).fill(0);
     const view = new DataView(payload.buffer);
 
-    // [0:36] Write header — exact bytes from captured write (Valeton GP-200 Editor)
+    // [0:36] Write header: exact bytes from captured write (Valeton GP-200 Editor)
     // The 0x27 values are static write markers, NOT slot-dependent addresses.
     // Slot is identified by byte[10] in each SysEx chunk header.
     payload.set([
@@ -280,7 +280,7 @@ export const SysExCodec = {
       }
     }
 
-    // [68:108] Middle section — zeros (URL/padding area)
+    // [68:108] Middle section: zeros (URL/padding area)
 
     // [108:128] Routing section
     payload.set([0x08, 0x00, 0x10, 0x00], 108);
@@ -293,7 +293,7 @@ export const SysExCodec = {
     }
     // [127] = 0x00 terminator (already zero)
 
-    // Clamp NaN/Infinity to 0 — mirrors PRSTDecoder/PRSTEncoder behavior.
+    // Clamp NaN/Infinity to 0; mirrors PRSTDecoder/PRSTEncoder behavior.
     const safeParam = (v: number | undefined) => (v !== undefined && Number.isFinite(v)) ? v : 0;
 
     // [128:704] Effect blocks 0-7 complete (8 × 72 = 576 bytes)
@@ -448,7 +448,7 @@ export const SysExCodec = {
   },
 
   parseIdentityResponse(msg: Uint8Array): { deviceType: number; firmwareValues: number[] } {
-    // sub=0x08 response — bytes [22] and [26] are NOT firmware version
+    // sub=0x08 response: bytes [22] and [26] are NOT firmware version
     // (they show 1.2 regardless of actual FW, likely protocol version).
     // Actual firmware version is not transmitted via SysEx identity.
     // We return deviceType only; firmware compat uses version check (sub=0x0A).
@@ -499,7 +499,7 @@ export const SysExCodec = {
   // ── Real-time editing commands (reverse-engineered 2026-03-19) ──────────
 
   buildToggleEffect(blockIndex: number, enabled: boolean): Uint8Array {
-    // CMD=0x12, sub=0x10, 46 bytes — raw SysEx (not nibble-encoded)
+    // CMD=0x12, sub=0x10, 46 bytes, raw SysEx (not nibble-encoded)
     // Confirmed: captures 100548 (WAH OFF, BOOST OFF, DLY ON, MOD ON) + 101538
     // Block indices: 0=PRE 1=WAH 2=BOOST 3=AMP 4=NR 5=CAB 6=EQ 7=MOD 8=DLY 9=RVB 10=VOL
     return new Uint8Array([
@@ -523,11 +523,11 @@ export const SysExCodec = {
   },
 
   buildEffectChange(blockIndex: number, effectId: number): Uint8Array {
-    // CMD=0x12, sub=0x14, 54 bytes — raw SysEx (not nibble-encoded)
+    // CMD=0x12, sub=0x14, 54 bytes, raw SysEx (not nibble-encoded)
     // Confirmed: captures 134828 (COMP→COMP4→AC Boost) + 143107 (AMP→SnapTone)
     // raw[38]=block, raw[45:47]=variant nibble-encoded, raw[52]=module type
     // NOTE: Sub-category byte (bits 16-23, e.g. 0x10 for User IR) encoding position
-    // is unknown — only regular effects (sub-category=0x00) are confirmed via captures.
+    // is unknown; only regular effects (sub-category=0x00) are confirmed via captures.
     const moduleType = (effectId >> 24) & 0xFF;
     const variant = effectId & 0xFF;
     return new Uint8Array([
@@ -552,7 +552,7 @@ export const SysExCodec = {
   },
 
   buildParamChange(blockIndex: number, paramIndex: number, effectId: number, value: number): Uint8Array {
-    // CMD=0x12, sub=0x18, 62 bytes — nibble-encoded 24-byte payload
+    // CMD=0x12, sub=0x18, 62 bytes, nibble-encoded 24-byte payload
     // Confirmed: capture 102448 (DLY Ping Pong: Mix/Feedback/Time/Sync/Trail)
     //            capture 102857 (AMP Mess4 LD: Gain/Presence/Volume/Bass/Middle/Treble)
     // ParamIndex matches effectParams.ts definition order
@@ -582,8 +582,8 @@ export const SysExCodec = {
   },
 
   buildPatchSetting(target: number, value: number): Uint8Array {
-    // CMD=0x12, sub=0x10, 46 bytes — similar to toggle but different constants
-    // Confirmed: capture 140802 (Valeton VOL/PAN/Tempo) — bytes[29:31]=0x00,0x06 (not 0x01,0x05 like toggle)
+    // CMD=0x12, sub=0x10, 46 bytes, similar to toggle but different constants
+    // Confirmed: capture 140802 (Valeton VOL/PAN/Tempo): bytes[29:31]=0x00,0x06 (not 0x01,0x05 like toggle)
     // target: 0x00=VOL, 0x01=Tempo, 0x06=PAN
     // value: nibble-encoded at raw[41:43], for PAN-left also raw[43:45]=0x0F,0x0F
     const msg = new Uint8Array([
@@ -621,11 +621,11 @@ export const SysExCodec = {
   },
 
   buildReorderEffects(order: number[], send: number, ret: number): Uint8Array {
-    // CMD=0x12, sub=0x20, 78 bytes — nibble-encoded 32-byte payload
+    // CMD=0x12, sub=0x20, 78 bytes, nibble-encoded 32-byte payload
     // Confirmed: capture 101538 (NR↔AMP swap) + 101714 (NR↔AMP + DLY↔RVB)
     // order: array of 11 slot indices representing the new chain order
     // decoded[14]=SEND, decoded[15]=RETURN (1..10). decoded[27]=0x44 flags this
-    // as a routing-reorder (vs FX-loop move which uses 0x08/0xBA — see buildFxLoopMove).
+    // as a routing-reorder (vs FX-loop move which uses 0x08/0xBA; see buildFxLoopMove).
     // Device responds with sub=0x14 echoing the new routing order
     const decoded = new Uint8Array(32);
     decoded[2] = 0x04;                          // constant
@@ -647,8 +647,8 @@ export const SysExCodec = {
   },
 
   buildFxLoopMove(order: number[], send: number, ret: number, which: 'send' | 'return'): Uint8Array {
-    // CMD=0x12, sub=0x20, 78 bytes — nibble-encoded 32-byte payload
-    // Confirmed: captures 075745 (SEND moves) + 075856 (RETURN moves) — 2026-05-18
+    // CMD=0x12, sub=0x20, 78 bytes, nibble-encoded 32-byte payload
+    // Confirmed: captures 075745 (SEND moves) + 075856 (RETURN moves), 2026-05-18
     // Same envelope as buildReorderEffects, but with FX-loop discriminators:
     //   decoded[6]=0x51 and decoded[12]=0x51 (vs 0x00 in reorder)
     //   decoded[27]=0x08 (send moved) or 0xBA (return moved), vs 0x44 (reorder)
@@ -675,7 +675,7 @@ export const SysExCodec = {
   },
 
   buildSaveCommit(presetName: string, slot: number): Uint8Array {
-    // CMD=0x12, sub=0x18, 62 bytes — nibble-encoded "save to slot" commit
+    // CMD=0x12, sub=0x18, 62 bytes, nibble-encoded "save to slot" commit
     // From captures 100548 + 101538: sent after live edits or write chunks to persist
     // Decoded payload: [0:3]=03 20 14, [4]=sub-slot (A=0,B=1,C=2,D=3), [8:24]=name
     // Confirmed: capture 121732 slot 1B has decoded[4]=0x01, slot 1A has decoded[4]=0x00
@@ -684,7 +684,7 @@ export const SysExCodec = {
     decoded[1] = 0x20;
     decoded[2] = 0x14;
     decoded[4] = slot;  // full absolute slot number (0-255), nibble-encoded by caller
-    // [8:24] = preset name (16 bytes, null-terminated — same as .prst format)
+    // [8:24] = preset name (16 bytes, null-terminated; same as .prst format)
     for (let i = 0; i < 16 && i < presetName.length; i++) {
       decoded[8 + i] = presetName.charCodeAt(i);
     }
@@ -698,8 +698,8 @@ export const SysExCodec = {
   },
 
   buildAuthorName(author: string): Uint8Array {
-    // CMD=0x12, sub=0x20, 78 bytes — nibble-encoded 32-byte payload
-    // Confirmed: capture 143029 pkt 71 — decoded[8]=0x09 (Author msg type)
+    // CMD=0x12, sub=0x20, 78 bytes, nibble-encoded 32-byte payload
+    // Confirmed: capture 143029 pkt 71: decoded[8]=0x09 (Author msg type)
     // Decoded: 00 00 04 00 00 00 01 00 09 00 14 00 01 00 70 0B [author 16B]
     const decoded = new Uint8Array(32);
     decoded[2] = 0x04;
@@ -722,8 +722,8 @@ export const SysExCodec = {
   },
 
   buildStyleName(styleName: string): Uint8Array {
-    // CMD=0x12, sub=0x18, 62 bytes — nibble-encoded 24-byte payload
-    // Confirmed: capture 143029 pkt 135 — different header from param change
+    // CMD=0x12, sub=0x18, 62 bytes, nibble-encoded 24-byte payload
+    // Confirmed: capture 143029 pkt 135: different header from param change
     // decoded[0:8]=03 20 14 00 01 00 a1 00, decoded[8:24]=style name
     const decoded = new Uint8Array(24);
     decoded[0] = 0x03;
@@ -744,8 +744,8 @@ export const SysExCodec = {
   },
 
   buildNote(note: string): Uint8Array {
-    // CMD=0x12, sub=0x38, 126 bytes — nibble-encoded 56-byte payload
-    // Confirmed: capture 143029 pkt 129 — decoded[8]=0x0B (Note msg type)
+    // CMD=0x12, sub=0x38, 126 bytes, nibble-encoded 56-byte payload
+    // Confirmed: capture 143029 pkt 129: decoded[8]=0x0B (Note msg type)
     // Decoded: 00 00 04 00 00 00 01 00 0B 00 2C 00 01 00 A1 00 [note 40B]
     const decoded = new Uint8Array(56);
     decoded[2] = 0x04;
@@ -767,11 +767,11 @@ export const SysExCodec = {
   },
 
   buildExpNavigation(page: number, item?: number, blockIndex?: number, paramIndex?: number): Uint8Array {
-    // CMD=0x12, sub=0x18, 62 bytes — nibble-encoded "section navigation"
+    // CMD=0x12, sub=0x18, 62 bytes, nibble-encoded "section navigation"
     // Selects which EXP/Mode to edit AND which effect parameter to assign.
-    // Confirmed: capture 200517 — decoded[2]=0x40 discriminates from param change,
+    // Confirmed: capture 200517: decoded[2]=0x40 discriminates from param change,
     // decoded[11]=page (0=EXP1 ModeA, 1=EXP1 ModeB, 2=EXP2)
-    // Confirmed: capture 204352 — decoded[13]=blockIndex<<4, decoded[14]=paramIndex<<4
+    // Confirmed: capture 204352: decoded[13]=blockIndex<<4, decoded[14]=paramIndex<<4
     //   COMP(PRE,block0,param0): decoded[13:15]=00 00
     //   WAH(block1,param1):      decoded[13:15]=10 10
     //   VOL-Volume(block10):     decoded[13:15]=a0 00
@@ -783,7 +783,7 @@ export const SysExCodec = {
     decoded[12] = (item ?? 0) & 0x0F;            // Para slot: 0=Para1, 1=Para2, 2=Para3
     decoded[13] = (blockIndex ?? 0) & 0x0F;       // effect block (0-10)
     decoded[14] = (paramIndex ?? 0) & 0x0F;       // param index
-    decoded[18] = 0xC8;                           // constant (was 0x84 — off-by-one analysis error)
+    decoded[18] = 0xC8;                           // constant (was 0x84; off-by-one analysis error)
     decoded[19] = 0x42;                           // constant (was 0x20)
 
     const nibbles = this.nibbleEncode(decoded);
@@ -795,8 +795,8 @@ export const SysExCodec = {
   },
 
   buildExpAssignment(section: number, page: number, item: number, value: number): Uint8Array {
-    // CMD=0x12, sub=0x14, 54 bytes — EXP/QA assignment write
-    // Confirmed: capture 200517 — type=0x0E at raw[30]
+    // CMD=0x12, sub=0x14, 54 bytes, EXP/QA assignment write
+    // Confirmed: capture 200517: type=0x0E at raw[30]
     // raw[38]=section (0=param select, 1=min/max), raw[39]=page, raw[40]=item (Para 1-3)
     // Nibble-decoded float32 LE at decoded[2:6] for value
     // section=0: float=param dropdown index (0.0=unassign, 1.0+=param)
@@ -829,7 +829,7 @@ export const SysExCodec = {
   },
 
   buildPresetChange(slot: number): Uint8Array {
-    // CMD=0x12, sub=0x08, 30 bytes — switch device to preset slot
+    // CMD=0x12, sub=0x08, 30 bytes, switch device to preset slot
     // Slot nibble-encoded at [25:26] (SysEx data bytes must be 0x00-0x7F)
     // H→D: device switches to slot. D→H: device notifies slot change.
     const sh = (slot >> 4) & 0x0F;

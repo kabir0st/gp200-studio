@@ -91,7 +91,7 @@ export interface UseMidiDeviceReturn {
   setOnExpPosition: (cb: ((value: number) => void) | null) => void;
 }
 
-// Minimal shape we actually use — avoids conflicts with DOM's MIDIInput / MIDIOutput
+// Minimal shape we actually use; avoids conflicts with DOM's MIDIInput / MIDIOutput
 interface GP200Input {
   name: string | null;
   onmidimessage: ((event: { data: unknown }) => void) | null;
@@ -192,7 +192,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   // send to or receive from the pedal.
   //
   // onSlotChange keeps the local currentSlot state in sync whenever the
-  // user triggers a slot change via sendSlotChange — previously that was
+  // user triggers a slot change via sendSlotChange; previously that was
   // done inline at the end of the send callback.
   const send = useMidiSend({
     outputRef,
@@ -217,7 +217,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   const onMidiMessage = useCallback((event: { data: unknown }) => {
     const data = getBytes(event.data);
     // Real-time hardware controls arrive (per current hypothesis) as standard
-    // Control Change messages, NOT SysEx — so they must be routed BEFORE the
+    // Control Change messages, NOT SysEx, so they must be routed BEFORE the
     // 0xF0 SysEx checks below, which every downstream branch requires. The exact
     // CC numbers are pending a USB capture; decodeControlChange centralizes them
     // (see src/core/midiControlMap.ts + docs/protocol-capture.md §4).
@@ -227,15 +227,15 @@ export function useMidiDevice(): UseMidiDeviceReturn {
       else onFootswitchRef.current?.(control.fsNumber, control.state);
       return;
     }
-    // sub=0x08 D→H: multipurpose — preset change echo vs FX state response
+    // sub=0x08 D→H: multipurpose, preset change echo vs FX state response
     // Distinguish by data[14]: 0x08 = preset change echo, other = FX state response.
     // CAUTION: hardware footswitch presses ALSO emit data[14]=0x08 frames whose
     // slot nibbles decode to the CURRENT slot, so data[14] alone is not a
-    // sufficient discriminator (no capture of the full frame yet — see
+    // sufficient discriminator (no capture of the full frame yet; see
     // docs/protocol-capture.md).
     if (isSysEx(data, 0x12, 0x08) && data.length >= 28) {
       if (data[14] === 0x08) {
-        // Preset change echo — slot nibble-encoded at data[25:26]
+        // Preset change echo: slot nibble-encoded at data[25:26]
         const slot = ((data[25] & 0x0F) << 4) | (data[26] & 0x0F);
         if (slot >= 0 && slot < 256 && slot !== currentSlotRef.current) {
           console.log(`[GP-200] device slot change: ${slot} (${SysExCodec.slotToLabel(slot)})`);
@@ -246,12 +246,12 @@ export function useMidiDevice(): UseMidiDeviceReturn {
           // Acting on it would re-pull the slot's FLASH copy and clobber
           // unsaved live edits (the device's edit buffer keeps them). Ignore.
           // Cost: re-selecting the same patch on the device won't force a
-          // re-pull — it re-syncs on the next real slot change or manual LOAD.
+          // re-pull; it re-syncs on the next real slot change or manual LOAD.
           const hex = Array.from(data.subarray(10, 28), (b) => b.toString(16).padStart(2, '0')).join(' ');
           console.log(`[GP-200] same-slot change frame ignored (slot=${slot}, data[10..27]=${hex})`);
         }
       } else if (suppressFxCountRef.current === 0) {
-        // FX state response — device reports effect toggle from hardware
+        // FX state response: device reports effect toggle from hardware
         // data[22]=block_id (0=PRE..10=VOL), data[24]=state (0=OFF, non-zero=ON)
         // Suppressed during our own sends (responses are echoes, not hardware changes)
         const blockId = data[22];
@@ -273,10 +273,10 @@ export function useMidiDevice(): UseMidiDeviceReturn {
       const effectId = (moduleType << 24) | variant;
       console.log(`[GP-200] device effect change: block=${blockIndex} effectId=0x${effectId.toString(16).padStart(8,'0')}`);
       // Hardware footswitch toggles also emit sub=0x0C frames with the
-      // module/variant fields zeroed — decoded blindly that's "effect changed
+      // module/variant fields zeroed; decoded blindly that's "effect changed
       // to 0x00000000" (COMP) and the pedal morphs. An all-zero id IS that
       // ack shape, so drop it here (cost: a hardware switch to COMP itself
-      // isn't mirrored — it re-syncs on the next slot change or pull). The
+      // isn't mirrored; it re-syncs on the next slot change or pull). The
       // applied-callback further validates (known id, same module, actually
       // different); suppress the follow-up FX-state messages ONLY after a
       // real swap, so hardware toggle messages still reach onDeviceToggle.
@@ -313,7 +313,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     }
   // suppressFxFor is intentionally omitted: it's a plain function (not
   // useCallback-memoised) that only closes over the stable suppressFxCountRef,
-  // so its identity changing every render doesn't affect behavior — but
+  // so its identity changing every render doesn't affect behavior, but
   // including it would make onMidiMessage (and everything that depends on
   // it, e.g. `connect` below) unstable every render.
   // oxlint-disable-next-line react-hooks/exhaustive-deps
@@ -367,7 +367,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
           input, (d) => isSysEx(d, 0x12, 0x08), READ_TIMEOUT_MS, onMidiMessage
         );
         const identity = SysExCodec.parseIdentityResponse(identityMsg);
-        // The GP-200 has no unique serial over MIDI — key the name cache on the
+        // The GP-200 has no unique serial over MIDI, so key the name cache on the
         // generic deviceType byte + MIDI port name (effectively one per machine).
         cacheKeyRef.current = presetNameCacheKey(identity.deviceType, input.name);
 
@@ -376,7 +376,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
         output.send(SysExCodec.buildEnterEditorMode());
         await new Promise(r => setTimeout(r, 100));
 
-        // Step 5-6: State dump (0x4E — current slot at decoded[8:10] LE16)
+        // Step 5-6: State dump (0x4E: current slot at decoded[8:10] LE16)
         setHandshakeStep('State Dump…');
         output.send(SysExCodec.buildStateDumpRequest());
         const dumpChunks = await collectChunks(input, 0x12, 0x4E, 5, READ_TIMEOUT_MS, onMidiMessage);
@@ -413,7 +413,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
                 );
                 assignmentEntries.push(SysExCodec.parseAssignmentResponse(resp, section, page));
               } catch {
-                assignFailed = true; break; // bail on first failure — device unresponsive
+                assignFailed = true; break; // bail on first failure: device unresponsive
               }
             }
           }
@@ -444,7 +444,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
         // Step 11: Seed remaining slots from the local cache so the Patch Manager
         // shows names instantly. The bank slots just pulled are device-truth and
         // are kept; only still-null slots are filled. A full cache lets us mark
-        // loading complete (progress 256) so no "Loading names…" bar appears — the
+        // loading complete (progress 256) so no "Loading names…" bar appears; the
         // background sync (syncPresetNames) then re-verifies every slot silently.
         const cached = cacheKeyRef.current ? loadCachedNames(cacheKeyRef.current) : null;
         if (cached) {
@@ -552,7 +552,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
 
   const pushPreset = useCallback(async (preset: GP200Preset, slot: number): Promise<void> => {
     if (!ENABLE_PUSH_PRESET) {
-      console.warn('[GP-200] pushPreset is disabled in production — use writePresetToSlot');
+      console.warn('[GP-200] pushPreset is disabled in production; use writePresetToSlot');
       return;
     }
     await pauseNameLoading();
@@ -590,7 +590,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // Save-commit persists the device's current editing buffer to flash.
     // Live edits (toggle, param, reorder) already updated the editing buffer.
     // Valeton flow: save-commit → preset-change (re-select slot to confirm).
-    // decoded[4] must be the sub-slot index (A=0,B=1,C=2,D=3) — otherwise device saves to wrong slot!
+    // decoded[4] must be the sub-slot index (A=0,B=1,C=2,D=3); otherwise device saves to wrong slot!
     const targetSlot = slot ?? currentSlotRef.current ?? 0;
     const msg = SysExCodec.buildSaveCommit(presetName, targetSlot);
     console.log(`[GP-200] save-commit: name="${presetName}" slot=${targetSlot} (sub=${targetSlot % 4})`);
@@ -658,7 +658,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   }, [pauseNameLoading, persistNames]);
 
   /** Request one slot's name. Fast path (sub=0x20 name-only read, fw 1.8.0)
-   *  when useFast; full 7-chunk read request otherwise — either way the
+   *  when useFast; full 7-chunk read request otherwise. Either way the
    *  first sub=0x18 chunk with offset 0 carries the name. */
   const requestSlotName = useCallback(
     (slot: number, useFast: boolean, timeoutMs: number): Promise<string | null> => {
@@ -696,7 +696,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     namesLoadRunningRef.current = true;
     namesLoadAbortRef.current = false;
     const FULL_TIMEOUT = 500; // device responds in ~20ms normally
-    const FAST_TIMEOUT = 250; // single-chunk response — fail over quickly
+    const FAST_TIMEOUT = 250; // single-chunk response, fail over quickly
     const BATCH_SIZE = 8;     // Update UI every 8 slots instead of every slot
 
     for (let s = 0; s < 256; s++) {
@@ -711,7 +711,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
         if (name !== null) {
           fastNameReadRef.current = true;
         } else if (fastNameReadRef.current === null && !namesLoadAbortRef.current) {
-          // Probe failed on first use — the firmware may not support the
+          // Probe failed on first use; the firmware may not support the
           // name-only read. Retry this slot with a full read; if THAT works
           // the fast path is dead for this connection, not the device.
           const fallback = await requestSlotName(s, false, FULL_TIMEOUT);
@@ -738,7 +738,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   }, [onMidiMessage, requestSlotName, persistNames]);
 
   // Force-read every slot and correct any that drifted from the cache-seeded
-  // values. Runs silently in the background after a cache hit — the Patch
+  // values. Runs silently in the background after a cache hit; the Patch
   // Manager already shows cached names, so this only patches in differences.
   // Shares the run/abort refs with loadPresetNames (both hijack
   // input.onmidimessage, so they must never run concurrently) and is aborted by
@@ -769,7 +769,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
         name = await requestSlotName(s, false, FULL_TIMEOUT);
       }
       if (namesLoadAbortRef.current) break;
-      // A null read is a transient miss (timeout) — keep the cached value rather
+      // A null read is a transient miss (timeout), so keep the cached value rather
       // than blanking a slot we already have a good name for.
       if (name !== null && name !== presetNamesRef.current[s]) {
         presetNamesRef.current[s] = name;
@@ -785,7 +785,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
 
   const refreshNames = useCallback(async (): Promise<void> => {
     await pauseNameLoading();
-    // Keep the names the handshake already pulled (current bank) — those came
+    // Keep the names the handshake already pulled (current bank); those came
     // from full reads moments ago; clear everything else for re-enumeration.
     const bankBase = (() => {
       if (currentSlotRef.current === null) return -1;

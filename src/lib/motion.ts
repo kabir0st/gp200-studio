@@ -5,7 +5,7 @@
  */
 
 export const motionDurations = {
-  fast: 0.15, // hover/press micro-interactions — matches Tailwind `duration-150`
+  fast: 0.15, // hover/press micro-interactions; matches Tailwind `duration-150`
   base: 0.2, // matches Tailwind `duration-200`
   slow: 0.3, // matches the `slot-enter` CSS keyframe
   ambient: 2, // matches the `led-pulse` CSS keyframe loop

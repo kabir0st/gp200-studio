@@ -372,7 +372,7 @@ export function getModuleName(effectId: number): string {
 /**
  * Fixed hardware block order: slotIndex → module. The GP-200's 11 blocks are
  * fixed-function (block 5 is ALWAYS the cab sim, whatever effectId it holds),
- * so this is the authoritative module source for slot-shaped UI — unlike
+ * so this is the authoritative module source for slot-shaped UI, unlike
  * getModuleName(effectId), which returns 'Unknown' for unmapped codes and
  * mislabels slots holding zeroed/foreign ids.
  */

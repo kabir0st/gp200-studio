@@ -1,5 +1,5 @@
 /* Self-hosted via @fontsource (npm-bundled font files, no runtime request to
-   fonts.googleapis.com / fonts.gstatic.com — GDPR, matches the old repo's
+   fonts.googleapis.com / fonts.gstatic.com: a GDPR choice, matching the old repo's
    next/font/google self-hosting rationale). @import must precede all other
    rules, including @tailwind. */
 @import '@fontsource/dm-sans/400.css';
@@ -18,7 +18,7 @@
   --font-dm-sans: 'DM Sans';
   --font-jetbrains-mono: 'JetBrains Mono';
 
-  /* ── App chrome: LIGHT stage theme (the dark "matrix" theme is gone —
+  /* ── App chrome: LIGHT stage theme (the dark "matrix" theme is gone;
      dialogs, banners, and browsers share the board's light environment). ── */
   --bg-primary: #d8d5ce;
   --bg-surface: #edebe5;
@@ -168,7 +168,7 @@ select option {
 }
 
 /* ── Global keyboard focus ring (WCAG 2.1 AA) ─────────────────────────── */
-/* Amber outline + glow for keyboard navigation. focus-visible only — mouse
+/* Amber outline + glow for keyboard navigation. focus-visible only; mouse
    clicks don't trigger it, keeping the UI calm. Components that need a
    custom ring can opt out per-case with focus-visible:outline-none. */
 :focus-visible {

@@ -19,7 +19,7 @@ export default defineConfig({
   build: {
     outDir: 'dist/gp200studio',
     emptyOutDir: true,
-    // Never inline the AudioWorklet as a data: URL — Chromium's
+    // Never inline the AudioWorklet as a data: URL. Chromium's
     // audioWorklet.addModule() rejects data: URLs, so it must stay a real,
     // separately-fetchable asset file (see src/hooks/useLooper.ts).
     assetsInlineLimit: (filePath: string) =>

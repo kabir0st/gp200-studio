@@ -10,11 +10,11 @@ interface PedalFaderProps {
   pedalName: string;
 }
 
-/** track height minus cap height — full travel = full min→max range */
+/** track height minus cap height: full travel = full min→max range */
 const TRAVEL_PX = 40;
 
 /**
- * Vertical fader for EQ-module params — a graphic EQ should look like a
+ * Vertical fader for EQ-module params: a graphic EQ should look like a
  * graphic EQ, not a row of knobs. Same interaction contract as PedalKnob:
  * pointer drag, double-click reset, arrow keys, role="slider".
  */

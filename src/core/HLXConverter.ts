@@ -2,7 +2,7 @@
  * HLX → GP200Preset Converter (Experimental)
  *
  * Converts Line6 HX Stomp .hlx presets (JSON) to GP-200 .prst format.
- * Best-effort mapping — different devices, different effects, approximate results.
+ * Best-effort mapping: different devices, different effects, approximate results.
  */
 
 import type { GP200Preset, EffectSlot } from './types';
@@ -28,13 +28,13 @@ function classifyHLXBlock(block: HLXBlock): string | null {
   if (type === 1 || type === 3) return 'AMP';
   if (type === 2 || type === 4) return 'CAB';
 
-  // Type 7: Delay or Reverb — distinguish by model name
+  // Type 7: Delay or Reverb, distinguished by model name
   if (type === 7) {
     if (m.includes('delay') || m.includes('echo') || m.includes('dl4')) return 'DLY';
     return 'RVB';
   }
 
-  // Type 0: Everything else — classify by model name keywords
+  // Type 0: Everything else, classified by model name keywords
   // Check dist/drive BEFORE comp (e.g. "CompulsiveDrive" contains "comp" but is a distortion)
   if (m.includes('dist') || m.includes('drive') || m.includes('boost') || m.includes('fuzz') || m.includes('scream') || m.includes('rat')) return 'DST';
   if (m.includes('compressor') || m.includes('squeeze') || m.includes('lacomp') || m.includes('redcomp') || /\bcomp\b/.test(m)) return 'PRE';
@@ -218,7 +218,7 @@ export function convertHLX(hlx: HLXPreset): GP200Preset {
     module: classifyHLXBlock(block),
   })).filter(({ module }) => module !== null) as { block: HLXBlock; module: string }[];
 
-  // Build 11 GP-200 effect slots — one per module, in fixed order
+  // Build 11 GP-200 effect slots, one per module, in fixed order
   const effects: EffectSlot[] = SLOT_MODULES.map((module, slotIndex) => {
     // Find first HLX block that maps to this module
     const match = classified.find(c => c.module === module);
@@ -230,7 +230,7 @@ export function convertHLX(hlx: HLXPreset): GP200Preset {
       return { slotIndex, effectId, enabled, params };
     }
 
-    // No match — use default, disabled
+    // No match: use default, disabled
     return {
       slotIndex,
       effectId: MODULE_DEFAULTS[module] ?? 0,

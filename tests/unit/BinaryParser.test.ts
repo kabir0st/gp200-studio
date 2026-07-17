@@ -64,7 +64,7 @@ describe('BinaryParser', () => {
   });
 
   it('readAscii stops at null terminator', () => {
-    // buf = [0x47, 0x50, 0x00, 0x0a, ...] — null at index 2
+    // buf = [0x47, 0x50, 0x00, 0x0a, ...] with a null at index 2
     const p = new BinaryParser(buf);
     expect(p.readAscii(0, 4)).toBe('GP'); // stops at 0x00
   });

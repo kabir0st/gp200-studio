@@ -19,14 +19,14 @@ interface LandingProps {
 }
 
 const FEATURES: string[] = [
-  'Visual pedalboard editor — drag to reorder, tweak every knob',
+  'Visual pedalboard editor: drag to reorder, tweak every knob',
   'Assign EXP pedals, CTRL footswitches, and the FX loop',
   'Live USB-MIDI sync with your GP-200 (Chrome / Edge)',
   'Import & export .prst, manage all 256 device patches',
 ];
 
 /**
- * Stage-styled landing: two actions only — connect the GP-200, or open the
+ * Stage-styled landing: two actions only. Connect the GP-200, or open the
  * editor with a blank preset. No file prompt; import lives in the board deck.
  */
 export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, onOpenGuide, loadError, onDismissError }: LandingProps) {
@@ -115,7 +115,7 @@ export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, onOpenGuide, l
         )}
         {!webMidiSupported && (
           <p className="landing-msg">
-            Web MIDI is not available in this browser — use Chrome or Edge to connect a device.
+            Web MIDI is not available in this browser; use Chrome or Edge to connect a device.
             You can still open the editor and export presets.
           </p>
         )}

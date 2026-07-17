@@ -2,7 +2,7 @@
  * Strips the NN-[A-D] slot/bank prefix that the GP-200 prepends to user
  * preset names (reflecting the device slot where the preset was last stored).
  *
- * The prefix is meaningless once the file lives in a library — it adds noise
+ * The prefix is meaningless once the file lives in a library; it adds noise
  * to listings. The regex requires trailing whitespace so literal names like
  * "05-DAwesome" (no space) are left untouched.
  *

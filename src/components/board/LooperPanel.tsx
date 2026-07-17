@@ -12,7 +12,7 @@ interface LooperPanelProps {
   looper: LooperApi;
   bindings: LooperBindings;
   onBindingsChange: (next: LooperBindings) => void;
-  /** enable the AUDIO IN capture — the looper needs the shared context running */
+  /** enable the AUDIO IN capture: the looper needs the shared context running */
   onEnableAudio: () => void;
   audioStarting: boolean;
 }
@@ -22,7 +22,7 @@ const FS_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8];
 // Action kinds selectable per footswitch (plus "none" to unbind).
 type ActionKind = LooperAction['kind'] | 'none';
 const ACTION_LABELS: Record<ActionKind, string> = {
-  none: '—',
+  none: '-',
   recordOverdubCycle: 'Record / Stop',
   playToggle: 'Play / Stop',
   muteToggle: 'Mute',
@@ -47,7 +47,7 @@ function buildAction(kind: ActionKind, track: number): LooperAction | null {
 }
 
 function fmtLength(sec: number | null): string {
-  if (sec === null) return '— : —';
+  if (sec === null) return '- : -';
   return `${sec.toFixed(2)}s`;
 }
 
@@ -63,7 +63,7 @@ export function LooperPanel({
   const { ready, getPlayhead } = looper;
 
   // Drive the master-loop progress bar from a rAF loop (no per-frame React
-  // state), mirroring AudioMeters — read the pure playhead each frame.
+  // state), mirroring AudioMeters: read the pure playhead each frame.
   useEffect(() => {
     if (!ready) return;
     let raf = 0;
@@ -97,7 +97,7 @@ export function LooperPanel({
     return (
       <div className="text-center py-6">
         <p className="font-mono-display text-caption text-text-muted mb-3">
-          The loop station records the GP-200's USB audio — enable audio capture to start.
+          The loop station records the GP-200's USB audio. Enable audio capture to start.
         </p>
         <Button onClick={onEnableAudio} disabled={audioStarting}>
           {audioStarting ? 'ENABLING…' : 'ENABLE AUDIO IN'}
@@ -228,7 +228,7 @@ export function LooperPanel({
             }}
             className="bg-bg-primary border border-border-active rounded px-2 py-1 font-mono-display text-caption text-text-secondary"
           >
-            <option value="none">—</option>
+            <option value="none">-</option>
             <option value="master">Master level</option>
             {looper.tracks.map((t) => (
               <option key={t.id} value={`track:${t.id}`}>Track {t.id + 1} level</option>

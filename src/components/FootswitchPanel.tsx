@@ -126,7 +126,7 @@ function PedalCard({
 }: PedalCardProps) {
   const moduleName = getSlotModule(blockIndex);
   const colors = MODULE_COLORS[moduleName];
-  // Data-driven per-module tint via inline style — the sanctioned second
+  // Data-driven per-module tint via inline style: the sanctioned second
   // color source (see docs/design-system.md).
   const cardStyle: CSSProperties = {
     border: '1px solid rgba(0,0,0,0.12)',
@@ -215,7 +215,7 @@ export function FootswitchPanel({
     });
   }
 
-  let summary = 'Nothing assigned yet — tap the pedals this switch should toggle.';
+  let summary = 'Nothing assigned yet. Tap the pedals this switch should toggle.';
   if (selectedModules.length === 1) {
     summary = `Stomping it toggles 1 pedal: ${selectedModules[0]}.`;
   }

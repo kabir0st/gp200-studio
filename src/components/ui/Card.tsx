@@ -12,7 +12,7 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
   ref?: Ref<HTMLDivElement>;
 }
 
-/** Shared card/panel primitive — see docs/design-system.md "Components > Card". */
+/** Shared card/panel primitive (see docs/design-system.md "Components > Card"). */
 export function Card({ moduleColor, className = '', style, children, ref, ...props }: CardProps) {
   const moduleStyle = moduleColor
     ? {

@@ -27,7 +27,7 @@ export interface PedalProps {
   onMove: (from: number, to: number) => void;
   /** hover/focus inspection for the info bar */
   onInspect: (inspecting: boolean) => void;
-  /** ⓘ click — pin in the info bar */
+  /** ⓘ click: pin in the info bar */
   onPin: () => void;
   isPinned: boolean;
 }
@@ -51,12 +51,12 @@ export function Pedal({
 
   const effectName = getEffectName(slot.effectId);
   // module identity comes from the physical block (slot 5 is ALWAYS the cab),
-  // not the effectId — unmapped/zeroed ids must not relabel or recolor a slot
+  // not the effectId; unmapped/zeroed ids must not relabel or recolor a slot
   const moduleName = getSlotModule(slot.slotIndex);
   // authentic per-effect colors from the artwork spec; module palette as fallback
   const spec = art?.colors ?? getBodySpec(moduleName);
   const defs = getEffectParams(slot.effectId);
-  // the pedal keeps its natural size, but never wider than its fixed bay — so
+  // the pedal keeps its natural size, but never wider than its fixed bay, so
   // swapping an effect only changes the padding inside the bay, never a
   // neighbour's position (see pedalIsWide)
   const wide = pedalIsWide(slot.slotIndex, slot.effectId);
@@ -109,7 +109,7 @@ export function Pedal({
       onFocusCapture={() => onInspect(true)}
       onBlurCapture={() => onInspect(false)}
     >
-      {/* knurled dot grip — signals the whole pedal is draggable */}
+      {/* knurled dot grip: signals the whole pedal is draggable */}
       <span className="pedal-grip" aria-hidden="true" />
       <span className="jack in" data-jack="in" />
       <span className="jack out" data-jack="out" />
