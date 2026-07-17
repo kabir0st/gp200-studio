@@ -1212,6 +1212,9 @@
   background: linear-gradient(90deg, #2f9e5f 0 70%, #d9a13c 70% 90%, #cf4b3c 90%);
   background-size: 90px 100%;
 }
+.board-view .audio-meters .am-row.muted {
+  opacity: 0.45;
+}
 .board-view .audio-meters .am-error {
   font-family: var(--font-jetbrains-mono), monospace;
   font-size: 9px;
