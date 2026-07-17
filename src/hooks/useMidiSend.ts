@@ -23,6 +23,13 @@ type OnDeviceParamChange = (blockIndex: number, paramIndex: number, value: numbe
 // loop station binds these. Wire format pending capture (docs/protocol-capture.md).
 type OnFootswitch = (fsNumber: number, state: boolean) => void;
 type OnExpPosition = (value: number) => void; // 0..127
+// Raw-frame tap for the looper's MIDI-learn/hijack path. onMidiMessage calls
+// it before every dispatcher branch; returning true consumes the frame (it
+// never reaches the normal handlers). See src/hooks/useLooperTriggers.ts.
+type OnLooperFrameTap = (
+  data: Uint8Array,
+  ctx: { suppressed: boolean; currentSlot: number | null },
+) => boolean;
 
 export interface DeviceCallbackRefs {
   onDeviceChangeRef: React.MutableRefObject<OnDeviceChange | null>;
@@ -31,6 +38,7 @@ export interface DeviceCallbackRefs {
   onDeviceParamChangeRef: React.MutableRefObject<OnDeviceParamChange | null>;
   onFootswitchRef: React.MutableRefObject<OnFootswitch | null>;
   onExpPositionRef: React.MutableRefObject<OnExpPosition | null>;
+  onLooperFrameTapRef: React.MutableRefObject<OnLooperFrameTap | null>;
 }
 
 export interface UseMidiSendReturn {
@@ -64,6 +72,7 @@ export interface UseMidiSendReturn {
   setOnDeviceParamChange: (cb: OnDeviceParamChange | null) => void;
   setOnFootswitch: (cb: OnFootswitch | null) => void;
   setOnExpPosition: (cb: OnExpPosition | null) => void;
+  setOnLooperFrameTap: (cb: OnLooperFrameTap | null) => void;
   // Internal plumbing consumed by useMidiDevice's onMidiMessage handler
   deviceCallbacks: DeviceCallbackRefs;
   suppressFxCountRef: React.MutableRefObject<number>;
@@ -107,6 +116,7 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
   const onDeviceParamChangeRef = useRef<OnDeviceParamChange | null>(null);
   const onFootswitchRef = useRef<OnFootswitch | null>(null);
   const onExpPositionRef = useRef<OnExpPosition | null>(null);
+  const onLooperFrameTapRef = useRef<OnLooperFrameTap | null>(null);
 
   // Suppress FX state toggles when we're actively sending commands (responses
   // are echoes, not hardware changes). Counter, not a boolean + single timer:
@@ -176,6 +186,11 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
 
   const sendSlotChange = useCallback((slot: number) => {
     if (!outputRef.current) return;
+    // The device echoes a same-slot 0x08 change frame back; suppress so the
+    // echo can't match a learned looper sysex08 fingerprint and fire an
+    // action. (FX-state frames are also muted for the window — harmless, the
+    // app re-pulls the preset after slot changes anyway.)
+    suppressFxBriefly();
     // sub=0x08 with slot at byte[26], confirmed via capture 222343
     const msg = SysExCodec.buildPresetChange(slot);
     console.log(`[GP-200] slot change: ${slot} (${SysExCodec.slotToLabel(slot)})`);
@@ -308,6 +323,9 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
     setOnExpPosition: (cb) => {
       onExpPositionRef.current = cb;
     },
+    setOnLooperFrameTap: (cb) => {
+      onLooperFrameTapRef.current = cb;
+    },
     deviceCallbacks: {
       onDeviceChangeRef,
       onDeviceToggleRef,
@@ -315,6 +333,7 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
       onDeviceParamChangeRef,
       onFootswitchRef,
       onExpPositionRef,
+      onLooperFrameTapRef,
     },
     suppressFxCountRef,
     suppressFxFor,

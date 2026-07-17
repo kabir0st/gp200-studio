@@ -7,6 +7,8 @@ import {
 } from '@/core/looperBindings';
 import { Button } from '@/components/ui/Button';
 import { Led } from '@/components/ui/Badge';
+import type { LooperTriggerMap } from '@/core/looperTriggers';
+import type { LearnNotice } from '@/hooks/useLooperTriggers';
 
 interface LooperPanelProps {
   looper: LooperApi;
@@ -15,9 +17,21 @@ interface LooperPanelProps {
   /** enable the AUDIO IN capture: the looper needs the shared context running */
   onEnableAudio: () => void;
   audioStarting: boolean;
+  /* MIDI-learn: bind hardware stomps to the rows below */
+  triggers: LooperTriggerMap;
+  armedFs: number | null;
+  onArmLearn: (fs: number) => void;
+  onClearTrigger: (fs: number) => void;
+  learnNotice: LearnNotice | null;
+  /** learning needs a connected GP-200 */
+  learnEnabled: boolean;
 }
 
 const FS_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8];
+
+const SELECT_CLASS =
+  'bg-bg-primary border border-border-active rounded px-2 py-1 ' +
+  'font-mono-display text-caption text-text-secondary';
 
 // Action kinds selectable per footswitch (plus "none" to unbind).
 type ActionKind = LooperAction['kind'] | 'none';
@@ -51,12 +65,36 @@ function fmtLength(sec: number | null): string {
   return `${sec.toFixed(2)}s`;
 }
 
+function learnLabel(armed: boolean, learned: boolean): string {
+  if (armed) return '● STOMP';
+  if (learned) return '✓';
+  return 'LEARN';
+}
+
+function learnVariant(armed: boolean): 'danger' | 'ghost' {
+  if (armed) return 'danger';
+  return 'ghost';
+}
+
+function learnTitle(armed: boolean, learned: boolean, learnEnabled: boolean): string {
+  if (!learnEnabled) return 'Connect the GP-200 to learn';
+  if (armed) return 'Stomp the hardware switch now (click to cancel)';
+  if (learned) return 'Learned — click to re-learn';
+  return 'Arm, then stomp the hardware switch to bind it';
+}
+
 export function LooperPanel({
   looper,
   bindings,
   onBindingsChange,
   onEnableAudio,
   audioStarting,
+  triggers,
+  armedFs,
+  onArmLearn,
+  onClearTrigger,
+  learnNotice,
+  learnEnabled,
 }: LooperPanelProps) {
   const playBar = useRef<HTMLSpanElement>(null);
   const [gains, setGains] = useState<number[]>(() => looper.tracks.map(() => 1));
@@ -181,7 +219,11 @@ export function LooperPanel({
       {/* Bindings */}
       <div className="pt-2 border-t border-border-active">
         <p className="font-mono-display text-label text-text-muted uppercase tracking-widest mb-2">
-          Hardware bindings <span className="normal-case tracking-normal">(footswitch / EXP wire format pending capture)</span>
+          Hardware bindings{' '}
+          <span className="normal-case tracking-normal">
+            (arm LEARN, then stomp the switch — bound switches drive the looper
+            while this panel is open)
+          </span>
         </p>
         <div className="grid grid-cols-2 gap-2">
           {FS_NUMBERS.map((fs) => {
@@ -189,29 +231,64 @@ export function LooperPanel({
             const kind = actionKind(action);
             const track = actionTrack(action);
             const needsTrack = kind !== 'none' && kind !== 'clearAll';
+            const learned = triggers[fs] !== undefined;
+            const armed = armedFs === fs;
+            const showNotice = learnNotice !== null && learnNotice.fs === fs;
             return (
-              <div key={fs} className="flex items-center gap-2">
-                <span className="font-mono-display text-label text-text-secondary w-10">FS{fs}</span>
-                <select
-                  value={kind}
-                  onChange={(e) => updateFootswitch(fs, e.target.value as ActionKind, track)}
-                  className="flex-1 bg-bg-primary border border-border-active rounded px-2 py-1 font-mono-display text-caption text-text-secondary"
-                >
-                  {(Object.keys(ACTION_LABELS) as ActionKind[]).map((k) => (
-                    <option key={k} value={k}>{ACTION_LABELS[k]}</option>
-                  ))}
-                </select>
-                <select
-                  value={track}
-                  disabled={!needsTrack}
-                  onChange={(e) => updateFootswitch(fs, kind, Number(e.target.value))}
-                  className="bg-bg-primary border border-border-active rounded px-2 py-1 font-mono-display text-caption text-text-secondary disabled:opacity-40"
-                  aria-label={`FS${fs} target track`}
-                >
-                  {looper.tracks.map((t) => (
-                    <option key={t.id} value={t.id}>T{t.id + 1}</option>
-                  ))}
-                </select>
+              <div key={fs} className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono-display text-label text-text-secondary w-10">
+                    FS{fs}
+                  </span>
+                  <select
+                    value={kind}
+                    onChange={(e) => updateFootswitch(fs, e.target.value as ActionKind, track)}
+                    className={`flex-1 ${SELECT_CLASS}`}
+                  >
+                    {(Object.keys(ACTION_LABELS) as ActionKind[]).map((actionOption) => (
+                      <option key={actionOption} value={actionOption}>
+                        {ACTION_LABELS[actionOption]}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={track}
+                    disabled={!needsTrack}
+                    onChange={(e) => updateFootswitch(fs, kind, Number(e.target.value))}
+                    className={`${SELECT_CLASS} disabled:opacity-40`}
+                    aria-label={`FS${fs} target track`}
+                  >
+                    {looper.tracks.map((trackOption) => (
+                      <option key={trackOption.id} value={trackOption.id}>
+                        T{trackOption.id + 1}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    variant={learnVariant(armed)}
+                    size="sm"
+                    disabled={!learnEnabled}
+                    onClick={() => onArmLearn(fs)}
+                    title={learnTitle(armed, learned, learnEnabled)}
+                  >
+                    {learnLabel(armed, learned)}
+                  </Button>
+                  {learned && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onClearTrigger(fs)}
+                      title="Forget the learned hardware switch"
+                    >
+                      ✕
+                    </Button>
+                  )}
+                </div>
+                {showNotice && (
+                  <p className="font-mono-display text-caption text-accent-red pl-12">
+                    Same stomp already bound to FS{learnNotice.duplicateOfFs} — not saved
+                  </p>
+                )}
               </div>
             );
           })}
@@ -234,6 +311,9 @@ export function LooperPanel({
               <option key={t.id} value={`track:${t.id}`}>Track {t.id + 1} level</option>
             ))}
           </select>
+          <span className="font-mono-display text-caption text-text-muted">
+            (EXP wire format pending capture)
+          </span>
         </div>
       </div>
     </div>

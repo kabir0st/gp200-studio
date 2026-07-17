@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type DragEvent } from 'react';
+import { useEffect, useState, type CSSProperties, type DragEvent } from 'react';
 import type { GP200Preset, EffectSlot } from '@/core/types';
 import type { PushProgress } from '@/core/devicePush';
 import { getSlotModule } from '@/core/effectNames';
@@ -10,6 +10,8 @@ import { FootswitchPanel } from '@/components/FootswitchPanel';
 import { LooperPanel } from './LooperPanel';
 import type { LooperApi } from '@/hooks/useLooper';
 import type { LooperBindings } from '@/core/looperBindings';
+import type { LooperTriggerMap } from '@/core/looperTriggers';
+import type { LearnNotice } from '@/hooks/useLooperTriggers';
 import { splitRows } from './boardLayout';
 import { lookupPedalArt, usePedalManifest } from './pedalManifest';
 import { Pedal } from './Pedal';
@@ -69,6 +71,13 @@ export interface PedalBoardProps {
   onLooperBindingsChange: (next: LooperBindings) => void;
   onEnableAudio: () => void;
   audioStarting: boolean;
+  /** Stomp-hijacking only applies while the looper drawer is open. */
+  onLooperDrawerOpenChange: (open: boolean) => void;
+  looperTriggers: LooperTriggerMap;
+  looperArmedFs: number | null;
+  onLooperArmLearn: (fs: number) => void;
+  onLooperClearTrigger: (fs: number) => void;
+  looperLearnNotice: LearnNotice | null;
   /* device session controls (deck-hosted; there is no separate status bar) */
   onConnectRequest: () => void;
   onDisconnect: () => void;
@@ -122,6 +131,12 @@ export function PedalBoard({
   onLooperBindingsChange,
   onEnableAudio,
   audioStarting,
+  onLooperDrawerOpenChange,
+  looperTriggers,
+  looperArmedFs,
+  onLooperArmLearn,
+  onLooperClearTrigger,
+  looperLearnNotice,
   onConnectRequest,
   onDisconnect,
   onPushRequest,
@@ -135,6 +150,12 @@ export function PedalBoard({
   const [pinnedSlot, setPinnedSlot] = useState<number | null>(null);
   const [openDrawer, setOpenDrawer] = useState<'fxloop' | 'exp' | 'ctrl' | 'looper' | null>(null);
   const [pickerSlot, setPickerSlot] = useState<number | null>(null);
+
+  // Report the looper drawer's open state up to App: the MIDI dispatcher tap
+  // hijacks learned footswitch stomps only while the drawer is open.
+  useEffect(() => {
+    onLooperDrawerOpenChange(openDrawer === 'looper');
+  }, [openDrawer, onLooperDrawerOpenChange]);
 
   const inspectKey = pinnedSlot ?? hoverSlot;
   const inspected = inspectKey !== null
@@ -320,6 +341,12 @@ export function PedalBoard({
           onBindingsChange={onLooperBindingsChange}
           onEnableAudio={onEnableAudio}
           audioStarting={audioStarting}
+          triggers={looperTriggers}
+          armedFs={looperArmedFs}
+          onArmLearn={onLooperArmLearn}
+          onClearTrigger={onLooperClearTrigger}
+          learnNotice={looperLearnNotice}
+          learnEnabled={connected}
         />
       </DeckDrawer>
 

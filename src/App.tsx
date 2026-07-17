@@ -10,6 +10,8 @@ import {
   applyExp,
   type LooperBindings,
 } from '@/core/looperBindings';
+import { loadLooperStore, saveLooperStore } from '@/core/looperTriggers';
+import { useLooperTriggers } from '@/hooks/useLooperTriggers';
 import { PRSTDecoder } from '@/core/PRSTDecoder';
 import { PRSTEncoder } from '@/core/PRSTEncoder';
 import { pushPresetToDevice, type PushProgress } from '@/core/devicePush';
@@ -62,11 +64,29 @@ function App() {
   // Loop-station hardware bindings. State drives the LooperPanel UI; the ref
   // mirror is what the once-per-connection MIDI callbacks read (so they see the
   // current map without re-registering); same pattern as presetRef below.
-  const [looperBindings, setLooperBindings] = useState<LooperBindings>(defaultLooperBindings);
+  const [looperBindings, setLooperBindings] = useState<LooperBindings>(() => {
+    return loadLooperStore()?.bindings ?? defaultLooperBindings;
+  });
   const looperBindingsRef = useRef(looperBindings);
   looperBindingsRef.current = looperBindings;
   const looperRef = useRef(looper);
   looperRef.current = looper;
+
+  // Whether the looper deck drawer is open (reported up from PedalBoard).
+  // Ref only, nothing renders from it: the MIDI tap reads it to decide if a
+  // learned stomp is hijacked into a looper action or left to the pedal.
+  const looperPanelOpenRef = useRef(false);
+  const looperTriggers = useLooperTriggers({
+    midiDevice,
+    looperRef,
+    bindingsRef: looperBindingsRef,
+    panelOpenRef: looperPanelOpenRef,
+  });
+
+  // Persist bindings + learned triggers so they survive a reload.
+  useEffect(() => {
+    saveLooperStore(looperBindings, looperTriggers.triggers);
+  }, [looperBindings, looperTriggers.triggers]);
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -605,6 +625,15 @@ function App() {
           looper={looper}
           looperBindings={looperBindings}
           onLooperBindingsChange={setLooperBindings}
+          onLooperDrawerOpenChange={(open) => {
+            looperPanelOpenRef.current = open;
+            if (!open) looperTriggers.cancelLearn();
+          }}
+          looperTriggers={looperTriggers.triggers}
+          looperArmedFs={looperTriggers.armedFs}
+          onLooperArmLearn={looperTriggers.armLearn}
+          onLooperClearTrigger={looperTriggers.clearTrigger}
+          looperLearnNotice={looperTriggers.learnNotice}
           onEnableAudio={() => void audioEngine.enable()}
           audioStarting={audioEngine.starting}
           onConnectRequest={() => void midiDevice.connect()}

@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { SysExCodec } from '@/core/SysExCodec';
 import { decodeControlChange } from '@/core/midiControlMap';
+import { isMidiMonitorEnabled } from '@/core/debugFlags';
+import { hexOfBytes } from '@/core/looperTriggers';
 import type { GP200Preset } from '@/core/types';
 import { presetNameCacheKey, loadCachedNames, saveCachedNames } from '@/core/presetNameCache';
 import { useMidiSend } from './useMidiSend';
@@ -89,6 +91,13 @@ export interface UseMidiDeviceReturn {
   // Real-time hardware controls for the loop station (wire format pending capture)
   setOnFootswitch: (cb: ((fsNumber: number, state: boolean) => void) | null) => void;
   setOnExpPosition: (cb: ((value: number) => void) | null) => void;
+  // Raw-frame tap: the looper's MIDI-learn/hijack path. Runs before every
+  // dispatcher branch; a true return consumes the frame.
+  setOnLooperFrameTap: (
+    cb:
+      | ((data: Uint8Array, ctx: { suppressed: boolean; currentSlot: number | null }) => boolean)
+      | null,
+  ) => void;
 }
 
 // Minimal shape we actually use; avoids conflicts with DOM's MIDIInput / MIDIOutput
@@ -209,6 +218,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
       onDeviceParamChangeRef,
       onFootswitchRef,
       onExpPositionRef,
+      onLooperFrameTapRef,
     },
     suppressFxCountRef,
     suppressFxFor,
@@ -216,6 +226,18 @@ export function useMidiDevice(): UseMidiDeviceReturn {
 
   const onMidiMessage = useCallback((event: { data: unknown }) => {
     const data = getBytes(event.data);
+    // Looper MIDI-learn/hijack tap runs before EVERY branch below: a consumed
+    // frame (learn capture, hijacked stomp, debounced sibling) must never
+    // reach the normal handlers — that's what keeps a hijacked toggle from
+    // being mirrored into preset state. The tap passes anything it doesn't
+    // own, so real slot changes, knob turns, and effect swaps fall through
+    // untouched. See src/hooks/useLooperTriggers.ts.
+    const tapConsumed = onLooperFrameTapRef.current?.(data, {
+      suppressed: suppressFxCountRef.current > 0,
+      currentSlot: currentSlotRef.current,
+    });
+    if (tapConsumed) return;
+    let handled = false;
     // Real-time hardware controls arrive (per current hypothesis) as standard
     // Control Change messages, NOT SysEx, so they must be routed BEFORE the
     // 0xF0 SysEx checks below, which every downstream branch requires. The exact
@@ -234,6 +256,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // sufficient discriminator (no capture of the full frame yet; see
     // docs/protocol-capture.md).
     if (isSysEx(data, 0x12, 0x08) && data.length >= 28) {
+      handled = true;
       if (data[14] === 0x08) {
         // Preset change echo: slot nibble-encoded at data[25:26]
         const slot = ((data[25] & 0x0F) << 4) | (data[26] & 0x0F);
@@ -266,6 +289,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // Format (38B raw): payload[12]=blockIndex, payload[26]=module(high byte),
     // payload[19:21]=variant nibble-encoded: effectId = (module<<24) | (p[19]<<4) | p[20]
     if (isSysEx(data, 0x12, 0x0C) && data.length >= 38) {
+      handled = true;
       const p = data.subarray(10); // payload starts after header
       const blockIndex = p[12];
       const moduleType = p[26];
@@ -288,6 +312,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // sub=0x10 D→H: toggle OR knob notification (46 bytes)
     // Discriminator: bytes[29:37] all zeros = knob notification, otherwise = toggle
     if (isSysEx(data, 0x12, 0x10) && data.length >= 45) {
+      handled = true;
       const isKnob = data[29] === 0 && data[30] === 0 && data[31] === 0 && data[32] === 0 &&
                      data[33] === 0 && data[34] === 0 && data[35] === 0 && data[36] === 0;
       if (isKnob) {
@@ -311,13 +336,21 @@ export function useMidiDevice(): UseMidiDeviceReturn {
         }
       }
     }
+    // Opt-in monitor (src/core/debugFlags.ts): hex-dump any frame no branch
+    // above recognized — exactly what the pending USB-capture work needs.
+    if (!handled && isMidiMonitorEnabled()) {
+      console.debug(`[GP-200] rx unhandled: ${hexOfBytes(data)}`);
+    }
   // suppressFxFor is intentionally omitted: it's a plain function (not
   // useCallback-memoised) that only closes over the stable suppressFxCountRef,
   // so its identity changing every render doesn't affect behavior, but
   // including it would make onMidiMessage (and everything that depends on
   // it, e.g. `connect` below) unstable every render.
   // oxlint-disable-next-line react-hooks/exhaustive-deps
-  }, [onDeviceChangeRef, onDeviceToggleRef, onDeviceEffectChangeRef, onDeviceParamChangeRef, onFootswitchRef, onExpPositionRef, suppressFxCountRef]);
+  }, [
+    onDeviceChangeRef, onDeviceToggleRef, onDeviceEffectChangeRef, onDeviceParamChangeRef,
+    onFootswitchRef, onExpPositionRef, onLooperFrameTapRef, suppressFxCountRef,
+  ]);
 
   /** Persist the current name list to localStorage under this device's key. */
   const persistNames = useCallback(() => {
@@ -885,5 +918,6 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     setOnDeviceParamChange: send.setOnDeviceParamChange,
     setOnFootswitch: send.setOnFootswitch,
     setOnExpPosition: send.setOnExpPosition,
+    setOnLooperFrameTap: send.setOnLooperFrameTap,
   };
 }
