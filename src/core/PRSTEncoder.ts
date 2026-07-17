@@ -22,6 +22,7 @@ const MRAP_CONTENT_SIZE  = 1172;
 // Pre-name metadata (0x30-0x43)
 const OFFSET_PRE_META    = 0x30;
 // Per-patch settings inside the pre-name block (mirror of PRSTDecoder).
+const OFFSET_PATCH_SLOT  = 0x34;  // u8: target slot 0..255 (mirrored at 0x90)
 const OFFSET_PATCH_TEMPO = 0x36;  // u16 LE
 const OFFSET_PATCH_VOLUME = 0x38; // u8
 const OFFSET_PATCH_PAN   = 0x3C;  // s8
@@ -33,6 +34,7 @@ const AUTHOR_MAX         = 16;
 
 // Routing section (0x8C-0x9F)
 const OFFSET_ROUTING     = 0x8C;
+const OFFSET_ROUTING_SLOT = 0x90; // u8: mirror of the target slot at 0x34
 const OFFSET_FX_SEND     = 0x92;
 const OFFSET_FX_RETURN   = 0x93;
 
@@ -127,6 +129,23 @@ export class PRSTEncoder {
     gen.writeUint16LE(OFFSET_PATCH_TEMPO, preset.patchTempo);
     gen.writeUint8(OFFSET_PATCH_VOLUME, preset.patchVolume);
     gen.writeUint8(OFFSET_PATCH_PAN, preset.patchPan & 0xFF);
+
+    // Target slot at 0x34. Only written when known: a genuine file decoded via
+    // rawSource already carries its slot, and a synthetic preset stays 0 until
+    // the user picks a slot at export. Writing it lets the Valeton editor land
+    // the patch on the intended slot instead of 01-A.
+    //
+    // 0x90 mirrors the slot in synthetic exports (matching genuine PC-software
+    // exports, e.g. 01-C where 0x34==0x90). For a rawSource round-trip we leave
+    // 0x90 as the original bytes: it is not reliably equal to 0x34 in the wild
+    // (some files store slot+1 there), so preserving it keeps real-file exports
+    // byte-exact rather than guessing.
+    if (preset.slotIndex !== undefined) {
+      gen.writeUint8(OFFSET_PATCH_SLOT, preset.slotIndex & 0xFF);
+      if (!preset.rawSource) {
+        gen.writeUint8(OFFSET_ROUTING_SLOT, preset.slotIndex & 0xFF);
+      }
+    }
 
     // ── Effect blocks (0xA0-0x3AF, 11 × 72 bytes) ───────────────────────
     // Each slot's physical byte position is determined by its slotIndex

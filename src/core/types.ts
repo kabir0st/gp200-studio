@@ -59,6 +59,14 @@ export const GP200PresetSchema = z.object({
   /** Per-patch tempo in BPM, .prst bytes 0x36-0x37 (u16 LE). */
   patchTempo: z.number().int().min(0).max(0xFFFF).default(120),
   /**
+   * Target patch slot, 0..255 = (bank-1)*4 + letter (A=0..D=3). Stored in the
+   * .prst at byte 0x34 (and mirrored at 0x90). Genuine files carry the slot the
+   * patch belongs to; the Valeton editor uses it when writing to the device, so
+   * an export left at 0 lands on slot 01-A instead of the chosen slot. Absent
+   * for synthetic presets (HLX import, blank editor) until the user picks one.
+   */
+  slotIndex: z.number().int().min(0).max(255).optional(),
+  /**
    * Original raw file bytes (1224 or 1176). When present, the encoder uses
    * this as the starting buffer and overwrites only the fields the editor
    * models (name, author, effect blocks, routing, checksum). Everything else

@@ -136,6 +136,23 @@ describe('PRSTEncoder', () => {
     expect(view.getUint32(0x20, true)).toBe(0x28);
   });
 
+  it('writes the target slot index to 0x34 (and mirrors 0x90 for synthetic presets)', () => {
+    // 01-C = (1-1)*4 + 2 = slot 2. Genuine files carry this at 0x34; the Valeton
+    // editor uses it to place the patch on the device, so a 0 lands it on 01-A.
+    const bytes = new Uint8Array(new PRSTEncoder().encode({ ...samplePreset, slotIndex: 2 }));
+    expect(bytes[0x34]).toBe(2);
+    expect(bytes[0x90]).toBe(2); // synthetic: mirror written
+    // Omitted slotIndex leaves 0x34 at 0 (unchanged legacy behaviour).
+    const noSlot = new Uint8Array(new PRSTEncoder().encode(samplePreset));
+    expect(noSlot[0x34]).toBe(0);
+  });
+
+  it('round-trips slotIndex through decode → encode', () => {
+    const buf = new Uint8Array(new PRSTEncoder().encode({ ...samplePreset, slotIndex: 42 }));
+    const decoded = new PRSTDecoder(buf).decode();
+    expect(decoded.slotIndex).toBe(42);
+  });
+
   it('round-trips float32 param values', () => {
     const preset: GP200Preset = {
       ...samplePreset,

@@ -8,6 +8,7 @@ const OFFSET_MAGIC       = 0x00;  // 4 bytes: "TSRP"
 const OFFSET_VERSION     = 0x15;  // 1 byte: version minor (e.g. 1)
 // Per-patch settings live in the pre-name metadata block (confirmed against
 // the encoder's own synthetic seeds and the committed fixtures).
+const OFFSET_PATCH_SLOT  = 0x34;  // u8, target slot 0..255 (mirrored at 0x90)
 const OFFSET_PATCH_TEMPO = 0x36;  // u16 LE, BPM (default 120)
 const OFFSET_PATCH_VOLUME = 0x38; // u8, 0..100 (default 50)
 const OFFSET_PATCH_PAN   = 0x3C;  // s8, 0 = center, - = L, + = R
@@ -121,6 +122,10 @@ export class PRSTDecoder {
     const panSigned = rawPan > 127 ? rawPan - 256 : rawPan;
     const patchPan = panSigned >= -50 && panSigned <= 50 ? panSigned : 0;
 
+    // Target slot the patch belongs to (0..255). Preserved so a decode → edit →
+    // re-export keeps landing on the same slot; the export dialog can override.
+    const slotIndex = this.parser.readUint8(OFFSET_PATCH_SLOT);
+
     // User presets (1224 bytes) carry a BE16 checksum at 0x4C6. Factory
     // presets (1176 bytes) don't have room for that footer; the checksum
     // offset (1222) is past the end of the buffer. Skip the read and use 0
@@ -147,7 +152,7 @@ export class PRSTDecoder {
     return GP200PresetSchema.parse({
       version, patchName, author: author || undefined, effects,
       fxLoopSend, fxLoopReturn,
-      patchVolume, patchPan, patchTempo,
+      patchVolume, patchPan, patchTempo, slotIndex,
       checksum, rawSource,
       expAssignments: controls?.exp,
       ctrlAssignments: controls?.ctrl,

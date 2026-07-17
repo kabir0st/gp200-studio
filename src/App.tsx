@@ -276,11 +276,11 @@ function App() {
     }
   }, [loadPreset, sendPresetToDevice]);
 
-  function handleExportConfirm(name: string, author?: string) {
+  function handleExportConfirm(name: string, author: string | undefined, slot: number) {
     if (!preset) return;
     setPatchName(name);
     if (author !== undefined) setAuthor(author);
-    const encoded = new PRSTEncoder().encode({ ...preset, patchName: name, author });
+    const encoded = new PRSTEncoder().encode({ ...preset, patchName: name, author, slotIndex: slot });
     downloadBlob(encoded, `${name || 'preset'}.prst`);
     setShowExportDialog(false);
   }
@@ -318,7 +318,7 @@ function App() {
   async function handleExportSlot(slot: number) {
     try {
       const pulled = await midiDevice.pullPreset(slot);
-      const encoded = new PRSTEncoder().encode(pulled);
+      const encoded = new PRSTEncoder().encode({ ...pulled, slotIndex: slot });
       downloadBlob(encoded, slotFilename(slot, pulled.patchName));
       setLoadError(null);
     } catch {
@@ -340,7 +340,7 @@ function App() {
           const pulled = await midiDevice.pullPreset(slot);
           entries.push({
             name: slotFilename(slot, pulled.patchName),
-            data: new Uint8Array(new PRSTEncoder().encode(pulled)),
+            data: new Uint8Array(new PRSTEncoder().encode({ ...pulled, slotIndex: slot })),
           });
         } catch {
           // Skip unreadable slots (e.g. factory 249–255) but keep going.
@@ -656,6 +656,7 @@ function App() {
         onClose={() => setShowExportDialog(false)}
         initialName={preset.patchName}
         initialAuthor={preset.author}
+        initialSlot={preset.slotIndex}
         onConfirm={handleExportConfirm}
       />
     </div>
