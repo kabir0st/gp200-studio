@@ -4,9 +4,11 @@ import path from 'node:path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  // Served from a subfolder of the afterhour.uk umbrella domain
-  // (afterhour.uk/gp200studio). Base rewrites asset URLs; outDir nests the build
+  // Served from a subfolder of the kabirtamari.com name domain
+  // (kabirtamari.com/gp200studio). Base rewrites asset URLs; outDir nests the build
   // under the same path so Cloudflare Workers Assets serves it by request path.
+  // A more-specific Worker route (kabirtamari.com/gp200studio*) wins over the
+  // resume worker's custom domain on kabirtamari.com.
   base: '/gp200studio/',
   plugins: [react()],
   resolve: {

@@ -8,8 +8,8 @@
   },
   "routes": [
     {
-      "pattern": "afterhour.uk/gp200studio*",
-      "zone_name": "afterhour.uk"
+      "pattern": "kabirtamari.com/gp200studio*",
+      "zone_name": "kabirtamari.com"
     }
   ]
 }
