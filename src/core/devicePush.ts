@@ -11,6 +11,12 @@ export interface PresetPushSender {
   /** Mirror the signal-chain order to the device (order = slotIndices in playback order). */
   sendReorder: (order: number[], send: number, ret: number) => void;
   sendAuthor: (author: string) => void;
+  /** Per-patch master volume 0..100 (distinct from the VOL block's own knob). */
+  sendPatchVolume: (value: number) => void;
+  /** Per-patch pan, device-encoded: 0..50 right, 206..255 (256 + signed) left. */
+  sendPatchPan: (deviceValue: number) => void;
+  /** Per-patch tempo in BPM. */
+  sendPatchTempo: (bpm: number) => void;
 }
 
 export interface PushProgress {
@@ -137,7 +143,22 @@ export async function pushPresetToDevice(
   // (order-independent), so a single reorder after them applies the preset's
   // routing without racing the per-block edits. Sent standalone (like the
   // author) to dodge the device's first-message-of-a-burst swallow (#90).
-  sender.sendReorder(decoded.effects.map((e) => e.slotIndex), decoded.fxLoopSend, decoded.fxLoopReturn);
+  sender.sendReorder(
+    decoded.effects.map((eff) => eff.slotIndex),
+    decoded.fxLoopSend,
+    decoded.fxLoopReturn,
+  );
+  await sleep(paramGap);
+  // Per-patch settings (master VOL/PAN/TEMPO) are part of the preset just like
+  // the block params; without them the device keeps the previous patch's
+  // values (e.g. its master volume) for the freshly pushed preset. Pan goes
+  // over the wire in the device's 0..255 encoding (left = 256 + signed value).
+  sender.sendPatchVolume(decoded.patchVolume);
+  await sleep(paramGap);
+  sender.sendPatchPan(decoded.patchPan & 0xFF);
+  await sleep(paramGap);
+  sender.sendPatchTempo(decoded.patchTempo);
+  await sleep(paramGap);
   if (decoded.author) sender.sendAuthor(decoded.author);
   onProgress?.({ completed: total, total, phase: 'done' });
 }

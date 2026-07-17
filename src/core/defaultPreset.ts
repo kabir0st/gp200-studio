@@ -3,8 +3,7 @@ import { SLOT_MODULES } from './effectNames';
 import { getEffectParams } from './effectParams';
 
 // ── Default effect per GP-200 module ────────────────────────────────────
-// Used for the blank "INIT" preset and as HLXConverter's fallback when no
-// better match is found for an imported block.
+// Used for the blank "INIT" preset.
 export const MODULE_DEFAULTS: Record<string, number> = {
   PRE: 0,           // COMP
   WAH: 0x05000001,  // V-Wah

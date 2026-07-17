@@ -12,6 +12,9 @@ function makeRecorder() {
     sendToggle: (b, on) => events.push(`toggle:${b}:${on}`),
     sendReorder: (order, send, ret) => events.push(`reorder:${order.join(',')}:${send}:${ret}`),
     sendAuthor: (a) => events.push(`author:${a}`),
+    sendPatchVolume: (value) => events.push(`patchvol:${value}`),
+    sendPatchPan: (deviceValue) => events.push(`patchpan:${deviceValue}`),
+    sendPatchTempo: (bpm) => events.push(`patchtempo:${bpm}`),
   };
   const sleep = async (ms: number) => {
     events.push(`sleep:${ms}`);
@@ -26,6 +29,9 @@ function twoBlockPreset(): GP200Preset {
       { slotIndex: 0, enabled: true, effectId: 0x11, params: [5, 6] },
       { slotIndex: 1, enabled: false, effectId: 0x22, params: [7] },
     ],
+    patchVolume: 50,
+    patchPan: 0,
+    patchTempo: 120,
     author: 'Tester',
   } as unknown as GP200Preset;
 }
@@ -43,6 +49,9 @@ function reorderedPreset(): GP200Preset {
     ],
     fxLoopSend: 4,
     fxLoopReturn: 4,
+    patchVolume: 80,
+    patchPan: -7,
+    patchTempo: 132,
     author: 'Tester',
   } as unknown as GP200Preset;
 }
@@ -127,6 +136,19 @@ describe('pushPresetToDevice', () => {
     expect(nonSleep[nonSleep.length - 1]).toBe('author:Tester');
   });
 
+  it('sends per-patch VOL/PAN/TEMPO in the finalize phase, after reorder and before author', async () => {
+    const { events, sender, sleep } = makeRecorder();
+    await pushPresetToDevice(reorderedPreset(), sender, { sleep });
+    const nonSleep = events.filter((event) => !event.startsWith('sleep:'));
+
+    // The previous patch's master settings must not leak into the pushed
+    // preset. PAN travels device-encoded: -7 → 256 - 7 = 249.
+    const reorderIdx = nonSleep.findIndex((event) => event.startsWith('reorder:'));
+    const authorIdx = nonSleep.indexOf('author:Tester');
+    const finalize = nonSleep.slice(reorderIdx + 1, authorIdx);
+    expect(finalize).toEqual(['patchvol:80', 'patchpan:249', 'patchtempo:132']);
+  });
+
   it('stops sending once the abort signal fires (no overlapping pushes)', async () => {
     const { events, sender } = makeRecorder();
     const ac = new AbortController();
@@ -143,6 +165,7 @@ describe('pushPresetToDevice', () => {
     expect(events.some((e) => e.startsWith('param:'))).toBe(false);
     expect(events.some((e) => e.startsWith('toggle:'))).toBe(false);
     expect(events.some((e) => e.startsWith('author:'))).toBe(false);
+    expect(events.some((e) => e.startsWith('patch'))).toBe(false);
     expect(events.some((e) => e === 'fx:1:34')).toBe(false);
   });
 

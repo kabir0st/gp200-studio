@@ -641,6 +641,14 @@ export function useMidiDevice(): UseMidiDeviceReturn {
       preset.effects.map(e => e.slotIndex), preset.fxLoopSend, preset.fxLoopReturn,
     ));
     await new Promise(r => setTimeout(r, 30));
+    // Per-patch master VOL/PAN/TEMPO, so the saved slot doesn't inherit the
+    // editing buffer's previous values. PAN is device-encoded (left = 256 + signed).
+    output.send(SysExCodec.buildPatchSetting(0x00, preset.patchVolume));
+    await new Promise(r => setTimeout(r, 30));
+    output.send(SysExCodec.buildPatchSetting(0x06, preset.patchPan & 0xFF));
+    await new Promise(r => setTimeout(r, 30));
+    output.send(SysExCodec.buildPatchSetting(0x01, preset.patchTempo));
+    await new Promise(r => setTimeout(r, 30));
     if (preset.author) {
       output.send(SysExCodec.buildAuthorName(preset.author));
       await new Promise(r => setTimeout(r, 30));

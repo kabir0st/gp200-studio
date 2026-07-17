@@ -47,7 +47,7 @@ export interface PedalBoardProps {
   onVolumeChange: (value: number) => void;
   onPanChange: (value: number) => void;
   onTempoChange: (bpm: number) => void;
-  onImportFile: (buffer: Uint8Array, filename: string) => void;
+  onImportFile: (buffer: Uint8Array) => void;
   onExportRequest: () => void;
   onCloseRequest: () => void;
   onFxSendChange: (pos: number) => void;

@@ -12,7 +12,6 @@ import {
 } from '@/core/looperBindings';
 import { PRSTDecoder } from '@/core/PRSTDecoder';
 import { PRSTEncoder } from '@/core/PRSTEncoder';
-import { convertHLX } from '@/core/HLXConverter';
 import { pushPresetToDevice, type PushProgress } from '@/core/devicePush';
 import { EFFECT_MAP } from '@/core/effectNames';
 import type { GP200Preset } from '@/core/types';
@@ -73,7 +72,6 @@ function App() {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [slotBrowserMode, setSlotBrowserMode] = useState<'pull' | 'push' | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [importedFromHLX, setImportedFromHLX] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
   // Full-page guide overlays both landing and board (no router). Back just
   // clears this, falling through to Landing or PedalBoard per `preset`.
@@ -121,6 +119,9 @@ function App() {
           sendToggle: midiDevice.sendToggle,
           sendReorder: midiDevice.sendReorder,
           sendAuthor: midiDevice.sendAuthor,
+          sendPatchVolume: midiDevice.sendPatchVolume,
+          sendPatchPan: midiDevice.sendPatchPan,
+          sendPatchTempo: midiDevice.sendPatchTempo,
         },
         {
           signal: ac.signal,
@@ -257,17 +258,9 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [midiDevice.status]);
 
-  const handleFile = useCallback((buffer: Uint8Array, filename: string) => {
+  const handleFile = useCallback((buffer: Uint8Array) => {
     try {
-      let decoded: GP200Preset;
-      if (filename.toLowerCase().endsWith('.hlx')) {
-        const text = new TextDecoder().decode(buffer);
-        decoded = convertHLX(JSON.parse(text));
-        setImportedFromHLX(true);
-      } else {
-        decoded = new PRSTDecoder(buffer).decode();
-        setImportedFromHLX(false);
-      }
+      const decoded = new PRSTDecoder(buffer).decode();
       loadPreset(decoded);
       void sendPresetToDevice(decoded);
       setLoadError(null);
@@ -514,12 +507,6 @@ function App() {
 
   return (
     <div className="w-full h-screen flex flex-col overflow-hidden">
-      {importedFromHLX && (
-        <div className="mx-4 mt-3 mb-2 px-3 py-1.5 rounded-lg font-mono-display text-caption tracking-wider uppercase inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/40 text-purple-800">
-          EXPERIMENTAL: imported from Line6 HX Stomp (.hlx)
-        </div>
-      )}
-
       {loadError && (
         <div className="mx-4 mt-3 mb-2 px-4 py-3 rounded-lg font-mono-display text-sm flex items-center justify-between bg-accent-red/10 border border-accent-red/30 text-accent-red">
           <span>{loadError}</span>
@@ -553,7 +540,11 @@ function App() {
           onPatchNameChange={setPatchName}
           onAuthorChange={setAuthor}
           onVolumeChange={(v) => { setPatchVolume(v); if (midiDevice.status === 'connected') midiDevice.sendPatchVolume(v); }}
-          onPanChange={(v) => { setPatchPan(v); if (midiDevice.status === 'connected') midiDevice.sendPatchPan(v); }}
+          onPanChange={(pan) => {
+            setPatchPan(pan);
+            // sendPatchPan takes the device encoding: left pan = 256 + signed value.
+            if (midiDevice.status === 'connected') midiDevice.sendPatchPan(pan & 0xFF);
+          }}
           onTempoChange={(v) => { setPatchTempo(v); if (midiDevice.status === 'connected') midiDevice.sendPatchTempo(v); }}
           onImportFile={handleFile}
           onExportRequest={() => setShowExportDialog(true)}

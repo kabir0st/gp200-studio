@@ -63,7 +63,7 @@ export const GP200PresetSchema = z.object({
    * .prst at byte 0x34 (and mirrored at 0x90). Genuine files carry the slot the
    * patch belongs to; the Valeton editor uses it when writing to the device, so
    * an export left at 0 lands on slot 01-A instead of the chosen slot. Absent
-   * for synthetic presets (HLX import, blank editor) until the user picks one.
+   * for synthetic presets (blank editor) until the user picks one.
    */
   slotIndex: z.number().int().min(0).max(255).optional(),
   /**
@@ -71,8 +71,8 @@ export const GP200PresetSchema = z.object({
    * this as the starting buffer and overwrites only the fields the editor
    * models (name, author, effect blocks, routing, checksum). Everything else
    * (controller/EXP assignments, pre-name metadata, routing header extras)
-   * round-trips byte-exact. Absent for synthetically-built presets (HLX
-   * import, tests); the encoder then builds a buffer from scratch.
+   * round-trips byte-exact. Absent for synthetically-built presets (blank
+   * editor, tests); the encoder then builds a buffer from scratch.
    */
   rawSource: z.instanceof(Uint8Array).optional(),
   /**

@@ -7,7 +7,7 @@ interface BoardTopBarProps {
   currentSlot: number | null;
   firmware: string | null;
   pushProgress: PushProgress | null;
-  onImportFile: (buffer: Uint8Array, filename: string) => void;
+  onImportFile: (buffer: Uint8Array) => void;
   onExportRequest: () => void;
   onLoadRequest: () => void;
   onPushRequest: () => void;
@@ -63,7 +63,7 @@ export function BoardTopBar({
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (loaded) => {
-      onImportFile(new Uint8Array(loaded.target!.result as ArrayBuffer), file.name);
+      onImportFile(new Uint8Array(loaded.target!.result as ArrayBuffer));
     };
     reader.readAsArrayBuffer(file);
     event.target.value = ''; // allow re-importing the same file
@@ -91,7 +91,7 @@ export function BoardTopBar({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".prst,.hlx"
+          accept=".prst"
           className="hidden"
           aria-hidden="true"
           tabIndex={-1}

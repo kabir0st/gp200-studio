@@ -131,7 +131,7 @@ describe('PRSTEncoder', () => {
   it('writes the MRAP pointer (0x20 = 0x28) so the Valeton editor can load it', () => {
     // Regression: the synthetic path left 0x20 at 0x00. Real files store the
     // MRAP block offset (0x28) there and the official editor follows it, so a
-    // zero made from-scratch/HLX exports unloadable. The decoder ignores 0x20.
+    // zero made from-scratch exports unloadable. The decoder ignores 0x20.
     const view = new DataView(new PRSTEncoder().encode(samplePreset));
     expect(view.getUint32(0x20, true)).toBe(0x28);
   });

@@ -359,9 +359,7 @@ export function Guide({ onBack }: GuideProps) {
           <Section id="files" title="Importing & exporting files">
             <p>
               <strong>IMPORT</strong> (top bar) accepts native GP-200{' '}
-              <code>.prst</code> presets and, experimentally,{' '}
-              <strong>Line6 HX Stomp <code>.hlx</code></strong> files; HLX is
-              best-effort and <em>import-only</em>. <strong>EXPORT</strong> names
+              <code>.prst</code> presets. <strong>EXPORT</strong> names
               the patch and downloads it as a <code>.prst</code>. Importing while
               connected also previews the patch live on the device.
             </p>
@@ -376,7 +374,6 @@ export function Guide({ onBack }: GuideProps) {
             <ul className="list-disc pl-5 space-y-1.5 text-base leading-relaxed text-text-secondary max-w-4xl">
               <li>Live device features need a GP-200 over USB in Chrome or Edge (Web MIDI).</li>
               <li>Offline, you can edit patches and import/export files, but not sync or save to the unit.</li>
-              <li>HLX import is experimental and import-only; export is always <code>.prst</code>.</li>
             </ul>
           </Section>
 
