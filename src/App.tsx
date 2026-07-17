@@ -102,6 +102,17 @@ function App() {
     if (midiDevice.status === 'disconnected') setFirmwareWarningDismissed(false);
   }, [midiDevice.status]);
 
+  // Ask for audio capture as soon as the board opens, so the permission
+  // prompt fires up front and the IN/OUT meters show by default instead of
+  // hiding behind the AUDIO IN button. Once only: after a denial or a manual
+  // ✕, the AudioMeters button stays as the fallback and we don't re-prompt.
+  const audioAutoRequested = useRef(false);
+  useEffect(() => {
+    if (!preset || audioAutoRequested.current) return;
+    audioAutoRequested.current = true;
+    void audioEngine.enable();
+  }, [preset, audioEngine]);
+
   // Send the whole preset to the device for live preview (no flash write).
   // Aborts any push still in flight so two loads never interleave on the wire.
   const sendPresetToDevice = useCallback(async (decoded: GP200Preset) => {

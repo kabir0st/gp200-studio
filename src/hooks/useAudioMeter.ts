@@ -3,8 +3,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 // The GP-200 is a USB audio interface as well as a MIDI device. This hook
 // captures its audio input (Web Audio) and exposes live in/out levels:
 // the metering + capture foundation for the planned loop station.
-// Everything is torn down on disable/unmount; no audio runs until the user
-// clicks enable (getUserMedia + AudioContext both need a gesture anyway).
+// Everything is torn down on disable/unmount. enable() may run without a
+// user gesture (the board auto-enables on open); Chrome then creates the
+// AudioContext suspended, so enable() resumes it on the first interaction.
 
 export interface AudioMeterApi {
   /** capture running */
@@ -52,8 +53,11 @@ export function useAudioMeter(): AudioMeterApi {
   const outAnalyserRef = useRef<AnalyserNode | null>(null);
   const monitorGainRef = useRef<GainNode | null>(null);
   const bufRef = useRef<Float32Array<ArrayBuffer> | null>(null);
+  const resumeCleanupRef = useRef<(() => void) | null>(null);
 
   const disable = useCallback(() => {
+    resumeCleanupRef.current?.();
+    resumeCleanupRef.current = null;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     sourceRef.current = null;
@@ -94,6 +98,20 @@ export function useAudioMeter(): AudioMeterApi {
         });
       }
       const ctx = new AudioContext({ latencyHint: 'interactive' });
+      if (ctx.state === 'suspended') {
+        // No user gesture yet (auto-enable on board open): the context starts
+        // suspended and the meters would sit at zero until it runs.
+        const resume = () => {
+          void ctx.resume().catch(() => {});
+        };
+        resume();
+        window.addEventListener('pointerdown', resume, { once: true });
+        window.addEventListener('keydown', resume, { once: true });
+        resumeCleanupRef.current = () => {
+          window.removeEventListener('pointerdown', resume);
+          window.removeEventListener('keydown', resume);
+        };
+      }
       const source = ctx.createMediaStreamSource(stream);
       const inAnalyser = ctx.createAnalyser();
       inAnalyser.fftSize = 1024;
