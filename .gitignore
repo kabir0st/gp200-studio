@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Local AI-assistant instructions (kept out of the public repo)
+CLAUDE.md
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
