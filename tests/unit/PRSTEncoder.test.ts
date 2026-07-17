@@ -265,4 +265,19 @@ describe('PRSTEncoder: controller/EXP assignment records', () => {
     const reDecoded = new PRSTDecoder(encoded).decode();
     expect(reDecoded.ctrlAssignments![5].blockMask).toBe(0x201);
   });
+
+  it.skipIf(!existsSync(fixturePath))(
+    'edited patch volume/pan/tempo survive a round-trip on a real file',
+    () => {
+      const original = loadCommitted();
+      const preset = new PRSTDecoder(original).decode();
+      const encoded = new Uint8Array(
+        new PRSTEncoder().encode({ ...preset, patchVolume: 88, patchPan: -12, patchTempo: 165 }),
+      );
+      const reDecoded = new PRSTDecoder(encoded).decode();
+      expect(reDecoded.patchVolume).toBe(88);
+      expect(reDecoded.patchPan).toBe(-12);
+      expect(reDecoded.patchTempo).toBe(165);
+    },
+  );
 });

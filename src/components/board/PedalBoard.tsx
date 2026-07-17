@@ -62,6 +62,7 @@ export interface PedalBoardProps {
   onCtrlBlockToggle: (ctrlIndex: number, blockIndex: number, on: boolean) => void;
   onCtrlClear: (ctrlIndex: number) => void;
   onOpenPatchManager: () => void;
+  onOpenGuide: () => void;
   /* loop station */
   looper: LooperApi;
   looperBindings: LooperBindings;
@@ -115,6 +116,7 @@ export function PedalBoard({
   onCtrlBlockToggle,
   onCtrlClear,
   onOpenPatchManager,
+  onOpenGuide,
   looper,
   looperBindings,
   onLooperBindingsChange,
@@ -210,6 +212,7 @@ export function PedalBoard({
         onLoadRequest={onLoadRequest}
         onPushRequest={onPushRequest}
         onOpenPatchManager={onOpenPatchManager}
+        onOpenGuide={onOpenGuide}
         onConnectRequest={onConnectRequest}
         onDisconnect={onDisconnect}
         onCloseRequest={onCloseRequest}
@@ -240,25 +243,27 @@ export function PedalBoard({
               </div>
             </div>
           </div>
-          <SwitcherUnit
-            preset={preset}
-            patchVolume={patchVolume}
-            patchPan={patchPan}
-            patchTempo={patchTempo}
-            currentSlot={currentSlot}
-            connected={connected}
-            onSaveToActiveSlot={onSaveToActiveSlot}
-            onPatchNameChange={onPatchNameChange}
-            onAuthorChange={onAuthorChange}
-            onVolumeChange={onVolumeChange}
-            onPanChange={onPanChange}
-            onTempoChange={onTempoChange}
-            onOpenFxLoop={() => setOpenDrawer('fxloop')}
-            onOpenExp={() => setOpenDrawer('exp')}
-            onOpenCtrl={() => setOpenDrawer('ctrl')}
-            onOpenLooper={() => setOpenDrawer('looper')}
-          />
         </section>
+        {/* Floating control deck — sits outside the board chassis so it can
+            stick to the bottom of the scroll stage and float over the rows. */}
+        <SwitcherUnit
+          preset={preset}
+          patchVolume={patchVolume}
+          patchPan={patchPan}
+          patchTempo={patchTempo}
+          currentSlot={currentSlot}
+          connected={connected}
+          onSaveToActiveSlot={onSaveToActiveSlot}
+          onPatchNameChange={onPatchNameChange}
+          onAuthorChange={onAuthorChange}
+          onVolumeChange={onVolumeChange}
+          onPanChange={onPanChange}
+          onTempoChange={onTempoChange}
+          onOpenFxLoop={() => setOpenDrawer('fxloop')}
+          onOpenExp={() => setOpenDrawer('exp')}
+          onOpenCtrl={() => setOpenDrawer('ctrl')}
+          onOpenLooper={() => setOpenDrawer('looper')}
+        />
       </main>
 
       <DeckDrawer

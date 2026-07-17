@@ -126,11 +126,14 @@ export function parseControlRecords(
       const slotId = bytes[p];
       const page = (slotId >> 4) & 0x0F;
       const item = slotId & 0x0F;
-      if (page > 2 || item > 2) return undefined;
+      if (page > 2 || item > 2) return undefined; // structural: stream misaligned
+      // Value tolerance: keep the raw block byte as-is. 0..10 = a modeled
+      // block, 0xFF = unassigned (null), 11..254 = an unmodeled/special target
+      // (e.g. EXP → Patch Volume). Previously any 11..254 aborted the WHOLE
+      // parse, silently dropping every EXP *and* CTRL assignment — so a single
+      // special EXP target made the footswitch panel read "nothing assigned."
       const rawBlock = bytes[p + 1];
-      let blockIndex: number | null = null;
-      if (rawBlock <= 10) blockIndex = rawBlock;
-      else if (rawBlock !== 0xFF) return undefined;
+      const blockIndex: number | null = rawBlock === 0xFF ? null : rawBlock;
       exp.push({
         page,
         item,
@@ -142,8 +145,10 @@ export function parseControlRecords(
     } else if (record.type === TYPE_CTRL) {
       const p = record.payloadOffset;
       const ctrlIndex = bytes[p];
+      if (ctrlIndex > 7) return undefined; // structural: stream misaligned
+      // Keep the full u16 mask verbatim (unknown high bits round-trip); only
+      // bits 0..10 render as pedals. A wider mask no longer aborts the parse.
       const blockMask = readU16LE(bytes, p + 1);
-      if (ctrlIndex > 7 || blockMask > 0x7FF) return undefined;
       ctrl.push({ ctrlIndex, blockMask });
     }
     // TYPE_UNKNOWN10: opaque, intentionally skipped.

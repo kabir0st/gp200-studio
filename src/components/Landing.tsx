@@ -4,6 +4,7 @@ import { SysExCodec } from '@/core/SysExCodec';
 import { SLOT_MODULES } from '@/core/effectNames';
 import { getBodySpec } from '@/components/board/boardPalette';
 import { Logo } from '@/components/Logo';
+import { Credits } from '@/components/Credits';
 
 interface LandingProps {
   midiDevice: UseMidiDeviceReturn;
@@ -11,15 +12,24 @@ interface LandingProps {
   onOpenBlank: () => void;
   /** open the editor with the connected device's current preset */
   onOpenCurrent: () => void;
+  /** open the full-page guide */
+  onOpenGuide: () => void;
   loadError: string | null;
   onDismissError: () => void;
 }
+
+const FEATURES: string[] = [
+  'Visual pedalboard editor — drag to reorder, tweak every knob',
+  'Assign EXP pedals, CTRL footswitches, and the FX loop',
+  'Live USB-MIDI sync with your GP-200 (Chrome / Edge)',
+  'Import & export .prst, manage all 256 device patches',
+];
 
 /**
  * Stage-styled landing: two actions only — connect the GP-200, or open the
  * editor with a blank preset. No file prompt; import lives in the board deck.
  */
-export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, loadError, onDismissError }: LandingProps) {
+export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, onOpenGuide, loadError, onDismissError }: LandingProps) {
   const { status, handshakeStep, errorMessage, currentSlot, connect } = midiDevice;
   const [webMidiSupported, setWebMidiSupported] = useState(true);
 
@@ -82,6 +92,18 @@ export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, loadError, onD
           </button>
         </div>
 
+        <ul className="landing-features">
+          {FEATURES.map((feature) => (
+            <li key={feature} className="landing-feature">
+              {feature}
+            </li>
+          ))}
+        </ul>
+
+        <button type="button" className="landing-guide-link" onClick={onOpenGuide}>
+          Read the guide →
+        </button>
+
         {status === 'error' && errorMessage && (
           <p className="landing-msg error" role="alert">{errorMessage}</p>
         )}
@@ -100,6 +122,8 @@ export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, loadError, onD
         {!connected && webMidiSupported && status !== 'error' && (
           <p className="landing-msg">Connect over USB, or open the editor and import a file from the deck.</p>
         )}
+
+        <Credits className="landing-credits" />
       </div>
     </div>
   );

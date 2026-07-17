@@ -15,6 +15,7 @@ interface BoardTopBarProps {
   onConnectRequest: () => void;
   onDisconnect: () => void;
   onCloseRequest: () => void;
+  onOpenGuide: () => void;
 }
 
 function connectionLabel(connected: boolean, firmware: string | null): string {
@@ -46,6 +47,7 @@ export function BoardTopBar({
   onConnectRequest,
   onDisconnect,
   onCloseRequest,
+  onOpenGuide,
 }: BoardTopBarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -138,6 +140,15 @@ export function BoardTopBar({
             CONNECT GP-200
           </button>
         )}
+        <button
+          type="button"
+          className="deck-btn quiet"
+          title="Open the guide"
+          aria-label="Open guide"
+          onClick={onOpenGuide}
+        >
+          ?
+        </button>
         <button
           type="button"
           className="deck-btn quiet"

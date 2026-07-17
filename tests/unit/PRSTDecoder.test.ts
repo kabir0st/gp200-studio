@@ -239,3 +239,19 @@ describe('PRSTDecoder: controller/EXP assignment records', () => {
     expect(preset.expAssignments).toBeUndefined();
   });
 });
+
+describe('PRSTDecoder: per-patch VOL/PAN/TEMPO', () => {
+  it('decodes patch volume/pan/tempo from a real file', () => {
+    const data = new Uint8Array(readFileSync(join(process.cwd(), 'prst/63-B American Idiot.prst')));
+    const preset = new PRSTDecoder(data).decode();
+    expect(preset.patchVolume).toBe(50);
+    expect(preset.patchPan).toBe(5);
+    expect(preset.patchTempo).toBe(120);
+  });
+
+  it('decodes a non-default patch volume', () => {
+    const data = new Uint8Array(readFileSync(join(process.cwd(), 'prst/63-C claude1.prst')));
+    const preset = new PRSTDecoder(data).decode();
+    expect(preset.patchVolume).toBe(74);
+  });
+});

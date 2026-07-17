@@ -6,6 +6,11 @@ import { CONTROL_RECORDS_FILE_OFFSET, parseControlRecords } from './controlRecor
 export const PRST_MAGIC = 'TSRP';
 const OFFSET_MAGIC       = 0x00;  // 4 bytes: "TSRP"
 const OFFSET_VERSION     = 0x15;  // 1 byte: version minor (e.g. 1)
+// Per-patch settings live in the pre-name metadata block (confirmed against
+// the encoder's own synthetic seeds and the committed fixtures).
+const OFFSET_PATCH_TEMPO = 0x36;  // u16 LE, BPM (default 120)
+const OFFSET_PATCH_VOLUME = 0x38; // u8, 0..100 (default 50)
+const OFFSET_PATCH_PAN   = 0x3C;  // s8, 0 = center, - = L, + = R
 const OFFSET_PATCH_NAME  = 0x44;  // null-terminated, max 16 bytes (not 32 — author follows)
 const PATCH_NAME_MAX     = 16;
 const OFFSET_AUTHOR      = 0x54;  // null-terminated, max 16 bytes
@@ -107,6 +112,15 @@ export class PRSTDecoder {
     const fxLoopSend = rawSend >= 1 && rawSend <= 10 ? rawSend : 4;
     const fxLoopReturn = rawReturn >= 1 && rawReturn <= 10 ? rawReturn : 4;
 
+    // Per-patch VOL/PAN/TEMPO — defensively clamped like the FX-loop bytes so
+    // an unexpected value can't fail the whole decode.
+    const rawVol = this.parser.readUint8(OFFSET_PATCH_VOLUME);
+    const patchVolume = rawVol <= 100 ? rawVol : 50;
+    const patchTempo = this.parser.readUint16LE(OFFSET_PATCH_TEMPO);
+    const rawPan = this.parser.readUint8(OFFSET_PATCH_PAN);
+    const panSigned = rawPan > 127 ? rawPan - 256 : rawPan;
+    const patchPan = panSigned >= -50 && panSigned <= 50 ? panSigned : 0;
+
     // User presets (1224 bytes) carry a BE16 checksum at 0x4C6. Factory
     // presets (1176 bytes) don't have room for that footer — the checksum
     // offset (1222) is past the end of the buffer. Skip the read and use 0
@@ -133,6 +147,7 @@ export class PRSTDecoder {
     return GP200PresetSchema.parse({
       version, patchName, author: author || undefined, effects,
       fxLoopSend, fxLoopReturn,
+      patchVolume, patchPan, patchTempo,
       checksum, rawSource,
       expAssignments: controls?.exp,
       ctrlAssignments: controls?.ctrl,

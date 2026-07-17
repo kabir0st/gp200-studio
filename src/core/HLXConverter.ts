@@ -252,5 +252,8 @@ export function convertHLX(hlx: HLXPreset): GP200Preset {
     checksum: 0,
     fxLoopSend: 4,
     fxLoopReturn: 4,
+    patchVolume: 50,
+    patchPan: 0,
+    patchTempo: 120,
   };
 }

@@ -15,6 +15,8 @@ export interface PatchManagerSheetProps {
   connected: boolean;
   presetNames: (string | null)[];
   namesLoadProgress: number;
+  /** True while the background pass is re-verifying cache-seeded names. */
+  namesSyncing?: boolean;
   currentSlot: number | null;
   onActivate: (slot: number) => void;
   onOpenInEditor: (slot: number) => Promise<void>;
@@ -44,6 +46,7 @@ export function PatchManagerSheet({
   connected,
   presetNames,
   namesLoadProgress,
+  namesSyncing = false,
   currentSlot,
   onActivate,
   onOpenInEditor,
@@ -152,10 +155,19 @@ export function PatchManagerSheet({
         >
           now: {currentLabel}
         </span>
+        {namesSyncing && !namesLoading && (
+          <span
+            className="font-mono-display text-caption"
+            style={{ color: 'var(--text-muted)' }}
+            title="Verifying cached names against the device"
+          >
+            syncing…
+          </span>
+        )}
         <button
           type="button"
           onClick={onRefreshNames}
-          disabled={!connected || namesLoading || bulkRunning}
+          disabled={!connected || namesLoading || namesSyncing || bulkRunning}
           className="font-mono-display text-caption px-2 py-0.5 rounded disabled:opacity-40"
           style={{ border: '1px solid rgba(0,0,0,0.20)', color: 'var(--text-muted)' }}
           title="Re-read all slot names from the device"

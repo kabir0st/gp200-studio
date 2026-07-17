@@ -857,17 +857,24 @@
 }
 
 /* ── control deck (clean, modern — no LCD glow, no decorative stomps) ── */
+/* Floating control deck: sticks to the bottom of the scroll stage and floats
+   over the board rows. */
 .board-view .deck {
-  margin-top: 10px;
-  border-radius: 10px;
+  position: sticky;
+  bottom: 12px;
+  z-index: 30;
+  margin: 14px 6px 4px;
+  border-radius: 12px;
   background: var(--chrome-bg);
   border: 1px solid var(--chrome-border);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
   padding: 12px 18px;
   display: flex;
   align-items: center;
   gap: 22px;
   flex-wrap: wrap;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    0 18px 40px rgba(0, 0, 0, 0.28);
 }
 .board-view .deck-status {
   display: flex;
@@ -1350,6 +1357,75 @@
 .landing-msg.error button {
   font-weight: 800;
   cursor: pointer;
+}
+.landing-features {
+  list-style: none;
+  margin: 26px 0 0;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--chrome-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+.landing-feature {
+  position: relative;
+  padding-left: 18px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--chrome-muted);
+}
+.landing-feature::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-amber, #8a6320);
+}
+.landing-guide-link {
+  margin-top: 18px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--chrome-text);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.landing-guide-link:hover {
+  color: var(--accent-amber, #8a6320);
+}
+.landing-credits {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--chrome-border);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--chrome-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.landing-credits .credits-links {
+  display: inline-flex;
+  gap: 16px;
+}
+.landing-credits a {
+  color: var(--chrome-text);
+  text-decoration: none;
+}
+.landing-credits a:hover {
+  color: var(--accent-amber, #8a6320);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* ══ effect picker: Guitar Rig style browser (EffectPicker.tsx) ══ */

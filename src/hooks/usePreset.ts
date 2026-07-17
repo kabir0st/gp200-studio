@@ -24,6 +24,12 @@ interface PresetActions {
     item: number,
     updates: Partial<Pick<ExpAssignment, 'blockIndex' | 'paramIndex' | 'min' | 'max'>>,
   ) => void;
+  /** Per-patch master volume (0..100). */
+  setPatchVolume: (value: number) => void;
+  /** Per-patch pan (-50..50, 0 = center). */
+  setPatchPan: (value: number) => void;
+  /** Per-patch tempo in BPM. */
+  setPatchTempo: (value: number) => void;
   reset: () => void;
 }
 
@@ -157,6 +163,21 @@ export function usePreset(): PresetActions {
     });
   }, []);
 
+  const setPatchVolume = useCallback((value: number) => {
+    const clamped = Math.max(0, Math.min(100, Math.round(value)));
+    setPreset((prev) => (prev ? { ...prev, patchVolume: clamped } : null));
+  }, []);
+
+  const setPatchPan = useCallback((value: number) => {
+    const clamped = Math.max(-50, Math.min(50, Math.round(value)));
+    setPreset((prev) => (prev ? { ...prev, patchPan: clamped } : null));
+  }, []);
+
+  const setPatchTempo = useCallback((value: number) => {
+    const clamped = Math.max(0, Math.min(0xFFFF, Math.round(value)));
+    setPreset((prev) => (prev ? { ...prev, patchTempo: clamped } : null));
+  }, []);
+
   const setExpAssignment = useCallback((
     page: number,
     item: number,
@@ -185,6 +206,7 @@ export function usePreset(): PresetActions {
     preset, loadPreset, setPatchName, setAuthor,
     toggleEffect, changeEffect, reorderEffects, setParam,
     setFxLoopSend, setFxLoopReturn, setCtrlBlock, setCtrlMask, setExpAssignment,
+    setPatchVolume, setPatchPan, setPatchTempo,
     reset,
   };
 }

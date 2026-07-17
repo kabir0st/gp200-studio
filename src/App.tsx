@@ -18,6 +18,7 @@ import { EFFECT_MAP } from '@/core/effectNames';
 import type { GP200Preset } from '@/core/types';
 
 import { Landing } from '@/components/Landing';
+import { Guide } from '@/components/Guide';
 import { PedalBoard } from '@/components/board/PedalBoard';
 import { DeviceSlotBrowser } from '@/components/DeviceSlotBrowser';
 import { FirmwareCompatDialog } from '@/components/FirmwareCompatDialog';
@@ -52,7 +53,8 @@ function App() {
   const {
     preset, loadPreset, setPatchName, setAuthor, toggleEffect, changeEffect,
     reorderEffects, setParam, setFxLoopSend, setFxLoopReturn, setCtrlBlock,
-    setCtrlMask, setExpAssignment, reset,
+    setCtrlMask, setExpAssignment, setPatchVolume, setPatchPan, setPatchTempo,
+    reset,
   } = usePreset();
   const midiDevice = useMidiDevice();
   const audioEngine = useAudioEngine();
@@ -73,12 +75,15 @@ function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [importedFromHLX, setImportedFromHLX] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  // Full-page guide overlays both landing and board (no router). Back just
+  // clears this, falling through to Landing or PedalBoard per `preset`.
+  const [view, setView] = useState<'landing' | 'guide'>('landing');
   const [firmwareWarningDismissed, setFirmwareWarningDismissed] = useState(false);
-  // Live-only device settings — not modeled in the .prst binary format, so
-  // they aren't part of GP200Preset and don't round-trip through save/export.
-  const [patchVolume, setPatchVolume] = useState(50);
-  const [patchPan, setPatchPan] = useState(0);
-  const [patchTempo, setPatchTempo] = useState(120);
+  // Per-patch VOL/PAN/TEMPO now live in the preset (decoded from the .prst /
+  // device dump), so the deck reflects the loaded patch instead of a constant.
+  const patchVolume = preset?.patchVolume ?? 50;
+  const patchPan = preset?.patchPan ?? 0;
+  const patchTempo = preset?.patchTempo ?? 120;
 
   const [pushProgress, setPushProgress] = useState<PushProgress | null>(null);
   const pushAbortRef = useRef<AbortController | null>(null);
@@ -147,10 +152,15 @@ function App() {
     }
   }, [midiDevice.status]);
 
-  // Auto-start background loading of all 256 device preset names after connect.
+  // After connect: if the local cache seeded a full set of names (progress
+  // already 256), silently re-verify them against the device in the background;
+  // otherwise fill in the missing names with the visible loading pass.
   useEffect(() => {
-    if (midiDevice.status === 'connected' && midiDevice.namesLoadProgress < 256) {
+    if (midiDevice.status !== 'connected') return;
+    if (midiDevice.namesLoadProgress < 256) {
       midiDevice.loadPresetNames();
+    } else {
+      midiDevice.syncPresetNames();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [midiDevice.status]);
@@ -474,12 +484,17 @@ function App() {
     !firmwareOk &&
     !firmwareWarningDismissed;
 
+  if (view === 'guide') {
+    return <Guide onBack={() => setView('landing')} />;
+  }
+
   if (!preset) {
     return (
       <Landing
         midiDevice={midiDevice}
         onOpenBlank={() => loadPreset(createDefaultPreset())}
         onOpenCurrent={() => void handleOpenCurrent()}
+        onOpenGuide={() => setView('guide')}
         loadError={loadError}
         onDismissError={() => setLoadError(null)}
       />
@@ -573,6 +588,7 @@ function App() {
           onCtrlBlockToggle={setCtrlBlock}
           onCtrlClear={(ctrlIndex) => setCtrlMask(ctrlIndex, 0)}
           onOpenPatchManager={handleOpenPatchManager}
+          onOpenGuide={() => setView('guide')}
           looper={looper}
           looperBindings={looperBindings}
           onLooperBindingsChange={setLooperBindings}
@@ -592,6 +608,7 @@ function App() {
         connected={midiDevice.status === 'connected'}
         presetNames={midiDevice.presetNames}
         namesLoadProgress={midiDevice.namesLoadProgress}
+        namesSyncing={midiDevice.namesSyncing}
         currentSlot={midiDevice.currentSlot}
         onActivate={handleActivateSlot}
         onOpenInEditor={handleOpenInEditorSlot}

@@ -16,8 +16,11 @@ export const EffectSlotSchema = z.object({
 export const ExpAssignmentSchema = z.object({
   page: z.number().int().min(0).max(2),
   item: z.number().int().min(0).max(2),
-  /** Fixed block index (0=PRE..10=VOL) the assigned param lives in; null = unassigned (0xFF). */
-  blockIndex: z.number().int().min(0).max(10).nullable(),
+  /** Block byte the assigned param lives in. 0..10 = modeled fixed blocks
+   *  (PRE..VOL); 11..254 = an unmodeled/special target (e.g. Patch Volume/Tempo
+   *  in the official editor) — kept verbatim so it round-trips; null = 0xFF
+   *  (unassigned). Only 0..10 render as a pedal in the EXP panel. */
+  blockIndex: z.number().int().min(0).max(254).nullable(),
   /** u16 in the file. Effect params are 0..14; special targets (Patch Volume/
    *  Tempo in the official editor) may use values beyond that — don't clamp. */
   paramIndex: z.number().int().min(0).max(0xFFFF),
@@ -32,7 +35,9 @@ export const ExpAssignmentSchema = z.object({
  */
 export const CtrlAssignmentSchema = z.object({
   ctrlIndex: z.number().int().min(0).max(7),
-  blockMask: z.number().int().min(0).max(0x7FF),
+  /** Full u16 mask kept verbatim so unknown high bits round-trip; only bits
+   *  0..10 (PRE..VOL) map to a pedal in the footswitch panel. */
+  blockMask: z.number().int().min(0).max(0xFFFF),
 });
 
 export const GP200PresetSchema = z.object({
@@ -45,6 +50,14 @@ export const GP200PresetSchema = z.object({
   fxLoopSend: z.number().int().min(1).max(10).default(4),
   /** FX-loop RETURN insertion point. 1..10. Invariant SEND <= RETURN enforced at mutation points, not in the schema. */
   fxLoopReturn: z.number().int().min(1).max(10).default(4),
+  /** Per-patch master volume (0..100), .prst byte 0x38. Distinct from the VOL
+   *  effect block's own Volume knob. */
+  patchVolume: z.number().int().min(0).max(100).default(50),
+  /** Per-patch pan, .prst byte 0x3C as signed int8. 0 = center, negative = L,
+   *  positive = R (deck exposes L50..R50). */
+  patchPan: z.number().int().min(-50).max(50).default(0),
+  /** Per-patch tempo in BPM, .prst bytes 0x36-0x37 (u16 LE). */
+  patchTempo: z.number().int().min(0).max(0xFFFF).default(120),
   /**
    * Original raw file bytes (1224 or 1176). When present, the encoder uses
    * this as the starting buffer and overwrites only the fields the editor

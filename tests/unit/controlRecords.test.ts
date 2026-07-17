@@ -92,6 +92,34 @@ describe('buildDefaultTail', () => {
       { page: 1, item: 1, blockIndex: 7, paramIndex: 2, min: 10, max: 90 },
     );
   });
+
+  // Regression: a single unmodeled value used to abort the whole parse via
+  // `return undefined`, silently dropping every EXP *and* CTRL assignment — so
+  // the footswitch panel read "nothing assigned" even when CTRLs were mapped.
+  it('keeps all records when one EXP targets a special (unmodeled) block byte', () => {
+    const exp = defaultExpAssignments();
+    exp[0] = { page: 0, item: 0, blockIndex: 0x20, paramIndex: 0, min: 0, max: 100 };
+    const ctrl = defaultCtrlAssignments();
+    ctrl[3] = { ctrlIndex: 3, blockMask: 0x0F };
+    const tail = buildDefaultTail(exp, ctrl);
+    const parsed = parseControlRecords(tail, 0);
+    expect(parsed).toBeDefined();
+    expect(parsed!.exp).toHaveLength(9);
+    expect(parsed!.ctrl).toHaveLength(8);
+    // The special target is preserved verbatim (round-trips), and the CTRL
+    // masks that share the tail survive alongside it.
+    expect(parsed!.exp[0].blockIndex).toBe(0x20);
+    expect(parsed!.ctrl[3].blockMask).toBe(0x0F);
+  });
+
+  it('keeps a CTRL mask with high bits beyond the 11 modeled blocks', () => {
+    const ctrl = defaultCtrlAssignments();
+    ctrl[1] = { ctrlIndex: 1, blockMask: 0x1005 }; // bit 12 set + PRE + DST
+    const tail = buildDefaultTail(undefined, ctrl);
+    const parsed = parseControlRecords(tail, 0);
+    expect(parsed).toBeDefined();
+    expect(parsed!.ctrl[1].blockMask).toBe(0x1005);
+  });
 });
 
 describe('applyControlRecords', () => {

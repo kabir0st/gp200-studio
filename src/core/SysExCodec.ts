@@ -160,6 +160,15 @@ export const SysExCodec = {
     const fxLoopSend = rawSend >= 1 && rawSend <= 10 ? rawSend : 4;
     const fxLoopReturn = rawReturn >= 1 && rawReturn <= 10 ? rawReturn : 4;
 
+    // Per-patch VOL/PAN/TEMPO. Dump mirrors the file shifted -0x28, so file
+    // 0x36/0x38/0x3C land at 14/16/20. Defensively clamped like fxLoop above.
+    const rawVol = decoded.length > 16 ? decoded[16] : 50;
+    const patchVolume = rawVol <= 100 ? rawVol : 50;
+    const patchTempo = decoded.length > 15 ? decoded[14] | (decoded[15] << 8) : 120;
+    const rawPan = decoded.length > 20 ? decoded[20] : 0;
+    const panSigned = rawPan > 127 ? rawPan - 256 : rawPan;
+    const patchPan = panSigned >= -50 && panSigned <= 50 ? panSigned : 0;
+
     const effects: GP200Preset['effects'] = [];
     const view = new DataView(decoded.buffer, decoded.byteOffset, decoded.byteLength);
     for (let b = 0; b < 11; b++) {
@@ -212,7 +221,7 @@ export const SysExCodec = {
 
     return GP200PresetSchema.parse({
       version: '1', patchName, author: author || undefined, effects,
-      fxLoopSend, fxLoopReturn, checksum: 0,
+      fxLoopSend, fxLoopReturn, patchVolume, patchPan, patchTempo, checksum: 0,
       expAssignments: controls?.exp,
       ctrlAssignments: controls?.ctrl,
     });

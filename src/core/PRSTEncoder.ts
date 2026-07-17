@@ -20,6 +20,10 @@ const MRAP_CONTENT_SIZE  = 1172;
 
 // Pre-name metadata (0x30-0x43)
 const OFFSET_PRE_META    = 0x30;
+// Per-patch settings inside the pre-name block (mirror of PRSTDecoder).
+const OFFSET_PATCH_TEMPO = 0x36;  // u16 LE
+const OFFSET_PATCH_VOLUME = 0x38; // u8
+const OFFSET_PATCH_PAN   = 0x3C;  // s8
 
 const OFFSET_PATCH_NAME  = 0x44;
 const PATCH_NAME_MAX     = 16;   // name is 16 bytes, author follows at 0x54
@@ -73,8 +77,6 @@ export class PRSTEncoder {
 
       gen.writeUint8(OFFSET_PRE_META, 0x02);
       gen.writeUint8(OFFSET_PRE_META + 2, 0x58);
-      gen.writeUint8(OFFSET_PRE_META + 6, 0x78);
-      gen.writeUint8(OFFSET_PRE_META + 8, 0x32);
     } else {
       // Even with rawSource, write the version byte so an edit flow that
       // changes preset.version propagates through a round-trip.
@@ -109,6 +111,13 @@ export class PRSTEncoder {
     // rawSource, because the editor owns these bytes.
     gen.writeUint8(OFFSET_FX_SEND, preset.fxLoopSend);
     gen.writeUint8(OFFSET_FX_RETURN, preset.fxLoopReturn);
+
+    // Per-patch VOL/PAN/TEMPO — likewise always written (editor-owned). For a
+    // rawSource preset these equal the decoded bytes unless the user edited
+    // them, so a straight round-trip stays byte-exact.
+    gen.writeUint16LE(OFFSET_PATCH_TEMPO, preset.patchTempo);
+    gen.writeUint8(OFFSET_PATCH_VOLUME, preset.patchVolume);
+    gen.writeUint8(OFFSET_PATCH_PAN, preset.patchPan & 0xFF);
 
     // ── Effect blocks (0xA0-0x3AF, 11 × 72 bytes) ───────────────────────
     // Each slot's physical byte position is determined by its slotIndex

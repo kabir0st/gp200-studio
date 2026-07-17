@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { SysExCodec } from '@/core/SysExCodec';
 import { decodeControlChange } from '@/core/midiControlMap';
 import type { GP200Preset } from '@/core/types';
+import { presetNameCacheKey, loadCachedNames, saveCachedNames } from '@/core/presetNameCache';
 import { useMidiSend } from './useMidiSend';
 
 const READ_TIMEOUT_MS = 3000;
@@ -39,6 +40,9 @@ export interface UseMidiDeviceReturn {
   currentSlot: number | null;
   presetNames: (string | null)[];
   namesLoadProgress: number;
+  /** True while the background re-scan is verifying cache-seeded names against
+   *  the device. Distinct from namesLoadProgress (which drives the first-load bar). */
+  namesSyncing: boolean;
   deviceInfo: { deviceType: number; firmwareValues: number[]; versionAccepted: boolean } | null;
   currentPreset: GP200Preset | null;
   /** Controller/EXP assignment readback collected during the handshake
@@ -49,6 +53,9 @@ export interface UseMidiDeviceReturn {
   connect: () => Promise<void>;
   disconnect: () => void;
   loadPresetNames: () => Promise<void>;
+  /** Force re-read every slot and correct any that drifted from the cache-seeded
+   *  values, persisting the result. Runs silently in the background after connect. */
+  syncPresetNames: () => Promise<void>;
   /** Clear cached names (except the already-pulled current bank) and re-enumerate. */
   refreshNames: () => Promise<void>;
   pullPreset: (slot: number) => Promise<GP200Preset>;
@@ -157,6 +164,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   const [currentSlot, setCurrentSlot] = useState<number | null>(null);
   const [presetNames, setPresetNames] = useState<(string | null)[]>(new Array(256).fill(null));
   const [namesLoadProgress, setNamesLoadProgress] = useState(0);
+  const [namesSyncing, setNamesSyncing] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState<UseMidiDeviceReturn['deviceInfo']>(null);
   const [currentPreset, setCurrentPreset] = useState<GP200Preset | null>(null);
   const wasConnectedRef = useRef(false);
@@ -170,6 +178,9 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   const currentSlotRef     = useRef<number | null>(null);
   const namesLoadAbortRef  = useRef<boolean>(false);
   const namesLoadRunningRef = useRef<boolean>(false);
+  // localStorage cache key for this device's slot names (deviceType + port name),
+  // computed during the handshake. null until connected / storage unavailable.
+  const cacheKeyRef        = useRef<string | null>(null);
   // Whether the fast name-only read (sub=0x20, documented for fw 1.8.0) works
   // on this device. null = untested; probed once per connection, then either
   // used for every slot or permanently bypassed in favor of full reads.
@@ -308,6 +319,11 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [onDeviceChangeRef, onDeviceToggleRef, onDeviceEffectChangeRef, onDeviceParamChangeRef, onFootswitchRef, onExpPositionRef, suppressFxCountRef]);
 
+  /** Persist the current name list to localStorage under this device's key. */
+  const persistNames = useCallback(() => {
+    if (cacheKeyRef.current) saveCachedNames(cacheKeyRef.current, presetNamesRef.current);
+  }, []);
+
   const connect = useCallback(async () => {
     setStatus('connecting');
     setErrorMessage(null);
@@ -351,6 +367,9 @@ export function useMidiDevice(): UseMidiDeviceReturn {
           input, (d) => isSysEx(d, 0x12, 0x08), READ_TIMEOUT_MS, onMidiMessage
         );
         const identity = SysExCodec.parseIdentityResponse(identityMsg);
+        // The GP-200 has no unique serial over MIDI — key the name cache on the
+        // generic deviceType byte + MIDI port name (effectively one per machine).
+        cacheKeyRef.current = presetNameCacheKey(identity.deviceType, input.name);
 
         // Step 3-4: Enter editor mode
         setHandshakeStep('Editor Mode…');
@@ -421,9 +440,25 @@ export function useMidiDevice(): UseMidiDeviceReturn {
           }
           await new Promise(r => setTimeout(r, 20));
         }
-        setPresetNames([...presetNamesRef.current]);
 
-        // Step 11: Done
+        // Step 11: Seed remaining slots from the local cache so the Patch Manager
+        // shows names instantly. The bank slots just pulled are device-truth and
+        // are kept; only still-null slots are filled. A full cache lets us mark
+        // loading complete (progress 256) so no "Loading names…" bar appears — the
+        // background sync (syncPresetNames) then re-verifies every slot silently.
+        const cached = cacheKeyRef.current ? loadCachedNames(cacheKeyRef.current) : null;
+        if (cached) {
+          for (let s = 0; s < 256; s++) {
+            if (presetNamesRef.current[s] === null) presetNamesRef.current[s] = cached[s];
+          }
+          const filledCount = presetNamesRef.current.filter((n) => n !== null).length;
+          if (filledCount === 256) setNamesLoadProgress(256);
+        }
+        setPresetNames([...presetNamesRef.current]);
+        // Persist the freshly-pulled bank names into the cache immediately.
+        persistNames();
+
+        // Step 12: Done
         setHandshakeStep(null);
         setStatus('connected');
       } catch (err) {
@@ -434,11 +469,12 @@ export function useMidiDevice(): UseMidiDeviceReturn {
       setStatus('error');
       setErrorMessage(err instanceof Error ? err.message : 'Connection failed');
     }
-  }, [onMidiMessage]);
+  }, [onMidiMessage, persistNames]);
 
   const disconnect = useCallback(() => {
     namesLoadAbortRef.current = true;
     namesLoadRunningRef.current = false;
+    setNamesSyncing(false);
     if (inputRef.current) inputRef.current.onmidimessage = null;
     outputRef.current = null;
     inputRef.current  = null;
@@ -543,10 +579,11 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // Update local state
     presetNamesRef.current[slot] = preset.patchName;
     setPresetNames([...presetNamesRef.current]);
+    persistNames();
     setCurrentSlot(slot); currentSlotRef.current = slot;
 
     console.log('[GP-200] push complete');
-  }, [pauseNameLoading]);
+  }, [pauseNameLoading, persistNames]);
 
   const saveToSlot = useCallback(async (presetName: string, slot?: number): Promise<void> => {
     if (!outputRef.current) return;
@@ -616,8 +653,9 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // Update local state
     presetNamesRef.current[slot] = preset.patchName;
     setPresetNames([...presetNamesRef.current]);
+    persistNames();
     setCurrentSlot(slot); currentSlotRef.current = slot;
-  }, [pauseNameLoading]);
+  }, [pauseNameLoading, persistNames]);
 
   /** Request one slot's name. Fast path (sub=0x20 name-only read, fw 1.8.0)
    *  when useFast; full 7-chunk read request otherwise — either way the
@@ -695,7 +733,55 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     setPresetNames([...presetNamesRef.current]);
     if (inputRef.current) inputRef.current.onmidimessage = onMidiMessage;
     namesLoadRunningRef.current = false;
-  }, [onMidiMessage, requestSlotName]);
+    // Warm the cache with whatever this pass filled in.
+    persistNames();
+  }, [onMidiMessage, requestSlotName, persistNames]);
+
+  // Force-read every slot and correct any that drifted from the cache-seeded
+  // values. Runs silently in the background after a cache hit — the Patch
+  // Manager already shows cached names, so this only patches in differences.
+  // Shares the run/abort refs with loadPresetNames (both hijack
+  // input.onmidimessage, so they must never run concurrently) and is aborted by
+  // pauseNameLoading / disconnect.
+  const syncPresetNames = useCallback(async (): Promise<void> => {
+    if (!outputRef.current || !inputRef.current) return;
+    if (namesLoadRunningRef.current) return; // a scan is already running
+    namesLoadRunningRef.current = true;
+    namesLoadAbortRef.current = false;
+    setNamesSyncing(true);
+    const FULL_TIMEOUT = 500;
+    const FAST_TIMEOUT = 250;
+    let changed = false;
+
+    for (let s = 0; s < 256; s++) {
+      if (namesLoadAbortRef.current) break;
+      let name: string | null = null;
+      if (fastNameReadRef.current !== false) {
+        name = await requestSlotName(s, true, FAST_TIMEOUT);
+        if (name !== null) {
+          fastNameReadRef.current = true;
+        } else if (fastNameReadRef.current === null && !namesLoadAbortRef.current) {
+          const fallback = await requestSlotName(s, false, FULL_TIMEOUT);
+          if (fallback !== null) fastNameReadRef.current = false;
+          name = fallback;
+        }
+      } else {
+        name = await requestSlotName(s, false, FULL_TIMEOUT);
+      }
+      if (namesLoadAbortRef.current) break;
+      // A null read is a transient miss (timeout) — keep the cached value rather
+      // than blanking a slot we already have a good name for.
+      if (name !== null && name !== presetNamesRef.current[s]) {
+        presetNamesRef.current[s] = name;
+        changed = true;
+        setPresetNames([...presetNamesRef.current]);
+      }
+    }
+    if (inputRef.current) inputRef.current.onmidimessage = onMidiMessage;
+    namesLoadRunningRef.current = false;
+    setNamesSyncing(false);
+    if (changed) persistNames();
+  }, [onMidiMessage, requestSlotName, persistNames]);
 
   const refreshNames = useCallback(async (): Promise<void> => {
     await pauseNameLoading();
@@ -728,13 +814,14 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     await new Promise(r => setTimeout(r, 300));
     presetNamesRef.current[slot] = name;
     setPresetNames([...presetNamesRef.current]);
+    persistNames();
     setCurrentSlot(slot); currentSlotRef.current = slot;
     if (previousSlot !== null && previousSlot !== slot) {
       output.send(SysExCodec.buildPresetChange(previousSlot));
       await new Promise(r => setTimeout(r, 200));
       setCurrentSlot(previousSlot); currentSlotRef.current = previousSlot;
     }
-  }, [pauseNameLoading]);
+  }, [pauseNameLoading, persistNames]);
 
   // All send* helpers + device-callback setters come from useMidiSend (see
   // the top of the hook where `send` is instantiated). The return value at
@@ -764,8 +851,9 @@ export function useMidiDevice(): UseMidiDeviceReturn {
 
   return {
     status, handshakeStep, errorMessage, deviceName, currentSlot, presetNames, namesLoadProgress,
+    namesSyncing,
     deviceInfo, currentPreset, assignmentInfo,
-    connect, disconnect, loadPresetNames, refreshNames,
+    connect, disconnect, loadPresetNames, syncPresetNames, refreshNames,
     pullPreset, pushPreset, writePresetToSlot, saveToSlot, renameSlot,
     // Send operations + device-callback registration are owned by useMidiSend.
     sendEffectChange: send.sendEffectChange,
