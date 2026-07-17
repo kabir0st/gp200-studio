@@ -8,8 +8,8 @@
   },
   "routes": [
     {
-      "pattern": "gp200.afterhour.uk",
-      "custom_domain": true
+      "pattern": "afterhour.uk/gp200studio*",
+      "zone_name": "afterhour.uk"
     }
   ]
 }

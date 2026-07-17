@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://afterhour.uk/gp200studio/sitemap.xml

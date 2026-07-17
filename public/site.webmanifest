@@ -1,0 +1,17 @@
+{
+  "name": "GP200 Studio",
+  "short_name": "GP200",
+  "description": "Browser-based editor for Valeton GP-200 guitar-effects presets — edit .prst files and push changes live over USB-MIDI.",
+  "start_url": "/gp200studio/",
+  "scope": "/gp200studio/",
+  "display": "standalone",
+  "background_color": "#232220",
+  "theme_color": "#232220",
+  "lang": "en",
+  "categories": ["music", "utilities"],
+  "icons": [
+    { "src": "/gp200studio/favicon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any maskable" },
+    { "src": "/gp200studio/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/gp200studio/icon-512.png", "type": "image/png", "sizes": "512x512" }
+  ]
+}

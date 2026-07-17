@@ -30,11 +30,14 @@ interface ShotProps {
 
 /** A screenshot figure — full-width within the content column. */
 function Shot({ src, alt, caption }: ShotProps) {
+  // Resolve root-relative `/guide/*` paths against the Vite base URL so the
+  // images load under the app's subfolder deploy (afterhour.uk/gp200studio/).
+  const resolvedSrc = `${import.meta.env.BASE_URL}${src.replace(/^\//, '')}`;
   return (
     <Card className="p-2 mt-5">
       <figure className="m-0">
         <img
-          src={src}
+          src={resolvedSrc}
           alt={alt}
           loading="lazy"
           className="w-full h-auto rounded border border-border-subtle"
