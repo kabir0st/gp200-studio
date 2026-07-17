@@ -14,6 +14,7 @@ const OFFSET_MAGIC       = 0x00;
 const OFFSET_DEVICE_ID   = 0x10;
 const OFFSET_FW_VERSION  = 0x14;  // 4 bytes: 00 01 01 00
 const OFFSET_TIMESTAMP   = 0x1C;  // 4 bytes LE uint32
+const OFFSET_MRAP_PTR    = 0x20;  // u32 LE: offset of the MRAP block (= OFFSET_MRAP)
 const OFFSET_MRAP        = 0x28;
 const OFFSET_MRAP_SIZE   = 0x2C;
 const MRAP_CONTENT_SIZE  = 1172;
@@ -84,6 +85,14 @@ export class PRSTEncoder {
       gen.writeUint8(OFFSET_FW_VERSION + 1, Number.isFinite(verNum) ? verNum & 0xFF : 0x01);
     }
 
+    // Pointer to the MRAP block. Real files store the block's offset here and
+    // the Valeton editor follows it to locate the preset payload, so an export
+    // that leaves it 0 fails to load even though every other byte is valid.
+    // (The decoder ignores it, which is why this went unnoticed.) Written
+    // unconditionally: it is invariant across all valid files, so it is a no-op
+    // for real-file round-trips and repairs a previously-broken re-import.
+    gen.writeUint32LE(OFFSET_MRAP_PTR, OFFSET_MRAP);
+
     // ── Patch name (0x44-0x53) ───────────────────────────────────────────
     gen.writeAscii(OFFSET_PATCH_NAME, preset.patchName, PATCH_NAME_MAX);
 
@@ -124,18 +133,21 @@ export class PRSTEncoder {
     // (PRST block identity 0..10 = PRE..VOL). Array order captures routing
     // order and is written separately in the routing section above.
     //
-    // Only the editor-modeled fields (slotIndex, enabled, effectId, 15×f32
-    // params) are overwritten. Marker/padding constants stay whatever the
-    // rawSource had (or are seeded below when rawSource is absent).
+    // Besides the editor-modeled fields (slotIndex, enabled, effectId, 15×f32
+    // params), the four invariant block-header bytes (0x14 .. 0x44 .. 0x0F 0x00)
+    // are (re)written unconditionally. They are identical in every valid file,
+    // so this is a no-op for a real-file round-trip but heals a re-import whose
+    // header was mis-encoded by an older build (the 0x0F marker used to land at
+    // +7 instead of +6). Remaining padding constants stay whatever rawSource
+    // had (or are zero-init when rawSource is absent).
     const hasRaw = Boolean(preset.rawSource);
     const written = new Set<number>();
     for (const slot of preset.effects) {
       const base = EFFECT_BLOCK_START + slot.slotIndex * EFFECT_BLOCK_SIZE;
-      if (!hasRaw) {
-        gen.writeUint8(base + 0, 0x14);
-        gen.writeUint8(base + 2, 0x44);
-        gen.writeUint8(base + 6, 0x0F);
-      }
+      gen.writeUint8(base + 0, 0x14);
+      gen.writeUint8(base + 2, 0x44);
+      gen.writeUint8(base + 6, 0x0F);
+      gen.writeUint8(base + 7, 0x00);
       gen.writeUint8(base + 4, slot.slotIndex);
       gen.writeUint8(base + 5, slot.enabled ? 1 : 0);
       gen.writeUint32LE(base + 8, slot.effectId);

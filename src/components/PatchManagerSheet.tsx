@@ -18,7 +18,7 @@ export interface PatchManagerSheetProps {
   /** True while the background pass is re-verifying cache-seeded names. */
   namesSyncing?: boolean;
   currentSlot: number | null;
-  onActivate: (slot: number) => void;
+  onActivate: (slot: number) => Promise<void>;
   onOpenInEditor: (slot: number) => Promise<void>;
   onExportSlot: (slot: number) => Promise<void>;
   onExportSlots: (slots: number[]) => Promise<void>;
@@ -81,7 +81,7 @@ export function PatchManagerSheet({
   }
 
   function handleActivateFromPicker(slot: number) {
-    if (connected) onActivate(slot);
+    if (connected) void runBusy(() => onActivate(slot));
   }
 
   async function runBusy(action: () => Promise<void>) {
@@ -267,7 +267,7 @@ export function PatchManagerSheet({
             size="sm"
             disabled={actionsDisabled}
             onClick={() => {
-              if (selected !== null) onActivate(selected);
+              if (selected !== null) void runBusy(() => onActivate(selected));
             }}
             title="Switch the device to this slot"
           >

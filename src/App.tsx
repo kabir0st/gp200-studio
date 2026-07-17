@@ -286,11 +286,22 @@ function App() {
   }
 
   // ── Patch-manager handlers ────────────────────────────────────────────
-  function handleActivateSlot(slot: number) {
+  async function handleActivateSlot(slot: number) {
     if (midiDevice.status !== 'connected') return;
-    // The onDeviceChange effect below mirrors the pulled preset into the
-    // editor once the device confirms the slot switch.
+    // Switch the device, then pull the slot and mirror it into the board.
+    // We can't rely on the incoming slot-change echo here: sendSlotChange
+    // synchronously advances currentSlotRef (via onSlotChange), so the echo
+    // matches the "same-slot frame" branch in useMidiDevice and is ignored,
+    // meaning onDeviceChange never fires. Pulling explicitly (like OPEN /
+    // handlePullConfirm) keeps the UI in sync regardless of the echo.
     midiDevice.sendSlotChange(slot);
+    try {
+      const pulled = await midiDevice.pullPreset(slot);
+      loadPreset(pulled);
+      setLoadError(null);
+    } catch {
+      setLoadError('Failed to load preset from device');
+    }
   }
 
   async function handleOpenInEditorSlot(slot: number) {
