@@ -161,10 +161,20 @@ export function Guide({ onBack }: GuideProps) {
         <main className="flex-1 min-w-0 px-6 sm:px-10 py-9 max-w-[1600px]">
           <Section id="overview" title="Overview">
             <p>
-              GP200 Studio is a browser-based editor for the Valeton GP-200
-              multi-effects floor unit. Load, build, and edit presets entirely in
-              your browser, then push changes live to a connected GP-200 over
-              USB-MIDI.
+              GP200 Studio is a browser-based editor and loop station for the
+              Valeton GP-200 multi-effects floor unit. Load, build, and edit
+              presets entirely in your browser, then push changes live to a
+              connected GP-200 over USB-MIDI. It's free and open source
+              (GPL-3.0); the code lives on{' '}
+              <a
+                href="https://github.com/kabir0st/gp200-studio"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline text-text-secondary hover:text-accent-amber"
+              >
+                GitHub
+              </a>
+              .
             </p>
             <Card className="p-4 mt-4 max-w-4xl">
               <p className="font-mono-display text-micro font-bold tracking-widest uppercase text-text-muted mb-1.5">
@@ -301,11 +311,21 @@ export function Guide({ onBack }: GuideProps) {
               LOOP: loop station
             </h3>
             <p>
-              A multi-track looper that records the GP-200's USB audio (you'll be
-              asked to enable audio capture first). Each track has Rec / Play /
-              Mute / level / clear, with a master progress bar and Clear All. You
-              can also map the hardware footswitches and the expression pedal to
-              looper actions.
+              A multi-layer loop station that records the GP-200's USB audio
+              (you'll be asked to enable audio capture first) — a capability the
+              pedal doesn't ship with. Your first recording sets the master loop
+              length; every record pass after that adds a new layer, quantized
+              and phase-locked to the first, with no limit on the number of
+              layers. Each track has Play / Mute / level / delete, with a master
+              progress bar and Clear All.
+            </p>
+            <p>
+              You can drive it hands-free from the pedal itself: use MIDI-learn
+              to bind the GP-200's physical footswitches to Record, Play, and
+              track selection, with an optional takeover mode so a stomp
+              controls the looper instead of its normal patch function while the
+              drawer is open. Mapping the expression pedal to loop levels is
+              experimental (its wire format is still being captured).
             </p>
             <Shot
               src="/guide/08-deck-loop.png"
@@ -384,7 +404,7 @@ export function Guide({ onBack }: GuideProps) {
             <Button variant="ghost" size="sm" onClick={onBack}>
               ← Back to the app
             </Button>
-            <Credits className="font-mono-display text-label text-text-muted tracking-wide flex flex-col gap-1 [&_.credits-links]:flex [&_.credits-links]:gap-4 [&_.credits-links]:mt-1 [&_a]:text-text-secondary [&_a]:underline [&_a:hover]:text-accent-amber" />
+            <Credits className="font-mono-display text-label text-text-muted tracking-wide flex flex-col gap-1 [&_.credits-links]:flex [&_.credits-links]:flex-wrap [&_.credits-links]:gap-4 [&_.credits-links]:mt-1 [&_a]:text-text-secondary [&_a]:underline [&_a:hover]:text-accent-amber" />
           </footer>
         </main>
       </div>

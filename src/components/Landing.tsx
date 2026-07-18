@@ -19,6 +19,7 @@ interface LandingProps {
 }
 
 const FEATURES: string[] = [
+  'Multi-layer loop station: stack unlimited loops over USB audio, hands-free from the pedal',
   'Visual pedalboard editor: drag to reorder, tweak every knob',
   'Assign EXP pedals, CTRL footswitches, and the FX loop',
   'Live USB-MIDI sync with your GP-200 (Chrome / Edge)',
@@ -61,7 +62,7 @@ export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, onOpenGuide, l
           <Logo size={72} />
         </div>
         <h1 className="landing-title">GP200 Studio</h1>
-        <p className="landing-sub">Valeton GP-200 pedalboard editor</p>
+        <p className="landing-sub">Valeton GP-200 pedalboard editor &amp; loop station</p>
 
         <div className="landing-actions">
           {connected ? (

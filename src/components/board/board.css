@@ -1447,7 +1447,9 @@
 }
 .landing-credits .credits-links {
   display: inline-flex;
-  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 16px;
 }
 .landing-credits a {
   color: var(--chrome-text);
