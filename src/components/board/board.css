@@ -265,7 +265,9 @@
   flex-wrap: nowrap;
 }
 .board-view .board-row + .board-row {
-  margin-top: 8px;
+  /* matches the row's own horizontal `gap`, so spacing between pedals reads the
+     same in both axes */
+  margin-top: 28px;
 }
 
 /* ── pedal bay ──
