@@ -60,6 +60,11 @@ export interface UseMidiSendReturn {
   // Expression pedal
   sendExpParamSelect: (page: number, item: number, blockIndex: number, paramIdx: number) => void;
   sendExpMinMax: (page: number, item: number, min: number, max: number) => void;
+  // Device-global settings (0x12/0x08 settings-write family, docs §0.2)
+  sendFsMode: (mode: number) => void;
+  sendFsTarget: (fs: number, kind: 'tap' | 'hold', actionId: number) => void;
+  sendFsCombo: (comboIndex: number, actionId: number) => void;
+  sendAutoCabMatch: (on: boolean) => void;
   // Plain MIDI CC (built-in looper / drum machine / tuner; src/core/ccControl.ts)
   sendCC: (command: CCCommand | CCCommand[]) => void;
   /** CC channel index 0..15; must match the GP-200's global MIDI channel. */
@@ -263,6 +268,38 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
     [outputRef],
   );
 
+  // Settings writes echo back verbatim with shapes that collide with the
+  // FX-state / preset-change branches, so every sender raises the FX
+  // suppression window (the dispatcher also has a structural [21]/[22]
+  // guard as the second line of defense).
+  const sendFsMode = useCallback((mode: number) => {
+    if (!outputRef.current) return;
+    suppressFxBriefly();
+    console.log(`[GP-200] FS mode: ${mode}`);
+    outputRef.current.send(SysExCodec.buildFsMode(mode));
+  }, [outputRef]);
+
+  const sendFsTarget = useCallback((fs: number, kind: 'tap' | 'hold', actionId: number) => {
+    if (!outputRef.current) return;
+    suppressFxBriefly();
+    console.log(`[GP-200] FS${fs} ${kind} target: 0x${actionId.toString(16)}`);
+    outputRef.current.send(SysExCodec.buildFsTarget(fs, kind, actionId));
+  }, [outputRef]);
+
+  const sendFsCombo = useCallback((comboIndex: number, actionId: number) => {
+    if (!outputRef.current) return;
+    suppressFxBriefly();
+    console.log(`[GP-200] FS combo ${comboIndex}: 0x${actionId.toString(16)}`);
+    outputRef.current.send(SysExCodec.buildFsCombo(comboIndex, actionId));
+  }, [outputRef]);
+
+  const sendAutoCabMatch = useCallback((on: boolean) => {
+    if (!outputRef.current) return;
+    suppressFxBriefly();
+    console.log(`[GP-200] auto cab match: ${on}`);
+    outputRef.current.send(SysExCodec.buildAutoCabMatch(on));
+  }, [outputRef]);
+
   const sendExpMinMax = useCallback(
     (page: number, item: number, min: number, max: number) => {
       if (!outputRef.current) return;
@@ -340,6 +377,10 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
     sendPatchTempo,
     sendExpParamSelect,
     sendExpMinMax,
+    sendFsMode,
+    sendFsTarget,
+    sendFsCombo,
+    sendAutoCabMatch,
     sendCC,
     ccChannel,
     setCcChannel,

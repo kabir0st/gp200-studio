@@ -23,6 +23,7 @@ interface SwitcherUnitProps {
   onOpenCtrl: () => void;
   onOpenLooper: () => void;
   onOpenDrums: () => void;
+  onOpenDevice: () => void;
 }
 
 interface LiveBar {
@@ -134,6 +135,7 @@ export function SwitcherUnit({
   onOpenCtrl,
   onOpenLooper,
   onOpenDrums,
+  onOpenDevice,
 }: SwitcherUnitProps) {
   const [openPop, setOpenPop] = useState<'meta' | 'settings' | null>(null);
 
@@ -338,6 +340,14 @@ export function SwitcherUnit({
           onClick={onOpenDrums}
         >
           DRUMS
+        </button>
+        <button
+          type="button"
+          className="deck-btn"
+          title="Device-global settings: footswitch mode/targets, Auto Cab Match"
+          onClick={onOpenDevice}
+        >
+          SETUP
         </button>
         {connected && (
           <button

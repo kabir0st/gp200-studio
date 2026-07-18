@@ -25,6 +25,10 @@ interface LooperPanelProps {
   learnNotice: LearnNotice | null;
   /** learning needs a connected GP-200 */
   learnEnabled: boolean;
+  /** FS takeover: rewrite bound switches' TAP targets to CTRLs on the pedal
+   *  so stomps stop firing their normal function while this panel is open */
+  takeoverActive: boolean;
+  onTakeoverChange: (active: boolean) => void;
 }
 
 const FS_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -76,6 +80,11 @@ function learnVariant(armed: boolean): 'danger' | 'ghost' {
   return 'ghost';
 }
 
+function takeoverLabel(active: boolean): string {
+  if (active) return '● TAKEOVER ON';
+  return 'TAKEOVER';
+}
+
 function learnTitle(armed: boolean, learned: boolean, learnEnabled: boolean): string {
   if (!learnEnabled) return 'Connect the GP-200 to learn';
   if (armed) return 'Stomp the hardware switch now (click to cancel)';
@@ -95,6 +104,8 @@ export function LooperPanel({
   onClearTrigger,
   learnNotice,
   learnEnabled,
+  takeoverActive,
+  onTakeoverChange,
 }: LooperPanelProps) {
   const playBar = useRef<HTMLSpanElement>(null);
   const [gains, setGains] = useState<number[]>(() => looper.tracks.map(() => 1));
@@ -218,13 +229,34 @@ export function LooperPanel({
 
       {/* Bindings */}
       <div className="pt-2 border-t border-border-active">
-        <p className="font-mono-display text-label text-text-muted uppercase tracking-widest mb-2">
-          Hardware bindings{' '}
-          <span className="normal-case tracking-normal">
-            (arm LEARN, then stomp the switch — bound switches drive the looper
-            while this panel is open)
-          </span>
-        </p>
+        <div className="flex items-center gap-3 mb-2">
+          <p className="font-mono-display text-label text-text-muted uppercase tracking-widest">
+            Hardware bindings{' '}
+            <span className="normal-case tracking-normal">
+              (arm LEARN, then stomp the switch — bound switches drive the looper
+              while this panel is open)
+            </span>
+          </p>
+          <Button
+            variant={learnVariant(takeoverActive)}
+            size="sm"
+            disabled={!learnEnabled}
+            onClick={() => onTakeoverChange(!takeoverActive)}
+            title={
+              'Rewrite the bound switches on the pedal to their CTRLs while this ' +
+              'panel is open, so stomps stop patch-switching; restored on close'
+            }
+          >
+            {takeoverLabel(takeoverActive)}
+          </Button>
+        </div>
+        {takeoverActive && (
+          <p className="font-mono-display text-caption text-text-secondary mb-2">
+            Takeover active: FS mode set to User, bound switches point at their
+            CTRLs. Re-LEARN each switch once while active, then stomps only
+            drive the looper. Closing this panel restores your setup.
+          </p>
+        )}
         <div className="grid grid-cols-2 gap-2">
           {FS_NUMBERS.map((fs) => {
             const action = bindings.footswitches[fs];
