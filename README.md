@@ -80,7 +80,7 @@ GP200 Studio fixes that:
 
 ### Just use it
 
-1. Open **[GP200studio]([https://afterhour.uk/gp200studio/](https://kabirtamari.com/gp200studio/))** in Chrome or Edge
+1. Open **[GP200studio](https://kabirtamari.com/gp200studio/)** in Chrome or Edge
 2. Plug your GP-200 into USB and hit **CONNECT GP-200** — or hit **Open editor** to work on `.prst` files offline
 3. That's it. Everything runs client-side; your presets never leave your machine.
 
