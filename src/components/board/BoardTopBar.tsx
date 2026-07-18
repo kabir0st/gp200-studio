@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 import type { PushProgress } from '@/core/devicePush';
 import { SysExCodec } from '@/core/SysExCodec';
-import { PRST_FILE_IO_DISABLED } from '@/components/prstFileIo';
 
 interface BoardTopBarProps {
   connected: boolean;
@@ -101,8 +100,7 @@ export function BoardTopBar({
         <button
           type="button"
           className="deck-btn"
-          disabled={PRST_FILE_IO_DISABLED}
-          title="Temporarily disabled"
+          title="Load a .prst preset file"
           onClick={() => fileInputRef.current?.click()}
         >
           IMPORT
@@ -110,8 +108,7 @@ export function BoardTopBar({
         <button
           type="button"
           className="deck-btn"
-          disabled={PRST_FILE_IO_DISABLED}
-          title="Temporarily disabled"
+          title="Download the current preset as a .prst file"
           onClick={onExportRequest}
         >
           EXPORT

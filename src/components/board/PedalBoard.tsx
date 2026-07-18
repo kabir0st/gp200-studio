@@ -314,6 +314,7 @@ export function PedalBoard({
           onOpenLooper={() => setOpenDrawer('looper')}
           onOpenDrums={() => setOpenDrawer('drums')}
           onOpenDevice={() => setOpenDrawer('device')}
+          sendCC={sendCC}
         />
       </main>
 

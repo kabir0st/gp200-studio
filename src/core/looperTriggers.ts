@@ -250,8 +250,9 @@ export function processLooperFrame(input: LooperFrameInput): LooperFrameDecision
 
 const STORE_KEY = 'gp200:looper';
 
-/** Bump when the envelope OR the sysex08 signature slice changes. */
-const STORE_VERSION = 1;
+/** Bump when the envelope OR the sysex08 signature slice changes.
+ *  v2: track-less LooperAction kinds (dynamic-track looper). */
+const STORE_VERSION = 2;
 
 export interface LooperStore {
   bindings: LooperBindings;
@@ -263,7 +264,7 @@ interface StoreEnvelope extends LooperStore {
   updatedAt: number;
 }
 
-const ACTION_KINDS = ['recordOverdubCycle', 'playToggle', 'muteToggle', 'clear', 'clearAll'];
+const ACTION_KINDS = ['recordToggle', 'playToggle', 'trackNext', 'trackPrev'];
 
 function isValidFsKey(fsText: string): boolean {
   const fs = Number(fsText);
@@ -273,19 +274,14 @@ function isValidFsKey(fsText: string): boolean {
 function isValidAction(value: unknown): value is LooperAction {
   if (typeof value !== 'object' || value === null) return false;
   const action = value as Partial<LooperAction>;
-  if (typeof action.kind !== 'string' || !ACTION_KINDS.includes(action.kind)) return false;
-  if (action.kind === 'clearAll') return true;
-  const track = (action as { track?: unknown }).track;
-  return Number.isInteger(track) && (track as number) >= 0;
+  return typeof action.kind === 'string' && ACTION_KINDS.includes(action.kind);
 }
 
 function isValidExpTarget(value: unknown): boolean {
   if (value === null) return true;
   if (typeof value !== 'object') return false;
-  const target = value as { kind?: unknown; track?: unknown };
-  if (target.kind === 'masterGain') return true;
-  if (target.kind !== 'trackGain') return false;
-  return Number.isInteger(target.track) && (target.track as number) >= 0;
+  const target = value as { kind?: unknown };
+  return target.kind === 'masterGain' || target.kind === 'selectedTrackGain';
 }
 
 function isValidBindings(value: unknown): value is LooperBindings {

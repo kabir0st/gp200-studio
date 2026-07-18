@@ -10,8 +10,10 @@ import {
 
 describe('resolveFootswitch', () => {
   it('returns the bound action for a mapped footswitch', () => {
-    expect(resolveFootswitch(defaultLooperBindings, 1)).toEqual({ kind: 'recordOverdubCycle', track: 0 });
-    expect(resolveFootswitch(defaultLooperBindings, 4)).toEqual({ kind: 'clearAll' });
+    expect(resolveFootswitch(defaultLooperBindings, 1)).toEqual({ kind: 'recordToggle' });
+    expect(resolveFootswitch(defaultLooperBindings, 2)).toEqual({ kind: 'playToggle' });
+    expect(resolveFootswitch(defaultLooperBindings, 3)).toEqual({ kind: 'trackNext' });
+    expect(resolveFootswitch(defaultLooperBindings, 4)).toEqual({ kind: 'trackPrev' });
   });
 
   it('returns null for an unbound footswitch', () => {
@@ -29,51 +31,27 @@ describe('applyExp', () => {
   });
 });
 
-function mockLooper(overrides: Partial<LooperControls> = {}): LooperControls {
+function mockLooper(): LooperControls {
   return {
-    isRecording: false,
-    tracks: [{ id: 0, muted: false }, { id: 1, muted: true }],
-    startRecord: vi.fn(),
-    stopRecord: vi.fn(),
-    togglePlay: vi.fn(),
-    setMute: vi.fn(),
-    clear: vi.fn(),
-    clearAll: vi.fn(),
-    ...overrides,
+    toggleRecord: vi.fn(),
+    togglePlayAll: vi.fn(),
+    selectNextTrack: vi.fn(),
+    selectPrevTrack: vi.fn(),
   };
 }
 
 describe('dispatchLooperAction', () => {
-  it('recordOverdubCycle starts recording when idle', () => {
-    const looper = mockLooper({ isRecording: false });
-    dispatchLooperAction(looper, { kind: 'recordOverdubCycle', track: 2 });
-    expect(looper.startRecord).toHaveBeenCalledWith(2);
-    expect(looper.stopRecord).not.toHaveBeenCalled();
-  });
-
-  it('recordOverdubCycle stops recording when armed', () => {
-    const looper = mockLooper({ isRecording: true });
-    dispatchLooperAction(looper, { kind: 'recordOverdubCycle', track: 2 });
-    expect(looper.stopRecord).toHaveBeenCalledTimes(1);
-    expect(looper.startRecord).not.toHaveBeenCalled();
-  });
-
-  it('muteToggle flips the current mute state of the target track', () => {
-    const looper = mockLooper();
-    dispatchLooperAction(looper, { kind: 'muteToggle', track: 1 }); // track 1 starts muted
-    expect(looper.setMute).toHaveBeenCalledWith(1, false);
-  });
-
-  it('routes the remaining actions to their methods', () => {
-    const looper = mockLooper();
-    const cases: Array<[LooperAction, keyof LooperControls, unknown[]]> = [
-      [{ kind: 'playToggle', track: 3 }, 'togglePlay', [3]],
-      [{ kind: 'clear', track: 3 }, 'clear', [3]],
-      [{ kind: 'clearAll' }, 'clearAll', []],
+  it('routes each transport action to its method', () => {
+    const cases: Array<[LooperAction, keyof LooperControls]> = [
+      [{ kind: 'recordToggle' }, 'toggleRecord'],
+      [{ kind: 'playToggle' }, 'togglePlayAll'],
+      [{ kind: 'trackNext' }, 'selectNextTrack'],
+      [{ kind: 'trackPrev' }, 'selectPrevTrack'],
     ];
-    for (const [action, method, args] of cases) {
+    for (const [action, method] of cases) {
+      const looper = mockLooper();
       dispatchLooperAction(looper, action);
-      expect(looper[method]).toHaveBeenCalledWith(...args);
+      expect(looper[method]).toHaveBeenCalledTimes(1);
     }
   });
 });

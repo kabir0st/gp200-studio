@@ -356,8 +356,12 @@ function App() {
       const target = looperBindingsRef.current.expTarget;
       if (!target) return;
       const gain = applyExp(value);
-      if (target.kind === 'trackGain') looperRef.current.setTrackGain(target.track, gain);
-      else looperRef.current.setMasterGain(gain);
+      if (target.kind === 'selectedTrackGain') {
+        const selected = looperRef.current.selectedTrack;
+        if (selected !== null) looperRef.current.setTrackGain(selected, gain);
+        return;
+      }
+      looperRef.current.setMasterGain(gain);
     });
     return () => midiDevice.setOnExpPosition(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps

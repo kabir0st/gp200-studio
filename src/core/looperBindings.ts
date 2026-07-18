@@ -1,16 +1,21 @@
 // Pure mapping from physical GP-200 controls (footswitches, EXP pedal) to loop
 // station actions. No Web Audio, no React, just the binding model + resolvers,
 // so the glue in App.tsx and the LooperPanel share one testable source of truth.
+//
+// Tracks are dynamic (every record→stop creates one), so actions carry no
+// track number: the four transport controls are record, play/stop, and
+// selection next/prev. Per-track operations (mute, clear, gain) stay
+// on-screen; the EXP pedal drives either the master level or the SELECTED
+// track's level.
 
 export type LooperAction =
-  | { kind: 'recordOverdubCycle'; track: number } // start record → stop (→ plays)
-  | { kind: 'playToggle'; track: number }
-  | { kind: 'muteToggle'; track: number }
-  | { kind: 'clear'; track: number }
-  | { kind: 'clearAll' };
+  | { kind: 'recordToggle' }   // record a NEW track / stop the recording
+  | { kind: 'playToggle' }     // play all / stop all
+  | { kind: 'trackNext' }
+  | { kind: 'trackPrev' };
 
 export type ExpTarget =
-  | { kind: 'trackGain'; track: number }
+  | { kind: 'selectedTrackGain' }
   | { kind: 'masterGain' }
   | null;
 
@@ -23,10 +28,10 @@ export interface LooperBindings {
 
 export const defaultLooperBindings: LooperBindings = {
   footswitches: {
-    1: { kind: 'recordOverdubCycle', track: 0 },
-    2: { kind: 'playToggle', track: 1 },
-    3: { kind: 'muteToggle', track: 2 },
-    4: { kind: 'clearAll' },
+    1: { kind: 'recordToggle' },
+    2: { kind: 'playToggle' },
+    3: { kind: 'trackNext' },
+    4: { kind: 'trackPrev' },
   },
   expTarget: { kind: 'masterGain' },
 };
@@ -44,36 +49,26 @@ export function applyExp(value: number): number {
 // The subset of the looper API the dispatcher needs, kept minimal so it can be
 // mocked in tests and so LooperApi satisfies it structurally.
 export interface LooperControls {
-  isRecording: boolean;
-  tracks: ReadonlyArray<{ id: number; muted: boolean }>;
-  startRecord: (track: number) => void;
-  stopRecord: () => void;
-  togglePlay: (track: number) => void;
-  setMute: (track: number, muted: boolean) => void;
-  clear: (track: number) => void;
-  clearAll: () => void;
+  toggleRecord: () => void;
+  togglePlayAll: () => void;
+  selectNextTrack: () => void;
+  selectPrevTrack: () => void;
 }
 
 /** Apply a resolved action to the looper. */
 export function dispatchLooperAction(looper: LooperControls, action: LooperAction): void {
   switch (action.kind) {
-    case 'recordOverdubCycle':
-      if (looper.isRecording) looper.stopRecord();
-      else looper.startRecord(action.track);
+    case 'recordToggle':
+      looper.toggleRecord();
       break;
     case 'playToggle':
-      looper.togglePlay(action.track);
+      looper.togglePlayAll();
       break;
-    case 'muteToggle': {
-      const track = looper.tracks.find((t) => t.id === action.track);
-      looper.setMute(action.track, !(track?.muted ?? false));
+    case 'trackNext':
+      looper.selectNextTrack();
       break;
-    }
-    case 'clear':
-      looper.clear(action.track);
-      break;
-    case 'clearAll':
-      looper.clearAll();
+    case 'trackPrev':
+      looper.selectPrevTrack();
       break;
   }
 }
