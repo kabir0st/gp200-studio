@@ -10,13 +10,6 @@ import {
 } from '@/core/looperBindings';
 import { loadLooperStore, saveLooperStore } from '@/core/looperTriggers';
 import { useLooperTriggers } from '@/hooks/useLooperTriggers';
-import { useFsTakeover } from '@/hooks/useFsTakeover';
-import {
-  loadDeviceSettings,
-  saveDeviceSettings,
-  defaultDeviceSettings,
-  type DeviceSettings,
-} from '@/core/deviceSettings';
 import { PRSTDecoder } from '@/core/PRSTDecoder';
 import { PRSTEncoder } from '@/core/PRSTEncoder';
 import { pushPresetToDevice, type PushProgress } from '@/core/devicePush';
@@ -97,26 +90,19 @@ function App() {
     saveLooperStore(looperBindings, looperTriggers.triggers);
   }, [looperBindings, looperTriggers.triggers]);
 
-  // While the Loop Station is open the footswitches belong to the looper, so the
-  // pedal is told to stop acting on them (FS mode → User, TAP → MIDI) and the
-  // settings are written back on close. An earlier version of this was removed
-  // in c380497 because its restore GUESSED the pre-takeover FS mode and
-  // clobbered it; the protocol still has no read-back, so the fix is that the
-  // restore value is now the user's declared one (deviceSettings, editable in
-  // the Loop Station panel) rather than an assumed default.
-  const [deviceSettings, setDeviceSettings] = useState<DeviceSettings>(
-    () => loadDeviceSettings() ?? defaultDeviceSettings,
-  );
-  useEffect(() => {
-    saveDeviceSettings(deviceSettings);
-  }, [deviceSettings]);
-
-  const fsTakeover = useFsTakeover({
-    sender: midiDevice,
-    connected: midiDevice.status === 'connected',
-    restoreMode: deviceSettings.fsMode,
-    restoreTaps: deviceSettings.taps,
-  });
+  // NOTE: the Loop Station does NOT rewrite the GP-200's global FootSwitch
+  // settings. Two attempts at that "takeover" have now been reverted (c380497,
+  // then again 2026-07-18): the settings protocol is write-only, so whatever
+  // the app writes on open cannot be read back and restored on close — it
+  // clobbers the user's real FS Mode and TAP targets for good. The second
+  // attempt broke a user's working Stomp configuration.
+  //
+  // The pedal is therefore left alone. In Stomp mode a press emits the
+  // effect-toggle frame the MIDI-learn tap recognizes, and the hijack path
+  // sends a toggle-back to undo it (see useLooperTriggers / revertFor). That
+  // undo covers ONE effect block, so it is correct only for a switch that
+  // toggles one block — hence the warning in LooperPanel telling the user to
+  // clear extra CTRL assignments from a switch before binding it.
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -682,19 +668,9 @@ function App() {
     onLooperBindingsChange: setLooperBindings,
     onLooperDrawerOpenChange: (open) => {
       looperPanelOpenRef.current = open;
-      if (open) {
-        fsTakeover.apply();
-        return;
-      }
       // Closing the dialog disarms any in-progress MIDI-learn so a stray
-      // stomp doesn't bind after the panel is gone, and hands the
-      // footswitches back to the pedal.
-      looperTriggers.cancelLearn();
-      fsTakeover.release();
-    },
-    fsRestoreMode: deviceSettings.fsMode,
-    onFsRestoreModeChange: (fsMode: number) => {
-      setDeviceSettings((prev) => ({ ...prev, fsMode }));
+      // stomp doesn't bind after the panel is gone.
+      if (!open) looperTriggers.cancelLearn();
     },
     looperTriggers: looperTriggers.triggers,
     looperArmedAction: looperTriggers.armedAction,

@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/Button';
 import { Led } from '@/components/ui/Badge';
 import type { LooperTriggerMap } from '@/core/looperTriggers';
 import type { LearnNotice } from '@/hooks/useLooperTriggers';
-import { FS_MODES } from '@/core/deviceSettings';
 
 interface LooperPanelProps {
   looper: LooperApi;
@@ -29,9 +28,6 @@ interface LooperPanelProps {
   learnNotice: LearnNotice | null;
   /** learning needs a connected GP-200 */
   learnEnabled: boolean;
-  /** FS mode restored on close; user-declared (protocol has no read-back) */
-  fsRestoreMode: number;
-  onFsRestoreModeChange: (mode: number) => void;
 }
 
 const SELECT_CLASS =
@@ -133,8 +129,6 @@ export function LooperPanel({
   onClearAll,
   learnNotice,
   learnEnabled,
-  fsRestoreMode,
-  onFsRestoreModeChange,
 }: LooperPanelProps) {
   const playBar = useRef<HTMLSpanElement>(null);
   // Track gains keyed by dynamic track id; default 1 for new tracks.
@@ -219,9 +213,9 @@ export function LooperPanel({
           </li>
           <li>
             Stomp assignments below: click ASSIGN STOMP on an action, then step
-            on any footswitch — that switch is remembered on this machine. While
-            this dialog is open the pedal hands its footswitches over to the
-            looper; normal behaviour is restored when you close it.
+            on any footswitch — that switch is remembered on this machine. Give
+            the looper switches that do nothing else on the pedal (CTRL / TAP set
+            to None); see the warning below for why.
           </li>
         </ul>
       </details>
@@ -379,9 +373,32 @@ export function LooperPanel({
         </p>
         <p className="font-mono-display text-caption text-text-secondary mb-3">
           Click ASSIGN STOMP, then step on any footswitch. While this dialog is
-          open the GP-200's footswitches belong to the looper — their normal
-          function is restored when you close it.
+          open a learned stomp drives the looper instead of your patch — the app
+          undoes the pedal&apos;s own reaction to it.
         </p>
+        {/* The undo is a single toggle-back (revertFor in looperTriggers.ts), so
+            it can only cancel a switch that flips ONE effect block. A CTRL
+            assignment carries a blockMask of many blocks; the extras would stay
+            flipped. The app cannot read the pedal's footswitch config, so this
+            has to be a warning rather than a check — and rewriting that config
+            was tried twice and reverted, because it is write-only and clobbers
+            the user's real setup (see the note in App.tsx). */}
+        <div
+          className="mb-3 px-3 py-2 rounded-lg border border-accent-amber
+            bg-accent-amber/10"
+        >
+          <p className="font-mono-display text-label text-accent-amber uppercase tracking-widest mb-1">
+            ⚠ Before you assign a footswitch
+          </p>
+          <p className="font-mono-display text-caption text-text-secondary">
+            On the GP-200, make sure the switch you are about to bind has no
+            extra triggers attached to it — set its CTRL / TAP assignment to
+            <strong> None</strong> for the switches you want the looper to own.
+            A switch that still toggles several effects at once cannot be fully
+            undone by the app: the looper action will fire, but the extra pedals
+            will stay flipped. One switch, one job.
+          </p>
+        </div>
         <div className="flex flex-col gap-2">
           {LOOPER_ACTION_KINDS.map((action) => {
             const learned = triggers[action] !== undefined;
@@ -458,27 +475,6 @@ export function LooperPanel({
           </select>
           <span className="font-mono-display text-caption text-text-muted basis-full sm:basis-auto">
             (EXP wire format pending capture)
-          </span>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 mt-3">
-          <span className="font-mono-display text-label text-text-secondary w-16">
-            FS MODE →
-          </span>
-          <select
-            value={fsRestoreMode}
-            onChange={(e) => onFsRestoreModeChange(Number(e.target.value))}
-            className={`flex-1 sm:flex-none min-w-0 ${SELECT_CLASS}`}
-          >
-            {FS_MODES.map((label, mode) => (
-              <option key={label} value={mode}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <span className="font-mono-display text-caption text-text-muted basis-full sm:basis-auto">
-            Your pedal&apos;s normal FS Mode, restored when this dialog closes. The
-            GP-200 cannot report its own setting, so this has to be told to us.
-            {fsRestoreMode === 2 && ' Note: in User mode the per-switch TAP targets are also restored, and those are only remembered from what this app last wrote.'}
           </span>
         </div>
       </div>
