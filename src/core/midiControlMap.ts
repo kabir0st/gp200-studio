@@ -10,6 +10,13 @@
 // `.pcap` diff lands. Keeping every magic number in this one pure module means
 // the reverse-engineered format is documented, testable, and never smeared
 // across the dispatcher.
+//
+// Evidence AGAINST the placeholder (2026-07-18): the device's documented
+// incoming-CC surface (docs/protocol-capture.md §5, src/core/ccControl.ts)
+// is command-oriented — CC69-72/76-79 are host→device "virtually tap
+// CTRL1-8" commands — which makes it unlikely the device *emits* CC80-87 on
+// hardware stomps. Stomps observed so far arrive as SysEx (looperTriggers.ts
+// MIDI-learn handles them); expect the capture to retire FS_CC_MAP.
 
 /** Foot-controller CC number carrying EXP-pedal position 0..127. PLACEHOLDER. */
 export const EXP_CC = 4; // TODO(capture): confirm against gp200-exp-sweep.pcap

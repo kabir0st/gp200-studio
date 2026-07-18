@@ -25,6 +25,10 @@ interface LooperPanelProps {
   learnNotice: LearnNotice | null;
   /** learning needs a connected GP-200 */
   learnEnabled: boolean;
+  /** FS takeover: rewrite bound switches' TAP targets to CTRLs on the pedal
+   *  so stomps stop firing their normal function while this panel is open */
+  takeoverActive: boolean;
+  onTakeoverChange: (active: boolean) => void;
 }
 
 const FS_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -33,31 +37,23 @@ const SELECT_CLASS =
   'bg-bg-primary border border-border-active rounded px-2 py-1 ' +
   'font-mono-display text-caption text-text-secondary';
 
-// Action kinds selectable per footswitch (plus "none" to unbind).
+// The four transport actions selectable per footswitch (plus "none" to unbind).
 type ActionKind = LooperAction['kind'] | 'none';
 const ACTION_LABELS: Record<ActionKind, string> = {
   none: '-',
-  recordOverdubCycle: 'Record / Stop',
+  recordToggle: 'Record / Stop',
   playToggle: 'Play / Stop',
-  muteToggle: 'Mute',
-  clear: 'Clear',
-  clearAll: 'Clear All',
+  trackNext: 'Track +',
+  trackPrev: 'Track -',
 };
 
 function actionKind(action: LooperAction | undefined): ActionKind {
   return action?.kind ?? 'none';
 }
 
-function actionTrack(action: LooperAction | undefined): number {
-  return action && 'track' in action ? action.track : 0;
-}
-
-function buildAction(kind: ActionKind, track: number): LooperAction | null {
-  switch (kind) {
-    case 'none': return null;
-    case 'clearAll': return { kind: 'clearAll' };
-    default: return { kind, track };
-  }
+function buildAction(kind: ActionKind): LooperAction | null {
+  if (kind === 'none') return null;
+  return { kind };
 }
 
 function fmtLength(sec: number | null): string {
@@ -76,11 +72,53 @@ function learnVariant(armed: boolean): 'danger' | 'ghost' {
   return 'ghost';
 }
 
+function takeoverLabel(active: boolean): string {
+  if (active) return '● TAKEOVER ON';
+  return 'TAKEOVER';
+}
+
 function learnTitle(armed: boolean, learned: boolean, learnEnabled: boolean): string {
   if (!learnEnabled) return 'Connect the GP-200 to learn';
   if (armed) return 'Stomp the hardware switch now (click to cancel)';
   if (learned) return 'Learned — click to re-learn';
   return 'Arm, then stomp the hardware switch to bind it';
+}
+
+function recordLabel(recording: boolean): string {
+  if (recording) return '■ STOP REC';
+  return '● REC';
+}
+
+function recordVariant(recording: boolean): 'danger' | 'secondary' {
+  if (recording) return 'danger';
+  return 'secondary';
+}
+
+function playAllLabel(anyPlaying: boolean): string {
+  if (anyPlaying) return '■ STOP';
+  return '▶ PLAY';
+}
+
+function trackRowClass(selected: boolean): string {
+  const base = 'flex items-center gap-2 px-3 py-2 rounded-lg border bg-bg-hover cursor-pointer';
+  if (selected) return `${base} border-accent-amber`;
+  return `${base} border-border-active`;
+}
+
+function playPauseLabel(state: string): string {
+  if (state === 'playing') return 'Pause';
+  return 'Play';
+}
+
+function muteVariant(muted: boolean): 'primary' | 'ghost' {
+  if (muted) return 'primary';
+  return 'ghost';
+}
+
+function expValue(target: ExpTarget): string {
+  if (target === null) return 'none';
+  if (target.kind === 'masterGain') return 'master';
+  return 'selected';
 }
 
 export function LooperPanel({
@@ -95,9 +133,12 @@ export function LooperPanel({
   onClearTrigger,
   learnNotice,
   learnEnabled,
+  takeoverActive,
+  onTakeoverChange,
 }: LooperPanelProps) {
   const playBar = useRef<HTMLSpanElement>(null);
-  const [gains, setGains] = useState<number[]>(() => looper.tracks.map(() => 1));
+  // Track gains keyed by dynamic track id; default 1 for new tracks.
+  const [gains, setGains] = useState<Record<number, number>>({});
   const { ready, getPlayhead } = looper;
 
   // Drive the master-loop progress bar from a rAF loop (no per-frame React
@@ -114,9 +155,9 @@ export function LooperPanel({
     return () => cancelAnimationFrame(raf);
   }, [ready, getPlayhead]);
 
-  const updateFootswitch = (fs: number, kind: ActionKind, track: number) => {
+  const updateFootswitch = (fs: number, kind: ActionKind) => {
     const next = { ...bindings.footswitches };
-    const action = buildAction(kind, track);
+    const action = buildAction(kind);
     if (action) next[fs] = action;
     else delete next[fs];
     onBindingsChange({ ...bindings, footswitches: next });
@@ -127,7 +168,7 @@ export function LooperPanel({
   };
 
   const setTrackGain = (id: number, value: number) => {
-    setGains((prev) => prev.map((g, i) => (i === id ? value : g)));
+    setGains((prev) => ({ ...prev, [id]: value }));
     looper.setTrackGain(id, value);
   };
 
@@ -144,47 +185,112 @@ export function LooperPanel({
     );
   }
 
+  const selectedPosition = looper.tracks.findIndex(
+    (track) => track.id === looper.selectedTrack,
+  );
+  let trackReadout = '-/-';
+  if (selectedPosition >= 0) {
+    trackReadout = `${selectedPosition + 1}/${looper.tracks.length}`;
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Master transport */}
-      <div className="flex items-center gap-3">
-        <span className="font-mono-display text-label text-text-muted uppercase tracking-widest">Master</span>
+      {/* Transport: the same four controls the footswitch bindings target */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant={recordVariant(looper.isRecording)}
+          size="sm"
+          onClick={looper.toggleRecord}
+          title="Record a new track / stop recording"
+        >
+          {recordLabel(looper.isRecording)}
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={looper.tracks.length === 0}
+          onClick={looper.togglePlayAll}
+          title="Play all tracks / stop all tracks"
+        >
+          {playAllLabel(looper.anyPlaying)}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={looper.tracks.length === 0}
+          onClick={looper.selectPrevTrack}
+          title="Select previous track"
+        >
+          ◀
+        </Button>
+        <span
+          className="font-mono-display text-caption text-text-secondary tabular-nums w-12
+            text-center"
+        >
+          {trackReadout}
+        </span>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={looper.tracks.length === 0}
+          onClick={looper.selectNextTrack}
+          title="Select next track"
+        >
+          ▶
+        </Button>
         <span className="flex-1 h-2 rounded bg-bg-hover overflow-hidden">
           <span ref={playBar} className="block h-full bg-accent-amber" style={{ width: '0%' }} />
         </span>
         <span className="font-mono-display text-caption text-text-secondary tabular-nums">
           {fmtLength(looper.masterLoopLengthSec)}
         </span>
-        <Button variant="danger" size="sm" onClick={looper.clearAll}>Clear All</Button>
+        <Button
+          variant="danger"
+          size="sm"
+          disabled={looper.tracks.length === 0}
+          onClick={looper.clearAll}
+        >
+          Clear All
+        </Button>
       </div>
 
-      {/* Track rows */}
+      {/* Track rows: one per recorded take, newest last */}
+      {looper.tracks.length === 0 && (
+        <p className="font-mono-display text-caption text-text-muted">
+          No tracks yet — hit ● REC (or a bound footswitch) to record the first
+          loop; every record/stop cycle adds a track.
+        </p>
+      )}
       <div className="flex flex-col gap-2">
         {looper.tracks.map((track) => {
-          const recordingThis = looper.isRecording && looper.recordArmedTrack === track.id;
-          const recordDisabled = looper.isRecording && !recordingThis;
+          const selected = track.id === looper.selectedTrack;
+          const position = looper.tracks.indexOf(track) + 1;
+          const recordingThis = looper.recordArmedTrack === track.id;
           return (
-            <div key={track.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border-active bg-bg-hover">
+            <div
+              key={track.id}
+              className={trackRowClass(selected)}
+              onClick={() => looper.selectTrack(track.id)}
+            >
               <Led active={track.state === 'playing' || track.state === 'recording'} />
-              <span className="font-mono-display text-label text-text-secondary w-14">TRK {track.id + 1}</span>
-              <Button
-                variant={recordingThis ? 'danger' : 'secondary'}
-                size="sm"
-                disabled={recordDisabled}
-                onClick={() => (recordingThis ? looper.stopRecord() : looper.startRecord(track.id))}
-              >
-                {recordingThis ? 'Stop' : 'Rec'}
-              </Button>
+              <span className="font-mono-display text-label text-text-secondary w-14">
+                TRK {position}
+              </span>
+              {recordingThis && (
+                <span className="font-mono-display text-caption text-accent-red">
+                  ● recording
+                </span>
+              )}
               <Button
                 variant="secondary"
                 size="sm"
                 disabled={!track.hasAudio}
                 onClick={() => looper.togglePlay(track.id)}
               >
-                {track.state === 'playing' ? 'Pause' : 'Play'}
+                {playPauseLabel(track.state)}
               </Button>
               <Button
-                variant={track.muted ? 'primary' : 'ghost'}
+                variant={muteVariant(track.muted)}
                 size="sm"
                 disabled={!track.hasAudio}
                 onClick={() => looper.setMute(track.id, !track.muted)}
@@ -196,18 +302,17 @@ export function LooperPanel({
                 min={0}
                 max={1}
                 step={0.01}
-                value={gains[track.id]}
+                value={gains[track.id] ?? 1}
                 disabled={!track.hasAudio}
                 onChange={(e) => setTrackGain(track.id, Number(e.target.value))}
                 className="flex-1 min-w-16 accent-accent-amber"
-                aria-label={`Track ${track.id + 1} level`}
+                aria-label={`Track ${position} level`}
               />
               <Button
                 variant="ghost"
                 size="sm"
-                disabled={!track.hasAudio}
                 onClick={() => looper.clear(track.id)}
-                title="Clear this track"
+                title="Delete this track"
               >
                 ✕
               </Button>
@@ -218,19 +323,37 @@ export function LooperPanel({
 
       {/* Bindings */}
       <div className="pt-2 border-t border-border-active">
-        <p className="font-mono-display text-label text-text-muted uppercase tracking-widest mb-2">
-          Hardware bindings{' '}
-          <span className="normal-case tracking-normal">
-            (arm LEARN, then stomp the switch — bound switches drive the looper
-            while this panel is open)
-          </span>
-        </p>
+        <div className="flex items-center gap-3 mb-2">
+          <p className="font-mono-display text-label text-text-muted uppercase tracking-widest">
+            Hardware bindings{' '}
+            <span className="normal-case tracking-normal">
+              (arm LEARN, then stomp the switch — bound switches drive the looper
+              while this panel is open)
+            </span>
+          </p>
+          <Button
+            variant={learnVariant(takeoverActive)}
+            size="sm"
+            disabled={!learnEnabled}
+            onClick={() => onTakeoverChange(!takeoverActive)}
+            title={
+              'Rewrite the bound switches on the pedal to their CTRLs while this ' +
+              'panel is open, so stomps stop patch-switching; restored on close'
+            }
+          >
+            {takeoverLabel(takeoverActive)}
+          </Button>
+        </div>
+        {takeoverActive && (
+          <p className="font-mono-display text-caption text-text-secondary mb-2">
+            Takeover active: FS mode set to User, bound switches point at their
+            CTRLs. Re-LEARN each switch once while active, then stomps only
+            drive the looper. Closing this panel restores your setup.
+          </p>
+        )}
         <div className="grid grid-cols-2 gap-2">
           {FS_NUMBERS.map((fs) => {
-            const action = bindings.footswitches[fs];
-            const kind = actionKind(action);
-            const track = actionTrack(action);
-            const needsTrack = kind !== 'none' && kind !== 'clearAll';
+            const kind = actionKind(bindings.footswitches[fs]);
             const learned = triggers[fs] !== undefined;
             const armed = armedFs === fs;
             const showNotice = learnNotice !== null && learnNotice.fs === fs;
@@ -242,25 +365,13 @@ export function LooperPanel({
                   </span>
                   <select
                     value={kind}
-                    onChange={(e) => updateFootswitch(fs, e.target.value as ActionKind, track)}
+                    onChange={(e) => updateFootswitch(fs, e.target.value as ActionKind)}
                     className={`flex-1 ${SELECT_CLASS}`}
+                    aria-label={`FS${fs} looper action`}
                   >
                     {(Object.keys(ACTION_LABELS) as ActionKind[]).map((actionOption) => (
                       <option key={actionOption} value={actionOption}>
                         {ACTION_LABELS[actionOption]}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={track}
-                    disabled={!needsTrack}
-                    onChange={(e) => updateFootswitch(fs, kind, Number(e.target.value))}
-                    className={`${SELECT_CLASS} disabled:opacity-40`}
-                    aria-label={`FS${fs} target track`}
-                  >
-                    {looper.tracks.map((trackOption) => (
-                      <option key={trackOption.id} value={trackOption.id}>
-                        T{trackOption.id + 1}
                       </option>
                     ))}
                   </select>
@@ -296,20 +407,18 @@ export function LooperPanel({
         <div className="flex items-center gap-2 mt-3">
           <span className="font-mono-display text-label text-text-secondary w-16">EXP →</span>
           <select
-            value={bindings.expTarget === null ? 'none' : bindings.expTarget.kind === 'masterGain' ? 'master' : `track:${bindings.expTarget.track}`}
+            value={expValue(bindings.expTarget)}
             onChange={(e) => {
               const v = e.target.value;
               if (v === 'none') updateExpTarget(null);
               else if (v === 'master') updateExpTarget({ kind: 'masterGain' });
-              else updateExpTarget({ kind: 'trackGain', track: Number(v.split(':')[1]) });
+              else updateExpTarget({ kind: 'selectedTrackGain' });
             }}
-            className="bg-bg-primary border border-border-active rounded px-2 py-1 font-mono-display text-caption text-text-secondary"
+            className={SELECT_CLASS}
           >
             <option value="none">-</option>
             <option value="master">Master level</option>
-            {looper.tracks.map((t) => (
-              <option key={t.id} value={`track:${t.id}`}>Track {t.id + 1} level</option>
-            ))}
+            <option value="selected">Selected track level</option>
           </select>
           <span className="font-mono-display text-caption text-text-muted">
             (EXP wire format pending capture)

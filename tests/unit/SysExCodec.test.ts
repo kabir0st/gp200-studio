@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { SysExCodec } from '@/core/SysExCodec';
 import { buildDefaultTail } from '@/core/controlRecords';
-import type { GP200Preset } from '@/core/types';
 
 /** Build a synthetic 1176-byte decoded preset buffer */
 function buildDecodedPreset(name: string, slot: number): Uint8Array {
@@ -238,143 +239,68 @@ describe('SysExCodec: parsePresetName', () => {
   });
 });
 
-describe('SysExCodec: buildWriteChunks', () => {
-  const samplePreset: GP200Preset = {
-    version: '1',
-    patchName: 'MyPreset',
-    checksum: 0,
-    effects: Array.from({ length: 11 }, (_, i) => ({
-      slotIndex: i,
-      enabled: i % 2 === 0,
-      effectId: 0x03000001 + i,
-      params: Array.from({ length: 15 }, (_, p) => p * 1.5),
-    })),
-    fxLoopSend: 4,
-    fxLoopReturn: 4,
-  };
+describe('SysExCodec: flash upload (buildUploadImage / buildUploadChunks)', () => {
+  // Format ground truth: dumps/patch-upload.pcapng (official editor writing
+  // a patch to slot 9). Fixture: a real committed user .prst (1224 bytes).
+  const fileBytes = new Uint8Array(
+    readFileSync(join(process.cwd(), 'prst/63-B American Idiot.prst')),
+  );
 
-  it('returns exactly 5 chunks (extended to include blocks 8, 9 complete + block 10 partial)', () => {
-    const chunks = SysExCodec.buildWriteChunks(samplePreset, 5);
-    expect(chunks).toHaveLength(5);
+  it('derives a 1184-byte image: 16-byte preamble + file[0x30 .. len-8]', () => {
+    const image = SysExCodec.buildUploadImage(fileBytes);
+    expect(image.length).toBe(1184);
+    expect(Array.from(image.subarray(0, 16))).toEqual([
+      0x00, 0x00, 0x04, 0x00, 0x01, 0x00, 0xff, 0x00,
+      0x01, 0x00, 0x04, 0x00, 0xff, 0x00, 0xff, 0x00,
+    ]);
+    expect(Array.from(image.subarray(16, 20))).toEqual(
+      Array.from(fileBytes.subarray(0x30, 0x34)),
+    );
+    expect(Array.from(image.subarray(21))).toEqual(
+      Array.from(fileBytes.subarray(0x35, fileBytes.length - 8)),
+    );
   });
 
-  it('each chunk starts with SysEx header CMD=0x12 sub=0x20', () => {
-    const chunks = SysExCodec.buildWriteChunks(samplePreset, 5);
-    const HEADER = [0xF0, 0x21, 0x25, 0x7E, 0x47, 0x50, 0x2D, 0x32, 0x12, 0x20];
+  it('blanks the in-file slot-mirror byte to 0xFF (capture: FF even for slot 9)', () => {
+    expect(fileBytes[0x34]).toBe(0xf9); // fixture is 63-B = slot 249
+    const image = SysExCodec.buildUploadImage(fileBytes);
+    expect(image[20]).toBe(0xff);
+  });
+
+  it('keeps the patch name at image offset 36 (capture-verified position)', () => {
+    const image = SysExCodec.buildUploadImage(fileBytes);
+    let name = '';
+    for (let i = 36; image[i] !== 0; i++) name += String.fromCharCode(image[i]);
+    expect(name).toBe('American Idiot');
+  });
+
+  it('frames the image as 7 chunks with 183-byte strides and 7-bit offsets', () => {
+    const image = SysExCodec.buildUploadImage(fileBytes);
+    const chunks = SysExCodec.buildUploadChunks(image, 9);
+    expect(chunks).toHaveLength(7);
+    expect(chunks.map((chunk) => chunk.length)).toEqual([380, 380, 380, 380, 380, 380, 186]);
+    const offsets = chunks.map((chunk) => chunk[12] * 128 + chunk[11]);
+    expect(offsets).toEqual([0, 183, 366, 549, 732, 915, 1098]);
     for (const chunk of chunks) {
-      HEADER.forEach((b, i) => expect(chunk[i]).toBe(b));
+      expect(Array.from(chunk.subarray(0, 10))).toEqual([
+        0xF0, 0x21, 0x25, 0x7E, 0x47, 0x50, 0x2D, 0x32, 0x12, 0x20,
+      ]);
+      expect(chunk[10]).toBe(9); // target slot
+      expect(chunk[chunk.length - 1]).toBe(0xF7);
+      const payload = Array.from(chunk.subarray(13, chunk.length - 1));
+      expect(payload.every((nibble) => nibble < 0x10)).toBe(true);
     }
   });
 
-  it('each chunk ends with F7', () => {
-    const chunks = SysExCodec.buildWriteChunks(samplePreset, 5);
-    for (const chunk of chunks) expect(chunk[chunk.length - 1]).toBe(0xF7);
-  });
-
-  it('slot number in each chunk header (byte 10)', () => {
-    const chunks = SysExCodec.buildWriteChunks(samplePreset, 7);
-    for (const chunk of chunks) expect(chunk[10]).toBe(7);
-  });
-
-  it('chunks decode to 876 bytes total', () => {
-    const chunks = SysExCodec.buildWriteChunks(samplePreset, 0);
-    // Each chunk: [10-byte header][slot:1][offLo:1][offHi:1][nibbleData...][F7:1]
-    const nibbles = chunks.flatMap(c => Array.from(c.slice(13, c.length - 1)));
-    const decoded = SysExCodec.nibbleDecode(new Uint8Array(nibbles));
-    expect(decoded.length).toBe(876);
-  });
-
-  it('first 4 chunks have 366 nibble bytes, last chunk has 288', () => {
-    const chunks = SysExCodec.buildWriteChunks(samplePreset, 0);
-    for (let i = 0; i < 4; i++) {
-      // chunk = header(10) + slot(1) + offsetLo(1) + offsetHi(1) + nibbles(366) + F7(1) = 380
-      expect(chunks[i].length).toBe(380);
+  it('round-trips: reassembled chunk nibbles decode back to the image', () => {
+    const image = SysExCodec.buildUploadImage(fileBytes);
+    const chunks = SysExCodec.buildUploadChunks(image, 0);
+    const nibbles: number[] = [];
+    for (const chunk of chunks) {
+      for (let i = 13; i < chunk.length - 1; i++) nibbles.push(chunk[i]);
     }
-    // Last chunk: 10+1+1+1+288+1 = 302
-    expect(chunks[4].length).toBe(302);
-  });
-
-  it('chunk offsets match captured protocol: 0, 311, 622, 1061, 1372', () => {
-    const chunks = SysExCodec.buildWriteChunks(samplePreset, 0);
-    const offsets = chunks.map(c => c[11] | (c[12] << 8));
-    expect(offsets).toEqual([0, 311, 622, 1061, 1372]);
-  });
-
-  it('write header contains static 0x27 markers at key positions', () => {
-    // Static markers, same for any slot (slot is in SysEx chunk header byte[10])
-    const chunks = SysExCodec.buildWriteChunks(samplePreset, 0);
-    const nibbles = chunks.flatMap(c => Array.from(c.slice(13, c.length - 1)));
     const decoded = SysExCodec.nibbleDecode(new Uint8Array(nibbles));
-    const view = new DataView(decoded.buffer);
-    expect(view.getUint16(6, true)).toBe(0x27);
-    expect(view.getUint16(12, true)).toBe(0x27);
-    expect(view.getUint16(14, true)).toBe(0x27);
-    expect(view.getUint16(20, true)).toBe(0x27);
-    expect(decoded[24]).toBe(0x32);
-    // Routing marker
-    expect(view.getUint16(112, true)).toBe(0x25);
-  });
-
-  it('preset name appears at write offset 36', () => {
-    const chunks = SysExCodec.buildWriteChunks(samplePreset, 0);
-    const nibbles = chunks.flatMap(c => Array.from(c.slice(13, c.length - 1)));
-    const decoded = SysExCodec.nibbleDecode(new Uint8Array(nibbles));
-    const name = new TextDecoder().decode(decoded.slice(36, 36 + samplePreset.patchName.length));
-    expect(name).toBe('MyPreset');
-  });
-
-  it('effect blocks 0-7 complete at write offset 128', () => {
-    const chunks = SysExCodec.buildWriteChunks(samplePreset, 0);
-    const nibbles = chunks.flatMap(c => Array.from(c.slice(13, c.length - 1)));
-    const decoded = SysExCodec.nibbleDecode(new Uint8Array(nibbles));
-    const view = new DataView(decoded.buffer);
-    // Block 0 marker: 14 00 44 00 at offset 128
-    expect(decoded[128]).toBe(0x14);
-    expect(decoded[130]).toBe(0x44);
-    // Block 0 effectId
-    expect(view.getUint32(128 + 8, true)).toBe(0x03000001);
-    // Block 7 (last full block) at offset 128 + 7*72 = 632
-    expect(decoded[632]).toBe(0x14);
-    expect(view.getUint32(632 + 8, true)).toBe(0x03000001 + 7);
-  });
-
-  it('effect block 8 complete at write offset 704 (72 bytes)', () => {
-    const chunks = SysExCodec.buildWriteChunks(samplePreset, 0);
-    const nibbles = chunks.flatMap(c => Array.from(c.slice(13, c.length - 1)));
-    const decoded = SysExCodec.nibbleDecode(new Uint8Array(nibbles));
-    const view = new DataView(decoded.buffer);
-    // Block 8 complete at offset 704
-    expect(decoded[704]).toBe(0x14);
-    expect(decoded[706]).toBe(0x44);
-    expect(view.getUint32(704 + 8, true)).toBe(0x03000001 + 8);
-    // All 15 params present
-    expect(view.getFloat32(704 + 12, true)).toBeCloseTo(0);
-    expect(view.getFloat32(704 + 12 + 56, true)).toBeCloseTo(14 * 1.5); // param 14
-  });
-
-  it('effect block 9 (RVB) complete at write offset 776 (72 bytes)', () => {
-    const chunks = SysExCodec.buildWriteChunks(samplePreset, 0);
-    const nibbles = chunks.flatMap(c => Array.from(c.slice(13, c.length - 1)));
-    const decoded = SysExCodec.nibbleDecode(new Uint8Array(nibbles));
-    const view = new DataView(decoded.buffer);
-    // Block 9 at offset 776
-    expect(decoded[776]).toBe(0x14);
-    expect(decoded[778]).toBe(0x44);
-    expect(view.getUint32(776 + 8, true)).toBe(0x03000001 + 9);
-    expect(view.getFloat32(776 + 12, true)).toBeCloseTo(0);
-  });
-
-  it('effect block 10 (VOL) partial at write offset 848 (28 bytes: header+4 params)', () => {
-    const chunks = SysExCodec.buildWriteChunks(samplePreset, 0);
-    const nibbles = chunks.flatMap(c => Array.from(c.slice(13, c.length - 1)));
-    const decoded = SysExCodec.nibbleDecode(new Uint8Array(nibbles));
-    const view = new DataView(decoded.buffer);
-    // Block 10 partial at offset 848
-    expect(decoded[848]).toBe(0x14);
-    expect(decoded[850]).toBe(0x44);
-    expect(view.getUint32(848 + 8, true)).toBe(0x03000001 + 10);
-    expect(view.getFloat32(848 + 12, true)).toBeCloseTo(0);       // param 0
-    expect(view.getFloat32(848 + 12 + 4, true)).toBeCloseTo(1.5); // param 1
+    expect(Array.from(decoded)).toEqual(Array.from(image));
   });
 });
 
@@ -925,6 +851,57 @@ describe('SysExCodec: buildEffectChange', () => {
   });
 });
 
+describe('SysExCodec: global settings writes (0x12/0x08 family)', () => {
+  // Expected frames are VERBATIM from the dumps/ captures (protocol doc §0.2).
+  function hex(bytes: Uint8Array): string {
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join(' ');
+  }
+
+  it('buildFsMode reproduces the fs-template-change capture frames', () => {
+    expect(hex(SysExCodec.buildFsMode(2))).toBe(
+      'f0 21 25 7e 47 50 2d 32 12 08 00 00 00 00 08 01 00 00 04 00 00 01 08 00 00 00 02 00 00 f7',
+    );
+    expect(SysExCodec.buildFsMode(0)[26]).toBe(0);
+    expect(SysExCodec.buildFsMode(1)[26]).toBe(1);
+  });
+
+  it('buildAutoCabMatch reproduces the auto-cab-match capture frames', () => {
+    expect(hex(SysExCodec.buildAutoCabMatch(true))).toBe(
+      'f0 21 25 7e 47 50 2d 32 12 08 00 00 00 00 08 01 00 00 04 00 00 02 04 00 00 00 01 00 00 f7',
+    );
+    expect(SysExCodec.buildAutoCabMatch(false)[26]).toBe(0);
+  });
+
+  it('buildFsTarget reproduces the FS1 TAP sweep frame (action Bank = 0x11)', () => {
+    expect(hex(SysExCodec.buildFsTarget(1, 'tap', 0x11))).toBe(
+      'f0 21 25 7e 47 50 2d 32 12 08 00 00 00 00 0f 01 00 00 04 00 00 00 01 00 00 00 00 01 01 f7',
+    );
+  });
+
+  it('buildFsTarget encodes the record index as (fs-1)*2 + hold', () => {
+    // FS-Tap-None-Set-1-8 capture: FS8 tap → record 0x0e, value None
+    expect(hex(SysExCodec.buildFsTarget(8, 'tap', 0x00))).toBe(
+      'f0 21 25 7e 47 50 2d 32 12 08 00 00 00 00 0f 01 00 00 04 00 00 00 01 00 00 00 0e 00 00 f7',
+    );
+    // fs-1-hold-all-changes capture: FS1 hold → record 1, action Looper 0x05
+    expect(hex(SysExCodec.buildFsTarget(1, 'hold', 0x05))).toBe(
+      'f0 21 25 7e 47 50 2d 32 12 08 00 00 00 00 0f 01 00 00 04 00 00 00 01 00 00 00 01 00 05 f7',
+    );
+  });
+
+  it('buildFsCombo reproduces the fs-combination-set-none capture frames', () => {
+    expect(hex(SysExCodec.buildFsCombo(3, 0x00))).toBe(
+      'f0 21 25 7e 47 50 2d 32 12 08 00 00 00 00 0f 01 00 00 04 00 00 00 01 00 00 01 03 00 00 f7',
+    );
+  });
+
+  it('nibbles action ids above 0x0f across bytes [27],[28]', () => {
+    const msg = SysExCodec.buildFsTarget(3, 'tap', 0x1a); // CTRL 8
+    expect(msg[27]).toBe(0x01);
+    expect(msg[28]).toBe(0x0a);
+  });
+});
+
 describe('SysExCodec: buildPatchSetting', () => {
   it('produces 46-byte raw SysEx for volume', () => {
     const msg = SysExCodec.buildPatchSetting(0x00, 50); // VOL=50
@@ -1026,25 +1003,6 @@ describe('SysExCodec: author in read/write chunks', () => {
     expect(preset.effects.every((e) => e.enabled)).toBe(true);
   });
 
-  it('buildWriteChunks includes author in payload at offset 52', () => {
-    const preset = {
-      version: '1', patchName: 'Test', author: 'Author1', checksum: 0,
-      effects: Array.from({ length: 11 }, (_, i) => ({ slotIndex: i, effectId: 0, enabled: false, params: Array(15).fill(0) })),
-      fxLoopSend: 4,
-      fxLoopReturn: 4,
-    };
-    const chunks = SysExCodec.buildWriteChunks(preset, 0);
-    // Reassemble nibble data and decode
-    const nibbles = chunks.flatMap(c => Array.from(c.slice(13, c.length - 1)));
-    const decoded = SysExCodec.nibbleDecode(new Uint8Array(nibbles));
-    // Write payload: author at [52:68]
-    let author = '';
-    for (let i = 0; i < 16; i++) {
-      if (decoded[52 + i] === 0) break;
-      author += String.fromCharCode(decoded[52 + i]);
-    }
-    expect(author).toBe('Author1');
-  });
 });
 
 describe('SysExCodec: fxLoop parse', () => {
@@ -1112,30 +1070,6 @@ describe('SysExCodec: buildFxLoopMove', () => {
   });
 });
 
-describe('SysExCodec: buildWriteChunks fxLoop', () => {
-  it('writes preset.fxLoopSend/Return to write-payload [114/115]', () => {
-    const preset: GP200Preset = {
-      version: '1',
-      patchName: 'WriteTest',
-      effects: Array.from({ length: 11 }, (_, i) => ({
-        slotIndex: i, effectId: 0x07000055, enabled: true,
-        params: Array(15).fill(0),
-      })),
-      checksum: 0,
-      fxLoopSend: 6,
-      fxLoopReturn: 7,
-    };
-    const chunks = SysExCodec.buildWriteChunks(preset, 5);
-    // Reassemble nibble bytes from all chunks (each chunk: F0..[10..12 header]..[nibble]..F7)
-    const allNibbles: number[] = [];
-    for (const ch of chunks) {
-      for (let i = 13; i < ch.length - 1; i++) allNibbles.push(ch[i]);
-    }
-    const decoded = SysExCodec.nibbleDecode(new Uint8Array(allNibbles));
-    expect(decoded[114]).toBe(6);
-    expect(decoded[115]).toBe(7);
-  });
-});
 
 /**
  * Param Change display-value field (decoded[14:16]): #80.

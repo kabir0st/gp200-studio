@@ -3,7 +3,6 @@ import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 import { PatchPicker } from './PatchPicker';
 import { SysExCodec } from '@/core/SysExCodec';
-import { PRST_FILE_IO_DISABLED } from '@/components/prstFileIo';
 
 export interface BulkExportProgress {
   done: number;
@@ -286,19 +285,19 @@ export function PatchManagerSheet({
           </Button>
           <Button
             size="sm"
-            disabled={actionsDisabled || PRST_FILE_IO_DISABLED}
+            disabled={actionsDisabled}
             onClick={() => {
               if (selected !== null) void runBusy(() => onExportSlot(selected));
             }}
-            title="Temporarily disabled"
+            title="Download this slot as a .prst file"
           >
             EXPORT
           </Button>
           <Button
             size="sm"
-            disabled={actionsDisabled || PRST_FILE_IO_DISABLED}
+            disabled={actionsDisabled}
             onClick={() => fileInputRef.current?.click()}
-            title="Temporarily disabled"
+            title="Import a .prst file into this slot"
           >
             IMPORT→{selectedLabel || 'SLOT'}
           </Button>
@@ -317,22 +316,22 @@ export function PatchManagerSheet({
           <Button
             size="sm"
             variant="ghost"
-            disabled={actionsDisabled || PRST_FILE_IO_DISABLED}
+            disabled={actionsDisabled}
             onClick={() => {
               if (selected !== null) void onExportSlots(bankSlotsOf(selected));
             }}
-            title="Temporarily disabled"
+            title="Download this bank (4 slots) as .prst files in a ZIP"
           >
             EXPORT BANK
           </Button>
           <Button
             size="sm"
             variant="ghost"
-            disabled={!connected || busy || bulkRunning || PRST_FILE_IO_DISABLED}
+            disabled={!connected || busy || bulkRunning}
             onClick={() => {
               void onExportSlots(Array.from({ length: 256 }, (_, slot) => slot));
             }}
-            title="Temporarily disabled"
+            title="Download all 256 slots as .prst files in a ZIP"
           >
             EXPORT ALL
           </Button>

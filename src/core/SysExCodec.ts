@@ -233,153 +233,58 @@ export const SysExCodec = {
   },
 
   /**
-   * @deprecated Chunk offsets overlap (0/311/622/1061/1372 with chunk size
-   * 366) and block 10 (VOL) is only partially populated; hardware testing
-   * confirmed this pathway is unreliable. Prefer the writePresetToSlot flow
-   * (buildToggle + buildParam + buildSaveCommit) which the device handles
-   * correctly. Kept only for USB-capture replay during protocol research.
+   * Assemble the flash-upload image for a preset from its encoded `.prst`
+   * file bytes (PRSTEncoder output or a raw imported file).
+   *
+   * Ground truth: dumps/patch-upload.pcapng (official editor pushing a patch
+   * to slot 9/"3B", 2026-07-18). The image is NOT the whole file:
+   *   [0:16]  two fixed TLV records `00 00 04 00 01 00 FF 00` +
+   *           `01 00 04 00 FF 00 FF 00` (a write preamble the file lacks)
+   *   [16:]   the file content from 0x30 (the `02 00 58 00` metadata TLV)
+   *           up to but excluding the trailing 8 bytes (the `C0 04 ...`
+   *           footer + BE16 checksum) — verified byte-for-byte against the
+   *           capture, whose image tail equals the file's last CTRL record.
+   *   [20]    the in-file slot-mirror byte is blanked to 0xFF: the capture
+   *           shows the editor sends FF here even when writing to slot 9;
+   *           the target slot lives in each chunk's SysEx header instead.
+   * A 1224-byte user file therefore yields a 1184-byte image.
    */
-  buildWriteChunks(preset: GP200Preset, slot: number): Uint8Array[] {
-    const SYSEX_HEADER = [0xF0, 0x21, 0x25, 0x7E, 0x47, 0x50, 0x2D, 0x32, 0x12, 0x20];
+  buildUploadImage(fileBytes: Uint8Array): Uint8Array {
+    const FOOTER_LEN = 8; // C0 04 00 00 00 00 + 2-byte checksum
+    const CONTENT_START = 0x30;
+    const content = fileBytes.subarray(CONTENT_START, fileBytes.length - FOOTER_LEN);
+    const image = new Uint8Array(16 + content.length);
+    image.set([
+      0x00, 0x00, 0x04, 0x00, 0x01, 0x00, 0xFF, 0x00,
+      0x01, 0x00, 0x04, 0x00, 0xFF, 0x00, 0xFF, 0x00,
+    ]);
+    image.set(content, 16);
+    image[20] = 0xFF; // blank the slot-mirror byte (file 0x34), per capture
+    return image;
+  },
 
-    // Build 876-byte decoded write payload, extended from 732 to include
-    // all 11 effect blocks (previously blocks 9=RVB and 10=VOL were omitted,
-    // causing silent data loss when those effects were modified).
-    // 876 bytes nibble-encoded = 1752 nibble bytes, split into 5 chunks (4×366 + 1×288).
-    // Layout: [0:36] write header, [36:68] name+author,
-    //         [68:128] middle section with routing, [128:704] 8×72B effect blocks 0-7,
-    //         [704:776] effect block 8 complete (72B),
-    //         [776:848] effect block 9 (RVB, 72B),
-    //         [848:876] effect block 10 (VOL) partial (28B of 72B)
-    // NOTE: Block 10 (VOL) is only partially sent (first 28 of 72 bytes).
-    // Full block 10 support requires verifying 5-chunk writes via USB capture.
-    const PAYLOAD_SIZE = 876;
-    const payload = new Uint8Array(PAYLOAD_SIZE).fill(0);
-    const view = new DataView(payload.buffer);
-
-    // [0:36] Write header: exact bytes from captured write (Valeton GP-200 Editor)
-    // The 0x27 values are static write markers, NOT slot-dependent addresses.
-    // Slot is identified by byte[10] in each SysEx chunk header.
-    payload.set([
-      0x00, 0x00, 0x04, 0x00, 0x01, 0x00, 0x27, 0x00,  // [0:8]
-      0x01, 0x00, 0x04, 0x00, 0x27, 0x00, 0x27, 0x00,  // [8:16]
-      0x02, 0x00, 0x58, 0x00, 0x27, 0x00, 0x78, 0x00,  // [16:24]
-      0x32, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // [24:32]
-      0x00, 0x00, 0x00, 0x00,                            // [32:36]
-    ], 0);
-
-    // [36:52] Preset name (16 bytes, null-terminated)
-    for (let i = 0; i < 16; i++) {
-      payload[36 + i] = i < preset.patchName.length ? preset.patchName.charCodeAt(i) : 0;
-    }
-
-    // [52:68] Author (16 bytes, null-terminated)
-    if (preset.author) {
-      for (let i = 0; i < 16; i++) {
-        payload[52 + i] = i < preset.author.length ? preset.author.charCodeAt(i) : 0;
-      }
-    }
-
-    // [68:108] Middle section: zeros (URL/padding area)
-
-    // [108:128] Routing section
-    payload.set([0x08, 0x00, 0x10, 0x00], 108);
-    payload[112] = 0x25; payload[113] = 0x00; // static write marker (captured: 0x25)
-    payload[114] = preset.fxLoopSend;
-    payload[115] = preset.fxLoopReturn;
-    // Routing order from preset effects' slotIndex ordering
-    for (let i = 0; i < 11; i++) {
-      payload[116 + i] = preset.effects[i]?.slotIndex ?? i;
-    }
-    // [127] = 0x00 terminator (already zero)
-
-    // Clamp NaN/Infinity to 0; mirrors PRSTDecoder/PRSTEncoder behavior.
-    const safeParam = (v: number | undefined) => (v !== undefined && Number.isFinite(v)) ? v : 0;
-
-    // [128:704] Effect blocks 0-7 complete (8 × 72 = 576 bytes)
-    for (let b = 0; b < 8; b++) {
-      const base = 128 + b * 72;
-      const eff = preset.effects[b];
-      if (!eff) continue;
-      payload[base] = 0x14; payload[base + 1] = 0x00;
-      payload[base + 2] = 0x44; payload[base + 3] = 0x00;
-      payload[base + 4] = eff.slotIndex;
-      payload[base + 5] = eff.enabled ? 1 : 0;
-      payload[base + 6] = 0x00; payload[base + 7] = 0x0F;
-      view.setUint32(base + 8, eff.effectId, true);
-      for (let p = 0; p < 15; p++) {
-        view.setFloat32(base + 12 + p * 4, safeParam(eff.params[p]), true);
-      }
-    }
-
-    // [704:776] Effect block 8 complete (72 bytes)
-    if (preset.effects[8]) {
-      const base = 704;
-      const eff = preset.effects[8];
-      payload[base] = 0x14; payload[base + 1] = 0x00;
-      payload[base + 2] = 0x44; payload[base + 3] = 0x00;
-      payload[base + 4] = eff.slotIndex;
-      payload[base + 5] = eff.enabled ? 1 : 0;
-      payload[base + 6] = 0x00; payload[base + 7] = 0x0F;
-      view.setUint32(base + 8, eff.effectId, true);
-      for (let p = 0; p < 15; p++) {
-        view.setFloat32(base + 12 + p * 4, safeParam(eff.params[p]), true);
-      }
-    }
-
-    // [776:848] Effect block 9 (RVB) complete (72 bytes)
-    if (preset.effects[9]) {
-      const base = 776;
-      const eff = preset.effects[9];
-      payload[base] = 0x14; payload[base + 1] = 0x00;
-      payload[base + 2] = 0x44; payload[base + 3] = 0x00;
-      payload[base + 4] = eff.slotIndex;
-      payload[base + 5] = eff.enabled ? 1 : 0;
-      payload[base + 6] = 0x00; payload[base + 7] = 0x0F;
-      view.setUint32(base + 8, eff.effectId, true);
-      for (let p = 0; p < 15; p++) {
-        view.setFloat32(base + 12 + p * 4, safeParam(eff.params[p]), true);
-      }
-    }
-
-    // [848:876] Effect block 10 (VOL) partial (28 of 72 bytes: marker+slot+active+const+effID+4 params)
-    // TODO: Capture 5-chunk USB write to verify full block 10 support.
-    if (preset.effects[10]) {
-      const base = 848;
-      const eff = preset.effects[10];
-      payload[base] = 0x14; payload[base + 1] = 0x00;
-      payload[base + 2] = 0x44; payload[base + 3] = 0x00;
-      payload[base + 4] = eff.slotIndex;
-      payload[base + 5] = eff.enabled ? 1 : 0;
-      payload[base + 6] = 0x00; payload[base + 7] = 0x0F;
-      view.setUint32(base + 8, eff.effectId, true);
-      for (let p = 0; p < 4; p++) {
-        view.setFloat32(base + 12 + p * 4, safeParam(eff.params[p]), true);
-      }
-    }
-
-    // Nibble-encode → 1752 nibble bytes, split into 5 chunks (4×366 + 1×288)
-    // Offsets from USB capture 7-chunk write format: 0, 311, 622, 1061, 1372, 1811, 2122
-    // Pattern: +311, +311, +439, +311, +439, +311 (alternating 311/439)
-    const nibble = this.nibbleEncode(payload);
-    const CHUNK_SIZE = 366;
-    const numChunks = Math.ceil(nibble.length / CHUNK_SIZE);
-    const CHUNK_OFFSETS = [0, 311, 622, 1061, 1372];
-
+  /**
+   * Frame an upload image as 0x12/0x20 flash-write chunks for `slot`.
+   * Per the same capture: 183 raw bytes per chunk (366 nibbles), target slot
+   * at byte[10], and the RAW-image offset 7-bit-split at [11] (low) / [12]
+   * (high) — offset = b12*128 + b11. A 1184-byte image yields 7 chunks
+   * (6×380B + 1×186B frames). The device commits to flash directly; no
+   * save-commit follows (hardware-verified: survives power-cycle).
+   */
+  buildUploadChunks(image: Uint8Array, slot: number): Uint8Array[] {
+    const CHUNK_RAW = 183;
     const chunks: Uint8Array[] = [];
-    for (let i = 0; i < numChunks; i++) {
-      const nibbleData = nibble.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-      const offLo = CHUNK_OFFSETS[i] & 0xFF;
-      const offHi = (CHUNK_OFFSETS[i] >> 8) & 0xFF;
-
-      const chunkBytes: number[] = [];
-      chunkBytes.push(...SYSEX_HEADER);
-      chunkBytes.push(slot & 0xFF);
-      chunkBytes.push(offLo);
-      chunkBytes.push(offHi);
-      chunkBytes.push(...Array.from(nibbleData));
-      chunkBytes.push(0xF7);
-      chunks.push(new Uint8Array(chunkBytes));
+    for (let off = 0; off < image.length; off += CHUNK_RAW) {
+      const raw = image.subarray(off, Math.min(off + CHUNK_RAW, image.length));
+      const nibble = this.nibbleEncode(raw);
+      const msg = new Uint8Array(13 + nibble.length + 1);
+      msg.set([0xF0, 0x21, 0x25, 0x7E, 0x47, 0x50, 0x2D, 0x32, 0x12, 0x20]);
+      msg[10] = slot & 0x7F;
+      msg[11] = off & 0x7F;
+      msg[12] = (off >> 7) & 0x7F;
+      msg.set(nibble, 13);
+      msg[msg.length - 1] = 0xF7;
+      chunks.push(msg);
     }
     return chunks;
   },
@@ -847,5 +752,77 @@ export const SysExCodec = {
       0x00, 0x00,                                        // [27-28] padding
       0xF7,                                              // [29]    end
     ]);
+  },
+
+  /**
+   * Generic 30-byte global-settings write (CMD=0x12, sub=0x08). Decoded from
+   * the dumps/ capture set (docs/protocol-capture.md §0.2): one frame per
+   * changed setting, addressed by bytes [13]/[14]/[15] (family) and
+   * [21]/[22] (setting id), value in [25..28] (per-setting layout). The
+   * device echoes the frame back verbatim; senders must raise the FX
+   * suppression window so the echo is ignored (see useMidiDevice's
+   * settings-echo guard for the [21]/[22]!=0 discriminator).
+   */
+  buildSettingsWrite(fields: {
+    b13?: number; b14: number; b15?: number;
+    b21?: number; b22?: number;
+    b25?: number; b26?: number; b27?: number; b28?: number;
+  }): Uint8Array {
+    return new Uint8Array([
+      0xF0, 0x21, 0x25, 0x7E, 0x47, 0x50, 0x2D, 0x32,  // [0-7]   header
+      0x12, 0x08,                                        // [8-9]   CMD, sub
+      0x00, 0x00, 0x00,                                  // [10-12] padding
+      fields.b13 ?? 0x00,                                // [13]    family hi
+      fields.b14,                                        // [14]    family
+      fields.b15 ?? 0x01,                                // [15]    constant
+      0x00, 0x00,                                        // [16-17] padding
+      0x04, 0x00, 0x00,                                  // [18-20] constant
+      fields.b21 ?? 0x00,                                // [21]    setting id hi
+      fields.b22 ?? 0x00,                                // [22]    setting id lo
+      0x00, 0x00,                                        // [23-24] padding
+      fields.b25 ?? 0x00,                                // [25]    value field
+      fields.b26 ?? 0x00,                                // [26]    value field
+      fields.b27 ?? 0x00,                                // [27]    value field
+      fields.b28 ?? 0x00,                                // [28]    value field
+      0xF7,                                              // [29]    end
+    ]);
+  },
+
+  /** FS Mode: 0=Patch, 1=Stomp, 2=User (capture: fs-template-change). */
+  buildFsMode(mode: number): Uint8Array {
+    return this.buildSettingsWrite({ b14: 0x08, b21: 0x01, b22: 0x08, b26: mode & 0x03 });
+  },
+
+  /** Auto Cab Match on/off (capture: auto-cab-match). */
+  buildAutoCabMatch(on: boolean): Uint8Array {
+    let value = 0;
+    if (on) value = 1;
+    return this.buildSettingsWrite({ b14: 0x08, b21: 0x02, b22: 0x04, b26: value });
+  },
+
+  /**
+   * FS TAP/HOLD target: record index at [26] = (fs-1)*2 + (0 TAP / 1 HOLD),
+   * action id nibbled across [27] (high) / [28] (low). Action ids live in
+   * src/core/footswitchSettings.ts (captures: fs-1-tap/hold-all-changes,
+   * FS-Tap-None-Set-1-8).
+   */
+  buildFsTarget(fs: number, kind: 'tap' | 'hold', actionId: number): Uint8Array {
+    let holdBit = 0;
+    if (kind === 'hold') holdBit = 1;
+    const record = (fs - 1) * 2 + holdBit;
+    return this.buildSettingsWrite({
+      b14: 0x0F, b22: 0x01,
+      b25: 0x00, b26: record,
+      b27: (actionId >> 4) & 0x0F, b28: actionId & 0x0F,
+    });
+  },
+
+  /** FS combo target: combo 0..3 = FS1+5..FS4+8 (capture: fs-combination-set-none). */
+  buildFsCombo(comboIndex: number, actionId: number): Uint8Array {
+    return this.buildSettingsWrite({
+      b14: 0x0F, b22: 0x01,
+      b25: 0x01, b26: comboIndex & 0x03,
+      b27: (actionId >> 4) & 0x0F, b28: actionId & 0x0F,
+    });
   },
 };

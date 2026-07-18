@@ -11,6 +11,13 @@ import {
   type LooperBindings,
 } from '@/core/looperBindings';
 import { loadLooperStore, saveLooperStore } from '@/core/looperTriggers';
+import {
+  ctrlActionForFs,
+  defaultDeviceSettings,
+  loadDeviceSettings,
+  saveDeviceSettings,
+  type DeviceSettings,
+} from '@/core/deviceSettings';
 import { useLooperTriggers } from '@/hooks/useLooperTriggers';
 import { PRSTDecoder } from '@/core/PRSTDecoder';
 import { PRSTEncoder } from '@/core/PRSTEncoder';
@@ -87,6 +94,89 @@ function App() {
   useEffect(() => {
     saveLooperStore(looperBindings, looperTriggers.triggers);
   }, [looperBindings, looperTriggers.triggers]);
+
+  // Device-global settings model (FS mode/targets/combos, Auto Cab Match).
+  // The protocol is write-only, so this is "what the app last set", persisted
+  // locally and pushed live per edit while connected.
+  const [deviceSettings, setDeviceSettings] = useState<DeviceSettings>(() => {
+    return loadDeviceSettings() ?? defaultDeviceSettings;
+  });
+  const deviceSettingsRef = useRef(deviceSettings);
+  deviceSettingsRef.current = deviceSettings;
+  useEffect(() => {
+    saveDeviceSettings(deviceSettings);
+  }, [deviceSettings]);
+
+  // Looper takeover: while active, the bound footswitches' TAP targets are
+  // rewritten to their same-numbered CTRLs (and FS mode to User) so stomps
+  // stop firing their normal function; closing the drawer restores the
+  // model's values. The applied switch list is remembered for exact restore.
+  const [fsTakeover, setFsTakeover] = useState(false);
+  const takeoverFsRef = useRef<number[]>([]);
+
+  function applyFsTakeover() {
+    const bound = [1, 2, 3, 4, 5, 6, 7, 8].filter((fs) => {
+      return resolveFootswitch(looperBindingsRef.current, fs) !== null;
+    });
+    takeoverFsRef.current = bound;
+    midiDevice.sendFsMode(2); // User mode: TAP/HOLD targets are in effect
+    for (const fs of bound) {
+      midiDevice.sendFsTarget(fs, 'tap', ctrlActionForFs(fs));
+    }
+    console.log(`[GP-200] looper takeover ON: FS ${bound.join(',')} → CTRL`);
+  }
+
+  function restoreFsTakeover() {
+    const settings = deviceSettingsRef.current;
+    midiDevice.sendFsMode(settings.fsMode);
+    for (const fs of takeoverFsRef.current) {
+      midiDevice.sendFsTarget(fs, 'tap', settings.taps[fs - 1]);
+    }
+    console.log('[GP-200] looper takeover OFF: footswitch targets restored');
+    takeoverFsRef.current = [];
+  }
+
+  function handleFsTakeoverChange(active: boolean) {
+    if (midiDevice.status !== 'connected') return;
+    setFsTakeover(active);
+    if (active) applyFsTakeover();
+    else restoreFsTakeover();
+  }
+
+  // Losing the connection ends the takeover state (the pedal keeps whatever
+  // targets were last written; the SETUP panel can re-send the real config).
+  useEffect(() => {
+    if (midiDevice.status !== 'connected') setFsTakeover(false);
+  }, [midiDevice.status]);
+
+  function handleDeviceModeChange(mode: number) {
+    setDeviceSettings((prev) => ({ ...prev, fsMode: mode }));
+    if (midiDevice.status === 'connected') midiDevice.sendFsMode(mode);
+  }
+
+  function handleDeviceTargetChange(fs: number, kind: 'tap' | 'hold', actionId: number) {
+    setDeviceSettings((prev) => {
+      const next = { ...prev, taps: [...prev.taps], holds: [...prev.holds] };
+      if (kind === 'tap') next.taps[fs - 1] = actionId;
+      else next.holds[fs - 1] = actionId;
+      return next;
+    });
+    if (midiDevice.status === 'connected') midiDevice.sendFsTarget(fs, kind, actionId);
+  }
+
+  function handleDeviceComboChange(comboIndex: number, actionId: number) {
+    setDeviceSettings((prev) => {
+      const combos = [...prev.combos];
+      combos[comboIndex] = actionId;
+      return { ...prev, combos };
+    });
+    if (midiDevice.status === 'connected') midiDevice.sendFsCombo(comboIndex, actionId);
+  }
+
+  function handleDeviceAutoCabChange(on: boolean) {
+    setDeviceSettings((prev) => ({ ...prev, autoCabMatch: on }));
+    if (midiDevice.status === 'connected') midiDevice.sendAutoCabMatch(on);
+  }
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -266,8 +356,12 @@ function App() {
       const target = looperBindingsRef.current.expTarget;
       if (!target) return;
       const gain = applyExp(value);
-      if (target.kind === 'trackGain') looperRef.current.setTrackGain(target.track, gain);
-      else looperRef.current.setMasterGain(gain);
+      if (target.kind === 'selectedTrackGain') {
+        const selected = looperRef.current.selectedTrack;
+        if (selected !== null) looperRef.current.setTrackGain(selected, gain);
+        return;
+      }
+      looperRef.current.setMasterGain(gain);
     });
     return () => midiDevice.setOnExpPosition(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -390,7 +484,10 @@ function App() {
   async function handleImportToSlot(slot: number, bytes: Uint8Array) {
     try {
       const decoded = new PRSTDecoder(bytes).decode();
-      await midiDevice.writePresetToSlot(decoded, slot);
+      // Flash-upload path (chunked 0x12/0x20, mirrors the official editor):
+      // full fidelity including the CTRL/EXP controls tail, and much faster
+      // than the per-parameter writePresetToSlot fallback.
+      await midiDevice.pushPreset(decoded, slot);
       setLoadError(null);
     } catch (err) {
       let detail = String(err);
@@ -430,7 +527,7 @@ function App() {
   async function handlePushConfirm(slot: number) {
     if (!preset) return;
     try {
-      await midiDevice.writePresetToSlot(preset, slot);
+      await midiDevice.pushPreset(preset, slot);
       setLoadError(null);
     } catch {
       setLoadError('Failed to save to device');
@@ -627,13 +724,29 @@ function App() {
           onLooperBindingsChange={setLooperBindings}
           onLooperDrawerOpenChange={(open) => {
             looperPanelOpenRef.current = open;
-            if (!open) looperTriggers.cancelLearn();
+            if (!open) {
+              looperTriggers.cancelLearn();
+              if (fsTakeover && midiDevice.status === 'connected') {
+                restoreFsTakeover();
+              }
+              setFsTakeover(false);
+            }
           }}
           looperTriggers={looperTriggers.triggers}
           looperArmedFs={looperTriggers.armedFs}
           onLooperArmLearn={looperTriggers.armLearn}
           onLooperClearTrigger={looperTriggers.clearTrigger}
           looperLearnNotice={looperTriggers.learnNotice}
+          looperTakeover={fsTakeover}
+          onLooperTakeoverChange={handleFsTakeoverChange}
+          deviceSettings={deviceSettings}
+          onDeviceModeChange={handleDeviceModeChange}
+          onDeviceTargetChange={handleDeviceTargetChange}
+          onDeviceComboChange={handleDeviceComboChange}
+          onDeviceAutoCabChange={handleDeviceAutoCabChange}
+          sendCC={midiDevice.sendCC}
+          ccChannel={midiDevice.ccChannel}
+          onCcChannelChange={midiDevice.setCcChannel}
           onEnableAudio={() => void audioEngine.enable()}
           audioStarting={audioEngine.starting}
           onConnectRequest={() => void midiDevice.connect()}

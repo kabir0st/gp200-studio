@@ -8,6 +8,7 @@ import { PedalBoard } from '@/components/board/PedalBoard';
 import { isWidePedal, isWideSlot, splitRows } from '@/components/board/boardLayout';
 import { AudioEngineProvider } from '@/components/AudioEngineProvider';
 import { defaultLooperBindings } from '@/core/looperBindings';
+import { defaultDeviceSettings } from '@/core/deviceSettings';
 import type { LooperApi } from '@/hooks/useLooper';
 
 // Minimal looper stub: the smoke tests never open the Loop Station drawer, so
@@ -15,13 +16,18 @@ import type { LooperApi } from '@/hooks/useLooper';
 // at mount (no getUserMedia until enable()), so wrapping is jsdom-safe.
 const fakeLooper: LooperApi = {
   ready: false,
-  tracks: [0, 1, 2, 3].map((id) => ({ id, state: 'empty' as const, muted: false, hasAudio: false, lengthLoops: 0 })),
+  tracks: [],
   isRecording: false,
   recordArmedTrack: null,
   masterLoopLengthSec: null,
+  selectedTrack: null,
+  anyPlaying: false,
   getPlayhead: () => 0,
-  startRecord: vi.fn(),
-  stopRecord: vi.fn(),
+  toggleRecord: vi.fn(),
+  togglePlayAll: vi.fn(),
+  selectNextTrack: vi.fn(),
+  selectPrevTrack: vi.fn(),
+  selectTrack: vi.fn(),
   togglePlay: vi.fn(),
   setMute: vi.fn(),
   clear: vi.fn(),
@@ -86,6 +92,16 @@ function renderBoard(overrides: Partial<Parameters<typeof PedalBoard>[0]> = {}) 
     onLooperArmLearn: vi.fn(),
     onLooperClearTrigger: vi.fn(),
     looperLearnNotice: null,
+    looperTakeover: false,
+    onLooperTakeoverChange: vi.fn(),
+    sendCC: vi.fn(),
+    ccChannel: 0,
+    onCcChannelChange: vi.fn(),
+    deviceSettings: defaultDeviceSettings,
+    onDeviceModeChange: vi.fn(),
+    onDeviceTargetChange: vi.fn(),
+    onDeviceComboChange: vi.fn(),
+    onDeviceAutoCabChange: vi.fn(),
     onEnableAudio: vi.fn(),
     audioStarting: false,
     onConnectRequest: vi.fn(),

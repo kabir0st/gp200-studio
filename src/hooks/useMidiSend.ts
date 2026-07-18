@@ -1,5 +1,6 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { SysExCodec } from '@/core/SysExCodec';
+import { buildCC, loadCcChannel, saveCcChannel, type CCCommand } from '@/core/ccControl';
 
 // Minimal output shape: the same interface useMidiDevice uses internally.
 // Kept local to avoid a cross-import just for a 1-field type.
@@ -59,6 +60,16 @@ export interface UseMidiSendReturn {
   // Expression pedal
   sendExpParamSelect: (page: number, item: number, blockIndex: number, paramIdx: number) => void;
   sendExpMinMax: (page: number, item: number, min: number, max: number) => void;
+  // Device-global settings (0x12/0x08 settings-write family, docs §0.2)
+  sendFsMode: (mode: number) => void;
+  sendFsTarget: (fs: number, kind: 'tap' | 'hold', actionId: number) => void;
+  sendFsCombo: (comboIndex: number, actionId: number) => void;
+  sendAutoCabMatch: (on: boolean) => void;
+  // Plain MIDI CC (built-in looper / drum machine / tuner; src/core/ccControl.ts)
+  sendCC: (command: CCCommand | CCCommand[]) => void;
+  /** CC channel index 0..15; must match the GP-200's global MIDI channel. */
+  ccChannel: number;
+  setCcChannel: (channel: number) => void;
   // Bulk
   sendRawChunks: (
     chunks: Uint8Array[],
@@ -257,6 +268,38 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
     [outputRef],
   );
 
+  // Settings writes echo back verbatim with shapes that collide with the
+  // FX-state / preset-change branches, so every sender raises the FX
+  // suppression window (the dispatcher also has a structural [21]/[22]
+  // guard as the second line of defense).
+  const sendFsMode = useCallback((mode: number) => {
+    if (!outputRef.current) return;
+    suppressFxBriefly();
+    console.log(`[GP-200] FS mode: ${mode}`);
+    outputRef.current.send(SysExCodec.buildFsMode(mode));
+  }, [outputRef]);
+
+  const sendFsTarget = useCallback((fs: number, kind: 'tap' | 'hold', actionId: number) => {
+    if (!outputRef.current) return;
+    suppressFxBriefly();
+    console.log(`[GP-200] FS${fs} ${kind} target: 0x${actionId.toString(16)}`);
+    outputRef.current.send(SysExCodec.buildFsTarget(fs, kind, actionId));
+  }, [outputRef]);
+
+  const sendFsCombo = useCallback((comboIndex: number, actionId: number) => {
+    if (!outputRef.current) return;
+    suppressFxBriefly();
+    console.log(`[GP-200] FS combo ${comboIndex}: 0x${actionId.toString(16)}`);
+    outputRef.current.send(SysExCodec.buildFsCombo(comboIndex, actionId));
+  }, [outputRef]);
+
+  const sendAutoCabMatch = useCallback((on: boolean) => {
+    if (!outputRef.current) return;
+    suppressFxBriefly();
+    console.log(`[GP-200] auto cab match: ${on}`);
+    outputRef.current.send(SysExCodec.buildAutoCabMatch(on));
+  }, [outputRef]);
+
   const sendExpMinMax = useCallback(
     (page: number, item: number, min: number, max: number) => {
       if (!outputRef.current) return;
@@ -265,6 +308,36 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
       // Min (section=0) + Max (section=1); confirmed: capture 203838
       out.send(SysExCodec.buildExpAssignment(0, page, item, min));
       out.send(SysExCodec.buildExpAssignment(1, page, item, max));
+    },
+    [outputRef],
+  );
+
+  // CC channel: state for UI display, ref mirror so sendCC stays stable.
+  // Deliberately NOT routed through suppressFxBriefly(): that window exists
+  // for SysEx echoes, and muting it here would also mute legitimate hardware
+  // stomps' frames (looperTriggers keeps cc-kind frames live on the
+  // assumption CC frames are never self-emitted — Web MIDI does not loop
+  // outbound messages back to inputs).
+  const [ccChannel, setCcChannelState] = useState(loadCcChannel);
+  const ccChannelRef = useRef(ccChannel);
+
+  const setCcChannel = useCallback((channel: number) => {
+    ccChannelRef.current = channel;
+    setCcChannelState(channel);
+    saveCcChannel(channel);
+  }, []);
+
+  const sendCC = useCallback(
+    (command: CCCommand | CCCommand[]) => {
+      if (!outputRef.current) return;
+      const commands = [command].flat();
+      for (const ccCommand of commands) {
+        const msg = buildCC(ccChannelRef.current, ccCommand.cc, ccCommand.value);
+        console.log(
+          `[GP-200] CC: ch=${ccChannelRef.current + 1} cc=${ccCommand.cc} val=${ccCommand.value}`,
+        );
+        outputRef.current.send(msg);
+      }
     },
     [outputRef],
   );
@@ -304,6 +377,13 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
     sendPatchTempo,
     sendExpParamSelect,
     sendExpMinMax,
+    sendFsMode,
+    sendFsTarget,
+    sendFsCombo,
+    sendAutoCabMatch,
+    sendCC,
+    ccChannel,
+    setCcChannel,
     sendRawChunks,
     setOnDeviceChange: (cb) => {
       onDeviceChangeRef.current = cb;

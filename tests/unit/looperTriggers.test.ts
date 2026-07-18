@@ -56,7 +56,7 @@ function slotChangeFrame(slot: number, extra: Record<number, number> = {}): Uint
 }
 
 const RECORD_FS1: LooperBindings = {
-  footswitches: { 1: { kind: 'recordOverdubCycle', track: 0 } },
+  footswitches: { 1: { kind: 'recordToggle' } },
   expTarget: null,
 };
 
@@ -206,7 +206,7 @@ describe('processLooperFrame', () => {
     expect(decision).toMatchObject({
       type: 'hijacked',
       fs: 1,
-      action: { kind: 'recordOverdubCycle', track: 0 },
+      action: { kind: 'recordToggle' },
       revertToggle: { block: 2, enabled: true },
     });
   });

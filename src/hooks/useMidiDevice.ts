@@ -4,17 +4,12 @@ import { decodeControlChange } from '@/core/midiControlMap';
 import { isMidiMonitorEnabled } from '@/core/debugFlags';
 import { hexOfBytes } from '@/core/looperTriggers';
 import type { GP200Preset } from '@/core/types';
+import type { CCCommand } from '@/core/ccControl';
 import { presetNameCacheKey, loadCachedNames, saveCachedNames } from '@/core/presetNameCache';
+import { PRSTEncoder } from '@/core/PRSTEncoder';
 import { useMidiSend } from './useMidiSend';
 
 const READ_TIMEOUT_MS = 3000;
-
-// Gate the chunk-based full-preset push behind a dev-only flag. Hardware
-// testing showed the payload layout is unreliable (overlapping chunk
-// offsets, only partial block-10 support); the writePresetToSlot flow
-// (toggle + params + save-commit) is the supported path. Remove this flag
-// once the USB capture is re-analyzed and buildWriteChunks is reliable.
-const ENABLE_PUSH_PRESET = import.meta.env.DEV;
 
 function isSysEx(data: Uint8Array, cmd: number, sub: number): boolean {
   return (
@@ -83,6 +78,15 @@ export interface UseMidiDeviceReturn {
   sendRawChunks: (chunks: Uint8Array[], delayMs: number, onProgress?: (i: number, total: number) => void) => Promise<void>;
   sendExpParamSelect: (page: number, item: number, blockIndex: number, paramIdx: number) => void;
   sendExpMinMax: (page: number, item: number, min: number, max: number) => void;
+  // Device-global settings (0x12/0x08 settings-write family, docs §0.2)
+  sendFsMode: (mode: number) => void;
+  sendFsTarget: (fs: number, kind: 'tap' | 'hold', actionId: number) => void;
+  sendFsCombo: (comboIndex: number, actionId: number) => void;
+  sendAutoCabMatch: (on: boolean) => void;
+  // Plain MIDI CC (built-in looper / drums / tuner; src/core/ccControl.ts)
+  sendCC: (command: CCCommand | CCCommand[]) => void;
+  ccChannel: number;
+  setCcChannel: (channel: number) => void;
   setOnDeviceChange: (cb: ((slot: number | null) => void) | null) => void;
   setOnDeviceToggle: (cb: ((blockIndex: number, enabled: boolean) => void) | null) => void;
   // Callback returns whether the change was applied (drives FX-state suppression)
@@ -257,7 +261,16 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // docs/protocol-capture.md).
     if (isSysEx(data, 0x12, 0x08) && data.length >= 28) {
       handled = true;
-      if (data[14] === 0x08) {
+      if (data[14] === 0x08 && (data[21] !== 0 || data[22] !== 0)) {
+        // Global-settings write echo (FS Mode [21]=01/[22]=08, Auto Cab Match
+        // [21]=02/[22]=04, ...): shares data[14]=0x08 with preset changes but
+        // carries a nonzero setting address at [21],[22] where preset-change
+        // frames have zeros (docs/protocol-capture.md §0.2). Without this
+        // guard the value byte at [26] would decode as a bogus slot change.
+        console.log(
+          `[GP-200] settings echo ignored (addr=${data[21]}/${data[22]} value=${data[26]})`,
+        );
+      } else if (data[14] === 0x08) {
         // Preset change echo: slot nibble-encoded at data[25:26]
         const slot = ((data[25] & 0x0F) << 4) | (data[26] & 0x0F);
         if (slot >= 0 && slot < 256 && slot !== currentSlotRef.current) {
@@ -584,30 +597,33 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   }, [onMidiMessage, pauseNameLoading]);
 
   const pushPreset = useCallback(async (preset: GP200Preset, slot: number): Promise<void> => {
-    if (!ENABLE_PUSH_PRESET) {
-      console.warn('[GP-200] pushPreset is disabled in production; use writePresetToSlot');
-      return;
-    }
     await pauseNameLoading();
     if (!outputRef.current) throw new Error('Not connected');
     console.log(`[GP-200] push: slot=${slot} (${SysExCodec.slotToLabel(slot)}) name="${preset.patchName}"`);
 
-    // Step 1: Send 4 write chunks (blocks 0-8 partial, 732 bytes decoded)
-    // Write chunks go directly to flash storage for the target slot.
-    // Captured Valeton flow: write chunks only, NO save-commit after (save-commit
-    // overwrites flash with the editing buffer, discarding write chunk data).
-    const chunks = SysExCodec.buildWriteChunks(preset, slot);
+    // Flash upload, mirroring the official editor byte-for-byte
+    // (dumps/patch-upload.pcapng): encode to .prst bytes, derive the upload
+    // image, send it as 0x12/0x20 chunks addressed to the target slot. The
+    // device commits to flash directly — no save-commit follows (verified:
+    // the uploaded patch survives a power-cycle). Because the image carries
+    // the full file content, CTRL/EXP assignments travel with it.
+    const fileBytes = new Uint8Array(new PRSTEncoder().encode(preset));
+    const image = SysExCodec.buildUploadImage(fileBytes);
+    const chunks = SysExCodec.buildUploadChunks(image, slot);
+    // The device echoes lone 0xF7 acks during the burst; mute FX-state
+    // handling so nothing downstream misreads upload traffic.
+    suppressFxFor(1000);
     for (let i = 0; i < chunks.length; i++) {
-      console.log(`[GP-200] push chunk ${i+1}/${chunks.length}: ${chunks[i].length}B`);
+      console.log(`[GP-200] push chunk ${i + 1}/${chunks.length}: ${chunks[i].length}B`);
       outputRef.current.send(chunks[i]);
       await new Promise(r => setTimeout(r, 20));
     }
 
-    // Step 2: Wait for device to process write chunks, then switch to the slot
+    // Let the flash write settle, then switch the device to the slot so the
+    // pushed patch is live (the editor leaves this to the user; we select it).
     await new Promise(r => setTimeout(r, 150));
-    const commitMsg = SysExCodec.buildPresetChange(slot);
     console.log(`[GP-200] push preset-change: slot=${slot}`);
-    outputRef.current.send(commitMsg);
+    outputRef.current.send(SysExCodec.buildPresetChange(slot));
 
     // Update local state
     presetNamesRef.current[slot] = preset.patchName;
@@ -616,7 +632,9 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     setCurrentSlot(slot); currentSlotRef.current = slot;
 
     console.log('[GP-200] push complete');
-  }, [pauseNameLoading, persistNames]);
+    // suppressFxFor is a plain per-render function, but unlike onMidiMessage
+    // nothing depends on pushPreset's identity, so listing it is harmless.
+  }, [pauseNameLoading, persistNames, suppressFxFor]);
 
   const saveToSlot = useCallback(async (presetName: string, slot?: number): Promise<void> => {
     if (!outputRef.current) return;
@@ -911,6 +929,13 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     sendPatchTempo: send.sendPatchTempo,
     sendExpParamSelect: send.sendExpParamSelect,
     sendExpMinMax: send.sendExpMinMax,
+    sendFsMode: send.sendFsMode,
+    sendFsTarget: send.sendFsTarget,
+    sendFsCombo: send.sendFsCombo,
+    sendAutoCabMatch: send.sendAutoCabMatch,
+    sendCC: send.sendCC,
+    ccChannel: send.ccChannel,
+    setCcChannel: send.setCcChannel,
     sendRawChunks: send.sendRawChunks,
     setOnDeviceChange: send.setOnDeviceChange,
     setOnDeviceToggle: send.setOnDeviceToggle,

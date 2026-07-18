@@ -20,8 +20,12 @@ const recorderWorkletUrl = new URL('../audio/looper-recorder.worklet.js', import
 // later tracks are quantized to whole multiples of it and launched on the next
 // loop boundary so everything stays phase-locked. All timing math lives in the
 // pure `looperTransport` core; this hook is the Web Audio glue + React state.
-
-export const TRACK_COUNT = 4;
+//
+// Tracks are DYNAMIC: every record→stop cycle appends a new track (there is no
+// fixed slot count). The four transport controls the hardware bindings target:
+// toggleRecord (record new track / stop), togglePlayAll (play all / stop all),
+// selectNextTrack / selectPrevTrack (move the selection the UI and EXP pedal
+// operate on).
 
 export type TrackState = 'empty' | 'recording' | 'playing' | 'stopped';
 
@@ -39,12 +43,21 @@ export interface LooperApi {
   ready: boolean;
   tracks: LooperTrack[];
   isRecording: boolean;
+  /** id of the track currently being recorded, or null */
   recordArmedTrack: number | null;
   masterLoopLengthSec: number | null;
+  /** the track the UI highlights and Track +/- moves; null when no tracks */
+  selectedTrack: number | null;
+  anyPlaying: boolean;
   /** 0..1 within the master loop; read inside rAF, not React state */
   getPlayhead: () => number;
-  startRecord: (trackId: number) => void;
-  stopRecord: () => void;
+  /** record a NEW track, or stop the recording in progress */
+  toggleRecord: () => void;
+  /** stop every playing track, or restart all recorded tracks together */
+  togglePlayAll: () => void;
+  selectNextTrack: () => void;
+  selectPrevTrack: () => void;
+  selectTrack: (trackId: number) => void;
   togglePlay: (trackId: number) => void;
   setMute: (trackId: number, muted: boolean) => void;
   clear: (trackId: number) => void;
@@ -62,23 +75,25 @@ interface TrackNodes {
   lengthLoops: number;
 }
 
-function emptyTrack(id: number): LooperTrack {
-  return { id, state: 'empty', muted: false, hasAudio: false, lengthLoops: 0 };
-}
-
 export function useLooper(engine: AudioMeterApi): LooperApi {
-  const [tracks, setTracks] = useState<LooperTrack[]>(() =>
-    Array.from({ length: TRACK_COUNT }, (_, i) => emptyTrack(i)),
-  );
+  const [tracks, setTracks] = useState<LooperTrack[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [recordArmedTrack, setRecordArmedTrack] = useState<number | null>(null);
   const [masterLoopLengthSec, setMasterLoopLengthSec] = useState<number | null>(null);
+  const [selectedTrack, setSelectedTrack] = useState<number | null>(null);
+
+  // Ref mirrors so transport callbacks registered once (MIDI dispatch) always
+  // see current values.
+  const tracksRef = useRef(tracks);
+  tracksRef.current = tracks;
+  const selectedTrackRef = useRef(selectedTrack);
+  selectedTrackRef.current = selectedTrack;
 
   // Web Audio graph (rebuilt whenever the engine opens a fresh context).
   const graphCtxRef = useRef<AudioContext | null>(null);
   const recorderRef = useRef<AudioWorkletNode | null>(null);
   const masterGainRef = useRef<GainNode | null>(null);
-  const trackNodesRef = useRef<TrackNodes[]>([]);
+  const trackNodesRef = useRef<Map<number, TrackNodes>>(new Map());
   const workletLoadRef = useRef<Promise<void> | null>(null);
 
   // Recording accumulation + transport anchor.
@@ -87,7 +102,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
   const masterSamplesRef = useRef<number | null>(null);
   const transportStartRef = useRef<number>(0);
   const loopDurationRef = useRef<number>(0);
-  const recordHistoryRef = useRef<number[]>([]);
+  const nextTrackIdRef = useRef(0);
 
   const patchTrack = useCallback((id: number, next: Partial<LooperTrack>) => {
     setTracks((prev) => prev.map((t) => (t.id === id ? { ...t, ...next } : t)));
@@ -127,25 +142,32 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     master.gain.value = 1;
     master.connect(ctx.destination);
 
-    const trackNodes: TrackNodes[] = Array.from({ length: TRACK_COUNT }, () => {
-      const gain = ctx.createGain();
-      gain.gain.value = 1;
-      gain.connect(master);
-      return { gain, gainValue: 1, buffer: null, source: null, lengthLoops: 0 };
-    });
-
     graphCtxRef.current = ctx;
     recorderRef.current = recorder;
     masterGainRef.current = master;
-    trackNodesRef.current = trackNodes;
+    // A fresh context invalidates every node from the old one.
+    trackNodesRef.current = new Map();
     return true;
   }, [engine]);
+
+  /** Create the per-track gain chain for a newly recorded track. */
+  const createTrackNodes = useCallback((id: number): TrackNodes | null => {
+    const ctx = graphCtxRef.current;
+    const master = masterGainRef.current;
+    if (!ctx || !master) return null;
+    const gain = ctx.createGain();
+    gain.gain.value = 1;
+    gain.connect(master);
+    const nodes: TrackNodes = { gain, gainValue: 1, buffer: null, source: null, lengthLoops: 0 };
+    trackNodesRef.current.set(id, nodes);
+    return nodes;
+  }, []);
 
   // Launch a track's buffer looping. First track anchors the transport at
   // ctx.currentTime; later tracks begin on the next master-loop boundary.
   const startTrackPlayback = useCallback((id: number) => {
     const ctx = graphCtxRef.current;
-    const nodes = trackNodesRef.current[id];
+    const nodes = trackNodesRef.current.get(id);
     if (!ctx || !nodes?.buffer) return;
     nodes.source?.stop();
     nodes.source?.disconnect();
@@ -157,28 +179,14 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     src.loopEnd = nodes.buffer.duration;
     src.connect(nodes.gain);
 
-    const startAt =
-      masterSamplesRef.current === null || loopDurationRef.current <= 0
-        ? ctx.currentTime
-        : nextBoundary(ctx.currentTime, transportStartRef.current, loopDurationRef.current);
+    let startAt = ctx.currentTime;
+    if (masterSamplesRef.current !== null && loopDurationRef.current > 0) {
+      startAt = nextBoundary(ctx.currentTime, transportStartRef.current, loopDurationRef.current);
+    }
     src.start(startAt);
     nodes.source = src;
     patchTrack(id, { state: 'playing' });
   }, [patchTrack]);
-
-  const startRecord = useCallback((trackId: number) => {
-    void (async () => {
-      const ok = await ensureGraph();
-      const recorder = recorderRef.current;
-      if (!ok || !recorder || recordingTrackRef.current !== null) return;
-      recordChunksRef.current = [];
-      recordingTrackRef.current = trackId;
-      setIsRecording(true);
-      setRecordArmedTrack(trackId);
-      patchTrack(trackId, { state: 'recording' });
-      recorder.port.postMessage({ type: 'start' });
-    })();
-  }, [ensureGraph, patchTrack]);
 
   const stopRecord = useCallback(() => {
     const ctx = graphCtxRef.current;
@@ -202,7 +210,15 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     const trimmed = flat.subarray(Math.min(calibration, Math.max(0, captured - 1)));
 
     if (trimmed.length === 0) {
-      patchTrack(trackId, { state: 'empty' });
+      // Nothing captured: drop the just-created track again.
+      trackNodesRef.current.delete(trackId);
+      setTracks((prev) => prev.filter((t) => t.id !== trackId));
+      setSelectedTrack((prev) => {
+        if (prev !== trackId) return prev;
+        const remaining = tracksRef.current.filter((t) => t.id !== trackId);
+        if (remaining.length === 0) return null;
+        return remaining[remaining.length - 1].id;
+      });
       return;
     }
 
@@ -224,16 +240,43 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
 
     const buffer = ctx.createBuffer(1, lengthSamples, ctx.sampleRate);
     buffer.copyToChannel(trimmed.subarray(0, Math.min(trimmed.length, lengthSamples)), 0);
-    const nodes = trackNodesRef.current[trackId];
+    const nodes = trackNodesRef.current.get(trackId);
+    if (!nodes) return;
     nodes.buffer = buffer;
     nodes.lengthLoops = lengthLoops;
-    recordHistoryRef.current.push(trackId);
     patchTrack(trackId, { hasAudio: true, lengthLoops });
     startTrackPlayback(trackId);
   }, [patchTrack, startTrackPlayback]);
 
+  const startRecordNewTrack = useCallback(() => {
+    void (async () => {
+      const ok = await ensureGraph();
+      const recorder = recorderRef.current;
+      if (!ok || !recorder || recordingTrackRef.current !== null) return;
+      const trackId = nextTrackIdRef.current;
+      nextTrackIdRef.current += 1;
+      if (!createTrackNodes(trackId)) return;
+      recordChunksRef.current = [];
+      recordingTrackRef.current = trackId;
+      setIsRecording(true);
+      setRecordArmedTrack(trackId);
+      setTracks((prev) => [
+        ...prev,
+        { id: trackId, state: 'recording', muted: false, hasAudio: false, lengthLoops: 0 },
+      ]);
+      setSelectedTrack(trackId);
+      recorder.port.postMessage({ type: 'start' });
+    })();
+  }, [createTrackNodes, ensureGraph]);
+
+  /** Record a new track, or stop (and keep) the recording in progress. */
+  const toggleRecord = useCallback(() => {
+    if (recordingTrackRef.current !== null) stopRecord();
+    else startRecordNewTrack();
+  }, [startRecordNewTrack, stopRecord]);
+
   const stopTrack = useCallback((id: number) => {
-    const nodes = trackNodesRef.current[id];
+    const nodes = trackNodesRef.current.get(id);
     if (nodes?.source) {
       nodes.source.stop();
       nodes.source.disconnect();
@@ -242,7 +285,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
   }, []);
 
   const togglePlay = useCallback((id: number) => {
-    const nodes = trackNodesRef.current[id];
+    const nodes = trackNodesRef.current.get(id);
     if (!nodes?.buffer) return;
     if (nodes.source) {
       stopTrack(id);
@@ -252,15 +295,58 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     }
   }, [patchTrack, startTrackPlayback, stopTrack]);
 
-  const setMute = useCallback((id: number, muted: boolean) => {
-    const nodes = trackNodesRef.current[id];
+  /** Stop everything, or restart every recorded track phase-locked. */
+  const togglePlayAll = useCallback(() => {
+    const playing = tracksRef.current.some((t) => t.state === 'playing');
+    if (playing) {
+      for (const track of tracksRef.current) {
+        if (track.state !== 'playing') continue;
+        stopTrack(track.id);
+        patchTrack(track.id, { state: 'stopped' });
+      }
+      return;
+    }
     const ctx = graphCtxRef.current;
-    if (nodes && ctx) nodes.gain.gain.setTargetAtTime(muted ? 0 : nodes.gainValue, ctx.currentTime, 0.01);
+    if (ctx) transportStartRef.current = ctx.currentTime; // fresh common anchor
+    for (const track of tracksRef.current) {
+      if (track.hasAudio) startTrackPlayback(track.id);
+    }
+  }, [patchTrack, startTrackPlayback, stopTrack]);
+
+  const selectTrack = useCallback((trackId: number) => {
+    if (tracksRef.current.some((t) => t.id === trackId)) setSelectedTrack(trackId);
+  }, []);
+
+  const stepSelection = useCallback((step: number) => {
+    const list = tracksRef.current;
+    if (list.length === 0) return;
+    const currentIndex = list.findIndex((t) => t.id === selectedTrackRef.current);
+    let nextIndex = currentIndex + step;
+    if (currentIndex === -1) nextIndex = 0;
+    // wrap around so a footswitch can cycle endlessly
+    nextIndex = (nextIndex + list.length) % list.length;
+    setSelectedTrack(list[nextIndex].id);
+  }, []);
+
+  const selectNextTrack = useCallback(() => stepSelection(1), [stepSelection]);
+  const selectPrevTrack = useCallback(() => stepSelection(-1), [stepSelection]);
+
+  const setMute = useCallback((id: number, muted: boolean) => {
+    const nodes = trackNodesRef.current.get(id);
+    const ctx = graphCtxRef.current;
+    if (nodes && ctx) {
+      let target = nodes.gainValue;
+      if (muted) target = 0;
+      nodes.gain.gain.setTargetAtTime(target, ctx.currentTime, 0.01);
+    }
     patchTrack(id, { muted });
   }, [patchTrack]);
 
   const resetTransportIfEmpty = useCallback(() => {
-    const anyAudio = trackNodesRef.current.some((n) => n?.buffer);
+    let anyAudio = false;
+    for (const nodes of trackNodesRef.current.values()) {
+      if (nodes.buffer) anyAudio = true;
+    }
     if (!anyAudio) {
       masterSamplesRef.current = null;
       loopDurationRef.current = 0;
@@ -269,22 +355,31 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     }
   }, []);
 
+  /** Remove a track entirely (tracks are dynamic; clearing deletes the row). */
   const clear = useCallback((id: number) => {
     stopTrack(id);
-    const nodes = trackNodesRef.current[id];
-    if (nodes) { nodes.buffer = null; nodes.lengthLoops = 0; }
-    recordHistoryRef.current = recordHistoryRef.current.filter((t) => t !== id);
-    setTracks((prev) => prev.map((t) => (t.id === id ? emptyTrack(id) : t)));
+    const nodes = trackNodesRef.current.get(id);
+    if (nodes) nodes.gain.disconnect();
+    trackNodesRef.current.delete(id);
+    if (recordingTrackRef.current === id) {
+      recordingTrackRef.current = null;
+      setIsRecording(false);
+      setRecordArmedTrack(null);
+    }
+    const remaining = tracksRef.current.filter((t) => t.id !== id);
+    setTracks(remaining);
+    setSelectedTrack((prev) => {
+      if (prev !== id) return prev;
+      if (remaining.length === 0) return null;
+      return remaining[remaining.length - 1].id;
+    });
     resetTransportIfEmpty();
   }, [resetTransportIfEmpty, stopTrack]);
 
   const clearAll = useCallback(() => {
-    for (let i = 0; i < TRACK_COUNT; i++) {
-      stopTrack(i);
-      const nodes = trackNodesRef.current[i];
-      if (nodes) { nodes.buffer = null; nodes.lengthLoops = 0; }
-    }
-    recordHistoryRef.current = [];
+    for (const track of tracksRef.current) stopTrack(track.id);
+    for (const nodes of trackNodesRef.current.values()) nodes.gain.disconnect();
+    trackNodesRef.current = new Map();
     recordingTrackRef.current = null;
     masterSamplesRef.current = null;
     loopDurationRef.current = 0;
@@ -292,16 +387,18 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     setIsRecording(false);
     setRecordArmedTrack(null);
     setMasterLoopLengthSec(null);
-    setTracks(Array.from({ length: TRACK_COUNT }, (_, i) => emptyTrack(i)));
+    setTracks([]);
+    setSelectedTrack(null);
   }, [stopTrack]);
 
   const setTrackGain = useCallback((id: number, gain: number) => {
-    const nodes = trackNodesRef.current[id];
+    const nodes = trackNodesRef.current.get(id);
     const ctx = graphCtxRef.current;
     if (!nodes || !ctx) return;
     nodes.gainValue = gain;
-    if (!tracks[id]?.muted) nodes.gain.gain.setTargetAtTime(gain, ctx.currentTime, 0.01);
-  }, [tracks]);
+    const muted = tracksRef.current.find((t) => t.id === id)?.muted ?? false;
+    if (!muted) nodes.gain.gain.setTargetAtTime(gain, ctx.currentTime, 0.01);
+  }, []);
 
   const setMasterGain = useCallback((gain: number) => {
     const master = masterGainRef.current;
@@ -321,7 +418,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     if (engine.active) return;
     recorderRef.current = null;
     masterGainRef.current = null;
-    trackNodesRef.current = [];
+    trackNodesRef.current = new Map();
     graphCtxRef.current = null;
     workletLoadRef.current = null;
     recordChunksRef.current = [];
@@ -329,11 +426,11 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     masterSamplesRef.current = null;
     loopDurationRef.current = 0;
     transportStartRef.current = 0;
-    recordHistoryRef.current = [];
     setIsRecording(false);
     setRecordArmedTrack(null);
     setMasterLoopLengthSec(null);
-    setTracks(Array.from({ length: TRACK_COUNT }, (_, i) => emptyTrack(i)));
+    setTracks([]);
+    setSelectedTrack(null);
   }, [engine.active]);
 
   return {
@@ -342,9 +439,14 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     isRecording,
     recordArmedTrack,
     masterLoopLengthSec,
+    selectedTrack,
+    anyPlaying: tracks.some((track) => track.state === 'playing'),
     getPlayhead,
-    startRecord,
-    stopRecord,
+    toggleRecord,
+    togglePlayAll,
+    selectNextTrack,
+    selectPrevTrack,
+    selectTrack,
     togglePlay,
     setMute,
     clear,
