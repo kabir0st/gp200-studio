@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState, type DragEvent } from 'react';
 import type { GP200Preset, EffectSlot } from '@/core/types';
 import type { PushProgress } from '@/core/devicePush';
 import { getSlotModule } from '@/core/effectNames';
@@ -34,8 +34,13 @@ export interface PedalBoardProps {
   onToggle: (slotIndex: number, currentlyEnabled: boolean) => void;
   onChangeEffect: (slotIndex: number, effectId: number) => void;
   onParamChange: (slotIndex: number, effectId: number, paramIndex: number, value: number) => void;
-  /** reorder by array position (pointer drag + keyboard grip) */
+  /** reorder by array position (drag drop + keyboard grip) */
   onMove: (fromIndex: number, toIndex: number) => void;
+  dragIndex: number | null;
+  dragOverIndex: number | null;
+  onDragStart: (index: number) => void;
+  onDragOver: (e: DragEvent, index: number) => void;
+  onDrop: (index: number) => void;
   patchVolume: number;
   patchPan: number;
   patchTempo: number;
@@ -102,6 +107,11 @@ export function PedalBoard({
   onChangeEffect,
   onParamChange,
   onMove,
+  dragIndex,
+  dragOverIndex,
+  onDragStart,
+  onDragOver,
+  onDrop,
   patchVolume,
   patchPan,
   patchTempo,
@@ -177,6 +187,10 @@ export function PedalBoard({
 
   // FLIP: capture pedal positions before a reorder, then spring them to place
   const { scopeRef, capture } = useFlipReorder(orderKey);
+  const handleReorderDrop = (index: number) => {
+    capture();
+    onDrop(index);
+  };
   const handleReorderMove = (from: number, to: number) => {
     capture();
     onMove(from, to);
@@ -204,19 +218,21 @@ export function PedalBoard({
 
   // each pedal sits in a fixed-size bay (compact/wide, keyed to the slot's module
   // (see isWideSlot). The pedal keeps its own natural size; the bay absorbs any
-  // difference as padding, so swapping an effect never shifts a neighbour.
+  // difference as padding, so swapping an effect never shifts a neighbour. The bay
+  // (not just the pedal) is the drop target, so you don't have to aim precisely at
+  // the pedal body, and while a drag is in flight every bay shows a drop slot.
   const renderPedal = (slot: EffectSlot, index: number, row: 'front' | 'back') => {
     const bayClasses = ['pedal-bay'];
     if (isWideSlot(slot.slotIndex)) bayClasses.push('wide');
-    // a single caret marks where the carried pedal will land
-    if (drag.target === index && drag.from !== null && drag.from !== index) {
-      bayClasses.push('drop-target');
-      if (drag.target > drag.from) bayClasses.push('after');
-    }
+    if (dragIndex !== null) bayClasses.push('droppable');
+    if (dragIndex === index) bayClasses.push('drag-source');
+    if (dragOverIndex === index && dragIndex !== index) bayClasses.push('drop-target');
     return (
       <div
         key={`slot-${slot.slotIndex}`}
         className={bayClasses.join(' ')}
+        onDragOver={(e) => onDragOver(e, index)}
+        onDrop={() => handleReorderDrop(index)}
       >
         <Pedal
           slot={slot}
@@ -277,7 +293,11 @@ export function PedalBoard({
               with the pedals (the top/bottom bars stay put) */}
           <div className="board-scroll">
             <div className={`board-rows${singleRow ? ' single' : ''}`} ref={scopeRef}>
-              <CableLayer modules={modules} orderKey={`${orderKey}|${singleRow ? 1 : 2}`} />
+              <CableLayer
+                modules={modules}
+                orderKey={`${orderKey}|${singleRow ? 1 : 2}`}
+                hidden={dragIndex !== null}
+              />
               {/* Phones get one row: two 340px+ rows plus the chrome don't fit a
                   phone viewport, and one row keeps the whole chain in a single
                   left-to-right swipe (cables stay same-row beziers throughout). */}
