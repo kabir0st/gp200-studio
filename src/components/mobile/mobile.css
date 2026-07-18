@@ -202,11 +202,6 @@
   opacity: 0.55;
 }
 
-.mobile-view .m-row.lifted {
-  transform: scale(1.02);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
-  opacity: 0.95;
-}
 
 .mobile-view .m-row-main {
   flex: 1;
@@ -329,44 +324,70 @@
 
 /* --------------------------------------------------------- reorder / markers */
 
-.mobile-view .m-row.edit {
-  align-items: center;
-  padding-right: 8px;
-}
-
-/* touch-action:none ONLY here. On the row it would swallow page scroll. */
+/* The grip is the ONLY element in the mobile tree with touch-action:none.
+   That is what lets a drag start immediately with no long-press delay: the
+   grip claims the gesture, while a press anywhere else on the row still
+   scrolls the list normally. Putting this on .m-row would swallow scroll. */
 .mobile-view .m-grip {
   flex: none;
-  width: 44px;
-  height: 44px;
-  margin-left: 4px;
+  align-self: stretch;
+  width: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  color: var(--chrome-muted);
+  border: 0;
+  border-right: 1px solid var(--chrome-border);
+  background: var(--strip-bg);
   touch-action: none;
   cursor: grab;
 }
 
-.mobile-view .m-move {
-  flex: none;
-  display: flex;
-  gap: 4px;
+.mobile-view .m-grip:active {
+  cursor: grabbing;
+  background: var(--bg-hover, #e2dfd8);
 }
 
-.mobile-view .m-move-btn {
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--chrome-border);
-  border-radius: 8px;
-  background: var(--strip-bg);
-  color: var(--chrome-text);
-  font-size: 12px;
+/* Two columns of dots, drawn rather than typed so the texture is even and
+   doesn't depend on how a platform renders U+2833. */
+.mobile-view .m-grip-dots {
+  width: 10px;
+  height: 18px;
+  background-image: radial-gradient(currentColor 1.4px, transparent 1.6px);
+  background-size: 5px 5px;
+  background-position: 0 0;
+  color: var(--chrome-muted);
+  opacity: 0.75;
 }
 
-.mobile-view .m-move-btn:disabled {
-  opacity: 0.3;
+.mobile-view .m-screen-hint {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--chrome-muted);
+}
+
+/* Lift the dragged row and settle the rest, so the reorder reads as a physical
+   move rather than rows blinking between positions. */
+.mobile-view .m-row.dragging {
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
+  border-color: var(--border-active, #aaa69d);
+  transform: scale(1.02);
+  position: relative;
+  z-index: 1;
+}
+
+.mobile-view .m-row.dragging .m-grip {
+  background: var(--bg-hover, #e2dfd8);
+}
+
+.mobile-view .m-list.dragging .m-row:not(.dragging) {
+  transition: transform 160ms ease;
+}
+
+/* No text selection or long-press callout while dragging by the grip. */
+.mobile-view .m-list.dragging {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .mobile-view .m-marker {
@@ -932,7 +953,11 @@
     transition: none;
   }
 
-  .mobile-view .m-row.lifted {
+  .mobile-view .m-row.dragging {
     transform: none;
+  }
+
+  .mobile-view .m-list.dragging .m-row:not(.dragging) {
+    transition: none;
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { PedalBoardProps } from '@/components/board/PedalBoard';
 import { usePedalManifest } from '@/components/board/pedalManifest';
 import { LooperPanel } from '@/components/board/LooperPanel';
@@ -87,6 +87,8 @@ export default function MobileShell({
   /** array position of the block being edited, or null for the chain list */
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const artIndex = usePedalManifest();
+  /** the scrolling region, so a chain drag near the edge can auto-scroll it */
+  const mainRef = useRef<HTMLElement>(null);
 
   // Stomp hijacking + the footswitch takeover are only safe while the looper is
   // actually on screen; on the phone that's the LOOP tab, not a dialog.
@@ -115,7 +117,7 @@ export default function MobileShell({
         onEditMeta={() => setSheet('meta')}
       />
 
-      <main className="m-main">
+      <main className="m-main" ref={mainRef}>
         {tab === 'chain' && editingSlot && editingIndex !== null && (
           <PedalEditorScreen
             slot={editingSlot}
@@ -135,6 +137,7 @@ export default function MobileShell({
           <ChainScreen
             preset={preset}
             artIndex={artIndex}
+            scrollRef={mainRef}
             onToggle={onToggle}
             onMove={onMove}
             onOpenSlot={setEditingIndex}
