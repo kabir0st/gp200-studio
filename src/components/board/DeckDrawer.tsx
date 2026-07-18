@@ -21,7 +21,7 @@ export function DeckDrawer({ open, onClose, title, children }: DeckDrawerProps) 
       title={title}
       placement="bottom"
       maxWidth="max-w-4xl"
-      className="max-h-[85vh] overflow-y-auto"
+      className="max-h-[88dvh] overflow-y-auto"
     >
       <div className="flex items-center justify-between mb-4">
         <span className="font-mono-display text-label font-bold tracking-wider uppercase text-text-secondary">
@@ -31,7 +31,8 @@ export function DeckDrawer({ open, onClose, title, children }: DeckDrawerProps) 
           type="button"
           onClick={onClose}
           aria-label={`Close ${title}`}
-          className="font-mono-display text-xs font-bold px-2 py-1 rounded text-text-muted hover:text-text-primary"
+          className="ui-btn font-mono-display text-xs font-bold px-3 py-1.5 -my-1 rounded
+            text-text-muted hover:text-text-primary"
         >
           ✕
         </button>

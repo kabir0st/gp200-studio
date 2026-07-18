@@ -100,7 +100,8 @@ function playAllLabel(anyPlaying: boolean): string {
 }
 
 function trackRowClass(selected: boolean): string {
-  const base = 'flex items-center gap-2 px-3 py-2 rounded-lg border bg-bg-hover cursor-pointer';
+  const base =
+    'flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg border bg-bg-hover cursor-pointer';
   if (selected) return `${base} border-accent-amber`;
   return `${base} border-border-active`;
 }
@@ -234,63 +235,79 @@ export function LooperPanel({
         </ul>
       </details>
 
-      {/* Transport: the same four controls the footswitch bindings target */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant={recordVariant(looper.isRecording)}
-          size="sm"
-          onClick={looper.toggleRecord}
-          title="Record a new track / stop recording"
-        >
-          {recordLabel(looper.isRecording)}
-        </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={looper.tracks.length === 0}
-          onClick={looper.togglePlayAll}
-          title="Play all tracks / stop all tracks"
-        >
-          {playAllLabel(looper.anyPlaying)}
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={looper.tracks.length === 0}
-          onClick={looper.selectPrevTrack}
-          title="Select previous track"
-        >
-          ◀
-        </Button>
-        <span
-          className="font-mono-display text-caption text-text-secondary tabular-nums w-12
-            text-center"
-        >
-          {trackReadout}
-        </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={looper.tracks.length === 0}
-          onClick={looper.selectNextTrack}
-          title="Select next track"
-        >
-          ▶
-        </Button>
-        <span className="flex-1 h-2 rounded bg-bg-hover overflow-hidden">
-          <span ref={playBar} className="block h-full bg-accent-amber" style={{ width: '0%' }} />
-        </span>
-        <span className="font-mono-display text-caption text-text-secondary tabular-nums">
-          {fmtLength(looper.masterLoopLengthSec)}
-        </span>
-        <Button
-          variant="danger"
-          size="sm"
-          disabled={looper.tracks.length === 0}
-          onClick={looper.clearAll}
-        >
-          Clear All
-        </Button>
+      {/* Transport: the same four controls the footswitch bindings target.
+          REC/PLAY grow to fill narrow screens (primary touch targets); the
+          track selector and Clear All wrap onto their own line when tight;
+          the loop-progress bar always gets a full-width row of its own. */}
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant={recordVariant(looper.isRecording)}
+            size="sm"
+            className="flex-1 sm:flex-none"
+            onClick={looper.toggleRecord}
+            title="Record a new track / stop recording"
+          >
+            {recordLabel(looper.isRecording)}
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="flex-1 sm:flex-none"
+            disabled={looper.tracks.length === 0}
+            onClick={looper.togglePlayAll}
+            title="Play all tracks / stop all tracks"
+          >
+            {playAllLabel(looper.anyPlaying)}
+          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={looper.tracks.length === 0}
+              onClick={looper.selectPrevTrack}
+              title="Select previous track"
+            >
+              ◀
+            </Button>
+            <span
+              className="font-mono-display text-caption text-text-secondary tabular-nums
+                w-12 text-center"
+            >
+              {trackReadout}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={looper.tracks.length === 0}
+              onClick={looper.selectNextTrack}
+              title="Select next track"
+            >
+              ▶
+            </Button>
+          </div>
+          <Button
+            variant="danger"
+            size="sm"
+            className="ml-auto"
+            disabled={looper.tracks.length === 0}
+            onClick={looper.clearAll}
+          >
+            Clear All
+          </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="flex-1 h-3 rounded bg-bg-hover overflow-hidden">
+            <span
+              ref={playBar}
+              className="block h-full bg-accent-amber"
+              style={{ width: '0%' }}
+            />
+          </span>
+          <span className="font-mono-display text-caption text-text-secondary tabular-nums">
+            {fmtLength(looper.masterLoopLengthSec)}
+          </span>
+        </div>
       </div>
 
       {/* Track rows: one per recorded take, newest last */}
@@ -344,12 +361,14 @@ export function LooperPanel({
                 value={gains[track.id] ?? 1}
                 disabled={!track.hasAudio}
                 onChange={(e) => setTrackGain(track.id, Number(e.target.value))}
-                className="flex-1 min-w-16 accent-accent-amber"
+                className="order-last basis-full sm:order-none sm:basis-0 sm:flex-1
+                  min-w-0 accent-accent-amber"
                 aria-label={`Track ${position} level`}
               />
               <Button
                 variant="ghost"
                 size="sm"
+                className="ml-auto sm:ml-0"
                 onClick={() => looper.clear(track.id)}
                 title="Delete this track"
               >
@@ -362,7 +381,7 @@ export function LooperPanel({
 
       {/* Bindings */}
       <div className="pt-2 border-t border-border-active">
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex flex-wrap items-center gap-2 mb-2">
           <p className="font-mono-display text-label text-text-muted uppercase tracking-widest">
             Hardware bindings{' '}
             <span className="normal-case tracking-normal">
@@ -390,7 +409,7 @@ export function LooperPanel({
             drive the looper. Closing this panel restores your setup.
           </p>
         )}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {FS_NUMBERS.map((fs) => {
             const kind = actionKind(bindings.footswitches[fs]);
             const learned = triggers[fs] !== undefined;
@@ -443,7 +462,7 @@ export function LooperPanel({
             );
           })}
         </div>
-        <div className="flex items-center gap-2 mt-3">
+        <div className="flex flex-wrap items-center gap-2 mt-3">
           <span className="font-mono-display text-label text-text-secondary w-16">EXP →</span>
           <select
             value={expValue(bindings.expTarget)}
@@ -453,13 +472,13 @@ export function LooperPanel({
               else if (v === 'master') updateExpTarget({ kind: 'masterGain' });
               else updateExpTarget({ kind: 'selectedTrackGain' });
             }}
-            className={SELECT_CLASS}
+            className={`flex-1 sm:flex-none min-w-0 ${SELECT_CLASS}`}
           >
             <option value="none">-</option>
             <option value="master">Master level</option>
             <option value="selected">Selected track level</option>
           </select>
-          <span className="font-mono-display text-caption text-text-muted">
+          <span className="font-mono-display text-caption text-text-muted basis-full sm:basis-auto">
             (EXP wire format pending capture)
           </span>
         </div>

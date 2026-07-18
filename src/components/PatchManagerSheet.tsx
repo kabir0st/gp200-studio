@@ -166,7 +166,8 @@ export function PatchManagerSheet({
       title="Patch Manager"
       placement="right"
       maxWidth="max-w-2xl"
-      className="flex flex-col p-0"
+      padding="p-0"
+      className="flex flex-col"
       closeOnOverlayClick={!busy && !bulkRunning}
     >
       {/* Header */}

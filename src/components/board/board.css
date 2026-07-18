@@ -25,6 +25,12 @@
   border-bottom: 1px solid var(--chrome-border);
   overflow-x: auto;
   flex-shrink: 0;
+  /* the nowrap pill chain must not leak overflow to the document: on mobile
+     Chrome it inflates the layout viewport (fixed overlays and dialogs then
+     render wider than the screen). Layout+paint containment keeps the strip
+     at the shell's width; the pills still scroll inside it. */
+  contain: content;
+  min-width: 0;
 }
 .board-view .chain-strip .strip-lbl {
   font-family: var(--font-jetbrains-mono), monospace;
@@ -173,6 +179,9 @@
   min-height: 0;
   overflow: auto;
   padding: 8px 16px 10px;
+  /* keep board scrolling from chaining into page bounce / browser
+     back-forward swipe gestures on touch devices */
+  overscroll-behavior: contain;
 }
 .board-view .cables-svg {
   position: absolute;
@@ -215,6 +224,7 @@
 .board-view .board-scroll {
   overflow-x: auto;
   overflow-y: hidden;
+  overscroll-behavior-x: contain;
   /* room for pedal drop-shadows so overflow-y:hidden doesn't clip them */
   padding: 6px 2px 10px;
   margin: -6px -2px -10px;
@@ -1244,6 +1254,7 @@
    ════════════════════════════════════════════════════════════════════════ */
 .landing-view {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--case);
   display: flex;
   align-items: center;
@@ -1919,5 +1930,102 @@
   .patch-picker .pp-row,
   .patch-picker .pp-cat {
     transition: none;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   Mobile chrome (≤640px): the top bar keeps ONE row of actions by swiping
+   horizontally instead of piling into 3-4 wrapped rows; the deck sheds its
+   desktop-only readouts (live treadle bars) and shrinks the meters; the
+   deck popovers become viewport-clamped bottom sheets instead of absolute
+   flyouts that clip off-screen.
+   ════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .board-view .stage {
+    padding: 6px 8px 8px;
+  }
+
+  /* top bar: status on its own line, actions in a swipeable single row */
+  .board-view .board-topbar {
+    gap: 8px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+  }
+  .board-view .board-topbar-status {
+    flex-basis: 100%;
+  }
+  .board-view .board-topbar-actions {
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-left: 0;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .board-view .board-topbar-actions::-webkit-scrollbar {
+    display: none;
+  }
+  .board-view .board-topbar-actions .deck-btn {
+    flex: none;
+    white-space: nowrap;
+  }
+
+  /* bottom deck: fewer readouts, tighter spacing, clear of the iOS home bar */
+  .board-view .deck {
+    gap: 10px 14px;
+    padding: 10px 12px;
+    margin: 10px 2px 4px;
+    bottom: calc(8px + env(safe-area-inset-bottom));
+  }
+  .board-view .deck-live {
+    display: none;
+  }
+  .board-view .deck-name {
+    max-width: 150px;
+  }
+  .board-view .audio-meters {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .board-view .audio-meters .am-track {
+    width: 56px;
+  }
+  .board-view .audio-meters .am-out-select {
+    max-width: 110px;
+  }
+
+  /* deck popovers: fixed bottom sheets clamped to the viewport */
+  .board-view .deck-pop,
+  .board-view .deck-pop.wide {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    top: auto;
+    min-width: 0;
+    z-index: 60;
+    max-height: 70dvh;
+    overflow-y: auto;
+  }
+}
+
+/* Touch ergonomics for the board chrome buttons (see index.css for the
+   shared .ui-btn rule): deck/topbar buttons get real touch targets. */
+@media (pointer: coarse) {
+  .board-view .deck-btn {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+  .board-view .deck-btn.quiet {
+    padding: 10px 12px;
+  }
+  .board-view .dp-btn {
+    min-height: 40px;
+    padding: 8px 12px;
+  }
+  .board-view .deck-meta-btn {
+    min-height: 44px;
   }
 }

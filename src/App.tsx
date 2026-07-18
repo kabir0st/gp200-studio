@@ -619,7 +619,7 @@ function App() {
   }
 
   return (
-    <div className="w-full h-screen flex flex-col overflow-hidden">
+    <div className="app-shell w-full flex flex-col overflow-hidden">
       {loadError && (
         <div className="mx-4 mt-3 mb-2 px-4 py-3 rounded-lg font-mono-display text-sm flex items-center justify-between bg-accent-red/10 border border-accent-red/30 text-accent-red">
           <span>{loadError}</span>

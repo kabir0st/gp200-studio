@@ -160,7 +160,8 @@ export function DrumsPanel({
       {/* Drum machine */}
       <div className="flex flex-col gap-2">
         <SectionHeading>Drum machine</SectionHeading>
-        <div className="flex items-center gap-2">
+        {/* The rhythm select drops to its own full-width line on phones */}
+        <div className="flex flex-wrap items-center gap-2">
           <Led active={drumsOn} />
           <Button
             variant="secondary"
@@ -183,7 +184,8 @@ export function DrumsPanel({
               setRhythmIndex(index);
               sendCC(drumsRhythm(index));
             }}
-            className={`flex-1 ${SELECT_CLASS} disabled:opacity-40`}
+            className={`order-last basis-full sm:order-none sm:basis-0 sm:flex-1 min-w-0
+              ${SELECT_CLASS} disabled:opacity-40`}
             aria-label="Drum rhythm"
           >
             {rhythmGroups.map((group) => (
@@ -232,7 +234,7 @@ export function DrumsPanel({
             (the GP-200's own single loop — the multi-track LOOP drawer is separate)
           </span>
         </SectionHeading>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Led active={looperPlaying} />
           <Button
             variant="danger"
@@ -360,7 +362,7 @@ export function DrumsPanel({
       </div>
 
       {/* Tuner / tempo / channel */}
-      <div className="flex items-center gap-2 pt-2 border-t border-border-active">
+      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border-active">
         <Button
           variant={toggleVariant(tunerOpen)}
           size="sm"
@@ -397,7 +399,7 @@ export function DrumsPanel({
             </option>
           ))}
         </select>
-        <span className="font-mono-display text-caption text-text-muted">
+        <span className="font-mono-display text-caption text-text-muted basis-full sm:basis-auto">
           must match the GP-200's global MIDI channel (default 1)
         </span>
       </div>
