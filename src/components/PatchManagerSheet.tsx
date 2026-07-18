@@ -27,6 +27,10 @@ export interface PatchManagerSheetProps {
   onImportToSlot: (slot: number, bytes: Uint8Array) => Promise<void>;
   onRenameSlot: (slot: number, name: string) => Promise<void>;
   onRefreshNames: () => void;
+  /** Load a .prst into the editor buffer (pushes + saves when connected). */
+  onImportFile: (bytes: Uint8Array) => void;
+  /** Open the editor's export-preset dialog for the current patch. */
+  onExportRequest: () => void;
 }
 
 function bankSlotsOf(slot: number): number[] {
@@ -37,8 +41,10 @@ function bankSlotsOf(slot: number): number[] {
 /**
  * Right-anchored side sheet listing all 256 device slots (64 banks × A–D)
  * with search, activate, open-in-editor, rename, per-slot .prst export /
- * import, and bulk export (bank / all → single .zip). The pedalboard stays
- * visible so slot browsing is audible/visible in context.
+ * import, and bulk export (bank / all → single .zip). Also hosts the
+ * editor-buffer FILE row (import/export the current patch as .prst), which
+ * works without a connected device. The pedalboard stays visible so slot
+ * browsing is audible/visible in context.
  */
 export function PatchManagerSheet({
   open,
@@ -57,6 +63,8 @@ export function PatchManagerSheet({
   onImportToSlot,
   onRenameSlot,
   onRefreshNames,
+  onImportFile,
+  onExportRequest,
 }: PatchManagerSheetProps) {
   const [selected, setSelected] = useState<number | null>(null);
   const [renaming, setRenaming] = useState(false);
@@ -65,6 +73,7 @@ export function PatchManagerSheet({
   const [confirmImportSlot, setConfirmImportSlot] = useState<number | null>(null);
   const pendingImportRef = useRef<Uint8Array | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const editorFileInputRef = useRef<HTMLInputElement>(null);
 
   const namesLoading = namesLoadProgress < 256;
   const bulkRunning = bulkProgress !== null;
@@ -131,6 +140,25 @@ export function PatchManagerSheet({
     await runBusy(() => onImportToSlot(slot, bytes));
   }
 
+  function handleEditorFilePick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      onImportFile(new Uint8Array(ev.target!.result as ArrayBuffer));
+      onClose();
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = '';
+  }
+
+  function handleEditorExport() {
+    // Close before opening ExportPresetDialog: a stacked Dialog would
+    // double-bind the document Escape handler and fight this focus trap.
+    onClose();
+    onExportRequest();
+  }
+
   return (
     <Dialog
       open={open}
@@ -185,6 +213,44 @@ export function PatchManagerSheet({
         </button>
       </div>
 
+      {/* Editor-buffer file I/O: works offline, unlike the per-slot actions */}
+      <div
+        className="flex items-center gap-2 px-4 py-2 flex-shrink-0"
+        style={{ borderBottom: '1px solid var(--border-active)' }}
+      >
+        <span
+          className="font-mono-display text-caption"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          FILE
+        </span>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => editorFileInputRef.current?.click()}
+          title="Load a .prst file into the editor (pushes + saves to the pedal when connected)"
+        >
+          IMPORT .PRST
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={handleEditorExport}
+          title="Name and download the editor's current patch as a .prst file"
+        >
+          EXPORT .PRST
+        </Button>
+        <input
+          ref={editorFileInputRef}
+          type="file"
+          accept=".prst"
+          className="hidden"
+          aria-hidden="true"
+          tabIndex={-1}
+          onChange={handleEditorFilePick}
+        />
+      </div>
+
       {/* Name-loading progress */}
       {connected && namesLoading && (
         <div className="flex items-center gap-2 px-4 py-1.5 flex-shrink-0">
@@ -214,7 +280,8 @@ export function PatchManagerSheet({
           className="font-mono-display text-caption px-4 py-2 flex-shrink-0"
           style={{ color: 'var(--text-muted)' }}
         >
-          Connect the GP-200 to browse and manage its patches.
+          Connect the GP-200 to browse and manage its patches. The FILE row
+          above works offline on the editor’s current patch.
         </p>
       )}
 

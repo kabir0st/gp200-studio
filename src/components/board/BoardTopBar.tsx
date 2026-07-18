@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import type { PushProgress } from '@/core/devicePush';
 import { SysExCodec } from '@/core/SysExCodec';
 import { tunerShow, type CCCommand } from '@/core/ccControl';
@@ -8,8 +8,6 @@ interface BoardTopBarProps {
   currentSlot: number | null;
   firmware: string | null;
   pushProgress: PushProgress | null;
-  onImportFile: (buffer: Uint8Array) => void;
-  onExportRequest: () => void;
   onLoadRequest: () => void;
   onPushRequest: () => void;
   onOpenPatchManager: () => void;
@@ -20,7 +18,6 @@ interface BoardTopBarProps {
   /* feature drawers + device tuner remote (moved up from the deck) */
   onOpenLooper: () => void;
   onOpenDrums: () => void;
-  onOpenDevice: () => void;
   sendCC: (command: CCCommand | CCCommand[]) => void;
 }
 
@@ -41,17 +38,16 @@ function tunerBtnClass(open: boolean): string {
 }
 
 /**
- * Sticky top bar owning the non-patch file + device actions (import/export,
- * device load/save-as, patch manager, connect/close) and the session status
- * readout, split out of the deck so the bottom deck holds only patch edits.
+ * Sticky top bar owning the non-patch device actions (device load/save-as,
+ * patch manager incl. .prst file import/export, connect/close) and the
+ * session status readout, split out of the deck so the bottom deck holds
+ * only patch edits.
  */
 export function BoardTopBar({
   connected,
   currentSlot,
   firmware,
   pushProgress,
-  onImportFile,
-  onExportRequest,
   onLoadRequest,
   onPushRequest,
   onOpenPatchManager,
@@ -61,10 +57,8 @@ export function BoardTopBar({
   onOpenGuide,
   onOpenLooper,
   onOpenDrums,
-  onOpenDevice,
   sendCC,
 }: BoardTopBarProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   // Device tuner toggle (CC58). Local best-effort state: the pedal doesn't
   // report tuner visibility, so a front-panel close can drift this until the
   // next click resyncs it.
@@ -76,17 +70,6 @@ export function BoardTopBar({
   if (firmware) firmwareTitle = `GP-200 firmware ${firmware}`;
   let dotClass = 'deck-dot';
   if (connected) dotClass = 'deck-dot on';
-
-  function handleFilePick(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (loaded) => {
-      onImportFile(new Uint8Array(loaded.target!.result as ArrayBuffer));
-    };
-    reader.readAsArrayBuffer(file);
-    event.target.value = ''; // allow re-importing the same file
-  }
 
   let syncClass = 'deck-sync';
   if (pushProgress && pushProgress.phase === 'done') syncClass = 'deck-sync done';
@@ -139,47 +122,13 @@ export function BoardTopBar({
         <button
           type="button"
           className="deck-btn"
-          title="Device-global settings: footswitch mode/targets, Auto Cab Match"
-          onClick={onOpenDevice}
+          title="Browse device patches · import/export .prst files"
+          onClick={onOpenPatchManager}
         >
-          SETUP
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".prst"
-          className="hidden"
-          aria-hidden="true"
-          tabIndex={-1}
-          onChange={handleFilePick}
-        />
-        <button
-          type="button"
-          className="deck-btn"
-          title="Load a .prst preset file"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          IMPORT
-        </button>
-        <button
-          type="button"
-          className="deck-btn"
-          disabled
-          title="Export is disabled for now"
-          onClick={onExportRequest}
-        >
-          EXPORT
+          PATCHES
         </button>
         {connected && (
           <>
-            <button
-              type="button"
-              className="deck-btn"
-              title="Browse and manage all device patches"
-              onClick={onOpenPatchManager}
-            >
-              PATCHES
-            </button>
             <button type="button" className="deck-btn" onClick={onLoadRequest}>
               LOAD
             </button>

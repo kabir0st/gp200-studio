@@ -8,7 +8,6 @@ import { PedalBoard } from '@/components/board/PedalBoard';
 import { isWidePedal, isWideSlot, splitRows } from '@/components/board/boardLayout';
 import { AudioEngineProvider } from '@/components/AudioEngineProvider';
 import { defaultLooperBindings } from '@/core/looperBindings';
-import { defaultDeviceSettings } from '@/core/deviceSettings';
 import type { LooperApi } from '@/hooks/useLooper';
 
 // Minimal looper stub: the smoke tests never open the Loop Station drawer, so
@@ -73,8 +72,6 @@ function renderBoard(overrides: Partial<Parameters<typeof PedalBoard>[0]> = {}) 
     onVolumeChange: vi.fn(),
     onPanChange: vi.fn(),
     onTempoChange: vi.fn(),
-    onImportFile: vi.fn(),
-    onExportRequest: vi.fn(),
     onCloseRequest: vi.fn(),
     onFxSendChange: vi.fn(),
     onFxReturnChange: vi.fn(),
@@ -97,11 +94,6 @@ function renderBoard(overrides: Partial<Parameters<typeof PedalBoard>[0]> = {}) 
     sendCC: vi.fn(),
     ccChannel: 0,
     onCcChannelChange: vi.fn(),
-    deviceSettings: defaultDeviceSettings,
-    onDeviceModeChange: vi.fn(),
-    onDeviceTargetChange: vi.fn(),
-    onDeviceComboChange: vi.fn(),
-    onDeviceAutoCabChange: vi.fn(),
     onEnableAudio: vi.fn(),
     audioStarting: false,
     onConnectRequest: vi.fn(),

@@ -27,6 +27,8 @@ function renderSheet(overrides: Partial<Parameters<typeof PatchManagerSheet>[0]>
     onImportToSlot: vi.fn().mockResolvedValue(undefined),
     onRenameSlot: vi.fn().mockResolvedValue(undefined),
     onRefreshNames: vi.fn(),
+    onImportFile: vi.fn(),
+    onExportRequest: vi.fn(),
     ...overrides,
   };
   const utils = render(<PatchManagerSheet {...props} />);
@@ -68,6 +70,15 @@ describe('PatchManagerSheet', () => {
     renderSheet({ connected: false });
     const activate = screen.getByText('ACTIVATE').closest('button');
     expect(activate?.disabled).toBe(true);
+  });
+
+  it('editor-file export works offline and closes the sheet first', () => {
+    const { props } = renderSheet({ connected: false });
+    const exportButton = screen.getByText('EXPORT .PRST').closest('button');
+    expect(exportButton?.disabled).toBe(false);
+    fireEvent.click(exportButton!);
+    expect(props.onClose).toHaveBeenCalled();
+    expect(props.onExportRequest).toHaveBeenCalled();
   });
 
   it('shows bulk progress with a cancel control', () => {

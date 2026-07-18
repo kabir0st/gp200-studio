@@ -15,7 +15,6 @@ import {
   ctrlActionForFs,
   defaultDeviceSettings,
   loadDeviceSettings,
-  saveDeviceSettings,
   type DeviceSettings,
 } from '@/core/deviceSettings';
 import { useLooperTriggers } from '@/hooks/useLooperTriggers';
@@ -95,17 +94,13 @@ function App() {
     saveLooperStore(looperBindings, looperTriggers.triggers);
   }, [looperBindings, looperTriggers.triggers]);
 
-  // Device-global settings model (FS mode/targets/combos, Auto Cab Match).
-  // The protocol is write-only, so this is "what the app last set", persisted
-  // locally and pushed live per edit while connected.
-  const [deviceSettings, setDeviceSettings] = useState<DeviceSettings>(() => {
+  // Device-global settings model (FS mode/targets/combos). The protocol is
+  // write-only (no read-back), so this is "what the app last set", loaded
+  // from local storage; the looper takeover restores these values when it
+  // releases the footswitches.
+  const [deviceSettings] = useState<DeviceSettings>(() => {
     return loadDeviceSettings() ?? defaultDeviceSettings;
   });
-  const deviceSettingsRef = useRef(deviceSettings);
-  deviceSettingsRef.current = deviceSettings;
-  useEffect(() => {
-    saveDeviceSettings(deviceSettings);
-  }, [deviceSettings]);
 
   // Looper takeover: while active, the bound footswitches' TAP targets are
   // rewritten to their same-numbered CTRLs (and FS mode to User) so stomps
@@ -127,10 +122,9 @@ function App() {
   }
 
   function restoreFsTakeover() {
-    const settings = deviceSettingsRef.current;
-    midiDevice.sendFsMode(settings.fsMode);
+    midiDevice.sendFsMode(deviceSettings.fsMode);
     for (const fs of takeoverFsRef.current) {
-      midiDevice.sendFsTarget(fs, 'tap', settings.taps[fs - 1]);
+      midiDevice.sendFsTarget(fs, 'tap', deviceSettings.taps[fs - 1]);
     }
     console.log('[GP-200] looper takeover OFF: footswitch targets restored');
     takeoverFsRef.current = [];
@@ -144,39 +138,10 @@ function App() {
   }
 
   // Losing the connection ends the takeover state (the pedal keeps whatever
-  // targets were last written; the SETUP panel can re-send the real config).
+  // targets were last written until the next takeover restores them).
   useEffect(() => {
     if (midiDevice.status !== 'connected') setFsTakeover(false);
   }, [midiDevice.status]);
-
-  function handleDeviceModeChange(mode: number) {
-    setDeviceSettings((prev) => ({ ...prev, fsMode: mode }));
-    if (midiDevice.status === 'connected') midiDevice.sendFsMode(mode);
-  }
-
-  function handleDeviceTargetChange(fs: number, kind: 'tap' | 'hold', actionId: number) {
-    setDeviceSettings((prev) => {
-      const next = { ...prev, taps: [...prev.taps], holds: [...prev.holds] };
-      if (kind === 'tap') next.taps[fs - 1] = actionId;
-      else next.holds[fs - 1] = actionId;
-      return next;
-    });
-    if (midiDevice.status === 'connected') midiDevice.sendFsTarget(fs, kind, actionId);
-  }
-
-  function handleDeviceComboChange(comboIndex: number, actionId: number) {
-    setDeviceSettings((prev) => {
-      const combos = [...prev.combos];
-      combos[comboIndex] = actionId;
-      return { ...prev, combos };
-    });
-    if (midiDevice.status === 'connected') midiDevice.sendFsCombo(comboIndex, actionId);
-  }
-
-  function handleDeviceAutoCabChange(on: boolean) {
-    setDeviceSettings((prev) => ({ ...prev, autoCabMatch: on }));
-    if (midiDevice.status === 'connected') midiDevice.sendAutoCabMatch(on);
-  }
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -684,8 +649,6 @@ function App() {
             if (midiDevice.status === 'connected') midiDevice.sendPatchPan(pan & 0xFF);
           }}
           onTempoChange={(v) => { setPatchTempo(v); if (midiDevice.status === 'connected') midiDevice.sendPatchTempo(v); }}
-          onImportFile={handleFile}
-          onExportRequest={() => setShowExportDialog(true)}
           onCloseRequest={reset}
           onFxSendChange={(pos) => {
             const clamped = Math.max(1, Math.min(10, pos));
@@ -749,11 +712,6 @@ function App() {
           looperLearnNotice={looperTriggers.learnNotice}
           looperTakeover={fsTakeover}
           onLooperTakeoverChange={handleFsTakeoverChange}
-          deviceSettings={deviceSettings}
-          onDeviceModeChange={handleDeviceModeChange}
-          onDeviceTargetChange={handleDeviceTargetChange}
-          onDeviceComboChange={handleDeviceComboChange}
-          onDeviceAutoCabChange={handleDeviceAutoCabChange}
           sendCC={midiDevice.sendCC}
           ccChannel={midiDevice.ccChannel}
           onCcChannelChange={midiDevice.setCcChannel}
@@ -784,6 +742,8 @@ function App() {
         onImportToSlot={handleImportToSlot}
         onRenameSlot={handleRenameSlot}
         onRefreshNames={() => void midiDevice.refreshNames()}
+        onImportFile={handleFile}
+        onExportRequest={() => setShowExportDialog(true)}
       />
 
       {slotBrowserMode && (
@@ -805,14 +765,18 @@ function App() {
         />
       )}
 
-      <ExportPresetDialog
-        open={showExportDialog}
-        onClose={() => setShowExportDialog(false)}
-        initialName={preset.patchName}
-        initialAuthor={preset.author}
-        initialSlot={preset.slotIndex}
-        onConfirm={handleExportConfirm}
-      />
+      {/* Mounted only while open so the name/author/slot fields reseed from
+          the preset current at open time (they are useState-initialized). */}
+      {showExportDialog && (
+        <ExportPresetDialog
+          open
+          onClose={() => setShowExportDialog(false)}
+          initialName={preset.patchName}
+          initialAuthor={preset.author}
+          initialSlot={preset.slotIndex}
+          onConfirm={handleExportConfirm}
+        />
+      )}
     </div>
   );
 }

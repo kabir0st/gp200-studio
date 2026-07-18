@@ -316,10 +316,11 @@ export function Guide({ onBack }: GuideProps) {
 
           <Section id="patches" title="Managing patches">
             <p>
-              When a device is connected, the <strong>PATCHES</strong> button in
-              the top bar opens the patch manager, a side sheet listing all 256
-              device slots (64 banks × A–D) with names and search. Per slot you
-              can:
+              The <strong>PATCHES</strong> button in the top bar opens the patch
+              manager, a side sheet listing all 256 device slots (64 banks ×
+              A–D) with names and search. It also hosts the <strong>FILE</strong>{' '}
+              row for importing/exporting <code>.prst</code> files, which works
+              without a device. With a GP-200 connected, per slot you can:
             </p>
             <ul className="list-disc pl-5 space-y-1.5">
               <li><strong>Activate</strong>: switch the unit to that slot.</li>
@@ -335,7 +336,7 @@ export function Guide({ onBack }: GuideProps) {
               editor or write the current patch to a chosen slot.
             </p>
             <p className="text-text-muted text-caption">
-              Patch management is a device-connected feature, so it isn't pictured
+              Slot management is a device-connected feature, so it isn't pictured
               here; connect a GP-200 to see your slots.
             </p>
           </Section>
@@ -358,10 +359,12 @@ export function Guide({ onBack }: GuideProps) {
 
           <Section id="files" title="Importing & exporting files">
             <p>
-              <strong>IMPORT</strong> (top bar) accepts native GP-200{' '}
-              <code>.prst</code> presets. <strong>EXPORT</strong> names
-              the patch and downloads it as a <code>.prst</code>. Importing while
-              connected also previews the patch live on the device.
+              The <strong>FILE</strong> row inside the <strong>PATCHES</strong>{' '}
+              sheet handles files: <strong>IMPORT .PRST</strong> accepts native
+              GP-200 <code>.prst</code> presets, and <strong>EXPORT .PRST</strong>{' '}
+              names the current patch and downloads it as a <code>.prst</code>.
+              Importing while connected also previews the patch live on the
+              device.
             </p>
             <Shot
               src="/guide/09-export-dialog.png"

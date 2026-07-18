@@ -9,9 +9,7 @@ import { ControllerPanel } from '@/components/ControllerPanel';
 import { FootswitchPanel } from '@/components/FootswitchPanel';
 import { LooperPanel } from './LooperPanel';
 import { DrumsPanel } from './DrumsPanel';
-import { DevicePanel } from './DevicePanel';
 import type { CCCommand } from '@/core/ccControl';
-import type { DeviceSettings } from '@/core/deviceSettings';
 import type { LooperApi } from '@/hooks/useLooper';
 import type { LooperBindings } from '@/core/looperBindings';
 import type { LooperTriggerMap } from '@/core/looperTriggers';
@@ -47,14 +45,12 @@ export interface PedalBoardProps {
   connected: boolean;
   onLoadRequest: () => void;
   onSaveToActiveSlot?: () => void;
-  /* deck: metadata, live settings, file I/O, drawers */
+  /* deck: metadata, live settings, drawers */
   onPatchNameChange: (name: string) => void;
   onAuthorChange: (author: string) => void;
   onVolumeChange: (value: number) => void;
   onPanChange: (value: number) => void;
   onTempoChange: (bpm: number) => void;
-  onImportFile: (buffer: Uint8Array) => void;
-  onExportRequest: () => void;
   onCloseRequest: () => void;
   onFxSendChange: (pos: number) => void;
   onFxReturnChange: (pos: number) => void;
@@ -89,12 +85,6 @@ export interface PedalBoardProps {
   sendCC: (command: CCCommand | CCCommand[]) => void;
   ccChannel: number;
   onCcChannelChange: (channel: number) => void;
-  /* device-global settings (footswitch mode/targets, Auto Cab Match) */
-  deviceSettings: DeviceSettings;
-  onDeviceModeChange: (mode: number) => void;
-  onDeviceTargetChange: (fs: number, kind: 'tap' | 'hold', actionId: number) => void;
-  onDeviceComboChange: (comboIndex: number, actionId: number) => void;
-  onDeviceAutoCabChange: (on: boolean) => void;
   /* device session controls (deck-hosted; there is no separate status bar) */
   onConnectRequest: () => void;
   onDisconnect: () => void;
@@ -132,8 +122,6 @@ export function PedalBoard({
   onVolumeChange,
   onPanChange,
   onTempoChange,
-  onImportFile,
-  onExportRequest,
   onCloseRequest,
   onFxSendChange,
   onFxReturnChange,
@@ -159,11 +147,6 @@ export function PedalBoard({
   sendCC,
   ccChannel,
   onCcChannelChange,
-  deviceSettings,
-  onDeviceModeChange,
-  onDeviceTargetChange,
-  onDeviceComboChange,
-  onDeviceAutoCabChange,
   onConnectRequest,
   onDisconnect,
   onPushRequest,
@@ -176,7 +159,7 @@ export function PedalBoard({
   const [hoverSlot, setHoverSlot] = useState<number | null>(null);
   const [pinnedSlot, setPinnedSlot] = useState<number | null>(null);
   const [openDrawer, setOpenDrawer] =
-    useState<'fxloop' | 'exp' | 'ctrl' | 'looper' | 'drums' | 'device' | null>(null);
+    useState<'fxloop' | 'exp' | 'ctrl' | 'looper' | 'drums' | null>(null);
   const [pickerSlot, setPickerSlot] = useState<number | null>(null);
 
   // Report the looper drawer's open state up to App: the MIDI dispatcher tap
@@ -256,8 +239,6 @@ export function PedalBoard({
         currentSlot={currentSlot}
         firmware={firmware}
         pushProgress={pushProgress}
-        onImportFile={onImportFile}
-        onExportRequest={onExportRequest}
         onLoadRequest={onLoadRequest}
         onPushRequest={onPushRequest}
         onOpenPatchManager={onOpenPatchManager}
@@ -267,7 +248,6 @@ export function PedalBoard({
         onCloseRequest={onCloseRequest}
         onOpenLooper={() => setOpenDrawer('looper')}
         onOpenDrums={() => setOpenDrawer('drums')}
-        onOpenDevice={() => setOpenDrawer('device')}
         sendCC={sendCC}
       />
       <ChainStrip effects={preset.effects} />
@@ -393,21 +373,6 @@ export function PedalBoard({
           sendCC={sendCC}
           ccChannel={ccChannel}
           onCcChannelChange={onCcChannelChange}
-        />
-      </DeckDrawer>
-
-      <DeckDrawer
-        open={openDrawer === 'device'}
-        onClose={() => setOpenDrawer(null)}
-        title="Device Setup"
-      >
-        <DevicePanel
-          connected={connected}
-          settings={deviceSettings}
-          onModeChange={onDeviceModeChange}
-          onTargetChange={onDeviceTargetChange}
-          onComboChange={onDeviceComboChange}
-          onAutoCabChange={onDeviceAutoCabChange}
         />
       </DeckDrawer>
 

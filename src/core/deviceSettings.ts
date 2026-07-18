@@ -8,7 +8,9 @@
 // this model tracks "what the app last set" and persists it locally.
 //
 // Pure module: id tables, model shape, localStorage envelope. Sending lives
-// in useMidiSend; UI in components/board/DevicePanel.tsx.
+// in useMidiSend. The settings drawer UI was removed (write-only protocol,
+// no read-back to show); the model persists for the looper FS takeover,
+// which rewrites TAP targets and must restore the last-written values.
 
 /** FS action ids, verbatim from the fs-1-tap-all-changes capture sweep. */
 export const FS_ACTION = {
