@@ -5,8 +5,6 @@ import { useLooper } from '@/hooks/useLooper';
 import { useAudioEngine } from '@/components/AudioEngineProvider';
 import {
   defaultLooperBindings,
-  resolveFootswitch,
-  dispatchLooperAction,
   applyExp,
   type LooperBindings,
 } from '@/core/looperBindings';
@@ -78,14 +76,13 @@ function App() {
   const looperRef = useRef(looper);
   looperRef.current = looper;
 
-  // Whether the looper deck drawer is open (reported up from PedalBoard).
+  // Whether the looper dialog is open (reported up from PedalBoard).
   // Ref only, nothing renders from it: the MIDI tap reads it to decide if a
   // learned stomp is hijacked into a looper action or left to the pedal.
   const looperPanelOpenRef = useRef(false);
   const looperTriggers = useLooperTriggers({
     midiDevice,
     looperRef,
-    bindingsRef: looperBindingsRef,
     panelOpenRef: looperPanelOpenRef,
   });
 
@@ -102,45 +99,37 @@ function App() {
     return loadDeviceSettings() ?? defaultDeviceSettings;
   });
 
-  // Looper takeover: while active, the bound footswitches' TAP targets are
-  // rewritten to their same-numbered CTRLs (and FS mode to User) so stomps
-  // stop firing their normal function; closing the drawer restores the
-  // model's values. The applied switch list is remembered for exact restore.
-  const [fsTakeover, setFsTakeover] = useState(false);
-  const takeoverFsRef = useRef<number[]>([]);
+  // Looper takeover: while the Loop Station dialog is open, ALL eight
+  // footswitches' TAP targets are rewritten to their same-numbered CTRLs (and
+  // FS mode to User) so stomps stop firing their normal function; closing the
+  // dialog restores the model's values. It covers all eight because the
+  // learned triggers are keyed by action, not by switch number — the app never
+  // knows which physical switch the user chose to assign.
+  const FS_ALL = [1, 2, 3, 4, 5, 6, 7, 8];
+  const fsTakeoverRef = useRef(false);
 
   function applyFsTakeover() {
-    const bound = [1, 2, 3, 4, 5, 6, 7, 8].filter((fs) => {
-      return resolveFootswitch(looperBindingsRef.current, fs) !== null;
-    });
-    takeoverFsRef.current = bound;
+    fsTakeoverRef.current = true;
     midiDevice.sendFsMode(2); // User mode: TAP/HOLD targets are in effect
-    for (const fs of bound) {
+    for (const fs of FS_ALL) {
       midiDevice.sendFsTarget(fs, 'tap', ctrlActionForFs(fs));
     }
-    console.log(`[GP-200] looper takeover ON: FS ${bound.join(',')} → CTRL`);
+    console.log('[GP-200] looper takeover ON: FS 1-8 → CTRL');
   }
 
   function restoreFsTakeover() {
+    fsTakeoverRef.current = false;
     midiDevice.sendFsMode(deviceSettings.fsMode);
-    for (const fs of takeoverFsRef.current) {
+    for (const fs of FS_ALL) {
       midiDevice.sendFsTarget(fs, 'tap', deviceSettings.taps[fs - 1]);
     }
     console.log('[GP-200] looper takeover OFF: footswitch targets restored');
-    takeoverFsRef.current = [];
   }
 
-  function handleFsTakeoverChange(active: boolean) {
-    if (midiDevice.status !== 'connected') return;
-    setFsTakeover(active);
-    if (active) applyFsTakeover();
-    else restoreFsTakeover();
-  }
-
-  // Losing the connection ends the takeover state (the pedal keeps whatever
-  // targets were last written until the next takeover restores them).
+  // Losing the connection ends the takeover (the pedal keeps whatever targets
+  // were last written until the next takeover restores them).
   useEffect(() => {
-    if (midiDevice.status !== 'connected') setFsTakeover(false);
+    if (midiDevice.status !== 'connected') fsTakeoverRef.current = false;
   }, [midiDevice.status]);
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -301,20 +290,11 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [midiDevice.status]);
 
-  // Loop-station triggers: bind hardware footswitch presses and EXP-pedal
-  // movement to looper transport/params via the (editable) binding map. The
-  // callbacks read the ref mirrors so they stay registered once per connection.
-  useEffect(() => {
-    if (midiDevice.status !== 'connected') return;
-    midiDevice.setOnFootswitch((fsNumber, state) => {
-      if (!state) return; // act on press, not release
-      const action = resolveFootswitch(looperBindingsRef.current, fsNumber);
-      if (action) dispatchLooperAction(looperRef.current, action);
-    });
-    return () => midiDevice.setOnFootswitch(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [midiDevice.status]);
-
+  // Loop-station EXP binding. (Footswitches are NOT wired here: the GP-200
+  // doesn't emit the standard CC frames midiControlMap.ts hypothesizes, so
+  // stomps reach the looper through the MIDI-learn tap in useLooperTriggers.)
+  // The callback reads the ref mirrors so it stays registered once per
+  // connection.
   useEffect(() => {
     if (midiDevice.status !== 'connected') return;
     midiDevice.setOnExpPosition((value) => {
@@ -707,21 +687,21 @@ function App() {
           onLooperBindingsChange={setLooperBindings}
           onLooperDrawerOpenChange={(open) => {
             looperPanelOpenRef.current = open;
-            if (!open) {
-              looperTriggers.cancelLearn();
-              if (fsTakeover && midiDevice.status === 'connected') {
-                restoreFsTakeover();
-              }
-              setFsTakeover(false);
+            const connected = midiDevice.status === 'connected';
+            if (open) {
+              if (connected && !fsTakeoverRef.current) applyFsTakeover();
+              return;
             }
+            looperTriggers.cancelLearn();
+            if (connected && fsTakeoverRef.current) restoreFsTakeover();
+            fsTakeoverRef.current = false;
           }}
           looperTriggers={looperTriggers.triggers}
-          looperArmedFs={looperTriggers.armedFs}
+          looperArmedAction={looperTriggers.armedAction}
           onLooperArmLearn={looperTriggers.armLearn}
           onLooperClearTrigger={looperTriggers.clearTrigger}
+          onLooperClearAll={looperTriggers.clearAllTriggers}
           looperLearnNotice={looperTriggers.learnNotice}
-          looperTakeover={fsTakeover}
-          onLooperTakeoverChange={handleFsTakeoverChange}
           sendCC={midiDevice.sendCC}
           ccChannel={midiDevice.ccChannel}
           onCcChannelChange={midiDevice.setCcChannel}

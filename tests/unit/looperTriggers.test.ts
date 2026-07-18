@@ -55,10 +55,7 @@ function slotChangeFrame(slot: number, extra: Record<number, number> = {}): Uint
   });
 }
 
-const RECORD_FS1: LooperBindings = {
-  footswitches: { 1: { kind: 'recordToggle' } },
-  expTarget: null,
-};
+const NO_EXP: LooperBindings = { expTarget: null };
 
 function baseInput(overrides: Partial<LooperFrameInput> = {}): LooperFrameInput {
   return {
@@ -66,9 +63,8 @@ function baseInput(overrides: Partial<LooperFrameInput> = {}): LooperFrameInput 
     currentSlot: 5,
     suppressed: false,
     panelOpen: true,
-    armedFs: null,
-    triggers: { 1: { kind: 'toggle', block: 2 } },
-    bindings: RECORD_FS1,
+    armedAction: null,
+    triggers: { recordToggle: { kind: 'toggle', block: 2 } },
     lastMatchAt: new Map<string, number>(),
     now: 10_000,
     ...overrides,
@@ -139,17 +135,20 @@ describe('extractToggleState', () => {
 
 describe('findDuplicateTrigger', () => {
   const triggers: LooperTriggerMap = {
-    1: { kind: 'toggle', block: 2 },
-    2: { kind: 'cc', cc: 80 },
+    recordToggle: { kind: 'toggle', block: 2 },
+    playToggle: { kind: 'cc', cc: 80 },
   };
 
-  it('finds the other row bound to the same fingerprint', () => {
-    expect(findDuplicateTrigger(triggers, { kind: 'toggle', block: 2 }, 3)).toBe(1);
+  it('finds the other action assigned the same fingerprint', () => {
+    expect(findDuplicateTrigger(triggers, { kind: 'toggle', block: 2 }, 'trackNext'))
+      .toBe('recordToggle');
   });
 
-  it('ignores the row being (re-)learned and unbound fingerprints', () => {
-    expect(findDuplicateTrigger(triggers, { kind: 'toggle', block: 2 }, 1)).toBeNull();
-    expect(findDuplicateTrigger(triggers, { kind: 'toggle', block: 9 }, 3)).toBeNull();
+  it('ignores the action being (re-)assigned and unassigned fingerprints', () => {
+    expect(findDuplicateTrigger(triggers, { kind: 'toggle', block: 2 }, 'recordToggle'))
+      .toBeNull();
+    expect(findDuplicateTrigger(triggers, { kind: 'toggle', block: 9 }, 'trackNext'))
+      .toBeNull();
   });
 });
 
@@ -164,20 +163,24 @@ describe('processLooperFrame', () => {
     expect(echo).toEqual({ type: 'pass' });
     const cc = processLooperFrame(baseInput({
       suppressed: true,
-      armedFs: 3,
+      armedAction: 'trackNext',
       data: new Uint8Array([0xb0, 81, 127]),
     }));
-    expect(cc).toMatchObject({ type: 'learned', fs: 3, fp: { kind: 'cc', cc: 81 } });
+    expect(cc).toMatchObject({
+      type: 'learned',
+      action: 'trackNext',
+      fp: { kind: 'cc', cc: 81 },
+    });
   });
 
   it('learn wins over hijack and carries the inverted revert toggle', () => {
     const decision = processLooperFrame(baseInput({
-      armedFs: 4,
+      armedAction: 'trackPrev',
       data: toggleFrame(6, 1),
     }));
     expect(decision).toMatchObject({
       type: 'learned',
-      fs: 4,
+      action: 'trackPrev',
       fp: { kind: 'toggle', block: 6 },
       revertToggle: { block: 6, enabled: false },
     });
@@ -185,41 +188,41 @@ describe('processLooperFrame', () => {
 
   it('learning a sysex08 frame needs no revert toggle', () => {
     const decision = processLooperFrame(baseInput({
-      armedFs: 4,
+      armedAction: 'trackPrev',
       data: slotChangeFrame(5),
     }));
-    expect(decision).toMatchObject({ type: 'learned', fs: 4, revertToggle: null });
+    expect(decision).toMatchObject({
+      type: 'learned',
+      action: 'trackPrev',
+      revertToggle: null,
+    });
   });
 
-  it('rejects learning a fingerprint already bound to another row', () => {
-    const decision = processLooperFrame(baseInput({ armedFs: 4 }));
-    expect(decision).toEqual({ type: 'learnRejected', fs: 4, duplicateOfFs: 1 });
+  it('rejects learning a fingerprint already assigned to another action', () => {
+    const decision = processLooperFrame(baseInput({ armedAction: 'trackPrev' }));
+    expect(decision).toEqual({
+      type: 'learnRejected',
+      action: 'trackPrev',
+      duplicateOf: 'recordToggle',
+    });
   });
 
-  it('allows re-learning the same fingerprint onto its own row', () => {
-    const decision = processLooperFrame(baseInput({ armedFs: 1 }));
-    expect(decision).toMatchObject({ type: 'learned', fs: 1 });
+  it('allows re-learning the same fingerprint onto its own action', () => {
+    const decision = processLooperFrame(baseInput({ armedAction: 'recordToggle' }));
+    expect(decision).toMatchObject({ type: 'learned', action: 'recordToggle' });
   });
 
-  it('hijacks a learned + bound frame and reverts the stomped toggle', () => {
+  it('hijacks a learned frame and reverts the stomped toggle', () => {
     const decision = processLooperFrame(baseInput({ data: toggleFrame(2, 0) }));
     expect(decision).toMatchObject({
       type: 'hijacked',
-      fs: 1,
-      action: { kind: 'recordToggle' },
+      action: 'recordToggle',
       revertToggle: { block: 2, enabled: true },
     });
   });
 
-  it('passes when the looper panel is closed', () => {
+  it('passes when the looper dialog is closed', () => {
     const decision = processLooperFrame(baseInput({ panelOpen: false }));
-    expect(decision).toEqual({ type: 'pass' });
-  });
-
-  it("passes when the learned row's action is '-' (unbound)", () => {
-    const decision = processLooperFrame(baseInput({
-      bindings: { footswitches: {}, expTarget: null },
-    }));
     expect(decision).toEqual({ type: 'pass' });
   });
 
@@ -249,14 +252,14 @@ describe('looper store persistence', () => {
   });
 
   const triggers: LooperTriggerMap = {
-    1: { kind: 'toggle', block: 2 },
-    2: { kind: 'sysex08', sig: '00 01 02' },
-    3: { kind: 'cc', cc: 80 },
+    recordToggle: { kind: 'toggle', block: 2 },
+    playToggle: { kind: 'sysex08', sig: '00 01 02' },
+    trackNext: { kind: 'cc', cc: 80 },
   };
 
   it('round-trips bindings and triggers', () => {
-    saveLooperStore(RECORD_FS1, triggers);
-    expect(loadLooperStore()).toEqual({ bindings: RECORD_FS1, triggers });
+    saveLooperStore(NO_EXP, triggers);
+    expect(loadLooperStore()).toEqual({ bindings: NO_EXP, triggers });
   });
 
   it('returns null on missing or malformed data', () => {
@@ -267,16 +270,26 @@ describe('looper store persistence', () => {
     expect(loadLooperStore()).toBeNull();
   });
 
-  it('returns null when a stored action or fingerprint is invalid', () => {
-    saveLooperStore(RECORD_FS1, triggers);
+  it('discards a v2 (footswitch-keyed) store', () => {
+    localStorage.setItem('gp200:looper', JSON.stringify({
+      v: 2,
+      updatedAt: 0,
+      bindings: { footswitches: { 1: { kind: 'recordToggle' } }, expTarget: null },
+      triggers: { 1: { kind: 'toggle', block: 2 } },
+    }));
+    expect(loadLooperStore()).toBeNull();
+  });
+
+  it('returns null when a stored key or fingerprint is invalid', () => {
+    saveLooperStore(NO_EXP, triggers);
     const raw = JSON.parse(localStorage.getItem('gp200:looper')!);
-    raw.triggers[1] = { kind: 'toggle', block: 99 };
+    raw.triggers.recordToggle = { kind: 'toggle', block: 99 };
     localStorage.setItem('gp200:looper', JSON.stringify(raw));
     expect(loadLooperStore()).toBeNull();
 
-    saveLooperStore(RECORD_FS1, triggers);
+    saveLooperStore(NO_EXP, triggers);
     const raw2 = JSON.parse(localStorage.getItem('gp200:looper')!);
-    raw2.bindings.footswitches[1] = { kind: 'bogus' };
+    raw2.triggers.bogusAction = { kind: 'cc', cc: 1 };
     localStorage.setItem('gp200:looper', JSON.stringify(raw2));
     expect(loadLooperStore()).toBeNull();
   });
@@ -285,6 +298,6 @@ describe('looper store persistence', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('quota');
     });
-    expect(() => saveLooperStore(RECORD_FS1, triggers)).not.toThrow();
+    expect(() => saveLooperStore(NO_EXP, triggers)).not.toThrow();
   });
 });

@@ -11,7 +11,7 @@ import { LooperPanel } from './LooperPanel';
 import { DrumsPanel } from './DrumsPanel';
 import type { CCCommand } from '@/core/ccControl';
 import type { LooperApi } from '@/hooks/useLooper';
-import type { LooperBindings } from '@/core/looperBindings';
+import type { LooperActionKind, LooperBindings } from '@/core/looperBindings';
 import type { LooperTriggerMap } from '@/core/looperTriggers';
 import type { LearnNotice } from '@/hooks/useLooperTriggers';
 import { splitRows } from './boardLayout';
@@ -24,6 +24,7 @@ import { CableLayer } from './CableLayer';
 import { SwitcherUnit } from './SwitcherUnit';
 import { BoardTopBar } from './BoardTopBar';
 import { DeckDrawer } from './DeckDrawer';
+import { Dialog } from '@/components/ui/Dialog';
 import './board.css';
 
 export interface PedalBoardProps {
@@ -71,16 +72,14 @@ export interface PedalBoardProps {
   onLooperBindingsChange: (next: LooperBindings) => void;
   onEnableAudio: () => void;
   audioStarting: boolean;
-  /** Stomp-hijacking only applies while the looper drawer is open. */
+  /** Stomp-hijacking (and the FS takeover) only apply while the looper is open. */
   onLooperDrawerOpenChange: (open: boolean) => void;
   looperTriggers: LooperTriggerMap;
-  looperArmedFs: number | null;
-  onLooperArmLearn: (fs: number) => void;
-  onLooperClearTrigger: (fs: number) => void;
+  looperArmedAction: LooperActionKind | null;
+  onLooperArmLearn: (action: LooperActionKind) => void;
+  onLooperClearTrigger: (action: LooperActionKind) => void;
+  onLooperClearAll: () => void;
   looperLearnNotice: LearnNotice | null;
-  /** FS takeover: bound switches rewritten to CTRLs while the drawer is open */
-  looperTakeover: boolean;
-  onLooperTakeoverChange: (active: boolean) => void;
   /* built-in drums/looper/tuner remote (plain MIDI CC, src/core/ccControl.ts) */
   sendCC: (command: CCCommand | CCCommand[]) => void;
   ccChannel: number;
@@ -138,12 +137,11 @@ export function PedalBoard({
   audioStarting,
   onLooperDrawerOpenChange,
   looperTriggers,
-  looperArmedFs,
+  looperArmedAction,
   onLooperArmLearn,
   onLooperClearTrigger,
+  onLooperClearAll,
   looperLearnNotice,
-  looperTakeover,
-  onLooperTakeoverChange,
   sendCC,
   ccChannel,
   onCcChannelChange,
@@ -340,11 +338,31 @@ export function PedalBoard({
         />
       </DeckDrawer>
 
-      <DeckDrawer
+      {/* The loop station is a big centred dialog (same footprint as the effect
+          picker), not a bottom sheet: it's a full workspace, not a quick tweak. */}
+      <Dialog
         open={openDrawer === 'looper'}
         onClose={() => setOpenDrawer(null)}
         title="Loop Station"
+        maxWidth="max-w-4xl"
       >
+        <div className="flex items-center justify-between mb-4">
+          <span
+            className="font-mono-display text-label font-bold tracking-wider uppercase
+              text-text-secondary"
+          >
+            Loop Station
+          </span>
+          <button
+            type="button"
+            onClick={() => setOpenDrawer(null)}
+            aria-label="Close Loop Station"
+            className="ui-btn font-mono-display text-xs font-bold px-3 py-1.5 -my-1 rounded
+              text-text-muted hover:text-text-primary"
+          >
+            ✕
+          </button>
+        </div>
         <LooperPanel
           looper={looper}
           bindings={looperBindings}
@@ -352,15 +370,14 @@ export function PedalBoard({
           onEnableAudio={onEnableAudio}
           audioStarting={audioStarting}
           triggers={looperTriggers}
-          armedFs={looperArmedFs}
+          armedAction={looperArmedAction}
           onArmLearn={onLooperArmLearn}
           onClearTrigger={onLooperClearTrigger}
+          onClearAll={onLooperClearAll}
           learnNotice={looperLearnNotice}
           learnEnabled={connected}
-          takeoverActive={looperTakeover}
-          onTakeoverChange={onLooperTakeoverChange}
         />
-      </DeckDrawer>
+      </Dialog>
 
       <DeckDrawer
         open={openDrawer === 'drums'}

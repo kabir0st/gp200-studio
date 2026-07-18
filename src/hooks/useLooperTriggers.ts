@@ -127,7 +127,7 @@ export function useLooperTriggers(opts: UseLooperTriggersOpts): UseLooperTrigger
             midiRef.current.sendToggle(decision.revertToggle.block, decision.revertToggle.enabled);
           }
           if (looperRef.current.ready) {
-            dispatchLooperAction(looperRef.current, decision.action);
+            dispatchLooperAction(looperRef.current, { kind: decision.action });
           }
           return true;
         }
@@ -136,12 +136,12 @@ export function useLooperTriggers(opts: UseLooperTriggersOpts): UseLooperTrigger
       }
     });
     return () => setTap(null);
-  }, [status, looperRef, bindingsRef, panelOpenRef]);
+  }, [status, looperRef, panelOpenRef]);
 
   // Disarm when the device goes away; a stranded arm would otherwise bind the
   // first frame of the next session.
   useEffect(() => {
-    if (status !== 'connected') setArmedFs(null);
+    if (status !== 'connected') setArmedAction(null);
   }, [status]);
 
   useEffect(() => {
@@ -150,23 +150,37 @@ export function useLooperTriggers(opts: UseLooperTriggersOpts): UseLooperTrigger
     };
   }, []);
 
-  const armLearn = (fs: number) => {
+  const armLearn = (action: LooperActionKind) => {
     setLearnNotice(null);
-    setArmedFs((prev) => {
-      if (prev === fs) return null;
-      return fs;
+    setArmedAction((prev) => {
+      if (prev === action) return null;
+      return action;
     });
   };
 
-  const cancelLearn = () => setArmedFs(null);
+  const cancelLearn = () => setArmedAction(null);
 
-  const clearTrigger = (fs: number) => {
+  const clearTrigger = (action: LooperActionKind) => {
     setTriggers((prev) => {
       const next = { ...prev };
-      delete next[fs];
+      delete next[action];
       return next;
     });
   };
 
-  return { triggers, armedFs, armLearn, cancelLearn, clearTrigger, learnNotice };
+  const clearAllTriggers = () => {
+    setLearnNotice(null);
+    setArmedAction(null);
+    setTriggers({});
+  };
+
+  return {
+    triggers,
+    armedAction,
+    armLearn,
+    cancelLearn,
+    clearTrigger,
+    clearAllTriggers,
+    learnNotice,
+  };
 }

@@ -1,23 +1,20 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
-  defaultLooperBindings,
-  resolveFootswitch,
+  LOOPER_ACTION_KINDS,
   applyExp,
   dispatchLooperAction,
   type LooperControls,
   type LooperAction,
 } from '@/core/looperBindings';
 
-describe('resolveFootswitch', () => {
-  it('returns the bound action for a mapped footswitch', () => {
-    expect(resolveFootswitch(defaultLooperBindings, 1)).toEqual({ kind: 'recordToggle' });
-    expect(resolveFootswitch(defaultLooperBindings, 2)).toEqual({ kind: 'playToggle' });
-    expect(resolveFootswitch(defaultLooperBindings, 3)).toEqual({ kind: 'trackNext' });
-    expect(resolveFootswitch(defaultLooperBindings, 4)).toEqual({ kind: 'trackPrev' });
-  });
-
-  it('returns null for an unbound footswitch', () => {
-    expect(resolveFootswitch(defaultLooperBindings, 8)).toBeNull();
+describe('LOOPER_ACTION_KINDS', () => {
+  it('lists the four transport actions in panel order', () => {
+    expect(LOOPER_ACTION_KINDS).toEqual([
+      'recordToggle',
+      'playToggle',
+      'trackNext',
+      'trackPrev',
+    ]);
   });
 });
 

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { LooperApi } from '@/hooks/useLooper';
 import {
+  LOOPER_ACTION_KINDS,
   type LooperBindings,
-  type LooperAction,
+  type LooperActionKind,
   type ExpTarget,
 } from '@/core/looperBindings';
 import { Button } from '@/components/ui/Button';
@@ -17,44 +18,28 @@ interface LooperPanelProps {
   /** enable the AUDIO IN capture: the looper needs the shared context running */
   onEnableAudio: () => void;
   audioStarting: boolean;
-  /* MIDI-learn: bind hardware stomps to the rows below */
+  /* MIDI-learn: assign a hardware stomp to each transport action */
   triggers: LooperTriggerMap;
-  armedFs: number | null;
-  onArmLearn: (fs: number) => void;
-  onClearTrigger: (fs: number) => void;
+  armedAction: LooperActionKind | null;
+  onArmLearn: (action: LooperActionKind) => void;
+  onClearTrigger: (action: LooperActionKind) => void;
+  /** forget every assigned stomp at once */
+  onClearAll: () => void;
   learnNotice: LearnNotice | null;
   /** learning needs a connected GP-200 */
   learnEnabled: boolean;
-  /** FS takeover: rewrite bound switches' TAP targets to CTRLs on the pedal
-   *  so stomps stop firing their normal function while this panel is open */
-  takeoverActive: boolean;
-  onTakeoverChange: (active: boolean) => void;
 }
-
-const FS_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8];
 
 const SELECT_CLASS =
   'bg-bg-primary border border-border-active rounded px-2 py-1 ' +
   'font-mono-display text-caption text-text-secondary';
 
-// The four transport actions selectable per footswitch (plus "none" to unbind).
-type ActionKind = LooperAction['kind'] | 'none';
-const ACTION_LABELS: Record<ActionKind, string> = {
-  none: '-',
+const ACTION_LABELS: Record<LooperActionKind, string> = {
   recordToggle: 'Record / Stop',
   playToggle: 'Play / Stop',
   trackNext: 'Track +',
   trackPrev: 'Track -',
 };
-
-function actionKind(action: LooperAction | undefined): ActionKind {
-  return action?.kind ?? 'none';
-}
-
-function buildAction(kind: ActionKind): LooperAction | null {
-  if (kind === 'none') return null;
-  return { kind };
-}
 
 function fmtLength(sec: number | null): string {
   if (sec === null) return '- : -';
@@ -62,26 +47,34 @@ function fmtLength(sec: number | null): string {
 }
 
 function learnLabel(armed: boolean, learned: boolean): string {
-  if (armed) return '● STOMP';
-  if (learned) return '✓';
-  return 'LEARN';
+  if (armed) return '● STOMP NOW';
+  if (learned) return 'REASSIGN';
+  return 'ASSIGN STOMP';
 }
 
-function learnVariant(armed: boolean): 'danger' | 'ghost' {
+function learnVariant(armed: boolean): 'danger' | 'secondary' {
   if (armed) return 'danger';
-  return 'ghost';
-}
-
-function takeoverLabel(active: boolean): string {
-  if (active) return '● TAKEOVER ON';
-  return 'TAKEOVER';
+  return 'secondary';
 }
 
 function learnTitle(armed: boolean, learned: boolean, learnEnabled: boolean): string {
-  if (!learnEnabled) return 'Connect the GP-200 to learn';
-  if (armed) return 'Stomp the hardware switch now (click to cancel)';
-  if (learned) return 'Learned — click to re-learn';
-  return 'Arm, then stomp the hardware switch to bind it';
+  if (!learnEnabled) return 'Connect the GP-200 to assign a stomp';
+  if (armed) return 'Stomp any footswitch now (click to cancel)';
+  if (learned) return 'Assigned — click to assign a different switch';
+  return 'Click, then stomp any footswitch to assign it';
+}
+
+function assignStatus(armed: boolean, learned: boolean): string {
+  if (armed) return 'waiting for stomp…';
+  if (learned) return '✓ assigned';
+  return 'not assigned';
+}
+
+function assignStatusClass(armed: boolean, learned: boolean): string {
+  const base = 'font-mono-display text-caption';
+  if (armed) return `${base} text-accent-red`;
+  if (learned) return `${base} text-accent-amber`;
+  return `${base} text-text-muted`;
 }
 
 function recordLabel(recording: boolean): string {
@@ -129,13 +122,12 @@ export function LooperPanel({
   onEnableAudio,
   audioStarting,
   triggers,
-  armedFs,
+  armedAction,
   onArmLearn,
   onClearTrigger,
+  onClearAll,
   learnNotice,
   learnEnabled,
-  takeoverActive,
-  onTakeoverChange,
 }: LooperPanelProps) {
   const playBar = useRef<HTMLSpanElement>(null);
   // Track gains keyed by dynamic track id; default 1 for new tracks.
@@ -155,14 +147,6 @@ export function LooperPanel({
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [ready, getPlayhead]);
-
-  const updateFootswitch = (fs: number, kind: ActionKind) => {
-    const next = { ...bindings.footswitches };
-    const action = buildAction(kind);
-    if (action) next[fs] = action;
-    else delete next[fs];
-    onBindingsChange({ ...bindings, footswitches: next });
-  };
 
   const updateExpTarget = (target: ExpTarget) => {
     onBindingsChange({ ...bindings, expTarget: target });
@@ -227,10 +211,10 @@ export function LooperPanel({
             "Selected track level" controls.
           </li>
           <li>
-            Hardware bindings below: arm LEARN and stomp a footswitch to bind
-            it. While this panel is open, bound stomps drive the looper;
-            TAKEOVER rewrites those switches on the pedal so their normal
-            function stays silent (restored when the panel closes).
+            Stomp assignments below: click ASSIGN STOMP on an action, then step
+            on any footswitch — that switch is remembered on this machine. While
+            this dialog is open the pedal hands its footswitches over to the
+            looper; normal behaviour is restored when you close it.
           </li>
         </ul>
       </details>
@@ -313,8 +297,8 @@ export function LooperPanel({
       {/* Track rows: one per recorded take, newest last */}
       {looper.tracks.length === 0 && (
         <p className="font-mono-display text-caption text-text-muted">
-          No tracks yet — hit ● REC (or a bound footswitch) to record the first
-          loop; every record/stop cycle adds a track.
+          No tracks yet — hit ● REC (or an assigned footswitch) to record the
+          first loop; every record/stop cycle adds a track.
         </p>
       )}
       <div className="flex flex-col gap-2">
@@ -379,65 +363,41 @@ export function LooperPanel({
         })}
       </div>
 
-      {/* Bindings */}
+      {/* Stomp assignments: one row per transport action. The user never picks
+          a footswitch NUMBER — they arm an action and stomp whatever switch
+          they like, and the frame's fingerprint is cached for that action. */}
       <div className="pt-2 border-t border-border-active">
-        <div className="flex flex-wrap items-center gap-2 mb-2">
-          <p className="font-mono-display text-label text-text-muted uppercase tracking-widest">
-            Hardware bindings{' '}
-            <span className="normal-case tracking-normal">
-              (arm LEARN, then stomp the switch — bound switches drive the looper
-              while this panel is open)
-            </span>
-          </p>
-          <Button
-            variant={learnVariant(takeoverActive)}
-            size="sm"
-            disabled={!learnEnabled}
-            onClick={() => onTakeoverChange(!takeoverActive)}
-            title={
-              'Rewrite the bound switches on the pedal to their CTRLs while this ' +
-              'panel is open, so stomps stop patch-switching; restored on close'
-            }
-          >
-            {takeoverLabel(takeoverActive)}
-          </Button>
-        </div>
-        {takeoverActive && (
-          <p className="font-mono-display text-caption text-text-secondary mb-2">
-            Takeover active: FS mode set to User, bound switches point at their
-            CTRLs. Re-LEARN each switch once while active, then stomps only
-            drive the looper. Closing this panel restores your setup.
-          </p>
-        )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {FS_NUMBERS.map((fs) => {
-            const kind = actionKind(bindings.footswitches[fs]);
-            const learned = triggers[fs] !== undefined;
-            const armed = armedFs === fs;
-            const showNotice = learnNotice !== null && learnNotice.fs === fs;
+        <p className="font-mono-display text-label text-text-muted uppercase tracking-widest mb-1">
+          Stomp assignments
+        </p>
+        <p className="font-mono-display text-caption text-text-secondary mb-3">
+          Click ASSIGN STOMP, then step on any footswitch. While this dialog is
+          open the GP-200's footswitches belong to the looper — their normal
+          function is restored when you close it.
+        </p>
+        <div className="flex flex-col gap-2">
+          {LOOPER_ACTION_KINDS.map((action) => {
+            const learned = triggers[action] !== undefined;
+            const armed = armedAction === action;
+            const showNotice = learnNotice !== null && learnNotice.action === action;
             return (
-              <div key={fs} className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono-display text-label text-text-secondary w-10">
-                    FS{fs}
+              <div key={action} className="flex flex-col gap-1">
+                <div
+                  className="flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg
+                    border border-border-active bg-bg-hover"
+                >
+                  <span className="font-mono-display text-label text-text-secondary w-32">
+                    {ACTION_LABELS[action]}
                   </span>
-                  <select
-                    value={kind}
-                    onChange={(e) => updateFootswitch(fs, e.target.value as ActionKind)}
-                    className={`flex-1 ${SELECT_CLASS}`}
-                    aria-label={`FS${fs} looper action`}
-                  >
-                    {(Object.keys(ACTION_LABELS) as ActionKind[]).map((actionOption) => (
-                      <option key={actionOption} value={actionOption}>
-                        {ACTION_LABELS[actionOption]}
-                      </option>
-                    ))}
-                  </select>
+                  <span className={assignStatusClass(armed, learned)}>
+                    {assignStatus(armed, learned)}
+                  </span>
                   <Button
                     variant={learnVariant(armed)}
                     size="sm"
+                    className="ml-auto"
                     disabled={!learnEnabled}
-                    onClick={() => onArmLearn(fs)}
+                    onClick={() => onArmLearn(action)}
                     title={learnTitle(armed, learned, learnEnabled)}
                   >
                     {learnLabel(armed, learned)}
@@ -446,21 +406,32 @@ export function LooperPanel({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onClearTrigger(fs)}
-                      title="Forget the learned hardware switch"
+                      onClick={() => onClearTrigger(action)}
+                      title="Forget the switch assigned to this action"
                     >
                       ✕
                     </Button>
                   )}
                 </div>
                 {showNotice && (
-                  <p className="font-mono-display text-caption text-accent-red pl-12">
-                    Same stomp already bound to FS{learnNotice.duplicateOfFs} — not saved
+                  <p className="font-mono-display text-caption text-accent-red px-3">
+                    That switch is already assigned to {ACTION_LABELS[learnNotice.duplicateOf]} —
+                    not saved
                   </p>
                 )}
               </div>
             );
           })}
+        </div>
+        <div className="flex justify-end mt-2">
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={onClearAll}
+            title="Forget every assigned stomp"
+          >
+            CLEAR ASSIGNMENTS
+          </Button>
         </div>
         <div className="flex flex-wrap items-center gap-2 mt-3">
           <span className="font-mono-display text-label text-text-secondary w-16">EXP →</span>
