@@ -20,6 +20,15 @@ interface BoardTopBarProps {
   onOpenLooper: () => void;
   onOpenDrums: () => void;
   sendCC: (command: CCCommand | CCCommand[]) => void;
+  /** Step to another device slot: switches the pedal and pulls the patch. */
+  onActivateSlot: (slot: number) => void;
+}
+
+/** Device slots are 0..255, and the Patch −/+ steppers wrap across both ends. */
+const SLOT_COUNT = 256;
+
+function stepSlot(slot: number, delta: number): number {
+  return (slot + delta + SLOT_COUNT) % SLOT_COUNT;
 }
 
 function connectionLabel(connected: boolean, firmware: string | null): string {
@@ -59,6 +68,7 @@ export function BoardTopBar({
   onOpenLooper,
   onOpenDrums,
   sendCC,
+  onActivateSlot,
 }: BoardTopBarProps) {
   // Device tuner toggle (CC58). Local best-effort state: the pedal doesn't
   // report tuner visibility, so a front-panel close can drift this until the
@@ -75,22 +85,27 @@ export function BoardTopBar({
   let syncClass = 'deck-sync';
   if (pushProgress && pushProgress.phase === 'done') syncClass = 'deck-sync done';
 
+  const stepDisabled = !connected || currentSlot === null;
+
+  function handleToggleTuner() {
+    const next = !tunerOpen;
+    setTunerOpen(next);
+    sendCC(tunerShow(next));
+  }
+
+  function handlePrevPatch() {
+    if (currentSlot === null) return;
+    onActivateSlot(stepSlot(currentSlot, -1));
+  }
+
+  function handleNextPatch() {
+    if (currentSlot === null) return;
+    onActivateSlot(stepSlot(currentSlot, 1));
+  }
+
   return (
     <div className="board-topbar">
-      <div className="board-topbar-status">
-        <span className={dotClass} aria-hidden="true" />
-        <span className="deck-slot">{slotLabel}</span>
-        <span className="deck-conn" title={firmwareTitle}>
-          {connectionLabel(connected, firmware)}
-        </span>
-        {pushProgress && (
-          <span className={syncClass} role="status" aria-live="polite">
-            {syncLabel(pushProgress)}
-          </span>
-        )}
-      </div>
-
-      <div className="board-topbar-actions">
+      <div className="board-topbar-left">
         <button
           type="button"
           className="deck-btn"
@@ -114,15 +129,49 @@ export function BoardTopBar({
           className={tunerBtnClass(tunerOpen)}
           disabled={!connected}
           title="Open/close the tuner on the GP-200's screen"
-          onClick={() => {
-            const next = !tunerOpen;
-            setTunerOpen(next);
-            sendCC(tunerShow(next));
-          }}
+          onClick={handleToggleTuner}
         >
           <ActionIcon name="tuner" />
           <span className="db-label">TUNER</span>
         </button>
+      </div>
+
+      <div className="board-topbar-status">
+        <span className={dotClass} aria-hidden="true" />
+        <div className="deck-slot-stepper">
+          <button
+            type="button"
+            className="deck-btn quiet"
+            disabled={stepDisabled}
+            title="Previous patch"
+            aria-label="Previous patch"
+            onClick={handlePrevPatch}
+          >
+            <ActionIcon name="patch-prev" />
+          </button>
+          <span className="deck-slot">{slotLabel}</span>
+          <button
+            type="button"
+            className="deck-btn quiet"
+            disabled={stepDisabled}
+            title="Next patch"
+            aria-label="Next patch"
+            onClick={handleNextPatch}
+          >
+            <ActionIcon name="patch-next" />
+          </button>
+        </div>
+        <span className="deck-conn" title={firmwareTitle}>
+          {connectionLabel(connected, firmware)}
+        </span>
+        {pushProgress && (
+          <span className={syncClass} role="status" aria-live="polite">
+            {syncLabel(pushProgress)}
+          </span>
+        )}
+      </div>
+
+      <div className="board-topbar-actions">
         <button
           type="button"
           className="deck-btn"

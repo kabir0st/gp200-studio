@@ -37,6 +37,16 @@ const ACTIONS: Record<string, ActionSpec> = {
     d: '<rect x="2.4" y="2.8" width="11.2" height="4.2" rx="1.2" /><rect x="2.4" y="9" width="11.2" height="4.2" rx="1.2" /><path d="M4.8 4.9h1.4M4.8 11.1h1.4" />',
     color: '#8a6320',
   },
+  // step to the previous device slot
+  'patch-prev': {
+    d: '<path d="m9.6 3.4-4.4 4.6 4.4 4.6" />',
+    color: '#8a6320',
+  },
+  // step to the next device slot
+  'patch-next': {
+    d: '<path d="m6.4 3.4 4.4 4.6-4.4 4.6" />',
+    color: '#8a6320',
+  },
   // load from device: arrow down into the tray
   load: {
     d: '<path d="M8 2.4v6.8" /><path d="m5.2 6.6 2.8 2.8 2.8-2.8" /><path d="M3 12.6h10" />',

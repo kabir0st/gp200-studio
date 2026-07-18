@@ -67,6 +67,7 @@ export interface PedalBoardProps {
   onCtrlBlockToggle: (ctrlIndex: number, blockIndex: number, on: boolean) => void;
   onCtrlClear: (ctrlIndex: number) => void;
   onOpenPatchManager: () => void;
+  onActivateSlot: (slot: number) => void;
   onOpenGuide: () => void;
   /* loop station */
   looper: LooperApi;
@@ -131,6 +132,7 @@ export function PedalBoard({
   onCtrlBlockToggle,
   onCtrlClear,
   onOpenPatchManager,
+  onActivateSlot,
   onOpenGuide,
   looper,
   looperBindings,
@@ -265,6 +267,7 @@ export function PedalBoard({
         onLoadRequest={onLoadRequest}
         onPushRequest={onPushRequest}
         onOpenPatchManager={onOpenPatchManager}
+        onActivateSlot={onActivateSlot}
         onOpenGuide={onOpenGuide}
         onConnectRequest={onConnectRequest}
         onDisconnect={onDisconnect}

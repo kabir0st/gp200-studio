@@ -643,6 +643,7 @@ function App() {
           onCtrlBlockToggle={setCtrlBlock}
           onCtrlClear={(ctrlIndex) => setCtrlMask(ctrlIndex, 0)}
           onOpenPatchManager={handleOpenPatchManager}
+          onActivateSlot={handleActivateSlot}
           onOpenGuide={() => setView('guide')}
           looper={looper}
           looperBindings={looperBindings}

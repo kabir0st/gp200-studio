@@ -905,12 +905,30 @@
   border: 1px solid var(--chrome-border);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
+.board-view .board-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+/* centered between the two action groups: dot, [− slot +], connection, sync */
 .board-view .board-topbar-status {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   min-width: 0;
+  margin: 0 auto;
   font-family: var(--font-jetbrains-mono), monospace;
+}
+/* the Patch −/+ steppers read as one unit with the slot label between them */
+.board-view .deck-slot-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.board-view .deck-slot-stepper .deck-btn.quiet {
+  padding: 4px;
 }
 .board-view .board-topbar-actions {
   display: flex;
@@ -2082,18 +2100,23 @@
   }
   .board-view .board-topbar-status {
     flex-basis: 100%;
+    justify-content: flex-start;
+    margin: 0;
   }
+  .board-view .board-topbar-left,
   .board-view .board-topbar-actions {
     flex: 1 1 100%;
     flex-wrap: wrap;
     gap: 6px;
     margin-left: 0;
   }
+  .board-view .board-topbar-left .deck-btn,
   .board-view .board-topbar-actions .deck-btn {
     /* grow to share the row evenly; the basis is the natural icon+label width */
     flex: 1 0 auto;
     white-space: nowrap;
   }
+  .board-view .board-topbar-left .deck-btn.quiet,
   .board-view .board-topbar-actions .deck-btn.quiet {
     flex: 0 0 auto;
   }
