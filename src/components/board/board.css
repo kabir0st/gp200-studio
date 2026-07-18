@@ -895,11 +895,14 @@
 .board-view .board-topbar {
   position: relative;
   z-index: 20;
-  display: flex;
+  /* Three tracks, not space-between: the side groups have different widths, so
+     flex would park the patch cluster off-centre and shift it whenever an
+     action button appears (CONNECT vs LOAD/SAVE AS). An auto middle track with
+     equal flexible sides keeps it centred on the bar itself. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 18px;
-  flex-wrap: wrap;
   flex-shrink: 0;
   margin-bottom: 16px;
   padding: 10px 16px;
@@ -913,31 +916,55 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  justify-self: start;
 }
-/* centered between the two action groups: dot, name, [− slot +], conn, sync */
+/* Middle grid track: dot · [− name slot +] · connection+sync. Nested as another
+   1fr-auto-1fr grid so the dot and the (much wider) connection badge occupy
+   equal side tracks — otherwise they flank the stepper asymmetrically and the
+   cluster reads ~25px left of centre. */
 .board-view .board-topbar-status {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
   gap: 10px;
   min-width: 0;
-  margin: 0 auto;
   font-family: var(--font-jetbrains-mono), monospace;
+}
+.board-view .board-topbar-status > .deck-dot {
+  justify-self: end;
+}
+.board-view .board-topbar-conn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: start;
+  min-width: 0;
 }
 /* the deck anchors its popovers upward; from the top bar they must drop down */
 .board-view .board-topbar .deck-pop {
   top: calc(100% + 12px);
   bottom: auto;
 }
-/* the Patch −/+ steppers read as one unit with the slot label between them */
+/* the Patch −/+ steppers read as one unit with name + slot between them */
 .board-view .deck-slot-stepper {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 .board-view .deck-slot-stepper .deck-btn.quiet {
   padding: 4px;
+  flex: none;
+}
+/* Fixed width so a long patch name truncates rather than pushing the arrows
+   outward — the cluster must not resize as you step through patches. */
+.board-view .deck-patch-well {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  width: 230px;
+  min-width: 0;
 }
 .board-view .board-topbar-actions {
   display: flex;
@@ -991,6 +1018,10 @@
   letter-spacing: 0.08em;
   color: var(--chrome-text);
 }
+.board-view .deck-patch-well .deck-slot {
+  flex: none;
+  color: var(--chrome-muted);
+}
 .board-view .deck-name {
   font-family: var(--font-dm-sans), sans-serif;
   font-size: 15px;
@@ -1037,6 +1068,11 @@
   padding: 0;
   cursor: pointer;
   text-align: left;
+}
+.board-view .deck-patch-well .deck-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 .board-view .deck-name.editable:hover {
   text-decoration: underline dotted;
@@ -2102,22 +2138,29 @@
 
   /* top bar: status on its own line, actions wrapped into an even grid so
      every action is visible without a hidden horizontal swipe */
+  /* one column: the three groups stack instead of sharing a row */
   .board-view .board-topbar {
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px;
     padding: 8px 10px;
     margin-bottom: 10px;
   }
+  /* stacked: no need to reserve symmetric side tracks, just run left-to-right */
   .board-view .board-topbar-status {
-    flex-basis: 100%;
+    display: flex;
     justify-content: flex-start;
-    margin: 0;
+  }
+  .board-view .deck-patch-well {
+    width: auto;
+    flex: 1 1 auto;
+    justify-content: flex-start;
   }
   .board-view .board-topbar-left,
   .board-view .board-topbar-actions {
-    flex: 1 1 100%;
     flex-wrap: wrap;
     gap: 6px;
     margin-left: 0;
+    justify-self: stretch;
   }
   .board-view .board-topbar-left .deck-btn,
   .board-view .board-topbar-actions .deck-btn {

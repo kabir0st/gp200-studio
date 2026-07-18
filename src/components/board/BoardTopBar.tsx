@@ -158,15 +158,6 @@ export function BoardTopBar({
 
       <div className="board-topbar-status">
         <span className={dotClass} aria-hidden="true" />
-        <button
-          type="button"
-          className="deck-name editable"
-          title="Edit patch name & author"
-          aria-expanded={metaOpen}
-          onClick={handleToggleMeta}
-        >
-          {patchName || 'Untitled'}
-        </button>
         {metaOpen && (
           <DeckPop label="Patch name and author" onClose={handleCloseMeta}>
             <label className="dp-field">
@@ -206,7 +197,20 @@ export function BoardTopBar({
           >
             <ActionIcon name="patch-prev" />
           </button>
-          <span className="deck-slot">{slotLabel}</span>
+          {/* Fixed-width well: the name truncates instead of shoving the arrows
+              around, so the whole cluster stays put as patches change. */}
+          <span className="deck-patch-well">
+            <button
+              type="button"
+              className="deck-name editable"
+              title="Edit patch name & author"
+              aria-expanded={metaOpen}
+              onClick={handleToggleMeta}
+            >
+              {patchName || 'Untitled'}
+            </button>
+            <span className="deck-slot">{slotLabel}</span>
+          </span>
           <button
             type="button"
             className="deck-btn quiet"
@@ -218,14 +222,16 @@ export function BoardTopBar({
             <ActionIcon name="patch-next" />
           </button>
         </div>
-        <span className="deck-conn" title={firmwareTitle}>
-          {connectionLabel(connected, firmware)}
-        </span>
-        {pushProgress && (
-          <span className={syncClass} role="status" aria-live="polite">
-            {syncLabel(pushProgress)}
+        <span className="board-topbar-conn">
+          <span className="deck-conn" title={firmwareTitle}>
+            {connectionLabel(connected, firmware)}
           </span>
-        )}
+          {pushProgress && (
+            <span className={syncClass} role="status" aria-live="polite">
+              {syncLabel(pushProgress)}
+            </span>
+          )}
+        </span>
       </div>
 
       <div className="board-topbar-actions">
