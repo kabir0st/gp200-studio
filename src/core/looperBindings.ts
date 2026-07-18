@@ -4,22 +4,25 @@
 //
 // Tracks are dynamic (every record→stop creates one), so actions carry no
 // track number: the four transport controls are record, play/stop, and
-// selection next/prev. Per-track operations (mute, clear, gain) stay
-// on-screen; the EXP pedal drives either the master level or the SELECTED
-// track's level.
+// selection next/prev. play/stop and the EXP pedal both act on the SELECTED
+// track — the ◀ ▶ switches pick the target, so a stomp never disturbs the
+// other tracks (the panel's own PLAY button is still the play-ALL control).
+// Per-track operations (mute, clear, gain) stay on-screen.
 
 export type LooperAction =
   | { kind: 'recordToggle' }   // record a NEW track / stop the recording
-  | { kind: 'playToggle' }     // play all / stop all
+  | { kind: 'playToggle' }     // play/stop the SELECTED track (not all)
+  | { kind: 'muteToggle' }     // mute/unmute the SELECTED track
   | { kind: 'trackNext' }
   | { kind: 'trackPrev' };
 
 export type LooperActionKind = LooperAction['kind'];
 
-/** The four transport actions, in the order the panel lists them. */
+/** The transport actions, in the order the panel lists them. */
 export const LOOPER_ACTION_KINDS: LooperActionKind[] = [
   'recordToggle',
   'playToggle',
+  'muteToggle',
   'trackNext',
   'trackPrev',
 ];
@@ -50,7 +53,8 @@ export function applyExp(value: number): number {
 // mocked in tests and so LooperApi satisfies it structurally.
 export interface LooperControls {
   toggleRecord: () => void;
-  togglePlayAll: () => void;
+  togglePlaySelected: () => void;
+  toggleMuteSelected: () => void;
   selectNextTrack: () => void;
   selectPrevTrack: () => void;
 }
@@ -62,7 +66,10 @@ export function dispatchLooperAction(looper: LooperControls, action: LooperActio
       looper.toggleRecord();
       break;
     case 'playToggle':
-      looper.togglePlayAll();
+      looper.togglePlaySelected();
+      break;
+    case 'muteToggle':
+      looper.toggleMuteSelected();
       break;
     case 'trackNext':
       looper.selectNextTrack();

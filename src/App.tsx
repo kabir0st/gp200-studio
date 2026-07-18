@@ -521,6 +521,24 @@ function App() {
     setDragOverIndex(index);
   }, []);
 
+  // Safety net for the drag state. The React onDragEnd on the board wrapper only
+  // fires if the event can bubble from the source pedal, and a cross-row move
+  // unmounts that pedal (the rows are separate parents). A window listener has no
+  // such dependency, so drag state can never stay stuck — which matters because a
+  // stuck dragIndex hides every cable on the board until reload.
+  useEffect(() => {
+    const clear = () => {
+      setDragIndex(null);
+      setDragOverIndex(null);
+    };
+    window.addEventListener('dragend', clear);
+    window.addEventListener('drop', clear);
+    return () => {
+      window.removeEventListener('dragend', clear);
+      window.removeEventListener('drop', clear);
+    };
+  }, []);
+
   // Shared by drag-and-drop and keyboard reordering. slotIndex (the immutable
   // PRST block identity) is preserved by reorderEffects; only array order changes.
   const moveSlot = useCallback((fromIndex: number, toIndex: number) => {

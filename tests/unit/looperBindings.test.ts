@@ -8,10 +8,11 @@ import {
 } from '@/core/looperBindings';
 
 describe('LOOPER_ACTION_KINDS', () => {
-  it('lists the four transport actions in panel order', () => {
+  it('lists the transport actions in panel order', () => {
     expect(LOOPER_ACTION_KINDS).toEqual([
       'recordToggle',
       'playToggle',
+      'muteToggle',
       'trackNext',
       'trackPrev',
     ]);
@@ -31,7 +32,8 @@ describe('applyExp', () => {
 function mockLooper(): LooperControls {
   return {
     toggleRecord: vi.fn(),
-    togglePlayAll: vi.fn(),
+    togglePlaySelected: vi.fn(),
+    toggleMuteSelected: vi.fn(),
     selectNextTrack: vi.fn(),
     selectPrevTrack: vi.fn(),
   };
@@ -41,7 +43,9 @@ describe('dispatchLooperAction', () => {
   it('routes each transport action to its method', () => {
     const cases: Array<[LooperAction, keyof LooperControls]> = [
       [{ kind: 'recordToggle' }, 'toggleRecord'],
-      [{ kind: 'playToggle' }, 'togglePlayAll'],
+      // Selected track only — a stomp must not disturb the other tracks.
+      [{ kind: 'playToggle' }, 'togglePlaySelected'],
+      [{ kind: 'muteToggle' }, 'toggleMuteSelected'],
       [{ kind: 'trackNext' }, 'selectNextTrack'],
       [{ kind: 'trackPrev' }, 'selectPrevTrack'],
     ];

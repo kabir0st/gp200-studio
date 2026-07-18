@@ -101,15 +101,28 @@ export function Pedal({
     />
   );
 
+  // data-flip-id: Flip matches captured state to live elements by identity unless
+  // given an id. A cross-row move remounts this pedal as a *different* DOM node
+  // (the two rows are separate parents), so without an id Flip can't reconcile it
+  // and — animating with absolute:true — strands it at an absolute position, out
+  // of flow: the board collapses and pedals overlap at stale coordinates.
+  // slotIndex is the immutable block identity, so it survives reordering.
   return (
     <article
       className={classes.join(' ')}
       style={bodyVars}
       data-chain={index}
       data-row={row}
+      data-flip-id={`pedal-${slot.slotIndex}`}
       draggable
       onDragStart={(e) => {
         e.dataTransfer.effectAllowed = 'move';
+        // Required: a dragstart that sets no data lets the browser abort the drag
+        // outright, after this handler has already set dragIndex. Nothing then
+        // fires dragend (the pedal unmounts on a cross-row move, so even the
+        // bubbled reset can't reach it) and the board stays ghosted with every
+        // cable hidden until reload.
+        e.dataTransfer.setData('text/plain', String(index));
         setDragging(true);
         onDragStart(index);
       }}

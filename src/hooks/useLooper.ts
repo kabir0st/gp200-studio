@@ -55,6 +55,10 @@ export interface LooperApi {
   toggleRecord: () => void;
   /** stop every playing track, or restart all recorded tracks together */
   togglePlayAll: () => void;
+  /** Play/stop the selected track only (the footswitch-bound action). */
+  togglePlaySelected: () => void;
+  /** Mute/unmute the selected track only (the footswitch-bound action). */
+  toggleMuteSelected: () => void;
   selectNextTrack: () => void;
   selectPrevTrack: () => void;
   selectTrack: (trackId: number) => void;
@@ -295,6 +299,18 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     }
   }, [patchTrack, startTrackPlayback, stopTrack]);
 
+  /**
+   * Play/stop ONLY the selected track — what the bound footswitch drives.
+   * Deliberately not togglePlayAll: a stomp acts on the track the ◀ ▶ switches
+   * have selected, leaving the rest of the loop playing underneath. Reads the
+   * ref, not state, because the MIDI tap holds a stable looper ref.
+   */
+  const togglePlaySelected = useCallback(() => {
+    const id = selectedTrackRef.current;
+    if (id === null) return;
+    togglePlay(id);
+  }, [togglePlay]);
+
   /** Stop everything, or restart every recorded track phase-locked. */
   const togglePlayAll = useCallback(() => {
     const playing = tracksRef.current.some((t) => t.state === 'playing');
@@ -341,6 +357,17 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     }
     patchTrack(id, { muted });
   }, [patchTrack]);
+
+  /** Mute/unmute ONLY the selected track — the footswitch counterpart of the
+   *  per-row MUTE button, same selected-track scope as togglePlaySelected.
+   *  Declared after setMute so the dep array isn't a TDZ reference. */
+  const toggleMuteSelected = useCallback(() => {
+    const id = selectedTrackRef.current;
+    if (id === null) return;
+    const track = tracksRef.current.find((t) => t.id === id);
+    if (!track) return;
+    setMute(id, !track.muted);
+  }, [setMute]);
 
   const resetTransportIfEmpty = useCallback(() => {
     let anyAudio = false;
@@ -444,6 +471,8 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     getPlayhead,
     toggleRecord,
     togglePlayAll,
+    togglePlaySelected,
+    toggleMuteSelected,
     selectNextTrack,
     selectPrevTrack,
     selectTrack,

@@ -256,7 +256,11 @@
 .board-view .board-row {
   display: flex;
   gap: 18px;
-  align-items: flex-end;
+  /* Bays stretch to the row's height (the pedal itself still sits bottom-centre,
+     via the bay's own align-items). A bay IS the drop target, so a bay that only
+     hugged its pedal gave short effects a short, unpredictable hit area and left
+     the space above them belonging to no slot at all. */
+  align-items: stretch;
   justify-content: space-evenly;
   flex-wrap: nowrap;
 }
@@ -270,11 +274,15 @@
    swapping an effect never shifts a neighbour sideways. Width is keyed to the
    slot's module (isWideSlot), which is stable.
 
-   Height is deliberately NOT reserved. Reserving each module's tallest possible
-   effect left up to ~140px of dead air above short pedals (the DLY bay reserved
-   442px for a 305px pedal), which read as a broken gap between the two rows.
-   Rows now hug their tallest current pedal; the trade is that swapping an effect
-   can nudge the row below it vertically. */
+   Height is deliberately NOT reserved per module. Reserving each module's tallest
+   possible effect (the old bayMinHeight) left up to ~140px of dead air above short
+   pedals (the DLY bay reserved 442px for a 305px pedal), which read as a broken gap
+   between the two rows. Rows hug their tallest *current* pedal instead.
+
+   The bay still stretches to that row height (see .board-row align-items), so every
+   drop target is full-height and uniform without any dead air. Don't set an explicit
+   height here: it reintroduces the gap. The trade remains that swapping an effect can
+   nudge the row below it vertically. */
 .board-view .pedal-bay {
   position: relative;
   display: flex;

@@ -24,6 +24,8 @@ const fakeLooper: LooperApi = {
   getPlayhead: () => 0,
   toggleRecord: vi.fn(),
   togglePlayAll: vi.fn(),
+  togglePlaySelected: vi.fn(),
+  toggleMuteSelected: vi.fn(),
   selectNextTrack: vi.fn(),
   selectPrevTrack: vi.fn(),
   selectTrack: vi.fn(),

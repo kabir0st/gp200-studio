@@ -36,7 +36,8 @@ const SELECT_CLASS =
 
 const ACTION_LABELS: Record<LooperActionKind, string> = {
   recordToggle: 'Record / Stop',
-  playToggle: 'Play / Stop',
+  playToggle: 'Play / Stop selected track',
+  muteToggle: 'Mute / Unmute selected track',
   trackNext: 'Track +',
   trackPrev: 'Track -',
 };

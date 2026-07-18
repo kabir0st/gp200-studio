@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type DragEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type DragEvent } from 'react';
 import type { GP200Preset, EffectSlot } from '@/core/types';
 import type { PushProgress } from '@/core/devicePush';
 import { getSlotModule } from '@/core/effectNames';
@@ -182,8 +182,15 @@ export function PedalBoard({
 
   const pickerEffect = preset.effects.find((slot) => slot.slotIndex === pickerSlot) ?? null;
 
-  const modules = preset.effects.map((e) => getSlotModule(e.slotIndex));
   const orderKey = preset.effects.map((e) => `${e.slotIndex}:${e.effectId}`).join(',');
+  // Memoised because CableLayer takes this as an effect dependency: rebuilt inline,
+  // a new array identity on every render made each hover/drag-over tear down the
+  // ResizeObserver and re-measure, scheduling a rAF and a ~460ms settle timeout each
+  // time. That thrash is what read as the board "glitching" while dragging.
+  const modules = useMemo(
+    () => preset.effects.map((e) => getSlotModule(e.slotIndex)),
+    [preset.effects],
+  );
 
   // FLIP: capture pedal positions before a reorder, then spring them to place
   const { scopeRef, capture } = useFlipReorder(orderKey);

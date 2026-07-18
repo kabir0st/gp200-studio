@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { Flip } from 'gsap/Flip';
 import { motionDurations, motionEase, prefersReducedMotion } from '@/lib/motion';
@@ -22,21 +22,72 @@ export function useFlipReorder<T extends HTMLElement = HTMLDivElement>(
 ) {
   const scopeRef = useRef<T | null>(null);
   const stateRef = useRef<Flip.FlipState | null>(null);
+  const tweenRef = useRef<gsap.core.Timeline | null>(null);
+
+  /**
+   * `absolute: true` takes the pedals out of flow for the duration of the tween.
+   * If a tween is interrupted (a second reorder lands mid-flight) the elements can
+   * keep that absolute positioning forever — the board collapses and the pedals
+   * pile up at stale coordinates. So every path out of an animation ends here.
+   */
+  const release = useCallback(() => {
+    const scope = scopeRef.current;
+    if (!scope) return;
+    gsap.set(scope.querySelectorAll(selector), {
+      clearProps: 'position,left,top,width,height,transform',
+    });
+    scope.querySelectorAll<HTMLElement>('.board-row').forEach((row) => {
+      row.style.removeProperty('height');
+    });
+  }, [selector]);
+
+  /**
+   * Hold each row open at its current height for the duration of the tween.
+   *
+   * `absolute: true` takes every pedal out of flow, and a bay reserves no height
+   * of its own (that reservation was removed because it left ~140px of dead air
+   * above short pedals). So the moment the pedals go absolute, the bays collapse
+   * to zero and the whole board implodes — measured live at 672px → 72px, with
+   * pedals piled up at stale coordinates. Pinning the height is what the old
+   * per-bay min-height was accidentally doing, minus the dead air at rest.
+   */
+  const lockRowHeights = useCallback(() => {
+    const scope = scopeRef.current;
+    if (!scope) return;
+    scope.querySelectorAll<HTMLElement>('.board-row').forEach((row) => {
+      row.style.height = `${row.getBoundingClientRect().height}px`;
+    });
+  }, []);
 
   const capture = useCallback(() => {
     const scope = scopeRef.current;
     if (!scope || prefersReducedMotion()) return;
+    // Never let two Flips overlap: the in-flight one still holds its targets
+    // absolute, so its state is already stale for the order we're about to commit.
+    if (tweenRef.current) {
+      tweenRef.current.kill();
+      tweenRef.current = null;
+      release();
+    }
     stateRef.current = Flip.getState(scope.querySelectorAll(selector));
-  }, [selector]);
+  }, [release, selector]);
 
   useLayoutEffect(() => {
     const state = stateRef.current;
     stateRef.current = null;
     if (!state) return;
-    Flip.from(state, {
+    // Measure before Flip.from: React has committed the new order and the pedals
+    // are still in flow, so this captures the true resting height of each row.
+    lockRowHeights();
+    tweenRef.current = Flip.from(state, {
       duration: motionDurations.base,
       ease: motionEase.out,
       absolute: true,
+      onComplete: () => {
+        tweenRef.current = null;
+        release();
+      },
+      onInterrupt: release,
       // a small settle so the pedal visibly "reacts" as it lands
       onEnter: (targets) =>
         gsap.fromTo(
@@ -45,7 +96,15 @@ export function useFlipReorder<T extends HTMLElement = HTMLDivElement>(
           { scale: 1, opacity: 1, duration: motionDurations.base, ease: motionEase.out },
         ),
     });
-  }, [orderKey]);
+  }, [lockRowHeights, orderKey, release]);
+
+  // A reorder that unmounts mid-tween must not leave the board absolutely positioned.
+  useEffect(() => {
+    return () => {
+      tweenRef.current?.kill();
+      tweenRef.current = null;
+    };
+  }, []);
 
   return { scopeRef, capture };
 }
