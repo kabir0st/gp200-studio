@@ -5,11 +5,11 @@
 // §4): effect-toggle stomps arrive as 0x12/0x10 toggle frames or 0x12/0x08
 // FX-state frames, and CTRL/bypass stomps arrive as 0x12/0x08 "same-slot
 // change" frames the dispatcher otherwise ignores. Instead of waiting for a
-// full USB capture, the LooperPanel lets the user ARM a footswitch row and
-// stomp: whatever frame arrives is fingerprinted here and becomes that row's
-// trigger. While the looper drawer is open, frames matching a learned + bound
-// row are consumed ("hijacked") into looper actions; everything else flows to
-// the normal dispatcher branches untouched.
+// full USB capture, the LooperPanel lets the user ARM one of the four transport
+// actions and stomp: whatever frame arrives is fingerprinted here and becomes
+// that action's trigger. While the looper dialog is open, frames matching a
+// learned action are consumed ("hijacked") into looper actions; everything else
+// flows to the normal dispatcher branches untouched.
 //
 // This module is pure: frame classification, the learn/hijack decision
 // function, and the localStorage envelope. All side effects (dispatching
@@ -17,9 +17,9 @@
 // src/hooks/useLooperTriggers.ts.
 
 import {
-  type LooperAction,
+  LOOPER_ACTION_KINDS,
+  type LooperActionKind,
   type LooperBindings,
-  resolveFootswitch,
 } from './looperBindings';
 import { FS_ON_THRESHOLD } from './midiControlMap';
 
@@ -31,8 +31,8 @@ export type TriggerFingerprint =
   | { kind: 'sysex08'; sig: string }
   | { kind: 'cc'; cc: number };
 
-/** footswitch number (1..8) → learned trigger */
-export type LooperTriggerMap = Record<number, TriggerFingerprint>;
+/** transport action → the stomp learned for it */
+export type LooperTriggerMap = Partial<Record<LooperActionKind, TriggerFingerprint>>;
 
 /** Two frames matching the same fingerprint within this window count as one
  *  stomp (sibling-frame suppression + mechanical switch bounce). */
@@ -126,24 +126,25 @@ export function fingerprintKey(fp: TriggerFingerprint): string {
   }
 }
 
-/** The footswitch (other than exceptFs) already bound to this fingerprint. */
+/** The action (other than exceptAction) already bound to this fingerprint. */
 export function findDuplicateTrigger(
   triggers: LooperTriggerMap,
   fp: TriggerFingerprint,
-  exceptFs: number,
-): number | null {
+  exceptAction: LooperActionKind,
+): LooperActionKind | null {
   const key = fingerprintKey(fp);
-  for (const [fsText, trigger] of Object.entries(triggers)) {
-    const fs = Number(fsText);
-    if (fs === exceptFs) continue;
-    if (fingerprintKey(trigger) === key) return fs;
+  for (const action of LOOPER_ACTION_KINDS) {
+    if (action === exceptAction) continue;
+    const trigger = triggers[action];
+    if (trigger !== undefined && fingerprintKey(trigger) === key) return action;
   }
   return null;
 }
 
-function ownerOfKey(triggers: LooperTriggerMap, key: string): number | null {
-  for (const [fsText, trigger] of Object.entries(triggers)) {
-    if (fingerprintKey(trigger) === key) return Number(fsText);
+function ownerOfKey(triggers: LooperTriggerMap, key: string): LooperActionKind | null {
+  for (const action of LOOPER_ACTION_KINDS) {
+    const trigger = triggers[action];
+    if (trigger !== undefined && fingerprintKey(trigger) === key) return action;
   }
   return null;
 }
@@ -167,12 +168,11 @@ export interface LooperFrameInput {
   currentSlot: number | null;
   /** True while suppressFxCountRef > 0: the frame is an echo of our own send. */
   suppressed: boolean;
-  /** Hijack only applies while the looper drawer is open. */
+  /** Hijack only applies while the looper dialog is open. */
   panelOpen: boolean;
-  /** Footswitch row armed for learning, or null. Learn wins over hijack. */
-  armedFs: number | null;
+  /** Action armed for learning, or null. Learn wins over hijack. */
+  armedAction: LooperActionKind | null;
   triggers: LooperTriggerMap;
-  bindings: LooperBindings;
   /** fingerprintKey → timestamp of the last consumed match (debounce clock). */
   lastMatchAt: ReadonlyMap<string, number>;
   now: number;
@@ -182,17 +182,16 @@ export type LooperFrameDecision =
   | { type: 'pass' }
   | {
       type: 'learned';
-      fs: number;
+      action: LooperActionKind;
       fp: TriggerFingerprint;
       key: string;
       revertToggle: RevertToggle | null;
     }
-  | { type: 'learnRejected'; fs: number; duplicateOfFs: number }
+  | { type: 'learnRejected'; action: LooperActionKind; duplicateOf: LooperActionKind }
   | {
       type: 'hijacked';
-      fs: number;
+      action: LooperActionKind;
       key: string;
-      action: LooperAction;
       revertToggle: RevertToggle | null;
     }
   | { type: 'debounced' };
@@ -213,14 +212,14 @@ export function processLooperFrame(input: LooperFrameInput): LooperFrameDecision
   // never self-emitted, so they stay live even during a suppression window.
   if (input.suppressed && fp.kind !== 'cc') return { type: 'pass' };
 
-  if (input.armedFs !== null) {
-    const duplicateOfFs = findDuplicateTrigger(input.triggers, fp, input.armedFs);
-    if (duplicateOfFs !== null) {
-      return { type: 'learnRejected', fs: input.armedFs, duplicateOfFs };
+  if (input.armedAction !== null) {
+    const duplicateOf = findDuplicateTrigger(input.triggers, fp, input.armedAction);
+    if (duplicateOf !== null) {
+      return { type: 'learnRejected', action: input.armedAction, duplicateOf };
     }
     return {
       type: 'learned',
-      fs: input.armedFs,
+      action: input.armedAction,
       fp,
       key: fingerprintKey(fp),
       revertToggle: revertFor(fp, input.data),
@@ -229,16 +228,14 @@ export function processLooperFrame(input: LooperFrameInput): LooperFrameDecision
 
   if (!input.panelOpen) return { type: 'pass' };
   const key = fingerprintKey(fp);
-  const fs = ownerOfKey(input.triggers, key);
-  if (fs === null) return { type: 'pass' };
-  const action = resolveFootswitch(input.bindings, fs);
-  if (action === null) return { type: 'pass' }; // row set to '-': pedal behaves normally
+  const action = ownerOfKey(input.triggers, key);
+  if (action === null) return { type: 'pass' };
 
   const last = input.lastMatchAt.get(key);
   if (last !== undefined && input.now - last < TRIGGER_DEBOUNCE_MS) {
     return { type: 'debounced' };
   }
-  return { type: 'hijacked', fs, key, action, revertToggle: revertFor(fp, input.data) };
+  return { type: 'hijacked', action, key, revertToggle: revertFor(fp, input.data) };
 }
 
 // ---------------------------------------------------------------------------
@@ -251,8 +248,9 @@ export function processLooperFrame(input: LooperFrameInput): LooperFrameDecision
 const STORE_KEY = 'gp200:looper';
 
 /** Bump when the envelope OR the sysex08 signature slice changes.
- *  v2: track-less LooperAction kinds (dynamic-track looper). */
-const STORE_VERSION = 2;
+ *  v2: track-less LooperAction kinds (dynamic-track looper).
+ *  v3: triggers keyed by action instead of footswitch number. */
+const STORE_VERSION = 3;
 
 export interface LooperStore {
   bindings: LooperBindings;
@@ -264,17 +262,8 @@ interface StoreEnvelope extends LooperStore {
   updatedAt: number;
 }
 
-const ACTION_KINDS = ['recordToggle', 'playToggle', 'trackNext', 'trackPrev'];
-
-function isValidFsKey(fsText: string): boolean {
-  const fs = Number(fsText);
-  return Number.isInteger(fs) && fs >= 1 && fs <= 8;
-}
-
-function isValidAction(value: unknown): value is LooperAction {
-  if (typeof value !== 'object' || value === null) return false;
-  const action = value as Partial<LooperAction>;
-  return typeof action.kind === 'string' && ACTION_KINDS.includes(action.kind);
+function isValidActionKey(text: string): boolean {
+  return (LOOPER_ACTION_KINDS as string[]).includes(text);
 }
 
 function isValidExpTarget(value: unknown): boolean {
@@ -287,11 +276,6 @@ function isValidExpTarget(value: unknown): boolean {
 function isValidBindings(value: unknown): value is LooperBindings {
   if (typeof value !== 'object' || value === null) return false;
   const bindings = value as Partial<LooperBindings>;
-  if (typeof bindings.footswitches !== 'object' || bindings.footswitches === null) return false;
-  for (const [fsText, action] of Object.entries(bindings.footswitches)) {
-    if (!isValidFsKey(fsText)) return false;
-    if (!isValidAction(action)) return false;
-  }
   return isValidExpTarget(bindings.expTarget);
 }
 
@@ -312,8 +296,8 @@ function isValidFingerprint(value: unknown): value is TriggerFingerprint {
 
 function isValidTriggers(value: unknown): value is LooperTriggerMap {
   if (typeof value !== 'object' || value === null) return false;
-  for (const [fsText, fp] of Object.entries(value)) {
-    if (!isValidFsKey(fsText)) return false;
+  for (const [actionText, fp] of Object.entries(value)) {
+    if (!isValidActionKey(actionText)) return false;
     if (!isValidFingerprint(fp)) return false;
   }
   return true;

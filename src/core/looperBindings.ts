@@ -1,5 +1,5 @@
 // Pure mapping from physical GP-200 controls (footswitches, EXP pedal) to loop
-// station actions. No Web Audio, no React, just the binding model + resolvers,
+// station actions. No Web Audio, no React, just the action model + resolvers,
 // so the glue in App.tsx and the LooperPanel share one testable source of truth.
 //
 // Tracks are dynamic (every record→stop creates one), so actions carry no
@@ -14,32 +14,32 @@ export type LooperAction =
   | { kind: 'trackNext' }
   | { kind: 'trackPrev' };
 
+export type LooperActionKind = LooperAction['kind'];
+
+/** The four transport actions, in the order the panel lists them. */
+export const LOOPER_ACTION_KINDS: LooperActionKind[] = [
+  'recordToggle',
+  'playToggle',
+  'trackNext',
+  'trackPrev',
+];
+
 export type ExpTarget =
   | { kind: 'selectedTrackGain' }
   | { kind: 'masterGain' }
   | null;
 
+/** Footswitches aren't bound by number any more: a learned stomp is keyed by the
+ *  action it drives (see looperTriggers.ts), so only the EXP pedal needs a
+ *  binding of its own. */
 export interface LooperBindings {
-  /** footswitch number (1..8) → action */
-  footswitches: Record<number, LooperAction>;
   /** what the EXP pedal drives, if anything */
   expTarget: ExpTarget;
 }
 
 export const defaultLooperBindings: LooperBindings = {
-  footswitches: {
-    1: { kind: 'recordToggle' },
-    2: { kind: 'playToggle' },
-    3: { kind: 'trackNext' },
-    4: { kind: 'trackPrev' },
-  },
   expTarget: { kind: 'masterGain' },
 };
-
-/** The action bound to a footswitch, or null if unbound. */
-export function resolveFootswitch(bindings: LooperBindings, fsNumber: number): LooperAction | null {
-  return bindings.footswitches[fsNumber] ?? null;
-}
 
 /** Map a raw EXP position 0..127 to a 0..1 gain, clamped. */
 export function applyExp(value: number): number {
