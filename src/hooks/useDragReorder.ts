@@ -221,7 +221,12 @@ export function useDragReorder({
   useLayoutEffect(() => {
     if (from !== null || !clearPendingRef.current) return;
     clearPendingRef.current = false;
-    gsap.set(rowsRef.current, { clearProps: 'all' });
+    // Only the properties these tweens write — never 'all'. The same inline
+    // style carries React-owned CSS custom properties (each row's --body/--ink/
+    // --led palette); 'all' strips those too and React never puts them back,
+    // because its virtual model still believes it set them. Symptom was every
+    // row turning grey after the first drag.
+    gsap.set(rowsRef.current, { clearProps: 'transform,boxShadow,zIndex,position' });
   }, [from]);
 
   useEffect(() => {
