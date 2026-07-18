@@ -31,7 +31,7 @@ interface ShotProps {
 /** A screenshot figure, full-width within the content column. */
 function Shot({ src, alt, caption }: ShotProps) {
   // Resolve root-relative `/guide/*` paths against the Vite base URL so the
-  // images load under the app's subfolder deploy (afterhour.uk/gp200studio/).
+  // images load under the app's subfolder deploy (kabirtamari.com/gp200studio/).
   const resolvedSrc = `${import.meta.env.BASE_URL}${src.replace(/^\//, '')}`;
   return (
     <Card className="p-2 mt-5">

@@ -121,7 +121,7 @@ function ogHtml() {
     </div>
     <div class="bottom">
       <div class="chips">${CHIPS.map((c) => `<span class="chip">${c}</span>`).join('')}</div>
-      <div class="url">gp200.afterhour.uk</div>
+      <div class="url">kabirtamari.com/gp200studio</div>
     </div>
   </div>
   </body></html>`;

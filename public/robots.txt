@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://afterhour.uk/gp200studio/sitemap.xml
+Sitemap: https://kabirtamari.com/gp200studio/sitemap.xml

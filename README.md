@@ -14,7 +14,7 @@ No install. No account. No backend. Just plug in and play.
 [![Backend](https://img.shields.io/badge/backend-none-success)](#how-it-works)
 [![Browser](https://img.shields.io/badge/browser-Chrome%20%7C%20Edge-orange?logo=googlechrome&logoColor=white)](#browser-support)
 
-**[▶ Open the live app](https://afterhour.uk/gp200studio/)**
+**[▶ Open the live app](https://kabirtamari.com/gp200studio/)**
 
 <img src="public/guide/02-editor-board.png" alt="The GP200 Studio pedalboard editor" width="100%" />
 
