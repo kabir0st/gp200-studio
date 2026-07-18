@@ -9,12 +9,6 @@ import {
   type LooperBindings,
 } from '@/core/looperBindings';
 import { loadLooperStore, saveLooperStore } from '@/core/looperTriggers';
-import {
-  ctrlActionForFs,
-  defaultDeviceSettings,
-  loadDeviceSettings,
-  type DeviceSettings,
-} from '@/core/deviceSettings';
 import { useLooperTriggers } from '@/hooks/useLooperTriggers';
 import { PRSTDecoder } from '@/core/PRSTDecoder';
 import { PRSTEncoder } from '@/core/PRSTEncoder';
@@ -91,46 +85,14 @@ function App() {
     saveLooperStore(looperBindings, looperTriggers.triggers);
   }, [looperBindings, looperTriggers.triggers]);
 
-  // Device-global settings model (FS mode/targets/combos). The protocol is
-  // write-only (no read-back), so this is "what the app last set", loaded
-  // from local storage; the looper takeover restores these values when it
-  // releases the footswitches.
-  const [deviceSettings] = useState<DeviceSettings>(() => {
-    return loadDeviceSettings() ?? defaultDeviceSettings;
-  });
-
-  // Looper takeover: while the Loop Station dialog is open, ALL eight
-  // footswitches' TAP targets are rewritten to their same-numbered CTRLs (and
-  // FS mode to User) so stomps stop firing their normal function; closing the
-  // dialog restores the model's values. It covers all eight because the
-  // learned triggers are keyed by action, not by switch number — the app never
-  // knows which physical switch the user chose to assign.
-  const FS_ALL = [1, 2, 3, 4, 5, 6, 7, 8];
-  const fsTakeoverRef = useRef(false);
-
-  function applyFsTakeover() {
-    fsTakeoverRef.current = true;
-    midiDevice.sendFsMode(2); // User mode: TAP/HOLD targets are in effect
-    for (const fs of FS_ALL) {
-      midiDevice.sendFsTarget(fs, 'tap', ctrlActionForFs(fs));
-    }
-    console.log('[GP-200] looper takeover ON: FS 1-8 → CTRL');
-  }
-
-  function restoreFsTakeover() {
-    fsTakeoverRef.current = false;
-    midiDevice.sendFsMode(deviceSettings.fsMode);
-    for (const fs of FS_ALL) {
-      midiDevice.sendFsTarget(fs, 'tap', deviceSettings.taps[fs - 1]);
-    }
-    console.log('[GP-200] looper takeover OFF: footswitch targets restored');
-  }
-
-  // Losing the connection ends the takeover (the pedal keeps whatever targets
-  // were last written until the next takeover restores them).
-  useEffect(() => {
-    if (midiDevice.status !== 'connected') fsTakeoverRef.current = false;
-  }, [midiDevice.status]);
+  // NOTE: the Loop Station no longer rewrites the GP-200's global FootSwitch
+  // settings. It used to run a "takeover" on dialog open/close (FS mode → User,
+  // all targets → CTRL, then restore) but the protocol is write-only, so the
+  // restore guessed the pre-takeover FS mode and permanently clobbered it
+  // (Stomp → Patch). It was also unnecessary: in the pedal's normal Stomp mode
+  // a footswitch press emits the 0x12/0x10 effect-toggle frame the MIDI-learn
+  // tap already recognizes (see useLooperTriggers / classifyFrame). Leaving the
+  // pedal untouched is what makes assignment work.
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -687,14 +649,9 @@ function App() {
           onLooperBindingsChange={setLooperBindings}
           onLooperDrawerOpenChange={(open) => {
             looperPanelOpenRef.current = open;
-            const connected = midiDevice.status === 'connected';
-            if (open) {
-              if (connected && !fsTakeoverRef.current) applyFsTakeover();
-              return;
-            }
-            looperTriggers.cancelLearn();
-            if (connected && fsTakeoverRef.current) restoreFsTakeover();
-            fsTakeoverRef.current = false;
+            // Closing the dialog disarms any in-progress MIDI-learn so a stray
+            // stomp doesn't bind after the panel is gone.
+            if (!open) looperTriggers.cancelLearn();
           }}
           looperTriggers={looperTriggers.triggers}
           looperArmedAction={looperTriggers.armedAction}
