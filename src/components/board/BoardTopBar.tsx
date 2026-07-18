@@ -1,6 +1,7 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import type { PushProgress } from '@/core/devicePush';
 import { SysExCodec } from '@/core/SysExCodec';
+import { tunerShow, type CCCommand } from '@/core/ccControl';
 
 interface BoardTopBarProps {
   connected: boolean;
@@ -16,6 +17,11 @@ interface BoardTopBarProps {
   onDisconnect: () => void;
   onCloseRequest: () => void;
   onOpenGuide: () => void;
+  /* feature drawers + device tuner remote (moved up from the deck) */
+  onOpenLooper: () => void;
+  onOpenDrums: () => void;
+  onOpenDevice: () => void;
+  sendCC: (command: CCCommand | CCCommand[]) => void;
 }
 
 function connectionLabel(connected: boolean, firmware: string | null): string {
@@ -27,6 +33,11 @@ function connectionLabel(connected: boolean, firmware: string | null): string {
 function syncLabel(pushProgress: PushProgress): string {
   if (pushProgress.phase === 'done') return '✓ SENT';
   return `SYNC ${pushProgress.completed}/${pushProgress.total}`;
+}
+
+function tunerBtnClass(open: boolean): string {
+  if (open) return 'deck-btn primary';
+  return 'deck-btn';
 }
 
 /**
@@ -48,8 +59,16 @@ export function BoardTopBar({
   onDisconnect,
   onCloseRequest,
   onOpenGuide,
+  onOpenLooper,
+  onOpenDrums,
+  onOpenDevice,
+  sendCC,
 }: BoardTopBarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Device tuner toggle (CC58). Local best-effort state: the pedal doesn't
+  // report tuner visibility, so a front-panel close can drift this until the
+  // next click resyncs it.
+  const [tunerOpen, setTunerOpen] = useState(false);
 
   let slotLabel = '-';
   if (currentSlot !== null) slotLabel = SysExCodec.slotToLabel(currentSlot);
@@ -88,6 +107,43 @@ export function BoardTopBar({
       </div>
 
       <div className="board-topbar-actions">
+        <button
+          type="button"
+          className="deck-btn"
+          title="Multi-track loop station (records the GP-200's USB audio)"
+          onClick={onOpenLooper}
+        >
+          LOOP
+        </button>
+        <button
+          type="button"
+          className="deck-btn"
+          title="GP-200 built-in drum machine, looper & tuner (MIDI CC remote)"
+          onClick={onOpenDrums}
+        >
+          DRUMS
+        </button>
+        <button
+          type="button"
+          className={tunerBtnClass(tunerOpen)}
+          disabled={!connected}
+          title="Open/close the tuner on the GP-200's screen"
+          onClick={() => {
+            const next = !tunerOpen;
+            setTunerOpen(next);
+            sendCC(tunerShow(next));
+          }}
+        >
+          TUNER
+        </button>
+        <button
+          type="button"
+          className="deck-btn"
+          title="Device-global settings: footswitch mode/targets, Auto Cab Match"
+          onClick={onOpenDevice}
+        >
+          SETUP
+        </button>
         <input
           ref={fileInputRef}
           type="file"
@@ -108,7 +164,8 @@ export function BoardTopBar({
         <button
           type="button"
           className="deck-btn"
-          title="Download the current preset as a .prst file"
+          disabled
+          title="Export is disabled for now"
           onClick={onExportRequest}
         >
           EXPORT

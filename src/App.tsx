@@ -383,16 +383,26 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [midiDevice.status]);
 
+  // Stable reference (useCallback([]) inside useMidiDevice), safe to close over.
+  const saveToSlot = midiDevice.saveToSlot;
   const handleFile = useCallback((buffer: Uint8Array) => {
     try {
       const decoded = new PRSTDecoder(buffer).decode();
       loadPreset(decoded);
-      void sendPresetToDevice(decoded);
       setLoadError(null);
+      // Live-push the import, then immediately commit it to the active slot
+      // (the SAVE flow), so an import lands on the pedal permanently without
+      // a separate save step. Both no-op while disconnected; saveToSlot
+      // resolves the active slot from its own ref, so no stale closure here.
+      void (async () => {
+        await sendPresetToDevice(decoded);
+        await new Promise((settle) => setTimeout(settle, 250));
+        await saveToSlot(decoded.patchName);
+      })();
     } catch (err) {
       setLoadError(`Error loading file: ${err instanceof Error ? err.message : String(err)}`);
     }
-  }, [loadPreset, sendPresetToDevice]);
+  }, [loadPreset, sendPresetToDevice, saveToSlot]);
 
   function handleExportConfirm(name: string, author: string | undefined, slot: number) {
     if (!preset) return;

@@ -3,7 +3,6 @@ import type { GP200Preset } from '@/core/types';
 import { SysExCodec } from '@/core/SysExCodec';
 import { getEffectName, getSlotModule } from '@/core/effectNames';
 import { getEffectParams } from '@/core/effectParams';
-import { tunerShow, type CCCommand } from '@/core/ccControl';
 import { AudioMeters } from './AudioMeters';
 
 interface SwitcherUnitProps {
@@ -22,11 +21,6 @@ interface SwitcherUnitProps {
   onOpenFxLoop: () => void;
   onOpenExp: () => void;
   onOpenCtrl: () => void;
-  onOpenLooper: () => void;
-  onOpenDrums: () => void;
-  onOpenDevice: () => void;
-  /** device tuner remote (plain MIDI CC 58, src/core/ccControl.ts) */
-  sendCC: (command: CCCommand | CCCommand[]) => void;
 }
 
 interface LiveBar {
@@ -120,11 +114,6 @@ function DeckPop({ label, onClose, children, wide }: DeckPopProps) {
 
 /** Patch control deck: name/author · volume · pan/tempo · live readouts ·
  *  meters · routing drawers · save-to-active-slot. */
-function tunerBtnClass(open: boolean): string {
-  if (open) return 'deck-btn primary';
-  return 'deck-btn';
-}
-
 export function SwitcherUnit({
   preset,
   patchVolume,
@@ -141,16 +130,8 @@ export function SwitcherUnit({
   onOpenFxLoop,
   onOpenExp,
   onOpenCtrl,
-  onOpenLooper,
-  onOpenDrums,
-  onOpenDevice,
-  sendCC,
 }: SwitcherUnitProps) {
   const [openPop, setOpenPop] = useState<'meta' | 'settings' | null>(null);
-  // Device tuner toggle (CC58). Local best-effort state: the pedal doesn't
-  // report tuner visibility, so a front-panel close can drift this until the
-  // next click resyncs it.
-  const [tunerOpen, setTunerOpen] = useState(false);
 
   let slotLabel: string | null = null;
   if (currentSlot !== null) slotLabel = SysExCodec.slotToLabel(currentSlot);
@@ -337,43 +318,6 @@ export function SwitcherUnit({
           onClick={onOpenCtrl}
         >
           CTRL
-        </button>
-        <button
-          type="button"
-          className="deck-btn"
-          title="Multi-track loop station (records the GP-200's USB audio)"
-          onClick={onOpenLooper}
-        >
-          LOOP
-        </button>
-        <button
-          type="button"
-          className="deck-btn"
-          title="GP-200 built-in drum machine, looper & tuner (MIDI CC remote)"
-          onClick={onOpenDrums}
-        >
-          DRUMS
-        </button>
-        <button
-          type="button"
-          className="deck-btn"
-          title="Device-global settings: footswitch mode/targets, Auto Cab Match"
-          onClick={onOpenDevice}
-        >
-          SETUP
-        </button>
-        <button
-          type="button"
-          className={tunerBtnClass(tunerOpen)}
-          disabled={!connected}
-          title="Open/close the tuner on the GP-200's screen"
-          onClick={() => {
-            const next = !tunerOpen;
-            setTunerOpen(next);
-            sendCC(tunerShow(next));
-          }}
-        >
-          TUNER
         </button>
         {connected && (
           <button

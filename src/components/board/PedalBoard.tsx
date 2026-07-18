@@ -265,6 +265,10 @@ export function PedalBoard({
         onConnectRequest={onConnectRequest}
         onDisconnect={onDisconnect}
         onCloseRequest={onCloseRequest}
+        onOpenLooper={() => setOpenDrawer('looper')}
+        onOpenDrums={() => setOpenDrawer('drums')}
+        onOpenDevice={() => setOpenDrawer('device')}
+        sendCC={sendCC}
       />
       <ChainStrip effects={preset.effects} />
       <InfoBar
@@ -311,10 +315,6 @@ export function PedalBoard({
           onOpenFxLoop={() => setOpenDrawer('fxloop')}
           onOpenExp={() => setOpenDrawer('exp')}
           onOpenCtrl={() => setOpenDrawer('ctrl')}
-          onOpenLooper={() => setOpenDrawer('looper')}
-          onOpenDrums={() => setOpenDrawer('drums')}
-          onOpenDevice={() => setOpenDrawer('device')}
-          sendCC={sendCC}
         />
       </main>
 

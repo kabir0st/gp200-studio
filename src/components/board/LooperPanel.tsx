@@ -176,7 +176,10 @@ export function LooperPanel({
     return (
       <div className="text-center py-6">
         <p className="font-mono-display text-caption text-text-muted mb-3">
-          The loop station records the GP-200's USB audio. Enable audio capture to start.
+          The loop station records the GP-200's USB audio here in the browser
+          (separate from the pedal's built-in looper): record takes on top of
+          each other, every take becomes its own track, and everything stays in
+          sync with the first loop. Enable audio capture to start.
         </p>
         <Button onClick={onEnableAudio} disabled={audioStarting}>
           {audioStarting ? 'ENABLING…' : 'ENABLE AUDIO IN'}
@@ -195,6 +198,42 @@ export function LooperPanel({
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Collapsible primer on the dynamic-track workflow */}
+      <details className="group">
+        <summary
+          className="font-mono-display text-label text-text-muted uppercase
+            tracking-widest cursor-pointer select-none list-none"
+        >
+          <span className="group-open:hidden">▸ How the looper works</span>
+          <span className="hidden group-open:inline">▾ How the looper works</span>
+        </summary>
+        <ul
+          className="font-mono-display text-caption text-text-muted mt-2 pl-4
+            flex flex-col gap-1 list-disc"
+        >
+          <li>
+            Records the GP-200's USB audio here in the browser — separate from
+            the pedal's built-in looper (that one lives in the DRUMS drawer).
+          </li>
+          <li>
+            ● REC starts a NEW track; press again to stop. Your first take sets
+            the master loop length; every later take is stretched to a whole
+            number of loops and stays locked in time with it.
+          </li>
+          <li>
+            ▶ PLAY stops or restarts all tracks together. ◀ / ▶ move the
+            selected track (highlighted row) — that's the track the EXP pedal's
+            "Selected track level" controls.
+          </li>
+          <li>
+            Hardware bindings below: arm LEARN and stomp a footswitch to bind
+            it. While this panel is open, bound stomps drive the looper;
+            TAKEOVER rewrites those switches on the pedal so their normal
+            function stays silent (restored when the panel closes).
+          </li>
+        </ul>
+      </details>
+
       {/* Transport: the same four controls the footswitch bindings target */}
       <div className="flex items-center gap-2">
         <Button
