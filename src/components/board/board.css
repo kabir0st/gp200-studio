@@ -911,8 +911,9 @@
   gap: 8px;
   flex-wrap: wrap;
 }
-/* centered between the two action groups: dot, [− slot +], connection, sync */
+/* centered between the two action groups: dot, name, [− slot +], conn, sync */
 .board-view .board-topbar-status {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -920,6 +921,11 @@
   min-width: 0;
   margin: 0 auto;
   font-family: var(--font-jetbrains-mono), monospace;
+}
+/* the deck anchors its popovers upward; from the top bar they must drop down */
+.board-view .board-topbar .deck-pop {
+  top: calc(100% + 12px);
+  bottom: auto;
 }
 /* the Patch −/+ steppers read as one unit with the slot label between them */
 .board-view .deck-slot-stepper {

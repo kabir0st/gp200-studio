@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import type { GP200Preset } from '@/core/types';
 import { SysExCodec } from '@/core/SysExCodec';
 import { getEffectName, getSlotModule } from '@/core/effectNames';
 import { getEffectParams } from '@/core/effectParams';
 import { AudioMeters } from './AudioMeters';
 import { ActionIcon } from './ActionIcon';
+import { DeckPop } from './DeckPop';
 
 interface SwitcherUnitProps {
   preset: GP200Preset;
@@ -14,8 +15,6 @@ interface SwitcherUnitProps {
   currentSlot: number | null;
   connected: boolean;
   onSaveToActiveSlot?: () => void;
-  onPatchNameChange: (name: string) => void;
-  onAuthorChange: (author: string) => void;
   onVolumeChange: (value: number) => void;
   onPanChange: (value: number) => void;
   onTempoChange: (bpm: number) => void;
@@ -78,43 +77,9 @@ function panLabel(pan: number): string {
   return `R${pan}`;
 }
 
-interface DeckPopProps {
-  label: string;
-  onClose: () => void;
-  children: React.ReactNode;
-  /** Wider variant for popovers with side-by-side controls (sliders + buttons). */
-  wide?: boolean;
-}
-
-/** Small anchored popover above the deck: click-outside and Escape close it. */
-function DeckPop({ label, onClose, children, wide }: DeckPopProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    function onDown(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) onClose();
-    }
-    function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose();
-    }
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [onClose]);
-
-  let popClass = 'deck-pop';
-  if (wide) popClass = 'deck-pop wide';
-  return (
-    <div ref={ref} className={popClass} role="group" aria-label={label}>
-      {children}
-    </div>
-  );
-}
-
-/** Patch control deck: name/author · volume · pan/tempo · live readouts ·
- *  meters · routing drawers · save-to-active-slot. */
+/** Patch control deck: volume · pan/tempo · live readouts · meters · routing
+ *  drawers · save-to-active-slot. The patch name/author editor lives in the top
+ *  bar (BoardTopBar), next to the slot readout it belongs with. */
 export function SwitcherUnit({
   preset,
   patchVolume,
@@ -123,8 +88,6 @@ export function SwitcherUnit({
   currentSlot,
   connected,
   onSaveToActiveSlot,
-  onPatchNameChange,
-  onAuthorChange,
   onVolumeChange,
   onPanChange,
   onTempoChange,
@@ -132,7 +95,7 @@ export function SwitcherUnit({
   onOpenExp,
   onOpenCtrl,
 }: SwitcherUnitProps) {
-  const [openPop, setOpenPop] = useState<'meta' | 'settings' | null>(null);
+  const [openPop, setOpenPop] = useState<'settings' | null>(null);
 
   let slotLabel: string | null = null;
   if (currentSlot !== null) slotLabel = SysExCodec.slotToLabel(currentSlot);
@@ -144,13 +107,6 @@ export function SwitcherUnit({
   if (connected) volTitle = 'Patch volume (live device setting)';
   let settingsTitle = 'Connect the device to adjust (live-only settings)';
   if (connected) settingsTitle = 'Adjust patch pan / tempo';
-
-  function toggleMeta() {
-    setOpenPop((prev) => {
-      if (prev === 'meta') return null;
-      return 'meta';
-    });
-  }
 
   function toggleSettings() {
     setOpenPop((prev) => {
@@ -164,46 +120,6 @@ export function SwitcherUnit({
 
   return (
     <div className="deck">
-      <div className="deck-status">
-        <button
-          type="button"
-          className="deck-name editable"
-          title="Edit patch name & author"
-          aria-expanded={openPop === 'meta'}
-          onClick={toggleMeta}
-        >
-          {preset.patchName || 'Untitled'}
-        </button>
-        {openPop === 'meta' && (
-          <DeckPop label="Patch name and author" onClose={() => setOpenPop(null)}>
-            <label className="dp-field">
-              <span>
-                Patch name <b>{`${preset.patchName.length}/16`}</b>
-              </span>
-              <input
-                value={preset.patchName}
-                maxLength={16}
-                autoFocus
-                onChange={(event) => onPatchNameChange(event.target.value.slice(0, 16))}
-                onKeyDown={(event) => event.key === 'Enter' && setOpenPop(null)}
-              />
-            </label>
-            <label className="dp-field">
-              <span>
-                Author <b>{`${(preset.author ?? '').length}/16`}</b>
-              </span>
-              <input
-                value={preset.author ?? ''}
-                maxLength={16}
-                onChange={(event) => onAuthorChange(event.target.value.slice(0, 16))}
-                onKeyDown={(event) => event.key === 'Enter' && setOpenPop(null)}
-              />
-            </label>
-            <p className="dp-note">Shown on the device display. 16 characters max.</p>
-          </DeckPop>
-        )}
-      </div>
-
       <div className="deck-readouts">
         <div className="deck-vol" title={volTitle}>
           <span className="deck-vol-lbl">VOL</span>

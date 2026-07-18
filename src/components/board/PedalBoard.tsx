@@ -266,6 +266,10 @@ export function PedalBoard({
         pushProgress={pushProgress}
         onLoadRequest={onLoadRequest}
         onPushRequest={onPushRequest}
+        patchName={preset.patchName}
+        author={preset.author ?? ''}
+        onPatchNameChange={onPatchNameChange}
+        onAuthorChange={onAuthorChange}
         onOpenPatchManager={onOpenPatchManager}
         onActivateSlot={onActivateSlot}
         onOpenGuide={onOpenGuide}
@@ -330,8 +334,6 @@ export function PedalBoard({
           currentSlot={currentSlot}
           connected={connected}
           onSaveToActiveSlot={onSaveToActiveSlot}
-          onPatchNameChange={onPatchNameChange}
-          onAuthorChange={onAuthorChange}
           onVolumeChange={onVolumeChange}
           onPanChange={onPanChange}
           onTempoChange={onTempoChange}

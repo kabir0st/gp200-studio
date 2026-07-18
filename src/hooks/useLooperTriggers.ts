@@ -93,6 +93,16 @@ export function useLooperTriggers(opts: UseLooperTriggersOpts): UseLooperTrigger
 
       switch (decision.type) {
         case 'pass':
+          // While armed, an unclassified frame is the interesting case: the
+          // stomp reached us but classifyFrame didn't recognize its shape (all
+          // shapes there are hypotheses pending capture, docs/protocol-capture.md
+          // §4). Log it so the real footswitch frame can be identified.
+          if (armedActionRef.current !== null) {
+            console.log(
+              `[GP-200] looper learn: unclassified frame while armed for` +
+                ` ${armedActionRef.current} raw: ${hexOfBytes(data)}`,
+            );
+          }
           return false;
         case 'learned': {
           lastMatchAtRef.current.set(decision.key, Date.now());

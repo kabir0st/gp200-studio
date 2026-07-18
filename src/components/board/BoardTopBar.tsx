@@ -3,9 +3,14 @@ import type { PushProgress } from '@/core/devicePush';
 import { SysExCodec } from '@/core/SysExCodec';
 import { tunerShow, type CCCommand } from '@/core/ccControl';
 import { ActionIcon } from './ActionIcon';
+import { DeckPop } from './DeckPop';
 
 interface BoardTopBarProps {
   connected: boolean;
+  patchName: string;
+  author: string;
+  onPatchNameChange: (name: string) => void;
+  onAuthorChange: (author: string) => void;
   currentSlot: number | null;
   firmware: string | null;
   pushProgress: PushProgress | null;
@@ -55,6 +60,10 @@ function tunerBtnClass(open: boolean): string {
  */
 export function BoardTopBar({
   connected,
+  patchName,
+  author,
+  onPatchNameChange,
+  onAuthorChange,
   currentSlot,
   firmware,
   pushProgress,
@@ -74,6 +83,9 @@ export function BoardTopBar({
   // report tuner visibility, so a front-panel close can drift this until the
   // next click resyncs it.
   const [tunerOpen, setTunerOpen] = useState(false);
+  // Patch name/author editor, moved up from the deck so patch identity sits with
+  // the slot readout it belongs with.
+  const [metaOpen, setMetaOpen] = useState(false);
 
   let slotLabel = '-';
   if (currentSlot !== null) slotLabel = SysExCodec.slotToLabel(currentSlot);
@@ -91,6 +103,14 @@ export function BoardTopBar({
     const next = !tunerOpen;
     setTunerOpen(next);
     sendCC(tunerShow(next));
+  }
+
+  function handleToggleMeta() {
+    setMetaOpen((prev) => !prev);
+  }
+
+  function handleCloseMeta() {
+    setMetaOpen(false);
   }
 
   function handlePrevPatch() {
@@ -138,6 +158,43 @@ export function BoardTopBar({
 
       <div className="board-topbar-status">
         <span className={dotClass} aria-hidden="true" />
+        <button
+          type="button"
+          className="deck-name editable"
+          title="Edit patch name & author"
+          aria-expanded={metaOpen}
+          onClick={handleToggleMeta}
+        >
+          {patchName || 'Untitled'}
+        </button>
+        {metaOpen && (
+          <DeckPop label="Patch name and author" onClose={handleCloseMeta}>
+            <label className="dp-field">
+              <span>
+                Patch name <b>{`${patchName.length}/16`}</b>
+              </span>
+              <input
+                value={patchName}
+                maxLength={16}
+                autoFocus
+                onChange={(event) => onPatchNameChange(event.target.value.slice(0, 16))}
+                onKeyDown={(event) => event.key === 'Enter' && handleCloseMeta()}
+              />
+            </label>
+            <label className="dp-field">
+              <span>
+                Author <b>{`${author.length}/16`}</b>
+              </span>
+              <input
+                value={author}
+                maxLength={16}
+                onChange={(event) => onAuthorChange(event.target.value.slice(0, 16))}
+                onKeyDown={(event) => event.key === 'Enter' && handleCloseMeta()}
+              />
+            </label>
+            <p className="dp-note">Shown on the device display. 16 characters max.</p>
+          </DeckPop>
+        )}
         <div className="deck-slot-stepper">
           <button
             type="button"
