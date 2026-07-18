@@ -22,6 +22,7 @@ interface SwitcherUnitProps {
   onOpenExp: () => void;
   onOpenCtrl: () => void;
   onOpenLooper: () => void;
+  onOpenDrums: () => void;
 }
 
 interface LiveBar {
@@ -132,6 +133,7 @@ export function SwitcherUnit({
   onOpenExp,
   onOpenCtrl,
   onOpenLooper,
+  onOpenDrums,
 }: SwitcherUnitProps) {
   const [openPop, setOpenPop] = useState<'meta' | 'settings' | null>(null);
 
@@ -328,6 +330,14 @@ export function SwitcherUnit({
           onClick={onOpenLooper}
         >
           LOOP
+        </button>
+        <button
+          type="button"
+          className="deck-btn"
+          title="GP-200 built-in drum machine, looper & tuner (MIDI CC remote)"
+          onClick={onOpenDrums}
+        >
+          DRUMS
         </button>
         {connected && (
           <button

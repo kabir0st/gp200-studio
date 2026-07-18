@@ -634,6 +634,9 @@ function App() {
           onLooperArmLearn={looperTriggers.armLearn}
           onLooperClearTrigger={looperTriggers.clearTrigger}
           looperLearnNotice={looperTriggers.learnNotice}
+          sendCC={midiDevice.sendCC}
+          ccChannel={midiDevice.ccChannel}
+          onCcChannelChange={midiDevice.setCcChannel}
           onEnableAudio={() => void audioEngine.enable()}
           audioStarting={audioEngine.starting}
           onConnectRequest={() => void midiDevice.connect()}

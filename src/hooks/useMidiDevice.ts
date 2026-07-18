@@ -4,6 +4,7 @@ import { decodeControlChange } from '@/core/midiControlMap';
 import { isMidiMonitorEnabled } from '@/core/debugFlags';
 import { hexOfBytes } from '@/core/looperTriggers';
 import type { GP200Preset } from '@/core/types';
+import type { CCCommand } from '@/core/ccControl';
 import { presetNameCacheKey, loadCachedNames, saveCachedNames } from '@/core/presetNameCache';
 import { useMidiSend } from './useMidiSend';
 
@@ -83,6 +84,10 @@ export interface UseMidiDeviceReturn {
   sendRawChunks: (chunks: Uint8Array[], delayMs: number, onProgress?: (i: number, total: number) => void) => Promise<void>;
   sendExpParamSelect: (page: number, item: number, blockIndex: number, paramIdx: number) => void;
   sendExpMinMax: (page: number, item: number, min: number, max: number) => void;
+  // Plain MIDI CC (built-in looper / drums / tuner; src/core/ccControl.ts)
+  sendCC: (command: CCCommand | CCCommand[]) => void;
+  ccChannel: number;
+  setCcChannel: (channel: number) => void;
   setOnDeviceChange: (cb: ((slot: number | null) => void) | null) => void;
   setOnDeviceToggle: (cb: ((blockIndex: number, enabled: boolean) => void) | null) => void;
   // Callback returns whether the change was applied (drives FX-state suppression)
@@ -911,6 +916,9 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     sendPatchTempo: send.sendPatchTempo,
     sendExpParamSelect: send.sendExpParamSelect,
     sendExpMinMax: send.sendExpMinMax,
+    sendCC: send.sendCC,
+    ccChannel: send.ccChannel,
+    setCcChannel: send.setCcChannel,
     sendRawChunks: send.sendRawChunks,
     setOnDeviceChange: send.setOnDeviceChange,
     setOnDeviceToggle: send.setOnDeviceToggle,

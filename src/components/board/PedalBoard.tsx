@@ -8,6 +8,8 @@ import { FxLoopArrows } from '@/components/FxLoopArrows';
 import { ControllerPanel } from '@/components/ControllerPanel';
 import { FootswitchPanel } from '@/components/FootswitchPanel';
 import { LooperPanel } from './LooperPanel';
+import { DrumsPanel } from './DrumsPanel';
+import type { CCCommand } from '@/core/ccControl';
 import type { LooperApi } from '@/hooks/useLooper';
 import type { LooperBindings } from '@/core/looperBindings';
 import type { LooperTriggerMap } from '@/core/looperTriggers';
@@ -78,6 +80,10 @@ export interface PedalBoardProps {
   onLooperArmLearn: (fs: number) => void;
   onLooperClearTrigger: (fs: number) => void;
   looperLearnNotice: LearnNotice | null;
+  /* built-in drums/looper/tuner remote (plain MIDI CC, src/core/ccControl.ts) */
+  sendCC: (command: CCCommand | CCCommand[]) => void;
+  ccChannel: number;
+  onCcChannelChange: (channel: number) => void;
   /* device session controls (deck-hosted; there is no separate status bar) */
   onConnectRequest: () => void;
   onDisconnect: () => void;
@@ -137,6 +143,9 @@ export function PedalBoard({
   onLooperArmLearn,
   onLooperClearTrigger,
   looperLearnNotice,
+  sendCC,
+  ccChannel,
+  onCcChannelChange,
   onConnectRequest,
   onDisconnect,
   onPushRequest,
@@ -148,7 +157,8 @@ export function PedalBoard({
   // hover inspects, ⓘ pins; both keyed by slotIndex (stable across reorders)
   const [hoverSlot, setHoverSlot] = useState<number | null>(null);
   const [pinnedSlot, setPinnedSlot] = useState<number | null>(null);
-  const [openDrawer, setOpenDrawer] = useState<'fxloop' | 'exp' | 'ctrl' | 'looper' | null>(null);
+  const [openDrawer, setOpenDrawer] =
+    useState<'fxloop' | 'exp' | 'ctrl' | 'looper' | 'drums' | null>(null);
   const [pickerSlot, setPickerSlot] = useState<number | null>(null);
 
   // Report the looper drawer's open state up to App: the MIDI dispatcher tap
@@ -284,6 +294,7 @@ export function PedalBoard({
           onOpenExp={() => setOpenDrawer('exp')}
           onOpenCtrl={() => setOpenDrawer('ctrl')}
           onOpenLooper={() => setOpenDrawer('looper')}
+          onOpenDrums={() => setOpenDrawer('drums')}
         />
       </main>
 
@@ -347,6 +358,19 @@ export function PedalBoard({
           onClearTrigger={onLooperClearTrigger}
           learnNotice={looperLearnNotice}
           learnEnabled={connected}
+        />
+      </DeckDrawer>
+
+      <DeckDrawer
+        open={openDrawer === 'drums'}
+        onClose={() => setOpenDrawer(null)}
+        title="GP-200 Drums & Looper"
+      >
+        <DrumsPanel
+          connected={connected}
+          sendCC={sendCC}
+          ccChannel={ccChannel}
+          onCcChannelChange={onCcChannelChange}
         />
       </DeckDrawer>
 
