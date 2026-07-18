@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { usePreset } from '@/hooks/usePreset';
 import { useMidiDevice } from '@/hooks/useMidiDevice';
 import { useLooper } from '@/hooks/useLooper';
@@ -18,7 +18,11 @@ import type { GP200Preset } from '@/core/types';
 
 import { Landing } from '@/components/Landing';
 import { Guide } from '@/components/Guide';
-import { PedalBoard } from '@/components/board/PedalBoard';
+import { PedalBoard, type PedalBoardProps } from '@/components/board/PedalBoard';
+import { useIsPhone } from '@/hooks/useMediaQuery';
+
+// Lazy so the phone tree and its stylesheet stay out of the desktop bundle.
+const MobileShell = lazy(() => import('@/components/mobile/MobileShell'));
 import { DeviceSlotBrowser } from '@/components/DeviceSlotBrowser';
 import { FirmwareCompatDialog } from '@/components/FirmwareCompatDialog';
 import { ExportPresetDialog } from '@/components/ExportPresetDialog';
@@ -56,6 +60,7 @@ function App() {
     reset,
   } = usePreset();
   const midiDevice = useMidiDevice();
+  const isPhone = useIsPhone();
   const audioEngine = useAudioEngine();
   const looper = useLooper(audioEngine);
 
@@ -560,6 +565,108 @@ function App() {
     );
   }
 
+  // One props object feeds both the desktop board and the phone shell, so a new
+  // capability can't reach one tree and silently skip the other: adding a field
+  // to PedalBoardProps is a type error here until it's supplied, and both
+  // branches receive it. All logic stays here; the trees differ only in layout.
+  const boardProps: PedalBoardProps = {
+    preset: preset,
+    onToggle: handleSlotToggle,
+    onChangeEffect: handleSlotEffectChange,
+    onParamChange: handleSlotParamChange,
+    onMove: moveSlot,
+    dragIndex: dragIndex,
+    dragOverIndex: dragOverIndex,
+    onDragStart: handleDragStart,
+    onDragOver: handleDragOver,
+    onDrop: handleDrop,
+    patchVolume: patchVolume,
+    patchPan: patchPan,
+    patchTempo: patchTempo,
+    currentSlot: midiDevice.currentSlot,
+    connected: midiDevice.status === 'connected',
+    onLoadRequest: () => handleOpenBrowser('pull'),
+    onSaveToActiveSlot: midiDevice.status === 'connected' ? handleSaveToActiveSlot : undefined,
+    onPatchNameChange: setPatchName,
+    onAuthorChange: setAuthor,
+    onVolumeChange: (v) => { setPatchVolume(v); if (midiDevice.status === 'connected') midiDevice.sendPatchVolume(v); },
+    onPanChange: (pan) => {
+      setPatchPan(pan);
+      // sendPatchPan takes the device encoding: left pan = 256 + signed value.
+      if (midiDevice.status === 'connected') midiDevice.sendPatchPan(pan & 0xFF);
+    },
+    onTempoChange: (v) => { setPatchTempo(v); if (midiDevice.status === 'connected') midiDevice.sendPatchTempo(v); },
+    onCloseRequest: reset,
+    onFxSendChange: (pos) => {
+      const clamped = Math.max(1, Math.min(10, pos));
+      const nextReturn = Math.max(clamped, preset.fxLoopReturn);
+      const sendChanged = clamped !== preset.fxLoopSend;
+      const returnPushed = nextReturn !== preset.fxLoopReturn;
+      setFxLoopSend(clamped);
+      if (midiDevice.status === 'connected') {
+        const order = preset.effects.map((e) => e.slotIndex);
+        if (sendChanged) midiDevice.sendFxLoopMove(order, clamped, nextReturn, 'send');
+        if (returnPushed) midiDevice.sendFxLoopMove(order, clamped, nextReturn, 'return');
+      }
+    },
+    onFxReturnChange: (pos) => {
+      const clamped = Math.max(1, Math.min(10, pos));
+      const nextSend = Math.min(clamped, preset.fxLoopSend);
+      const returnChanged = clamped !== preset.fxLoopReturn;
+      const sendPushed = nextSend !== preset.fxLoopSend;
+      setFxLoopReturn(clamped);
+      if (midiDevice.status === 'connected') {
+        const order = preset.effects.map((e) => e.slotIndex);
+        if (returnChanged) midiDevice.sendFxLoopMove(order, nextSend, clamped, 'return');
+        if (sendPushed) midiDevice.sendFxLoopMove(order, nextSend, clamped, 'send');
+      }
+    },
+    onExpParamSelect: (page, item, blockIndex, paramIdx) => {
+      // Persist with the patch; also apply live when a device is attached
+      // (there is no live "unassign" message; that lands on SAVE).
+      setExpAssignment(page, item, { blockIndex, paramIndex: paramIdx });
+      if (midiDevice.status === 'connected' && blockIndex !== null) {
+        midiDevice.sendExpParamSelect(page, item, blockIndex, paramIdx);
+      }
+    },
+    onExpMinMax: (page, item, min, max) => {
+      setExpAssignment(page, item, { min, max });
+      if (midiDevice.status === 'connected') {
+        midiDevice.sendExpMinMax(page, item, min, max);
+      }
+    },
+    onCtrlBlockToggle: setCtrlBlock,
+    onCtrlClear: (ctrlIndex) => setCtrlMask(ctrlIndex, 0),
+    onOpenPatchManager: handleOpenPatchManager,
+    onActivateSlot: handleActivateSlot,
+    onOpenGuide: () => setView('guide'),
+    looper: looper,
+    looperBindings: looperBindings,
+    onLooperBindingsChange: setLooperBindings,
+    onLooperDrawerOpenChange: (open) => {
+      looperPanelOpenRef.current = open;
+      // Closing the dialog disarms any in-progress MIDI-learn so a stray
+      // stomp doesn't bind after the panel is gone.
+      if (!open) looperTriggers.cancelLearn();
+    },
+    looperTriggers: looperTriggers.triggers,
+    looperArmedAction: looperTriggers.armedAction,
+    onLooperArmLearn: looperTriggers.armLearn,
+    onLooperClearTrigger: looperTriggers.clearTrigger,
+    onLooperClearAll: looperTriggers.clearAllTriggers,
+    looperLearnNotice: looperTriggers.learnNotice,
+    sendCC: midiDevice.sendCC,
+    ccChannel: midiDevice.ccChannel,
+    onCcChannelChange: midiDevice.setCcChannel,
+    onEnableAudio: () => void audioEngine.enable(),
+    audioStarting: audioEngine.starting,
+    onConnectRequest: () => void midiDevice.connect(),
+    onDisconnect: midiDevice.disconnect,
+    onPushRequest: () => handleOpenBrowser('push'),
+    pushProgress: pushProgress,
+    firmware: midiDevice.deviceInfo?.firmwareValues.join('.') || null,
+  };
+
   return (
     <div className="app-shell w-full flex flex-col overflow-hidden">
       {loadError && (
@@ -569,109 +676,22 @@ function App() {
         </div>
       )}
 
-      {/* THE view: full-bleed pedalboard */}
-      <div
-        className="flex-1 min-h-0 flex flex-col"
-        onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
-      >
-        <PedalBoard
-          preset={preset}
-          onToggle={handleSlotToggle}
-          onChangeEffect={handleSlotEffectChange}
-          onParamChange={handleSlotParamChange}
-          onMove={moveSlot}
-          dragIndex={dragIndex}
-          dragOverIndex={dragOverIndex}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          patchVolume={patchVolume}
-          patchPan={patchPan}
-          patchTempo={patchTempo}
-          currentSlot={midiDevice.currentSlot}
-          connected={midiDevice.status === 'connected'}
-          onLoadRequest={() => handleOpenBrowser('pull')}
-          onSaveToActiveSlot={midiDevice.status === 'connected' ? handleSaveToActiveSlot : undefined}
-          onPatchNameChange={setPatchName}
-          onAuthorChange={setAuthor}
-          onVolumeChange={(v) => { setPatchVolume(v); if (midiDevice.status === 'connected') midiDevice.sendPatchVolume(v); }}
-          onPanChange={(pan) => {
-            setPatchPan(pan);
-            // sendPatchPan takes the device encoding: left pan = 256 + signed value.
-            if (midiDevice.status === 'connected') midiDevice.sendPatchPan(pan & 0xFF);
-          }}
-          onTempoChange={(v) => { setPatchTempo(v); if (midiDevice.status === 'connected') midiDevice.sendPatchTempo(v); }}
-          onCloseRequest={reset}
-          onFxSendChange={(pos) => {
-            const clamped = Math.max(1, Math.min(10, pos));
-            const nextReturn = Math.max(clamped, preset.fxLoopReturn);
-            const sendChanged = clamped !== preset.fxLoopSend;
-            const returnPushed = nextReturn !== preset.fxLoopReturn;
-            setFxLoopSend(clamped);
-            if (midiDevice.status === 'connected') {
-              const order = preset.effects.map((e) => e.slotIndex);
-              if (sendChanged) midiDevice.sendFxLoopMove(order, clamped, nextReturn, 'send');
-              if (returnPushed) midiDevice.sendFxLoopMove(order, clamped, nextReturn, 'return');
-            }
-          }}
-          onFxReturnChange={(pos) => {
-            const clamped = Math.max(1, Math.min(10, pos));
-            const nextSend = Math.min(clamped, preset.fxLoopSend);
-            const returnChanged = clamped !== preset.fxLoopReturn;
-            const sendPushed = nextSend !== preset.fxLoopSend;
-            setFxLoopReturn(clamped);
-            if (midiDevice.status === 'connected') {
-              const order = preset.effects.map((e) => e.slotIndex);
-              if (returnChanged) midiDevice.sendFxLoopMove(order, nextSend, clamped, 'return');
-              if (sendPushed) midiDevice.sendFxLoopMove(order, nextSend, clamped, 'send');
-            }
-          }}
-          onExpParamSelect={(page, item, blockIndex, paramIdx) => {
-            // Persist with the patch; also apply live when a device is attached
-            // (there is no live "unassign" message; that lands on SAVE).
-            setExpAssignment(page, item, { blockIndex, paramIndex: paramIdx });
-            if (midiDevice.status === 'connected' && blockIndex !== null) {
-              midiDevice.sendExpParamSelect(page, item, blockIndex, paramIdx);
-            }
-          }}
-          onExpMinMax={(page, item, min, max) => {
-            setExpAssignment(page, item, { min, max });
-            if (midiDevice.status === 'connected') {
-              midiDevice.sendExpMinMax(page, item, min, max);
-            }
-          }}
-          onCtrlBlockToggle={setCtrlBlock}
-          onCtrlClear={(ctrlIndex) => setCtrlMask(ctrlIndex, 0)}
-          onOpenPatchManager={handleOpenPatchManager}
-          onActivateSlot={handleActivateSlot}
-          onOpenGuide={() => setView('guide')}
-          looper={looper}
-          looperBindings={looperBindings}
-          onLooperBindingsChange={setLooperBindings}
-          onLooperDrawerOpenChange={(open) => {
-            looperPanelOpenRef.current = open;
-            // Closing the dialog disarms any in-progress MIDI-learn so a stray
-            // stomp doesn't bind after the panel is gone.
-            if (!open) looperTriggers.cancelLearn();
-          }}
-          looperTriggers={looperTriggers.triggers}
-          looperArmedAction={looperTriggers.armedAction}
-          onLooperArmLearn={looperTriggers.armLearn}
-          onLooperClearTrigger={looperTriggers.clearTrigger}
-          onLooperClearAll={looperTriggers.clearAllTriggers}
-          looperLearnNotice={looperTriggers.learnNotice}
-          sendCC={midiDevice.sendCC}
-          ccChannel={midiDevice.ccChannel}
-          onCcChannelChange={midiDevice.setCcChannel}
-          onEnableAudio={() => void audioEngine.enable()}
-          audioStarting={audioEngine.starting}
-          onConnectRequest={() => void midiDevice.connect()}
-          onDisconnect={midiDevice.disconnect}
-          onPushRequest={() => handleOpenBrowser('push')}
-          pushProgress={pushProgress}
-          firmware={midiDevice.deviceInfo?.firmwareValues.join('.') || null}
-        />
-      </div>
+      {/* THE view. Below 640px the pedalboard is replaced wholesale by the
+          phone shell — the board is built around fixed-width enclosures in a
+          horizontal stage and does not fold to a phone. The two trees never
+          coexist; all state lives out here and survives the swap. */}
+      {isPhone ? (
+        <Suspense fallback={<div className="flex-1" />}>
+          <MobileShell {...boardProps} />
+        </Suspense>
+      ) : (
+        <div
+          className="flex-1 min-h-0 flex flex-col"
+          onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+        >
+          <PedalBoard {...boardProps} />
+        </div>
+      )}
 
       <PatchManagerSheet
         open={showPatchManager}

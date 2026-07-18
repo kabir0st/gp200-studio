@@ -36,3 +36,14 @@ export function useSingleRowBoard(): boolean {
 export function useCoarsePointer(): boolean {
   return useMediaQuery('(pointer: coarse)');
 }
+
+/**
+ * Phone cutoff: below this we render a different component tree entirely
+ * (`components/mobile/`) instead of the pedalboard, which is built around
+ * fixed-width pedal enclosures in a horizontal stage and cannot fold down
+ * to ~390px. 639.98px is the exact complement of Tailwind's `sm`
+ * (min-width: 640px), so no viewport width can match both.
+ */
+export function useIsPhone(): boolean {
+  return useMediaQuery('(max-width: 639.98px)');
+}
