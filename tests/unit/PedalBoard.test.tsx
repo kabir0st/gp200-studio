@@ -43,7 +43,7 @@ class ResizeObserverStub {
 }
 
 function loadFixture() {
-  const bytes = readFileSync(join(process.cwd(), 'prst/63-B American Idiot.prst'));
+  const bytes = readFileSync(join(process.cwd(), 'dumps/prts/01-A Start Pedal.prst'));
   return new PRSTDecoder(new Uint8Array(bytes)).decode();
 }
 

@@ -334,7 +334,6 @@ export function PedalBoard({
       >
         <FootswitchPanel
           preset={preset}
-          currentSlot={currentSlot}
           connected={connected}
           onCtrlBlockToggle={onCtrlBlockToggle}
           onCtrlClear={onCtrlClear}

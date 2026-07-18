@@ -355,17 +355,21 @@ function App() {
       const decoded = new PRSTDecoder(buffer).decode();
       loadPreset(decoded);
       setLoadError(null);
-      // Live-push the import, then immediately commit it to the active slot
-      // (the SAVE flow), so an import lands on the pedal permanently without
-      // a separate save step. Both no-op while disconnected; saveToSlot
-      // resolves the active slot from its own ref, so no stale closure here.
+      // Live-push the import, then commit it to the active slot (the SAVE
+      // flow), so an import lands on the pedal permanently without a
+      // separate save step. Both no-op while disconnected; saveToSlot
+      // resolves the active slot from its own ref, so no stale closure.
+      // Known gap: CTRL footswitch masks don't survive this (no live opcode;
+      // the flash-upload alternative is rejected by real hardware).
       void (async () => {
         await sendPresetToDevice(decoded);
         await new Promise((settle) => setTimeout(settle, 250));
         await saveToSlot(decoded.patchName);
-      })();
+      })().catch(() => setLoadError('Failed to save to device'));
     } catch (err) {
-      setLoadError(`Error loading file: ${err instanceof Error ? err.message : String(err)}`);
+      let message = String(err);
+      if (err instanceof Error) message = err.message;
+      setLoadError(`Error loading file: ${message}`);
     }
   }, [loadPreset, sendPresetToDevice, saveToSlot]);
 
@@ -513,6 +517,12 @@ function App() {
 
   async function handleSaveToActiveSlot() {
     if (!preset || midiDevice.currentSlot === null) return;
+    // Save-commit persists the device's edit buffer, which every live edit
+    // (toggle, param, reorder, VOL/PAN/TEMPO, EXP) already reached. CTRL
+    // footswitch masks are the one thing it cannot carry — no live opcode is
+    // known — and the flash-upload alternative is rejected by real hardware
+    // (docs/protocol-capture.md §0.1), so this stays the save path until the
+    // upload finalize is captured.
     await midiDevice.saveToSlot(preset.patchName, midiDevice.currentSlot);
   }
 

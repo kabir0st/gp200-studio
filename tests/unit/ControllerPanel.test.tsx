@@ -8,7 +8,7 @@ import type { ExpAssignment, GP200Preset } from '@/core/types';
 import { defaultExpAssignments } from '@/core/controlRecords';
 
 function loadFixture(): GP200Preset {
-  const bytes = readFileSync(join(process.cwd(), 'prst/63-B American Idiot.prst'));
+  const bytes = readFileSync(join(process.cwd(), 'dumps/prts/01-A Start Pedal.prst'));
   return new PRSTDecoder(new Uint8Array(bytes)).decode();
 }
 

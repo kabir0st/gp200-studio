@@ -241,9 +241,9 @@ describe('SysExCodec: parsePresetName', () => {
 
 describe('SysExCodec: flash upload (buildUploadImage / buildUploadChunks)', () => {
   // Format ground truth: dumps/patch-upload.pcapng (official editor writing
-  // a patch to slot 9). Fixture: a real committed user .prst (1224 bytes).
+  // a patch to slot 9). Fixture: a real device export (1224 bytes).
   const fileBytes = new Uint8Array(
-    readFileSync(join(process.cwd(), 'prst/63-B American Idiot.prst')),
+    readFileSync(join(process.cwd(), 'dumps/prts/07-D Scotland Kiss.prst')),
   );
 
   it('derives a 1184-byte image: 16-byte preamble + file[0x30 .. len-8]', () => {
@@ -262,7 +262,7 @@ describe('SysExCodec: flash upload (buildUploadImage / buildUploadChunks)', () =
   });
 
   it('blanks the in-file slot-mirror byte to 0xFF (capture: FF even for slot 9)', () => {
-    expect(fileBytes[0x34]).toBe(0xf9); // fixture is 63-B = slot 249
+    expect(fileBytes[0x34]).toBe(0x1b); // fixture is 07-D = slot 27
     const image = SysExCodec.buildUploadImage(fileBytes);
     expect(image[20]).toBe(0xff);
   });
@@ -271,7 +271,7 @@ describe('SysExCodec: flash upload (buildUploadImage / buildUploadChunks)', () =
     const image = SysExCodec.buildUploadImage(fileBytes);
     let name = '';
     for (let i = 36; image[i] !== 0; i++) name += String.fromCharCode(image[i]);
-    expect(name).toBe('American Idiot');
+    expect(name).toBe('Scotland Kiss');
   });
 
   it('frames the image as 7 chunks with 183-byte strides and 7-bit offsets', () => {

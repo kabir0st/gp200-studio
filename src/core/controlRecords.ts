@@ -3,8 +3,8 @@ import type { CtrlAssignment, ExpAssignment } from './types';
 /**
  * TLV record walker for the .prst "controls" tail, the region between the
  * last effect block (0x3B0) and the checksum (0x4C6) that stores EXP pedal
- * and CTRL footswitch assignments. Layout hex-verified against the committed
- * fixtures (prst/*.prst, firmware 1.8.0 exports):
+ * and CTRL footswitch assignments. Layout hex-verified against real device
+ * exports (dumps/prts/*.prst, firmware 1.8.0):
  *
  *   0x3B0  8 zero bytes (padding)
  *   0x3B8  9 × 16-byte EXP records:  header 0C 00 0C 00 (type 0x000C, size 12)
@@ -14,11 +14,17 @@ import type { CtrlAssignment, ExpAssignment } from './types';
  *          payload: [id u8][value u8][0000]; semantics unknown (fixtures:
  *          FF FF 0B); round-tripped opaquely, never modeled.
  *   0x460  8 × 12-byte CTRL records: header 0F 00 08 00 (type 0x000F, size 8)
- *          payload: [ctrlIndex u8 0–7][blockMask u16 LE][5 zero bytes]
- *          bit n of blockMask = fixed block n (0=PRE..10=VOL), matching the
- *          official editor's "ctrlTarget: PRE-WAH-DST-AMP-NR-CAB-EQ-MOD-DLY-
- *          RVB-VOL" debug structure. NOTE: bits 8–10 (DLY/RVB/VOL) are
- *          inferred from that structure but not yet observed in a real file.
+ *          payload: [ctrlIndex u8 0–7][state u8 0/1][2 bytes uninitialized]
+ *                   [blockMask u16 LE][2 bytes uninitialized]
+ *          bit n of blockMask = fixed block n (0=PRE..10=VOL); bit 11 also
+ *          appears in real exports (unmodeled, kept verbatim; possibly the
+ *          FX loop). The state byte is the CTRL's saved toggle position, not
+ *          an enable gate (masks are honored with state 0). The two 2-byte
+ *          windows and the mask's high nibble carry uninitialized firmware
+ *          memory (repeating strides, ASCII fragments) and must round-trip
+ *          untouched. Layout hex-verified against real device exports
+ *          (dumps/prts/*.prst); an earlier capture misread the mask at
+ *          payload+1, lighting phantom PRE/DLY/RVB/VOL pedals.
  *   0x4C0  footer C0 04 00 00 00 00, then the BE16 checksum at 0x4C6.
  *
  * Shared by PRSTDecoder, PRSTEncoder, and SysExCodec (device dumps use the
@@ -146,9 +152,10 @@ export function parseControlRecords(
       const p = record.payloadOffset;
       const ctrlIndex = bytes[p];
       if (ctrlIndex > 7) return undefined; // structural: stream misaligned
-      // Keep the full u16 mask verbatim (unknown high bits round-trip); only
-      // bits 0..10 render as pedals. A wider mask no longer aborts the parse.
-      const blockMask = readU16LE(bytes, p + 1);
+      // Mask lives at payload+4 (payload+1 is the saved toggle state, +2..3
+      // uninitialized memory). Strip the high nibble — it carries garbage in
+      // real exports — but keep bit 11, which the device does write.
+      const blockMask = readU16LE(bytes, p + 4) & 0x0FFF;
       ctrl.push({ ctrlIndex, blockMask });
     }
     // TYPE_UNKNOWN10: opaque, intentionally skipped.
@@ -199,7 +206,11 @@ export function applyControlRecords(
     } else if (record.type === TYPE_CTRL) {
       const assignment = ctrlByIndex.get(target[p]);
       if (!assignment) continue;
-      writeU16LE(target, p + 1, assignment.blockMask);
+      // Write only the 12 mask bits at payload+4; the state byte (+1), the
+      // uninitialized windows (+2..3, +6..7), and the mask's garbage high
+      // nibble keep their device-written bytes so exports stay byte-exact.
+      target[p + 4] = assignment.blockMask & 0xFF;
+      target[p + 5] = (target[p + 5] & 0xF0) | ((assignment.blockMask >> 8) & 0x0F);
       ctrlByIndex.delete(target[p]);
     }
   }
@@ -300,7 +311,9 @@ export function buildDefaultTail(
     writeU16LE(tail, off, TYPE_CTRL);
     writeU16LE(tail, off + 2, CTRL_PAYLOAD_SIZE);
     tail[off + 4] = ctrlIndex;
-    writeU16LE(tail, off + 5, ctrlByIndex.get(ctrlIndex)?.blockMask ?? 0);
+    // state byte (+5) and the two unknown windows (+6..7, +10..11) stay zero;
+    // a clean device save writes zeros there too.
+    writeU16LE(tail, off + 8, ctrlByIndex.get(ctrlIndex)?.blockMask ?? 0);
     off += HEADER_SIZE + CTRL_PAYLOAD_SIZE;
   }
 

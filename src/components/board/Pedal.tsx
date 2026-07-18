@@ -154,11 +154,14 @@ export function Pedal({
       >
         {defs.map((def) => {
           const value = slot.params[def.idx] ?? def.default;
+          // Two defs can share an idx (generated table quirk: Slapback's
+          // Sync + Trail both map param 3), so the key needs the name too.
+          const defKey = `${def.idx}-${def.name}`;
           if (def.type === 'knob') {
             if (isEq) {
               return (
                 <PedalFader
-                  key={def.idx}
+                  key={defKey}
                   param={def}
                   value={value}
                   onChange={(v) => onParamChange(def.idx, v)}
@@ -168,7 +171,7 @@ export function Pedal({
             }
             return (
               <PedalKnob
-                key={def.idx}
+                key={defKey}
                 param={def}
                 value={value}
                 onChange={(v) => onParamChange(def.idx, v)}
@@ -180,11 +183,23 @@ export function Pedal({
           }
           if (def.type === 'switch') {
             return (
-              <MiniSwitch key={def.idx} param={def} value={value} onChange={(v) => onParamChange(def.idx, v)} pedalName={effectName} />
+              <MiniSwitch
+                key={defKey}
+                param={def}
+                value={value}
+                onChange={(v) => onParamChange(def.idx, v)}
+                pedalName={effectName}
+              />
             );
           }
           return (
-            <ComboSelect key={def.idx} param={def} value={value} onChange={(v) => onParamChange(def.idx, v)} pedalName={effectName} />
+            <ComboSelect
+              key={defKey}
+              param={def}
+              value={value}
+              onChange={(v) => onParamChange(def.idx, v)}
+              pedalName={effectName}
+            />
           );
         })}
       </div>

@@ -2,11 +2,9 @@ import { useState, type CSSProperties } from 'react';
 import type { GP200Preset, CtrlAssignment } from '@/core/types';
 import { getSlotModule, getEffectName, MODULE_COLORS } from '@/core/effectNames';
 import { defaultCtrlAssignments } from '@/core/controlRecords';
-import { SysExCodec } from '@/core/SysExCodec';
 
 interface FootswitchPanelProps {
   preset: GP200Preset;
-  currentSlot: number | null;
   connected: boolean;
   onCtrlBlockToggle: (ctrlIndex: number, blockIndex: number, on: boolean) => void;
   /** Clear every block off one CTRL footswitch (whole-mask reset). */
@@ -192,7 +190,6 @@ function PedalCard({
  */
 export function FootswitchPanel({
   preset,
-  currentSlot,
   connected,
   onCtrlBlockToggle,
   onCtrlClear,
@@ -225,10 +222,14 @@ export function FootswitchPanel({
       `${selectedModules.join(', ')}.`;
   }
 
-  let saveHint = 'Export the preset to keep them in the .prst file.';
-  if (connected && currentSlot !== null) {
-    const label = SysExCodec.slotToLabel(currentSlot);
-    saveHint = `Press SAVE TO ${label} (or SAVE AS) to persist them on the device.`;
+  // Honest status: no working device write exists for CTRL masks (no live
+  // opcode; the flash upload is rejected by real hardware — see
+  // docs/protocol-capture.md), so don't promise SAVE TO will carry them.
+  let deviceHint = '';
+  if (connected) {
+    deviceHint =
+      ' Syncing them to the connected GP-200 is not possible yet — SAVE TO ' +
+      'does not carry them (the write protocol still needs a capture).';
   }
 
   return (
@@ -294,9 +295,9 @@ export function FootswitchPanel({
       </div>
 
       <p className="text-xs mt-3" style={{ color: 'var(--text-secondary)' }}>
-        Assignments are saved with the patch. {saveHint} To trigger a CTRL
-        from the pedal, map a footswitch to it in the device&apos;s footswitch
-        settings (Settings → Footswitch).
+        Assignments are kept with the patch and included in exported .prst
+        files.{deviceHint} To trigger a CTRL from the pedal, map a footswitch
+        to it in the device&apos;s footswitch settings (Settings → Footswitch).
       </p>
     </div>
   );
