@@ -4,6 +4,7 @@ import { SysExCodec } from '@/core/SysExCodec';
 import { getEffectName, getSlotModule } from '@/core/effectNames';
 import { getEffectParams } from '@/core/effectParams';
 import { AudioMeters } from './AudioMeters';
+import { ActionIcon } from './ActionIcon';
 
 interface SwitcherUnitProps {
   preset: GP200Preset;
@@ -306,10 +307,12 @@ export function SwitcherUnit({
 
       <div className="deck-actions">
         <button type="button" className="deck-btn" onClick={onOpenFxLoop}>
-          FX LOOP
+          <ActionIcon name="fxloop" />
+          <span className="db-label">FX LOOP</span>
         </button>
         <button type="button" className="deck-btn" onClick={onOpenExp}>
-          EXP
+          <ActionIcon name="exp" />
+          <span className="db-label">EXP</span>
         </button>
         <button
           type="button"
@@ -317,7 +320,8 @@ export function SwitcherUnit({
           title="Assign CTRL footswitches to effect blocks"
           onClick={onOpenCtrl}
         >
-          CTRL
+          <ActionIcon name="ctrl" />
+          <span className="db-label">CTRL</span>
         </button>
         {connected && (
           <button
@@ -326,7 +330,8 @@ export function SwitcherUnit({
             disabled={!canSave}
             onClick={onSaveToActiveSlot}
           >
-            {saveLabel}
+            <ActionIcon name="save" />
+            <span className="db-label">{saveLabel}</span>
           </button>
         )}
       </div>

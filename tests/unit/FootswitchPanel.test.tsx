@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render } from '@testing-library/react';
@@ -16,7 +16,11 @@ function moduleOf(card: Element): string {
   return /→ (\w+):/.exec(card.getAttribute('title') ?? '')?.[1] ?? '';
 }
 
-describe('FootswitchPanel', () => {
+// dumps/ is gitignored (real device exports, not committed), so this suite only
+// runs on a machine that has them. Same convention as PRSTEncoder.test.ts.
+const HAS_FIXTURES = existsSync(join(process.cwd(), 'dumps/prts/01-A Start Pedal.prst'));
+
+describe.skipIf(!HAS_FIXTURES)('FootswitchPanel', () => {
   it('renders 8 footswitch selectors and 11 pedal cards', () => {
     const preset = loadFixture();
     const { container, getAllByRole } = render(

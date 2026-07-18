@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type DragEvent } from 'react';
+import { useCallback, useEffect, useState, type CSSProperties, type DragEvent } from 'react';
 import type { GP200Preset, EffectSlot } from '@/core/types';
 import type { PushProgress } from '@/core/devicePush';
 import { getSlotModule } from '@/core/effectNames';
@@ -25,6 +25,8 @@ import { SwitcherUnit } from './SwitcherUnit';
 import { BoardTopBar } from './BoardTopBar';
 import { DeckDrawer } from './DeckDrawer';
 import { Dialog } from '@/components/ui/Dialog';
+import { useCoarsePointer, useSingleRowBoard } from '@/hooks/useMediaQuery';
+import { prefersReducedMotion } from '@/lib/motion';
 import './board.css';
 
 export interface PedalBoardProps {
@@ -153,6 +155,11 @@ export function PedalBoard({
 }: PedalBoardProps) {
   const artIndex = usePedalManifest();
 
+  // Phones fold the two rows into one swipeable row (see useSingleRowBoard) and
+  // get tap reorder arrows, since HTML5 drag-and-drop never fires on touch.
+  const singleRow = useSingleRowBoard();
+  const touch = useCoarsePointer();
+
   // hover inspects, ⓘ pins; both keyed by slotIndex (stable across reorders)
   const [hoverSlot, setHoverSlot] = useState<number | null>(null);
   const [pinnedSlot, setPinnedSlot] = useState<number | null>(null);
@@ -185,11 +192,27 @@ export function PedalBoard({
   const handleReorderMove = (from: number, to: number) => {
     capture();
     onMove(from, to);
+    // keep the pedal you just moved on screen (it can leave the viewport on a
+    // narrow board); wait a frame so the new order is laid out first
+    requestAnimationFrame(() => scrollToPedal(to));
   };
 
   // rows balanced by rendered width so a wide AMP can't push the last
   // front-row pedal (usually CAB) off the stage
   const { front, back } = splitRows(preset.effects);
+
+  // chain strip / reorder arrows scroll the moved pedal back into view —
+  // on a phone the target is usually off-screen after the move
+  const scrollToPedal = useCallback(
+    (index: number) => {
+      const pedal = scopeRef.current?.querySelector<HTMLElement>(`[data-chain="${index}"]`);
+      if (!pedal) return;
+      let behavior: ScrollBehavior = 'smooth';
+      if (prefersReducedMotion()) behavior = 'auto';
+      pedal.scrollIntoView({ behavior, block: 'nearest', inline: 'center' });
+    },
+    [scopeRef],
+  );
 
   // each pedal sits in a fixed-size bay (compact/wide, keyed to the slot's module
   // (see isWideSlot). The pedal keeps its own natural size; the bay absorbs any
@@ -225,6 +248,8 @@ export function PedalBoard({
           }
           onPin={() => setPinnedSlot((prev) => (prev === slot.slotIndex ? null : slot.slotIndex))}
           isPinned={pinnedSlot === slot.slotIndex}
+          showMoveButtons={touch}
+          chainLength={preset.effects.length}
         />
       </div>
     );
@@ -248,7 +273,7 @@ export function PedalBoard({
         onOpenDrums={() => setOpenDrawer('drums')}
         sendCC={sendCC}
       />
-      <ChainStrip effects={preset.effects} />
+      <ChainStrip effects={preset.effects} onJump={scrollToPedal} />
       <InfoBar
         slot={inspected}
         art={inspected ? lookupPedalArt(artIndex, inspected.effectId) : undefined}
@@ -261,17 +286,34 @@ export function PedalBoard({
               screens, and the cables live inside it so they scroll in lockstep
               with the pedals (the top/bottom bars stay put) */}
           <div className="board-scroll">
-            <div className="board-rows" ref={scopeRef}>
-              <CableLayer modules={modules} orderKey={orderKey} hidden={dragIndex !== null} />
-              {/* reading order = chain order: front row first, remainder below */}
-              <div className="board-row">
-                <span className="flow-badge" aria-hidden="true">IN ›</span>
-                {front.map((slot, i) => renderPedal(slot, i, 'front'))}
-              </div>
-              <div className="board-row">
-                {back.map((slot, i) => renderPedal(slot, i + front.length, 'back'))}
-                <span className="flow-badge" aria-hidden="true">› OUT</span>
-              </div>
+            <div className={`board-rows${singleRow ? ' single' : ''}`} ref={scopeRef}>
+              <CableLayer
+                modules={modules}
+                orderKey={`${orderKey}|${singleRow ? 1 : 2}`}
+                hidden={dragIndex !== null}
+              />
+              {/* Phones get one row: two 340px+ rows plus the chrome don't fit a
+                  phone viewport, and one row keeps the whole chain in a single
+                  left-to-right swipe (cables stay same-row beziers throughout). */}
+              {singleRow ? (
+                <div className="board-row">
+                  <span className="flow-badge" aria-hidden="true">IN ›</span>
+                  {preset.effects.map((slot, i) => renderPedal(slot, i, 'front'))}
+                  <span className="flow-badge" aria-hidden="true">› OUT</span>
+                </div>
+              ) : (
+                <>
+                  {/* reading order = chain order: front row first, remainder below */}
+                  <div className="board-row">
+                    <span className="flow-badge" aria-hidden="true">IN ›</span>
+                    {front.map((slot, i) => renderPedal(slot, i, 'front'))}
+                  </div>
+                  <div className="board-row">
+                    {back.map((slot, i) => renderPedal(slot, i + front.length, 'back'))}
+                    <span className="flow-badge" aria-hidden="true">› OUT</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </section>

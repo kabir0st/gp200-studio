@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
@@ -107,7 +107,11 @@ function renderBoard(overrides: Partial<Parameters<typeof PedalBoard>[0]> = {}) 
   return { preset, props, ...utils };
 }
 
-describe('PedalBoard (render smoke test)', () => {
+// dumps/ is gitignored (real device exports, not committed), so this suite only
+// runs on a machine that has them. Same convention as PRSTEncoder.test.ts.
+const HAS_FIXTURES = existsSync(join(process.cwd(), 'dumps/prts/01-A Start Pedal.prst'));
+
+describe.skipIf(!HAS_FIXTURES)('PedalBoard (render smoke test)', () => {
   beforeAll(() => {
     vi.stubGlobal('ResizeObserver', ResizeObserverStub);
   });

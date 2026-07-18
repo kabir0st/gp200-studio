@@ -30,6 +30,14 @@ export interface PedalProps {
   /** ⓘ click: pin in the info bar */
   onPin: () => void;
   isPinned: boolean;
+  /**
+   * Show tap ‹ › reorder arrows. HTML5 drag-and-drop never fires on touch, and
+   * the keyboard grip needs arrow keys, so without these a phone can't reorder
+   * the chain at all.
+   */
+  showMoveButtons?: boolean;
+  /** chain length, for the move bounds + the grip's announced position */
+  chainLength: number;
 }
 
 /** One effect slot rendered as a physical pedal (docs/board-design-system.md). */
@@ -46,6 +54,8 @@ export function Pedal({
   onInspect,
   onPin,
   isPinned,
+  showMoveButtons,
+  chainLength,
 }: PedalProps) {
   const [dragging, setDragging] = useState(false);
 
@@ -129,12 +139,14 @@ export function Pedal({
         className="chain-num"
         role="button"
         tabIndex={0}
-        aria-label={`Reorder ${effectName}, position ${index + 1} of 11. Use arrow keys.`}
+        aria-label={
+          `Reorder ${effectName}, position ${index + 1} of ${chainLength}. Use arrow keys.`
+        }
         onKeyDown={(e) => {
           if (e.key === 'ArrowLeft' && index > 0) {
             e.preventDefault();
             onMove(index, index - 1);
-          } else if (e.key === 'ArrowRight' && index < 10) {
+          } else if (e.key === 'ArrowRight' && index < chainLength - 1) {
             e.preventDefault();
             onMove(index, index + 1);
           }
@@ -225,6 +237,31 @@ export function Pedal({
       </p>
 
       {wide ? <div className="fs-row">{footswitch}</div> : footswitch}
+
+      {/* Touch-only chain reorder. Absolutely positioned over the brand strip so
+          enabling them doesn't change the pedal's height (and with it the bay). */}
+      {showMoveButtons && (
+        <>
+          <button
+            type="button"
+            className="pedal-move prev"
+            disabled={index === 0}
+            aria-label={`Move ${effectName} earlier in the chain`}
+            onClick={() => onMove(index, index - 1)}
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            className="pedal-move next"
+            disabled={index === chainLength - 1}
+            aria-label={`Move ${effectName} later in the chain`}
+            onClick={() => onMove(index, index + 1)}
+          >
+            ›
+          </button>
+        </>
+      )}
       <div className="brand-strip">GP200 Studio</div>
     </article>
   );

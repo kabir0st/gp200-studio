@@ -1153,17 +1153,36 @@
   margin-left: auto;
 }
 .board-view .deck-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font-family: var(--font-jetbrains-mono), monospace;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.1em;
-  padding: 7px 14px;
+  padding: 7px 12px;
   border-radius: 6px;
   background: #fff;
   border: 1px solid var(--chrome-border);
   color: var(--chrome-text);
   cursor: pointer;
   transition: background 0.1s ease, border-color 0.1s ease;
+}
+/* Colour-coded action mark (ActionIcon.tsx). The hue is set inline per action;
+   it only carries meaning alongside the label, never instead of it. */
+.board-view .act-icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+/* on the inverted primary face the hue would fall through the dark fill —
+   inherit the button's own ink instead */
+.board-view .deck-btn.primary .act-icon {
+  color: currentColor;
+}
+.board-view .deck-btn:disabled .act-icon {
+  color: var(--chrome-muted);
 }
 .board-view .deck-btn:hover:not(:disabled) {
   border-color: var(--chrome-muted);

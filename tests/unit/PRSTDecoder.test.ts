@@ -241,20 +241,19 @@ describe('PRSTDecoder: controller/EXP assignment records', () => {
 });
 
 describe('PRSTDecoder: per-patch VOL/PAN/TEMPO', () => {
-  it('decodes patch volume/pan/tempo from a real file', () => {
-    const data = new Uint8Array(
-      readFileSync(join(process.cwd(), 'dumps/prts/07-D Scotland Kiss.prst')),
-    );
+  const scotlandKiss = join(process.cwd(), 'dumps/prts/07-D Scotland Kiss.prst');
+  const startPedal = join(process.cwd(), 'dumps/prts/01-A Start Pedal.prst');
+
+  it.skipIf(!existsSync(scotlandKiss))('decodes patch volume/pan/tempo from a real file', () => {
+    const data = new Uint8Array(readFileSync(scotlandKiss));
     const preset = new PRSTDecoder(data).decode();
     expect(preset.patchVolume).toBe(50);
     expect(preset.patchPan).toBe(5);
     expect(preset.patchTempo).toBe(120);
   });
 
-  it('decodes a non-default patch volume', () => {
-    const data = new Uint8Array(
-      readFileSync(join(process.cwd(), 'dumps/prts/01-A Start Pedal.prst')),
-    );
+  it.skipIf(!existsSync(startPedal))('decodes a non-default patch volume', () => {
+    const data = new Uint8Array(readFileSync(startPedal));
     const preset = new PRSTDecoder(data).decode();
     expect(preset.patchVolume).toBe(46);
   });

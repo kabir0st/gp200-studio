@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import {
   CONTROL_RECORDS_FILE_OFFSET,
@@ -18,7 +18,11 @@ function loadFixture(name: string): Uint8Array {
   return new Uint8Array(readFileSync(join(process.cwd(), 'dumps/prts', name)));
 }
 
-describe('parseControlRecords', () => {
+// dumps/ is gitignored (real device exports, not committed), so these suites
+// only run on a machine that has them. Same convention as PRSTEncoder.test.ts.
+const HAS_FIXTURES = existsSync(join(process.cwd(), 'dumps/prts', '01-A Start Pedal.prst'));
+
+describe.skipIf(!HAS_FIXTURES)('parseControlRecords', () => {
   it('decodes the CTRL masks of a real device export', () => {
     const bytes = loadFixture('01-A Start Pedal.prst');
     const parsed = parseControlRecords(bytes, CONTROL_RECORDS_FILE_OFFSET);
@@ -136,7 +140,7 @@ describe('buildDefaultTail', () => {
   });
 });
 
-describe('applyControlRecords', () => {
+describe.skipIf(!HAS_FIXTURES)('applyControlRecords', () => {
   it('overwrites only the mask low byte in a real device tail', () => {
     const original = loadFixture('01-A Start Pedal.prst');
     const modified = new Uint8Array(original);

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { PushProgress } from '@/core/devicePush';
 import { SysExCodec } from '@/core/SysExCodec';
 import { tunerShow, type CCCommand } from '@/core/ccControl';
+import { ActionIcon } from './ActionIcon';
 
 interface BoardTopBarProps {
   connected: boolean;
@@ -96,7 +97,8 @@ export function BoardTopBar({
           title="Multi-track loop station (records the GP-200's USB audio)"
           onClick={onOpenLooper}
         >
-          LOOP
+          <ActionIcon name="loop" />
+          <span className="db-label">LOOP</span>
         </button>
         <button
           type="button"
@@ -104,7 +106,8 @@ export function BoardTopBar({
           title="GP-200 built-in drum machine, looper & tuner (MIDI CC remote)"
           onClick={onOpenDrums}
         >
-          DRUMS
+          <ActionIcon name="drums" />
+          <span className="db-label">DRUMS</span>
         </button>
         <button
           type="button"
@@ -117,7 +120,8 @@ export function BoardTopBar({
             sendCC(tunerShow(next));
           }}
         >
-          TUNER
+          <ActionIcon name="tuner" />
+          <span className="db-label">TUNER</span>
         </button>
         <button
           type="button"
@@ -125,12 +129,14 @@ export function BoardTopBar({
           title="Browse device patches · import/export .prst files"
           onClick={onOpenPatchManager}
         >
-          PATCHES
+          <ActionIcon name="patches" />
+          <span className="db-label">PATCHES</span>
         </button>
         {connected && (
           <>
             <button type="button" className="deck-btn" onClick={onLoadRequest}>
-              LOAD
+              <ActionIcon name="load" />
+              <span className="db-label">LOAD</span>
             </button>
             <button
               type="button"
@@ -138,7 +144,8 @@ export function BoardTopBar({
               title="Save to another slot"
               onClick={onPushRequest}
             >
-              SAVE AS
+              <ActionIcon name="save" />
+              <span className="db-label">SAVE AS</span>
             </button>
             <button
               type="button"
@@ -147,13 +154,14 @@ export function BoardTopBar({
               aria-label="Disconnect device"
               onClick={onDisconnect}
             >
-              ✕
+              <ActionIcon name="disconnect" />
             </button>
           </>
         )}
         {!connected && (
           <button type="button" className="deck-btn primary" onClick={onConnectRequest}>
-            CONNECT GP-200
+            <ActionIcon name="connect" />
+            <span className="db-label">CONNECT GP-200</span>
           </button>
         )}
         <button
@@ -163,7 +171,7 @@ export function BoardTopBar({
           aria-label="Open guide"
           onClick={onOpenGuide}
         >
-          ?
+          <ActionIcon name="guide" />
         </button>
         <button
           type="button"
@@ -171,7 +179,8 @@ export function BoardTopBar({
           title="Close preset"
           onClick={onCloseRequest}
         >
-          CLOSE
+          <ActionIcon name="close" />
+          <span className="db-label">CLOSE</span>
         </button>
       </div>
     </div>
