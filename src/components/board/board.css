@@ -46,7 +46,12 @@
   gap: 4px;
   flex: 1;
 }
+/* Each chip is a button that scrolls its pedal into view — the board's nav on
+   narrow screens, where only a couple of pedals fit at a time. */
 .board-view .chain-node {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
   font-family: var(--font-jetbrains-mono), monospace;
   font-size: 10px;
   font-weight: 800;
@@ -57,10 +62,21 @@
   color: var(--ink, #eee);
   border: 1px solid color-mix(in srgb, var(--ink, #888) 25%, transparent);
   white-space: nowrap;
-  transition: opacity 0.15s ease;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.board-view .chain-node:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--ink, #888) 60%, transparent);
+}
+.board-view .chain-node:active {
+  transform: none;
 }
 .board-view .chain-node.off {
   opacity: 0.32;
+}
+.board-view .chain-node.off:hover {
+  opacity: 0.6;
 }
 .board-view .chain-arrow {
   color: var(--chrome-muted);
@@ -441,6 +457,44 @@
   color: var(--ink);
   opacity: 0.6;
 }
+/* ── touch chain reorder ──
+   Drag-and-drop is HTML5 DnD, which never fires on touch, and the keyboard grip
+   needs arrow keys — so touch devices get explicit ‹ › arrows (rendered only
+   when the pointer is coarse, see PedalBoard). Absolutely positioned over the
+   brand strip so they cost no layout height and the bays keep their size. */
+.board-view .pedal-move {
+  position: absolute;
+  bottom: 5px;
+  width: 44px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ink) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  color: var(--ink);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 3;
+}
+.board-view .pedal-move.prev {
+  left: 4px;
+}
+.board-view .pedal-move.next {
+  right: 4px;
+}
+.board-view .pedal-move:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+.board-view .pedal-move:active:not(:disabled) {
+  background: color-mix(in srgb, var(--ink) 28%, transparent);
+}
+
 .board-view .info-chip {
   position: absolute;
   top: 6px;
@@ -1955,18 +2009,72 @@
 }
 
 /* ════════════════════════════════════════════════════════════════════════
-   Mobile chrome (≤640px): the top bar keeps ONE row of actions by swiping
-   horizontally instead of piling into 3-4 wrapped rows; the deck sheds its
-   desktop-only readouts (live treadle bars) and shrinks the meters; the
-   deck popovers become viewport-clamped bottom sheets instead of absolute
-   flyouts that clip off-screen.
+   Board layout ≤720px: the two pedal rows fold into ONE swipeable row (see
+   useSingleRowBoard — PedalBoard renders the markup, this styles it). Two
+   340px+ rows plus the chain strip, info bar and deck don't fit a phone
+   viewport, and one row keeps the whole chain in a single left-to-right
+   swipe with no cross-row cable stubs to read.
+   ════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 720px) {
+  .board-view .board-deck {
+    padding: 10px 10px 8px;
+  }
+  .board-view .board-rows.single .board-row {
+    gap: 12px;
+    /* one row of 11 pedals is always wider than the screen: pack them from the
+       left so the chain starts at IN instead of centring on a mid-chain pedal */
+    justify-content: flex-start;
+  }
+  /* Drop the reserved bay height. It buys a stable layout when you swap an
+     effect (nothing above shifts), but it costs the height of the tallest
+     effect in the module — 200-300px of empty board above a short pedal, on
+     the one screen where vertical space is scarcest. Bays collapse to their
+     pedal instead; the row still bottom-aligns, so the chain stays level. */
+  .board-view .board-rows.single .pedal-bay {
+    min-height: 0;
+  }
+  /* snap each pedal to the viewport centre as you swipe the chain */
+  .board-view .board-scroll {
+    scroll-snap-type: x proximity;
+    scroll-padding: 0 16px;
+  }
+  .board-view .board-rows.single .pedal-bay {
+    scroll-snap-align: center;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   Mobile chrome (≤640px): the top bar wraps its actions into a tidy grid
+   (a horizontal scroller hid half of them behind an invisible affordance);
+   the deck sheds its desktop-only readouts (live treadle bars) and the
+   audio meters; the deck popovers become viewport-clamped bottom sheets
+   instead of absolute flyouts that clip off-screen.
    ════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 640px) {
   .board-view .stage {
     padding: 6px 8px 8px;
   }
 
-  /* top bar: status on its own line, actions in a swipeable single row */
+  /* chain strip: it's the board's nav on mobile, so keep it but tighten it */
+  .board-view .chain-strip {
+    gap: 8px;
+    padding: 7px 10px;
+  }
+  .board-view .chain-strip .strip-lbl {
+    display: none;
+  }
+
+  /* info bar: hover doesn't exist on touch, so the "hover a pedal" hint is
+     dead weight — the bar only earns its height once a pedal's ⓘ is pinned */
+  .board-view .info-bar {
+    padding: 0 10px;
+  }
+  .board-view .info-bar .i-empty {
+    display: none;
+  }
+
+  /* top bar: status on its own line, actions wrapped into an even grid so
+     every action is visible without a hidden horizontal swipe */
   .board-view .board-topbar {
     gap: 8px;
     padding: 8px 10px;
@@ -1977,25 +2085,22 @@
   }
   .board-view .board-topbar-actions {
     flex: 1 1 100%;
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    gap: 6px;
     margin-left: 0;
-    padding-bottom: 2px;
-    scrollbar-width: none;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-  }
-  .board-view .board-topbar-actions::-webkit-scrollbar {
-    display: none;
   }
   .board-view .board-topbar-actions .deck-btn {
-    flex: none;
+    /* grow to share the row evenly; the basis is the natural icon+label width */
+    flex: 1 0 auto;
     white-space: nowrap;
+  }
+  .board-view .board-topbar-actions .deck-btn.quiet {
+    flex: 0 0 auto;
   }
 
   /* bottom deck: fewer readouts, tighter spacing, clear of the iOS home bar */
   .board-view .deck {
-    gap: 10px 14px;
+    gap: 8px 12px;
     padding: 10px 12px;
     margin: 10px 2px 4px;
     bottom: calc(8px + env(safe-area-inset-bottom));
@@ -2003,18 +2108,45 @@
   .board-view .deck-live {
     display: none;
   }
-  .board-view .deck-name {
-    max-width: 150px;
-  }
+  /* Drop the IN/OUT level bars — they're a passive readout, and they're the
+     widest thing in the deck. The audio *controls* (AUDIO IN, MONITOR, output
+     device, stop) stay: nothing else in the board exposes them. */
   .board-view .audio-meters {
     flex-wrap: wrap;
     min-width: 0;
   }
-  .board-view .audio-meters .am-track {
-    width: 56px;
+  .board-view .audio-meters .am-row {
+    display: none;
   }
   .board-view .audio-meters .am-out-select {
-    max-width: 110px;
+    max-width: 120px;
+  }
+  .board-view .deck-status {
+    flex: 1 1 100%;
+  }
+  .board-view .deck-name {
+    max-width: 100%;
+  }
+  .board-view .deck-readouts {
+    flex: 1 1 100%;
+    gap: 12px;
+  }
+  .board-view .deck-vol {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .board-view .deck-vol-slider {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .board-view .deck-actions {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-left: 0;
+  }
+  .board-view .deck-actions .deck-btn {
+    flex: 1 0 auto;
   }
 
   /* deck popovers: fixed bottom sheets clamped to the viewport */
@@ -2037,10 +2169,16 @@
 @media (pointer: coarse) {
   .board-view .deck-btn {
     min-height: 44px;
-    padding: 10px 14px;
+    padding: 10px 12px;
   }
   .board-view .deck-btn.quiet {
-    padding: 10px 12px;
+    padding: 10px;
+    min-width: 44px;
+  }
+  /* reserve the strip the ‹ › reorder arrows sit in, so they get full-size tap
+     targets without overlapping the bypass treadle above them */
+  .board-view .pedal {
+    padding-bottom: 50px;
   }
   .board-view .dp-btn {
     min-height: 40px;
