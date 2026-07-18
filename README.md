@@ -1,36 +1,91 @@
+<div align="center">
+
+<img src="public/icon-512.png" alt="GP200 Studio logo" width="120" />
+
 # GP200 Studio
 
-Browser-based editor for Valeton GP-200 guitar-pedal preset files (`.prst`). Load a preset, edit effect parameters, push changes live to a connected GP-200 over USB-MIDI, save/export the result, all client-side, no backend.
+**A browser-based editor, patch manager & loop station for the Valeton GP-200.**
+No install. No account. No backend. Just plug in and play.
 
-> **Based on [phash/gp200editor](https://github.com/phash/gp200editor)** — the original project whose reverse-engineered `.prst` binary format, SysEx MIDI protocol, and 305-effect mapping this editor is built on.
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](tsconfig.app.json)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](package.json)
+[![Vite](https://img.shields.io/badge/Vite-⚡-646CFF?logo=vite&logoColor=white)](vite.config.ts)
+[![Web MIDI](https://img.shields.io/badge/Web%20MIDI-SysEx-5df08a)](src/core/SysExCodec.ts)
+[![Backend](https://img.shields.io/badge/backend-none-success)](#how-it-works)
+[![Browser](https://img.shields.io/badge/browser-Chrome%20%7C%20Edge-orange?logo=googlechrome&logoColor=white)](#browser-support)
 
-Live at **[kabirtamari.com/gp200studio](https://kabirtamari.com/gp200studio)**. Web MIDI works in Chrome/Edge only (no Firefox/Safari support).
+**[▶ Open the live app](https://afterhour.uk/gp200studio/)**
 
-## Why this repo exists
+<img src="public/guide/02-editor-board.png" alt="The GP200 Studio pedalboard editor" width="100%" />
 
-This is a focused rebuild of the editor surface from [`gp200editor`](https://github.com/phash/gp200editor), a Next.js app that also has a preset gallery, accounts, sharing, and community features. The reverse-engineered protocol work (`.prst` binary format, SysEx MIDI protocol, 305-effect mapping) was already pure, framework-agnostic TypeScript with zero coupling to Next.js, and Web MIDI has never touched a backend either (`navigator.requestMIDIAccess()` + `MIDIOutput.send()` are 100% browser APIs). So the hard, valuable part of that project ported here with zero rewrite risk. Everything else (auth, database, gallery, sharing) was deliberately left behind. This app doesn't have or need a backend.
+</div>
 
-The old repo is frozen, not actively developed further; this repo is the intended future for the editor itself. Gallery/auth/sharing/community features, if ever revived, would live in `gp200editor`, not here.
+---
+
+## Why?
+
+The Valeton GP-200 is a great multi-effects pedal with a not-so-great editing story: the official editor runs on **Windows and macOS only**, and organizing 256 patches through a 4" screen and two footswitches is nobody's idea of fun.
+
+GP200 Studio fixes that:
+
+- 🐧 **Runs anywhere Chrome runs** — including Linux. Web MIDI + Web Audio, straight from the browser to the pedal over USB. Nothing to install.
+- 🗂️ **Real patch management** — browse, search, rename, import, export and back up all 256 device slots. Bulk-export your entire pedal to a single ZIP.
+- 🎛️ **A UI that looks like the gear it edits** — your patch is a pedalboard, not a parameter spreadsheet. Every effect is a colorful pedal with knobs you can actually see and turn. See your signal chain at a glance instead of decoding menus.
+- 🔁 **A loop station the pedal doesn't ship with** — records the GP-200's USB audio right in the browser, with MIDI footswitch learn so you can drive it hands-free from the pedal itself.
 
 ## Features
 
-- **Pedalboard editor** — the whole patch as a stage-styled board with per-effect pedal bodies, drag-reorder, FX-loop routing, and knob/fader parameter editing
-- **Live device push** — edits stream to a connected GP-200 over USB-MIDI SysEx as you make them
-- **Patch manager** — all 256 device slots: list with names/search, activate/open/rename, per-slot `.prst` export/import, bulk export to a single ZIP
-- **Controller assignment** — per-patch EXP pedal and CTRL 1–8 footswitch assignments
-- **Import/export** — native GP-200 `.prst` files
-- **Looper panel** — drives the GP-200's built-in looper transport
+- 🎸 **Pedalboard editor** — the whole patch as a stage-styled board: per-effect pedal bodies, drag-to-reorder, FX-loop routing, knob/fader parameter editing, and real-world "based on" info for all 305 effects
+- ⚡ **Live device push** — edits stream to a connected GP-200 over USB-MIDI SysEx as you make them; hardware-side changes sync back into the editor
+- 🗄️ **Patch manager** — full 256-slot list with names & search, activate/open/rename, per-slot `.prst` export/import, one-click bulk ZIP backup
+- 🦶 **Controller assignment** — per-patch EXP pedal and CTRL 1–8 footswitch mappings
+- 🔁 **Loop station** — in-browser recording of the GP-200's USB audio with overdub, plus MIDI-learn to bind transport controls to the pedal's footswitches
+- 💾 **Import / export** — native GP-200 `.prst` files, byte-exact round-trips
 
-## Stack
+<div align="center">
+<img src="public/guide/03-effect-picker.png" alt="Effect picker" width="49%" /> <img src="public/guide/08-deck-loop.png" alt="Loop station" width="49%" />
+</div>
 
-- Vite + React 19 + TypeScript (strict)
-- Tailwind CSS v3
-- GSAP (`gsap` + `@gsap/react`) as the animation backbone. See [`src/lib/motion.ts`](src/lib/motion.ts) and [`src/hooks/useGsapTimeline.ts`](src/hooks/useGsapTimeline.ts). Not wired into any component yet.
-- Vitest for unit tests
-- Cloudflare Workers static assets for deployment (`wrangler.jsonc`)
-- No backend, no database, no auth, no i18n framework (English-only)
+<details>
+<summary><b>📸 More screenshots</b></summary>
+<br/>
+<table>
+  <tr>
+    <td><img src="public/guide/01-landing.png" alt="Landing screen" /></td>
+    <td><img src="public/guide/05-deck-fxloop.png" alt="FX loop routing" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Landing</sub></td>
+    <td align="center"><sub>FX-loop routing</sub></td>
+  </tr>
+  <tr>
+    <td><img src="public/guide/06-deck-exp.png" alt="EXP pedal assignment" /></td>
+    <td><img src="public/guide/07-deck-ctrl.png" alt="CTRL footswitch assignment" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>EXP pedal assignment</sub></td>
+    <td align="center"><sub>CTRL footswitch assignment</sub></td>
+  </tr>
+  <tr>
+    <td><img src="public/guide/04-info-bar-chain.png" alt="Signal chain info bar" /></td>
+    <td><img src="public/guide/09-export-dialog.png" alt="Export dialog" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Signal chain & effect info</sub></td>
+    <td align="center"><sub>Export</sub></td>
+  </tr>
+</table>
+</details>
 
-## Development
+## Getting started
+
+### Just use it
+
+1. Open **[afterhour.uk/gp200studio](https://afterhour.uk/gp200studio/)** in Chrome or Edge
+2. Plug your GP-200 into USB and hit **CONNECT GP-200** — or hit **Open editor** to work on `.prst` files offline
+3. That's it. Everything runs client-side; your presets never leave your machine.
+
+### Run it locally
 
 ```bash
 npm install
@@ -42,62 +97,53 @@ npm run test            # vitest run
 npm run test:watch      # vitest (watch mode)
 ```
 
-## Architecture
+## How it works
+
+Everything is client-side TypeScript. A pure protocol layer in [`src/core/`](src/core/) decodes/encodes the GP-200's binary `.prst` preset format (byte-exact round-trips via raw-source passthrough) and speaks the pedal's **reverse-engineered USB-MIDI SysEx protocol** — parameter changes, effect swaps, toggles, reorders, preset pulls and saves — over the browser's Web MIDI API. React hooks layer connection/session handling on top, and the pedalboard UI sits on that. No server is involved at any point.
+
+<details>
+<summary><b>🏗️ Architecture overview</b></summary>
 
 ```
 src/
-├── core/              # Pure TypeScript, zero framework dependency, ported from gp200editor
-│   ├── types.ts               # Zod schemas: GP200Preset, EffectSlot
-│   ├── BinaryParser.ts        # DataView-based reader
-│   ├── BufferGenerator.ts     # DataView-based writer
-│   ├── PRSTDecoder.ts         # .prst → GP200Preset (1224 bytes)
-│   ├── PRSTEncoder.ts         # GP200Preset → .prst (byte-exact via rawSource round-trip)
-│   ├── SysExCodec.ts          # USB-MIDI SysEx protocol (reverse-engineered)
-│   ├── controlRecords.ts      # TLV walker for the EXP/CTRL "controls tail", shared by both codecs
-│   ├── devicePush.ts          # Live-push orchestration (effect→settle→params→toggle)
-│   ├── effectNames.ts         # 305 effect ID→name mappings + MODULE_COLORS
-│   ├── effectParams.ts        # Per-effect parameter definitions (generated, see below)
-│   ├── effectDescriptions.ts  # Effect → real-world pedal/amp it emulates
-│   ├── ampCategories.ts       # Groups AMP-module effects by real-world amp
-│   ├── looperBindings.ts, looperTransport.ts  # Built-in looper control
-│   ├── zipStore.ts            # Minimal STORE-only ZIP writer for bulk patch export
-│   └── defaultPreset.ts, midiControlMap.ts, presetNameCache.ts,
-│       extractModules.ts, firmware.ts, normalizePresetName.ts
+├── core/         # Pure TypeScript, zero framework dependency
+│   ├── PRSTDecoder / PRSTEncoder    # .prst file codec (byte-exact round-trip)
+│   ├── SysExCodec / devicePush      # reverse-engineered USB-MIDI SysEx protocol
+│   ├── controlRecords               # EXP/CTRL assignment TLV walker (shared by both codecs)
+│   ├── effectNames / effectParams   # 305-effect map + per-effect parameter definitions
+│   ├── looperBindings / looperTransport
+│   └── zipStore                     # minimal ZIP writer for bulk patch export
 │
-├── hooks/
-│   ├── usePreset.ts        # Client-side preset state (load/toggle/param/reorder), MIDI-agnostic
-│   ├── useMidiSend.ts      # Low-level send helpers, split out of useMidiDevice
-│   ├── useMidiDevice.ts    # Web MIDI connection, handshake, pull/push/save, auto-reconnect
-│   ├── useLooper.ts        # Looper transport state
-│   ├── useAudioMeter.ts    # Input level metering
-│   └── useGsapTimeline.ts  # GSAP animation backbone (infrastructure only, unused so far)
+├── hooks/        # usePreset (state) · useMidiSend / useMidiDevice (Web MIDI session)
+│                 # useLooper · useAudioMeter · useGsapTimeline
 │
 ├── components/
-│   ├── board/           # The pedalboard: the only effects view (PedalBoard, Pedal, knobs/faders,
-│   │                    #   SwitcherUnit bottom deck, DeckDrawer sheets, cable layer, looper panel)
-│   ├── ui/              # Shared primitives: Button, Card, Dialog, Badge
-│   ├── Landing.tsx           # Entry view: connect device or open a blank preset
-│   ├── PatchManagerSheet.tsx # Full 256-slot device patch management side sheet
-│   ├── DeviceSlotBrowser.tsx # Slot-pick dialogs (load/save-as)
-│   ├── ControllerPanel.tsx   # EXP pedal assignment
-│   ├── FootswitchPanel.tsx   # Per-patch CTRL 1–8 footswitch assignment
-│   └── ...                   # Import/export dialogs, firmware compat, guide, credits
+│   ├── board/    # The pedalboard — the only effects view
+│   ├── ui/       # Shared primitives: Button, Card, Dialog, Badge
+│   └── ...       # Landing, PatchManagerSheet, DeviceSlotBrowser, panels & dialogs
 │
-└── lib/
-    └── motion.ts          # GSAP duration/easing tokens, kept in sync with CSS keyframes
+└── lib/motion.ts # GSAP tokens
 ```
 
-`App.tsx` is the sole composition root: no router, no global store; it wires `usePreset()` and `useMidiDevice()` together imperatively.
+`App.tsx` is the sole composition root — no router, no global store; it wires `usePreset()` and `useMidiDevice()` together directly.
 
-Test fixtures: real 1224-byte `.prst` preset files under a local (non-committed) `prst/` directory; unit tests that need them live in `tests/unit/`.
+A few notes for the curious:
 
-## USB-MIDI device communication
+- The SysEx protocol was reverse-engineered from USB captures; the capture context is documented in [`docs/protocol-capture.md`](docs/protocol-capture.md) and inline in [`SysExCodec.ts`](src/core/SysExCodec.ts).
+- Never call `loadPresetNames()` without its abort mechanism — it can trigger a firmware-update popup on the device.
+- [`scripts/generate-effect-params.mjs`](scripts/generate-effect-params.mjs) regenerates [`effectParams.ts`](src/core/effectParams.ts) from Valeton's own `algorithm.xml` (read from a local install of their editor). Only needed when a firmware release changes effect parameters.
+- Tests live in [`tests/unit/`](tests/unit/), one file per core module, running against real `.prst` fixtures.
 
-Reverse-engineered SysEx protocol, unchanged from the source repo. Web MIDI only works in Chrome/Edge (no Firefox/Safari). Never call `loadPresetNames()` without its abort mechanism; it can trigger a firmware-update popup on the device.
+</details>
 
-`scripts/generate-effect-params.mjs` regenerates `src/core/effectParams.ts` from Valeton's own `algorithm.xml`. That file isn't part of this repo (or the source repo); it's read from a local install of Valeton's editor software. You only need this script if effect parameter definitions ever need to be regenerated from a newer firmware/algorithm release.
+## Browser support
+
+| Browser | Status |
+|---|---|
+| Chrome / Edge (desktop) | ✅ Full support |
+| Firefox / Safari | ❌ No Web MIDI — file editing may load, but no device connection |
 
 ## Credits
 
-- [phash/gp200editor](https://github.com/phash/gp200editor) — original project and the reverse-engineering groundwork this editor is based on
+- Built on the reverse-engineering groundwork of **[phash/gp200editor](https://github.com/phash/gp200editor)** — the `.prst` binary format, SysEx MIDI protocol, and 305-effect mapping
 - Built by [Kabir Tamari](https://kabirtamari.com)
