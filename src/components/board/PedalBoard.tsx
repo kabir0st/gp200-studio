@@ -83,6 +83,10 @@ export interface PedalBoardProps {
   onLooperClearTrigger: (action: LooperActionKind) => void;
   onLooperClearAll: () => void;
   looperLearnNotice: LearnNotice | null;
+  /* FS mode written back when the looper releases the footswitches; user-declared
+   * because the settings protocol has no read-back (see useFsTakeover). */
+  fsRestoreMode: number;
+  onFsRestoreModeChange: (mode: number) => void;
   /* built-in drums/looper/tuner remote (plain MIDI CC, src/core/ccControl.ts) */
   sendCC: (command: CCCommand | CCCommand[]) => void;
   ccChannel: number;
@@ -146,6 +150,8 @@ export function PedalBoard({
   onLooperClearTrigger,
   onLooperClearAll,
   looperLearnNotice,
+  fsRestoreMode,
+  onFsRestoreModeChange,
   sendCC,
   ccChannel,
   onCcChannelChange,
@@ -429,6 +435,8 @@ export function PedalBoard({
           onClearAll={onLooperClearAll}
           learnNotice={looperLearnNotice}
           learnEnabled={connected}
+          fsRestoreMode={fsRestoreMode}
+          onFsRestoreModeChange={onFsRestoreModeChange}
         />
       </Dialog>
 

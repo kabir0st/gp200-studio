@@ -73,6 +73,8 @@ export default function MobileShell({
   onLooperClearTrigger,
   onLooperClearAll,
   looperLearnNotice,
+  fsRestoreMode,
+  onFsRestoreModeChange,
   sendCC,
   ccChannel,
   onCcChannelChange,
@@ -161,6 +163,8 @@ export default function MobileShell({
               onClearAll={onLooperClearAll}
               learnNotice={looperLearnNotice}
               learnEnabled={connected}
+              fsRestoreMode={fsRestoreMode}
+              onFsRestoreModeChange={onFsRestoreModeChange}
             />
           </div>
         )}

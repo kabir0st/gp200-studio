@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Led } from '@/components/ui/Badge';
 import type { LooperTriggerMap } from '@/core/looperTriggers';
 import type { LearnNotice } from '@/hooks/useLooperTriggers';
+import { FS_MODES } from '@/core/deviceSettings';
 
 interface LooperPanelProps {
   looper: LooperApi;
@@ -28,6 +29,9 @@ interface LooperPanelProps {
   learnNotice: LearnNotice | null;
   /** learning needs a connected GP-200 */
   learnEnabled: boolean;
+  /** FS mode restored on close; user-declared (protocol has no read-back) */
+  fsRestoreMode: number;
+  onFsRestoreModeChange: (mode: number) => void;
 }
 
 const SELECT_CLASS =
@@ -129,6 +133,8 @@ export function LooperPanel({
   onClearAll,
   learnNotice,
   learnEnabled,
+  fsRestoreMode,
+  onFsRestoreModeChange,
 }: LooperPanelProps) {
   const playBar = useRef<HTMLSpanElement>(null);
   // Track gains keyed by dynamic track id; default 1 for new tracks.
@@ -452,6 +458,27 @@ export function LooperPanel({
           </select>
           <span className="font-mono-display text-caption text-text-muted basis-full sm:basis-auto">
             (EXP wire format pending capture)
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 mt-3">
+          <span className="font-mono-display text-label text-text-secondary w-16">
+            FS MODE →
+          </span>
+          <select
+            value={fsRestoreMode}
+            onChange={(e) => onFsRestoreModeChange(Number(e.target.value))}
+            className={`flex-1 sm:flex-none min-w-0 ${SELECT_CLASS}`}
+          >
+            {FS_MODES.map((label, mode) => (
+              <option key={label} value={mode}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <span className="font-mono-display text-caption text-text-muted basis-full sm:basis-auto">
+            Your pedal&apos;s normal FS Mode, restored when this dialog closes. The
+            GP-200 cannot report its own setting, so this has to be told to us.
+            {fsRestoreMode === 2 && ' Note: in User mode the per-switch TAP targets are also restored, and those are only remembered from what this app last wrote.'}
           </span>
         </div>
       </div>

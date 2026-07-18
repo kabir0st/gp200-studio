@@ -10,6 +10,13 @@ import {
 } from '@/core/looperBindings';
 import { loadLooperStore, saveLooperStore } from '@/core/looperTriggers';
 import { useLooperTriggers } from '@/hooks/useLooperTriggers';
+import { useFsTakeover } from '@/hooks/useFsTakeover';
+import {
+  loadDeviceSettings,
+  saveDeviceSettings,
+  defaultDeviceSettings,
+  type DeviceSettings,
+} from '@/core/deviceSettings';
 import { PRSTDecoder } from '@/core/PRSTDecoder';
 import { PRSTEncoder } from '@/core/PRSTEncoder';
 import { pushPresetToDevice, type PushProgress } from '@/core/devicePush';
@@ -90,14 +97,26 @@ function App() {
     saveLooperStore(looperBindings, looperTriggers.triggers);
   }, [looperBindings, looperTriggers.triggers]);
 
-  // NOTE: the Loop Station no longer rewrites the GP-200's global FootSwitch
-  // settings. It used to run a "takeover" on dialog open/close (FS mode → User,
-  // all targets → CTRL, then restore) but the protocol is write-only, so the
-  // restore guessed the pre-takeover FS mode and permanently clobbered it
-  // (Stomp → Patch). It was also unnecessary: in the pedal's normal Stomp mode
-  // a footswitch press emits the 0x12/0x10 effect-toggle frame the MIDI-learn
-  // tap already recognizes (see useLooperTriggers / classifyFrame). Leaving the
-  // pedal untouched is what makes assignment work.
+  // While the Loop Station is open the footswitches belong to the looper, so the
+  // pedal is told to stop acting on them (FS mode → User, TAP → MIDI) and the
+  // settings are written back on close. An earlier version of this was removed
+  // in c380497 because its restore GUESSED the pre-takeover FS mode and
+  // clobbered it; the protocol still has no read-back, so the fix is that the
+  // restore value is now the user's declared one (deviceSettings, editable in
+  // the Loop Station panel) rather than an assumed default.
+  const [deviceSettings, setDeviceSettings] = useState<DeviceSettings>(
+    () => loadDeviceSettings() ?? defaultDeviceSettings,
+  );
+  useEffect(() => {
+    saveDeviceSettings(deviceSettings);
+  }, [deviceSettings]);
+
+  const fsTakeover = useFsTakeover({
+    sender: midiDevice,
+    connected: midiDevice.status === 'connected',
+    restoreMode: deviceSettings.fsMode,
+    restoreTaps: deviceSettings.taps,
+  });
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -663,9 +682,19 @@ function App() {
     onLooperBindingsChange: setLooperBindings,
     onLooperDrawerOpenChange: (open) => {
       looperPanelOpenRef.current = open;
+      if (open) {
+        fsTakeover.apply();
+        return;
+      }
       // Closing the dialog disarms any in-progress MIDI-learn so a stray
-      // stomp doesn't bind after the panel is gone.
-      if (!open) looperTriggers.cancelLearn();
+      // stomp doesn't bind after the panel is gone, and hands the
+      // footswitches back to the pedal.
+      looperTriggers.cancelLearn();
+      fsTakeover.release();
+    },
+    fsRestoreMode: deviceSettings.fsMode,
+    onFsRestoreModeChange: (fsMode: number) => {
+      setDeviceSettings((prev) => ({ ...prev, fsMode }));
     },
     looperTriggers: looperTriggers.triggers,
     looperArmedAction: looperTriggers.armedAction,
