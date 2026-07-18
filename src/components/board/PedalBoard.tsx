@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState, type CSSProperties, type DragEvent } from 'react';
+import { useCallback, useEffect, useState, type DragEvent } from 'react';
 import type { GP200Preset, EffectSlot } from '@/core/types';
 import type { PushProgress } from '@/core/devicePush';
 import { getSlotModule } from '@/core/effectNames';
-import { bayMinHeight, isWideSlot } from './boardLayout';
+import { isWideSlot } from './boardLayout';
 import { useFlipReorder } from './useFlipReorder';
 import { FxLoopArrows } from '@/components/FxLoopArrows';
 import { ControllerPanel } from '@/components/ControllerPanel';
@@ -231,7 +231,6 @@ export function PedalBoard({
       <div
         key={`slot-${slot.slotIndex}`}
         className={bayClasses.join(' ')}
-        style={{ '--bay-h': `${bayMinHeight(slot.slotIndex)}px` } as CSSProperties}
         onDragOver={(e) => onDragOver(e, index)}
         onDrop={() => handleReorderDrop(index)}
       >

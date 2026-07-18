@@ -261,15 +261,20 @@
   flex-wrap: nowrap;
 }
 .board-view .board-row + .board-row {
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 /* ── pedal bay ──
-   Fixed-size cell per slot. The pedal keeps its own natural size and sits at the
-   bottom-centre; the bay absorbs any width/height difference as padding, so
-   swapping an effect only changes the padding, never a neighbour's position.
-   Width/height are keyed to the slot's module (isWideSlot), which is stable, so
-   the whole row's footprint is constant across effect changes. */
+   Fixed-*width* cell per slot: the pedal keeps its natural size and sits at the
+   bottom-centre, and the bay absorbs any width difference as padding, so
+   swapping an effect never shifts a neighbour sideways. Width is keyed to the
+   slot's module (isWideSlot), which is stable.
+
+   Height is deliberately NOT reserved. Reserving each module's tallest possible
+   effect left up to ~140px of dead air above short pedals (the DLY bay reserved
+   442px for a 305px pedal), which read as a broken gap between the two rows.
+   Rows now hug their tallest current pedal; the trade is that swapping an effect
+   can nudge the row below it vertically. */
 .board-view .pedal-bay {
   position: relative;
   display: flex;
@@ -277,8 +282,6 @@
   justify-content: center;
   flex: none;
   width: 172px;
-  /* per-module reserved height (bayMinHeight): set inline; falls back if unset */
-  min-height: var(--bay-h, 342px);
 }
 .board-view .pedal-bay.wide {
   width: 310px;
