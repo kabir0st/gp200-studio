@@ -24,7 +24,7 @@ No install. No account. No backend. Just plug in and play.
 
 ## Why?
 
-The Valeton GP-200 is a great multi-effects pedal with a not-so-great editing story: the official editor runs on **Windows and macOS only**, and organizing 256 patches through a 4" screen and two footswitches is nobody's idea of fun.
+The Valeton GP-200 is a great multi-effects pedal with a not-so-great support for linux as the official editor runs on **Windows and macOS only**, and organizing 256 patches through a 4" screen and two footswitches is nobody's idea of fun.
 
 GP200 Studio fixes that:
 
@@ -40,7 +40,6 @@ GP200 Studio fixes that:
 - 🗄️ **Patch manager** — full 256-slot list with names & search, activate/open/rename, per-slot `.prst` export/import, one-click bulk ZIP backup
 - 🦶 **Controller assignment** — per-patch EXP pedal and CTRL 1–8 footswitch mappings
 - 🔁 **Loop station** — in-browser recording of the GP-200's USB audio with overdub, plus MIDI-learn to bind transport controls to the pedal's footswitches
-- 💾 **Import / export** — native GP-200 `.prst` files, byte-exact round-trips
 
 <div align="center">
 <img src="public/guide/03-effect-picker.png" alt="Effect picker" width="49%" /> <img src="public/guide/08-deck-loop.png" alt="Loop station" width="49%" />
@@ -81,67 +80,14 @@ GP200 Studio fixes that:
 
 ### Just use it
 
-1. Open **[afterhour.uk/gp200studio](https://afterhour.uk/gp200studio/)** in Chrome or Edge
+1. Open **[GP200studio]([https://afterhour.uk/gp200studio/](https://kabirtamari.com/gp200studio/))** in Chrome or Edge
 2. Plug your GP-200 into USB and hit **CONNECT GP-200** — or hit **Open editor** to work on `.prst` files offline
 3. That's it. Everything runs client-side; your presets never leave your machine.
-
-### Run it locally
-
-```bash
-npm install
-npm run dev          # http://localhost:5173
-npm run build         # production build
-npm run typecheck     # tsc -b --noEmit
-npm run lint           # oxlint
-npm run test            # vitest run
-npm run test:watch      # vitest (watch mode)
-```
 
 ## How it works
 
 Everything is client-side TypeScript. A pure protocol layer in [`src/core/`](src/core/) decodes/encodes the GP-200's binary `.prst` preset format (byte-exact round-trips via raw-source passthrough) and speaks the pedal's **reverse-engineered USB-MIDI SysEx protocol** — parameter changes, effect swaps, toggles, reorders, preset pulls and saves — over the browser's Web MIDI API. React hooks layer connection/session handling on top, and the pedalboard UI sits on that. No server is involved at any point.
 
-<details>
-<summary><b>🏗️ Architecture overview</b></summary>
-
-```
-src/
-├── core/         # Pure TypeScript, zero framework dependency
-│   ├── PRSTDecoder / PRSTEncoder    # .prst file codec (byte-exact round-trip)
-│   ├── SysExCodec / devicePush      # reverse-engineered USB-MIDI SysEx protocol
-│   ├── controlRecords               # EXP/CTRL assignment TLV walker (shared by both codecs)
-│   ├── effectNames / effectParams   # 305-effect map + per-effect parameter definitions
-│   ├── looperBindings / looperTransport
-│   └── zipStore                     # minimal ZIP writer for bulk patch export
-│
-├── hooks/        # usePreset (state) · useMidiSend / useMidiDevice (Web MIDI session)
-│                 # useLooper · useAudioMeter · useGsapTimeline
-│
-├── components/
-│   ├── board/    # The pedalboard — the only effects view
-│   ├── ui/       # Shared primitives: Button, Card, Dialog, Badge
-│   └── ...       # Landing, PatchManagerSheet, DeviceSlotBrowser, panels & dialogs
-│
-└── lib/motion.ts # GSAP tokens
-```
-
-`App.tsx` is the sole composition root — no router, no global store; it wires `usePreset()` and `useMidiDevice()` together directly.
-
-A few notes for the curious:
-
-- The SysEx protocol was reverse-engineered from USB captures; the capture context is documented in [`docs/protocol-capture.md`](docs/protocol-capture.md) and inline in [`SysExCodec.ts`](src/core/SysExCodec.ts).
-- Never call `loadPresetNames()` without its abort mechanism — it can trigger a firmware-update popup on the device.
-- [`scripts/generate-effect-params.mjs`](scripts/generate-effect-params.mjs) regenerates [`effectParams.ts`](src/core/effectParams.ts) from Valeton's own `algorithm.xml` (read from a local install of their editor). Only needed when a firmware release changes effect parameters.
-- Tests live in [`tests/unit/`](tests/unit/), one file per core module, running against real `.prst` fixtures.
-
-</details>
-
-## Browser support
-
-| Browser | Status |
-|---|---|
-| Chrome / Edge (desktop) | ✅ Full support |
-| Firefox / Safari | ❌ No Web MIDI — file editing may load, but no device connection |
 
 ## Credits
 
