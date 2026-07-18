@@ -29,9 +29,8 @@ type Sheet = 'fxloop' | 'exp' | 'ctrl' | 'meta' | null;
  * ephemeral UI state (active tab, open sheet) resets. That is deliberate —
  * debouncing the breakpoint would reintroduce mid-resize flicker.
  *
- * Ignored on purpose: dragIndex / dragOverIndex / onDragStart / onDragOver /
- * onDrop. Those drive HTML5 drag-and-drop, which never fires on touch; reorder
- * here goes through onMove.
+ * Nothing in PedalBoardProps is ignored here any more: both trees now reorder
+ * through the same `onMove`, so there is no desktop-only drag surface left.
  */
 export default function MobileShell({
   preset,

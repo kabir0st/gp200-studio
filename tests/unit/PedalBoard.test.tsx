@@ -55,11 +55,6 @@ function renderBoard(overrides: Partial<Parameters<typeof PedalBoard>[0]> = {}) 
     onChangeEffect: vi.fn(),
     onParamChange: vi.fn(),
     onMove: vi.fn(),
-    dragIndex: null,
-    dragOverIndex: null,
-    onDragStart: vi.fn(),
-    onDragOver: vi.fn(),
-    onDrop: vi.fn(),
     patchVolume: 50,
     patchPan: 0,
     patchTempo: 120,
@@ -221,8 +216,11 @@ describe.skipIf(!HAS_FIXTURES)('PedalBoard (render smoke test)', () => {
     const wideBays = [...bays].filter((b) => b.classList.contains('wide')).length;
     const wideSlots = preset.effects.filter((e) => isWideSlot(e.slotIndex)).length;
     expect(wideBays).toBe(wideSlots);
-    // every pedal shows the drag-grip affordance
-    expect(container.querySelectorAll('article.pedal .pedal-grip')).toHaveLength(11);
+    // the grip is the reorder control: a real button, not decoration, so the
+    // chain stays reorderable without a pointing device
+    const grips = container.querySelectorAll<HTMLButtonElement>('article.pedal button.pedal-grip');
+    expect(grips).toHaveLength(11);
+    for (const grip of grips) expect(grip.getAttribute('aria-label')).toMatch(/Reorder .*position/);
   });
 
   it('isWideSlot is keyed to the fixed module, not the chosen effect', () => {

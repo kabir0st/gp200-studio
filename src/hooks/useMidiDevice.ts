@@ -308,6 +308,12 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // sub=0x0C D→H: effect change response (user changed effect type on hardware)
     // Format (38B raw): payload[12]=blockIndex, payload[26]=module(high byte),
     // payload[19:21]=variant nibble-encoded: effectId = (module<<24) | (p[19]<<4) | p[20]
+    // CAUTION: those module/variant offsets belong to the longer swap frame; on
+    // the 38-byte footswitch-ack variant (CTRL 4-8 report a stomp as 0x0C where
+    // CTRL 1-3 use 0x08) they land in an all-zero tail, which is precisely the
+    // effectId===0 case dropped below. That ack carries block@22 and state@24,
+    // the same offsets the 0x08 FX-state frame uses — see isFootswitchAck0c in
+    // src/core/looperTriggers.ts, which must stay in step with this check.
     if (isSysEx(data, 0x12, 0x0C) && data.length >= 38) {
       handled = true;
       const p = data.subarray(10); // payload starts after header

@@ -99,8 +99,6 @@ function App() {
   // tap already recognizes (see useLooperTriggers / classifyFrame). Leaving the
   // pedal untouched is what makes assignment work.
 
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [slotBrowserMode, setSlotBrowserMode] = useState<'pull' | 'push' | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -515,13 +513,8 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setParam, midiDevice.status]);
 
-  const handleDragStart = useCallback((index: number) => setDragIndex(index), []);
-  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    setDragOverIndex(index);
-  }, []);
-
-  // Shared by drag-and-drop and keyboard reordering. slotIndex (the immutable
+  // The single commit path for both trees: pointer drag, keyboard grip and the
+  // chain strip all land here. slotIndex (the immutable
   // PRST block identity) is preserved by reorderEffects; only array order changes.
   const moveSlot = useCallback((fromIndex: number, toIndex: number) => {
     if (!preset) return;
@@ -534,12 +527,6 @@ function App() {
       midiDevice.sendReorder(order, preset.fxLoopSend, preset.fxLoopReturn);
     }
   }, [preset, reorderEffects, midiDevice]);
-
-  const handleDrop = useCallback((toIndex: number) => {
-    if (dragIndex !== null) moveSlot(dragIndex, toIndex);
-    setDragIndex(null);
-    setDragOverIndex(null);
-  }, [dragIndex, moveSlot]);
 
   const firmwareOk = midiDevice.deviceInfo?.versionAccepted ?? false;
   const showFirmwareDialog =
@@ -575,11 +562,6 @@ function App() {
     onChangeEffect: handleSlotEffectChange,
     onParamChange: handleSlotParamChange,
     onMove: moveSlot,
-    dragIndex: dragIndex,
-    dragOverIndex: dragOverIndex,
-    onDragStart: handleDragStart,
-    onDragOver: handleDragOver,
-    onDrop: handleDrop,
     patchVolume: patchVolume,
     patchPan: patchPan,
     patchTempo: patchTempo,
@@ -685,10 +667,7 @@ function App() {
           <MobileShell {...boardProps} />
         </Suspense>
       ) : (
-        <div
-          className="flex-1 min-h-0 flex flex-col"
-          onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
-        >
+        <div className="flex-1 min-h-0 flex flex-col">
           <PedalBoard {...boardProps} />
         </div>
       )}

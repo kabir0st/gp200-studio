@@ -66,6 +66,22 @@ function decodeSlotNibbles(data: Uint8Array): number {
 }
 
 /**
+ * True for the 38-byte 0x0c "footswitch ack" shape emitted by CTRL 4-8, as
+ * opposed to a genuine effect swap (capture 2026-07-18, docs/protocol-capture.md).
+ *
+ * CTRL 1-3 report a stomp as 0x08; CTRL 4-8 report the same gesture as 0x0c.
+ * Both carry block@22 and state@24. The two 0x0c uses are told apart by the
+ * effectId fields the dispatcher reads (data[29],[30],[36]): a real swap has a
+ * nonzero module/variant there, an ack has the all-zero tail. useMidiDevice's
+ * 0x0c branch already drops zero-effectId frames for exactly this reason, so
+ * this predicate must stay in step with that check.
+ */
+function isFootswitchAck0c(data: Uint8Array): boolean {
+  if (!isGpSysEx(data, 0x12, 0x0c) || data.length < 38) return false;
+  return data[29] === 0 && data[30] === 0 && data[36] === 0;
+}
+
+/**
  * Classify an incoming raw MIDI frame into a learnable/hijackable fingerprint,
  * or null for frames that must always flow through normal handling (real slot
  * changes, knob turns, effect swaps, short frames).
@@ -100,6 +116,14 @@ export function classifyFrame(
     if (decodeSlotNibbles(data) !== currentSlot) return null; // real slot change
     return { kind: 'sysex08', sig: hexOfBytes(data, 10, 25) };
   }
+  if (isFootswitchAck0c(data)) {
+    // Same fingerprint kind as the 0x08 shape on purpose: this means "block N
+    // was stomped", and a block stomped via either message must drive the same
+    // looper action. Keeps fingerprintKey and the persisted store unchanged.
+    const block = data[22];
+    if (block < 0 || block > 10) return null;
+    return { kind: 'toggle', block };
+  }
   return null;
 }
 
@@ -111,6 +135,7 @@ export function extractToggleState(data: Uint8Array): boolean | null {
   if (isGpSysEx(data, 0x12, 0x08) && data.length >= 28 && data[14] !== 0x08) {
     return data[24] !== 0;
   }
+  if (isFootswitchAck0c(data)) return data[24] !== 0;
   return null;
 }
 

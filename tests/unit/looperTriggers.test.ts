@@ -55,6 +55,31 @@ function slotChangeFrame(slot: number, extra: Record<number, number> = {}): Uint
   });
 }
 
+/**
+ * 0x12/0x0c footswitch ack: block@22, state@24, module/variant tail all zero.
+ * CTRL 4-8 report a stomp this way where CTRL 1-3 use 0x08 (capture 2026-07-18).
+ */
+function fsAckFrame(block: number, state: number): Uint8Array {
+  return gpFrame(0x0c, 38, { 14: 0x0f, 18: 0x08, 22: block, 24: state });
+}
+
+/** 0x12/0x0c genuine effect swap: nonzero module@36 / variant@29,30. */
+function effectSwapFrame(block: number): Uint8Array {
+  return gpFrame(0x0c, 38, { 22: block, 29: 0x02, 30: 0x0a, 36: 0x08 });
+}
+
+/** Verbatim hardware captures of two presses of one CTRL 4-8 switch. */
+const CAPTURED_FS_ACK_ON = Uint8Array.from([
+  0xf0, 0x21, 0x25, 0x7e, 0x47, 0x50, 0x2d, 0x32, 0x12, 0x0c, 0x00, 0x00, 0x00,
+  0x00, 0x0f, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x03, 0x00, 0x01, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf7,
+]);
+const CAPTURED_FS_ACK_OFF = Uint8Array.from([
+  0xf0, 0x21, 0x25, 0x7e, 0x47, 0x50, 0x2d, 0x32, 0x12, 0x0c, 0x00, 0x00, 0x00,
+  0x00, 0x0f, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x03,
+  0x0d, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf7,
+]);
+
 const NO_EXP: LooperBindings = { expTarget: null };
 
 function baseInput(overrides: Partial<LooperFrameInput> = {}): LooperFrameInput {
@@ -94,6 +119,20 @@ describe('classifyFrame', () => {
   it('rejects toggle frames with out-of-range blocks', () => {
     expect(classifyFrame(toggleFrame(11, 1), 5)).toBeNull();
     expect(classifyFrame(fxStateFrame(11, 1), 5)).toBeNull();
+    expect(classifyFrame(fsAckFrame(11, 1), 5)).toBeNull();
+  });
+
+  it('gives 0x0c footswitch acks the SAME fingerprint as 0x10 toggles', () => {
+    const viaToggle = classifyFrame(toggleFrame(3, 1), 5);
+    const viaAck = classifyFrame(fsAckFrame(3, 1), 5);
+    expect(viaAck).toEqual({ kind: 'toggle', block: 3 });
+    expect(fingerprintKey(viaToggle!)).toBe(fingerprintKey(viaAck!));
+  });
+
+  it('classifies both captured CTRL 4-8 frames but not a real effect swap', () => {
+    expect(classifyFrame(CAPTURED_FS_ACK_ON, 5)).toEqual({ kind: 'toggle', block: 3 });
+    expect(classifyFrame(CAPTURED_FS_ACK_OFF, 5)).toEqual({ kind: 'toggle', block: 3 });
+    expect(classifyFrame(effectSwapFrame(3), 5)).toBeNull();
   });
 
   it('classifies a same-slot change frame as sysex08', () => {
@@ -112,7 +151,8 @@ describe('classifyFrame', () => {
   it('never classifies real slot changes or unknown/short frames', () => {
     expect(classifyFrame(slotChangeFrame(7), 5)).toBeNull(); // different slot
     expect(classifyFrame(slotChangeFrame(7), null)).toBeNull(); // slot unknown
-    expect(classifyFrame(gpFrame(0x0c, 38, {}), 5)).toBeNull(); // effect change
+    expect(classifyFrame(effectSwapFrame(2), 5)).toBeNull(); // real effect change
+    expect(classifyFrame(gpFrame(0x0c, 20, { 22: 3 }), 5)).toBeNull(); // truncated 0x0c
     expect(classifyFrame(gpFrame(0x10, 20, { 29: 1 }), 5)).toBeNull(); // truncated
     expect(classifyFrame(new Uint8Array([0x90, 60, 100]), 5)).toBeNull(); // note on
   });
@@ -124,6 +164,8 @@ describe('extractToggleState', () => {
     expect(extractToggleState(toggleFrame(2, 0))).toBe(false);
     expect(extractToggleState(fxStateFrame(2, 1))).toBe(true);
     expect(extractToggleState(fxStateFrame(2, 0))).toBe(false);
+    expect(extractToggleState(CAPTURED_FS_ACK_ON)).toBe(true);
+    expect(extractToggleState(CAPTURED_FS_ACK_OFF)).toBe(false);
   });
 
   it('returns null for non-toggle frames', () => {
@@ -183,6 +225,19 @@ describe('processLooperFrame', () => {
       action: 'trackPrev',
       fp: { kind: 'toggle', block: 6 },
       revertToggle: { block: 6, enabled: false },
+    });
+  });
+
+  it('learns a captured CTRL 4-8 stomp and reverts it', () => {
+    const decision = processLooperFrame(baseInput({
+      armedAction: 'trackPrev',
+      data: CAPTURED_FS_ACK_ON,
+    }));
+    expect(decision).toMatchObject({
+      type: 'learned',
+      action: 'trackPrev',
+      fp: { kind: 'toggle', block: 3 },
+      revertToggle: { block: 3, enabled: false },
     });
   });
 

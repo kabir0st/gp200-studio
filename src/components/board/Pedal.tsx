@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import type { CSSProperties, PointerEvent } from 'react';
 import type { EffectSlot } from '@/core/types';
 import { getEffectName, getSlotModule } from '@/core/effectNames';
 import { EFFECT_DESCRIPTIONS } from '@/core/effectDescriptions';
@@ -22,20 +22,20 @@ export interface PedalProps {
   /** open the effect browser for this slot */
   onOpenPicker: () => void;
   onParamChange: (paramIdx: number, value: number) => void;
-  onDragStart: (index: number) => void;
-  /** keyboard reorder (grip button arrows) */
+  /** keyboard reorder (grip arrows) */
   onMove: (from: number, to: number) => void;
+  /** pointer drag reorder; the grip is the only handle */
+  onDragHandleDown: (index: number, e: PointerEvent) => void;
+  /** position to *show* — differs from `index` mid-drag, while the committed
+   *  order still stands under the animation */
+  displayIndex: number;
+  /** true while this pedal is the one being dragged */
+  dragging: boolean;
   /** hover/focus inspection for the info bar */
   onInspect: (inspecting: boolean) => void;
   /** ⓘ click: pin in the info bar */
   onPin: () => void;
   isPinned: boolean;
-  /**
-   * Show tap ‹ › reorder arrows. HTML5 drag-and-drop never fires on touch, and
-   * the keyboard grip needs arrow keys, so without these a phone can't reorder
-   * the chain at all.
-   */
-  showMoveButtons?: boolean;
   /** chain length, for the move bounds + the grip's announced position */
   chainLength: number;
 }
@@ -49,16 +49,15 @@ export function Pedal({
   onToggle,
   onOpenPicker,
   onParamChange,
-  onDragStart,
   onMove,
+  onDragHandleDown,
+  displayIndex,
+  dragging,
   onInspect,
   onPin,
   isPinned,
-  showMoveButtons,
   chainLength,
 }: PedalProps) {
-  const [dragging, setDragging] = useState(false);
-
   const effectName = getEffectName(slot.effectId);
   // module identity comes from the physical block (slot 5 is ALWAYS the cab),
   // not the effectId; unmapped/zeroed ids must not relabel or recolor a slot
@@ -107,20 +106,35 @@ export function Pedal({
       style={bodyVars}
       data-chain={index}
       data-row={row}
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.effectAllowed = 'move';
-        setDragging(true);
-        onDragStart(index);
-      }}
-      onDragEnd={() => setDragging(false)}
+      /* Flip matches state to this id, not to the node. Required: the two
+         board rows are separate parents, so a cross-row move unmounts and
+         recreates the pedal and node identity is lost. */
+      data-flip-id={slot.slotIndex}
       onMouseEnter={() => onInspect(true)}
       onMouseLeave={() => onInspect(false)}
       onFocusCapture={() => onInspect(true)}
       onBlurCapture={() => onInspect(false)}
     >
-      {/* knurled dot grip: signals the whole pedal is draggable */}
-      <span className="pedal-grip" aria-hidden="true" />
+      {/* The one reorder control: pointer-drags, and takes arrow keys so
+          reordering stays reachable without a pointing device. */}
+      <button
+        type="button"
+        className="pedal-grip"
+        aria-label={
+          `Reorder ${effectName}, position ${displayIndex + 1} of ${chainLength}. `
+          + 'Use arrow keys to move.'
+        }
+        onPointerDown={(e) => onDragHandleDown(index, e)}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowLeft' && index > 0) {
+            e.preventDefault();
+            onMove(index, index - 1);
+          } else if (e.key === 'ArrowRight' && index < chainLength - 1) {
+            e.preventDefault();
+            onMove(index, index + 1);
+          }
+        }}
+      />
       <span className="jack in" data-jack="in" />
       <span className="jack out" data-jack="out" />
       <span className="screw tl" /><span className="screw tr" />
@@ -135,35 +149,9 @@ export function Pedal({
       >
         i
       </button>
-      <span
-        className="chain-num"
-        role="button"
-        tabIndex={0}
-        aria-label={
-          `Reorder ${effectName}, position ${index + 1} of ${chainLength}. Use arrow keys.`
-        }
-        onKeyDown={(e) => {
-          if (e.key === 'ArrowLeft' && index > 0) {
-            e.preventDefault();
-            onMove(index, index - 1);
-          } else if (e.key === 'ArrowRight' && index < chainLength - 1) {
-            e.preventDefault();
-            onMove(index, index + 1);
-          }
-        }}
-      >
-        #{index + 1}
-      </span>
+      <span className="chain-num">#{displayIndex + 1}</span>
 
-      {/* knob/switch drags must never start a pedal drag */}
-      <div
-        className={`controls${panel ? ' amp-panel' : ''}`}
-        draggable
-        onDragStart={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-      >
+      <div className={`controls${panel ? ' amp-panel' : ''}`}>
         {defs.map((def) => {
           const value = slot.params[def.idx] ?? def.default;
           // Two defs can share an idx (generated table quirk: Slapback's
@@ -238,30 +226,6 @@ export function Pedal({
 
       {wide ? <div className="fs-row">{footswitch}</div> : footswitch}
 
-      {/* Touch-only chain reorder. Absolutely positioned over the brand strip so
-          enabling them doesn't change the pedal's height (and with it the bay). */}
-      {showMoveButtons && (
-        <>
-          <button
-            type="button"
-            className="pedal-move prev"
-            disabled={index === 0}
-            aria-label={`Move ${effectName} earlier in the chain`}
-            onClick={() => onMove(index, index - 1)}
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            className="pedal-move next"
-            disabled={index === chainLength - 1}
-            aria-label={`Move ${effectName} later in the chain`}
-            onClick={() => onMove(index, index + 1)}
-          >
-            ›
-          </button>
-        </>
-      )}
       <div className="brand-strip">GP200 Studio</div>
     </article>
   );
