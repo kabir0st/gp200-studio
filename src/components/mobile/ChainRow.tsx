@@ -8,8 +8,11 @@ import type { PedalArtEntry } from '@/components/board/pedalManifest';
 
 interface ChainRowProps {
   slot: EffectSlot;
-  /** array position in the chain (0-based) */
+  /** array position in the chain (0-based); drives handlers */
   index: number;
+  /** position to *show* — differs from `index` mid-drag, while the committed
+   *  order still stands under the animation */
+  displayIndex: number;
   chainLength: number;
   art?: PedalArtEntry;
   onToggle: () => void;
@@ -44,6 +47,7 @@ function summarize(defs: EffectParam[], params: number[]): string {
 export function ChainRow({
   slot,
   index,
+  displayIndex,
   chainLength,
   art,
   onToggle,
@@ -86,7 +90,7 @@ export function ChainRow({
       <button
         type="button"
         className="m-grip"
-        aria-label={`Reorder ${effectName}, position ${index + 1} of ${chainLength}. Use arrow keys to move.`}
+        aria-label={`Reorder ${effectName}, position ${displayIndex + 1} of ${chainLength}. Use arrow keys to move.`}
         onPointerDown={(e) => onDragHandleDown(index, e)}
         onKeyDown={onGripKeyDown}
       >
@@ -95,7 +99,7 @@ export function ChainRow({
 
       <button type="button" className="m-row-main" onClick={onOpen}>
         <span className="m-row-band" aria-hidden="true" />
-        <span className="m-row-pos">{index + 1}</span>
+        <span className="m-row-pos">{displayIndex + 1}</span>
         <span className="m-row-text">
           <span className="m-row-top">
             <span className="m-row-module">{moduleName}</span>

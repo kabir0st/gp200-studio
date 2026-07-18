@@ -193,7 +193,8 @@
   border: 1px solid var(--chrome-border);
   border-radius: 12px;
   overflow: hidden;
-  transition: opacity 120ms ease, transform 120ms ease;
+  /* opacity only — transform belongs to the GSAP drag tweens */
+  transition: opacity 120ms ease;
 }
 
 /* Bypass dims the row but never disables it — the design system forbids
@@ -366,28 +367,30 @@
   color: var(--chrome-muted);
 }
 
-/* Lift the dragged row and settle the rest, so the reorder reads as a physical
-   move rather than rows blinking between positions. */
+/* The lift (scale, shadow, travel) and the stack shift are BOTH driven by GSAP
+   in useDragReorder — see docs/design-system.md "Motion" for the CSS-vs-GSAP
+   rule: this is a multi-element timeline over a live gesture, which is the
+   GSAP case. Do not add `transform`, `box-shadow` or a `transition` for these
+   here; CSS would fight the tweens for the same properties. */
 .mobile-view .m-row.dragging {
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
   border-color: var(--border-active, #aaa69d);
-  transform: scale(1.02);
-  position: relative;
-  z-index: 1;
 }
 
 .mobile-view .m-row.dragging .m-grip {
   background: var(--bg-hover, #e2dfd8);
-}
-
-.mobile-view .m-list.dragging .m-row:not(.dragging) {
-  transition: transform 160ms ease;
+  cursor: grabbing;
 }
 
 /* No text selection or long-press callout while dragging by the grip. */
 .mobile-view .m-list.dragging {
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* The row transition is for bypass opacity only; naming the property keeps it
+   from also animating the GSAP-owned transform. */
+.mobile-view .m-row {
+  transition-property: opacity;
 }
 
 .mobile-view .m-marker {
@@ -953,11 +956,7 @@
     transition: none;
   }
 
-  .mobile-view .m-row.dragging {
-    transform: none;
-  }
-
-  .mobile-view .m-list.dragging .m-row:not(.dragging) {
-    transition: none;
-  }
+  /* The drag's lift/shift/settle are GSAP-driven and therefore invisible to
+     this block — useDragReorder collapses those tweens itself via
+     prefersReducedMotion(), the same gate useFlipReorder uses. */
 }

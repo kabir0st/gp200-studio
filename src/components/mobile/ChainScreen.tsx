@@ -2,7 +2,7 @@ import { useRef, type RefObject } from 'react';
 import type { GP200Preset } from '@/core/types';
 import type { ManifestIndex } from '@/components/board/pedalManifest';
 import { lookupPedalArt } from '@/components/board/pedalManifest';
-import { useDragReorder } from '@/hooks/useDragReorder';
+import { displayPosition, useDragReorder } from '@/hooks/useDragReorder';
 import { ChainRow } from './ChainRow';
 
 interface ChainScreenProps {
@@ -48,14 +48,6 @@ export function ChainScreen({
     onCommit: onMove,
   });
 
-  // Preview the reordered list while dragging so it reads as direct
-  // manipulation rather than a value that only lands on release.
-  const ordered = [...chain];
-  if (drag.from !== null && drag.target !== null && drag.from !== drag.target) {
-    const [moved] = ordered.splice(drag.from, 1);
-    ordered.splice(drag.target, 0, moved);
-  }
-
   return (
     <div className="m-screen">
       <div className="m-screen-head">
@@ -63,38 +55,43 @@ export function ChainScreen({
         <span className="m-screen-hint">DRAG ⠿ TO REORDER</span>
       </div>
 
+      {/* Rows render in plain chain order at all times. During a drag, GSAP
+          moves them by transform and the real reorder is committed once, on
+          drop — so layout stays frozen and the animation geometry stays exact
+          (see useDragReorder). */}
       <ul className={`m-list${drag.from !== null ? ' dragging' : ''}`} ref={listRef}>
         <li className="m-marker">
           <span>IN</span>
         </li>
 
-        {ordered.map((slot, position) => (
+        {chain.map((slot, position) => (
           <div key={slot.slotIndex} className="m-row-wrap">
             <ChainRow
               slot={slot}
               index={position}
+              displayIndex={displayPosition(position, drag.from, drag.target)}
               chainLength={chain.length}
               art={lookupPedalArt(artIndex, slot.effectId)}
               onToggle={() => onToggle(slot.slotIndex, slot.enabled)}
               onOpen={() => onOpenSlot(position)}
               onMove={onMove}
               onDragHandleDown={drag.start}
-              /* In the previewed array the dragged row already sits at its
-                 target position, so this keys off `target`, not `from`. */
-              dragging={drag.target === position}
+              dragging={drag.from === position}
             />
 
             {/* FX loop send/return are chain positions (1..10), so they render
-                between rows exactly where they sit in the signal path. They are
-                hidden mid-drag: they aren't drag targets, and leaving them in
-                place while rows move around them reads as broken. */}
-            {drag.from === null && preset.fxLoopSend === position + 1 && (
+                between rows exactly where they sit in the signal path. They
+                stay mounted during a drag: a marker belongs to a position, not
+                to a block, so it correctly holds still while blocks move past
+                it — and keeping it in the flow is what makes the measured slot
+                geometry valid for the whole gesture. */}
+            {preset.fxLoopSend === position + 1 && (
               <button type="button" className="m-marker fx" onClick={onOpenFxLoop}>
                 <span>↗ FX SEND</span>
                 <span className="m-marker-edit">EDIT</span>
               </button>
             )}
-            {drag.from === null && preset.fxLoopReturn === position + 1 && (
+            {preset.fxLoopReturn === position + 1 && (
               <button type="button" className="m-marker fx" onClick={onOpenFxLoop}>
                 <span>↘ FX RETURN</span>
                 <span className="m-marker-edit">EDIT</span>
