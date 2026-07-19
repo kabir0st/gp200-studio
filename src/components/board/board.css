@@ -1326,6 +1326,16 @@
 .board-view .deck-btn.quiet {
   padding: 7px 9px;
 }
+.board-view .deck-btn.tuner-active {
+  background: var(--accent-red);
+  border-color: var(--accent-red);
+  color: #fff;
+}
+/* on the solid red fill the icon's own hue would clash — inherit ink instead,
+   same treatment as .deck-btn.primary .act-icon above */
+.board-view .deck-btn.tuner-active .act-icon {
+  color: currentColor;
+}
 .board-view .deck-btn.mon.on {
   background: #2f9e5f;
   border-color: #2f9e5f;

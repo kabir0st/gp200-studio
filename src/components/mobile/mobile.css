@@ -726,6 +726,12 @@
   color: #f6f5f0;
 }
 
+.mobile-view .m-btn.tuner-active {
+  background: var(--accent-red);
+  border-color: var(--accent-red);
+  color: #fff;
+}
+
 .mobile-view .m-btn.wide {
   grid-column: 1 / -1;
 }

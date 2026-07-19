@@ -48,7 +48,7 @@ function syncLabel(pushProgress: PushProgress): string {
 }
 
 function tunerBtnClass(open: boolean): string {
-  if (open) return 'deck-btn primary';
+  if (open) return 'deck-btn tuner-active';
   return 'deck-btn';
 }
 

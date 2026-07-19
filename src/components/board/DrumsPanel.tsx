@@ -44,6 +44,11 @@ function toggleVariant(on: boolean): 'primary' | 'ghost' {
   return 'ghost';
 }
 
+function tunerVariant(open: boolean): 'danger' | 'ghost' {
+  if (open) return 'danger';
+  return 'ghost';
+}
+
 function playStopLabel(playing: boolean): string {
   if (playing) return '■ STOP';
   return '▶ PLAY';
@@ -364,7 +369,7 @@ export function DrumsPanel({
       {/* Tuner / tempo / channel */}
       <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border-active">
         <Button
-          variant={toggleVariant(tunerOpen)}
+          variant={tunerVariant(tunerOpen)}
           size="sm"
           disabled={!connected}
           title={disabledTitle(connected, "Open/close the tuner on the device's screen")}

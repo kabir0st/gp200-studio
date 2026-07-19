@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useAudioEngine } from '@/components/AudioEngineProvider';
 import type { LooperApi } from '@/hooks/useLooper';
 import {
   LOOPER_ACTION_KINDS,
@@ -131,9 +132,11 @@ export function LooperPanel({
   learnEnabled,
 }: LooperPanelProps) {
   const playBar = useRef<HTMLSpanElement>(null);
+  const recBar = useRef<HTMLSpanElement>(null);
   // Track gains keyed by dynamic track id; default 1 for new tracks.
   const [gains, setGains] = useState<Record<number, number>>({});
-  const { ready, getPlayhead } = looper;
+  const { ready, getPlayhead, isRecording } = looper;
+  const { active: audioActive, getLevels } = useAudioEngine();
 
   // Drive the master-loop progress bar from a rAF loop (no per-frame React
   // state), mirroring AudioMeters: read the pure playhead each frame.
@@ -148,6 +151,21 @@ export function LooperPanel({
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [ready, getPlayhead]);
+
+  // Live input level while actively recording, so silence doesn't go
+  // unnoticed — same rAF-driven read AudioMeters uses, gated to the
+  // recording pass only.
+  useEffect(() => {
+    if (!isRecording || !audioActive) return;
+    let raf = 0;
+    const tick = () => {
+      const { input } = getLevels();
+      if (recBar.current) recBar.current.style.width = `${(input * 100).toFixed(1)}%`;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [isRecording, audioActive, getLevels]);
 
   const updateExpTarget = (target: ExpTarget) => {
     onBindingsChange({ ...bindings, expTarget: target });
@@ -235,6 +253,21 @@ export function LooperPanel({
           >
             {recordLabel(looper.isRecording)}
           </Button>
+          {looper.isRecording && (
+            <span
+              className="flex items-center gap-1.5 basis-full sm:basis-auto"
+              title="Live input level while recording"
+            >
+              <span className="font-mono-display text-caption text-accent-red">IN</span>
+              <span className="w-16 sm:w-20 h-3 rounded bg-bg-hover overflow-hidden">
+                <span
+                  ref={recBar}
+                  className="block h-full bg-accent-red"
+                  style={{ width: '0%' }}
+                />
+              </span>
+            </span>
+          )}
           <Button
             variant="secondary"
             size="sm"

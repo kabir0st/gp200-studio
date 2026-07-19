@@ -9,9 +9,11 @@ interface DeckDrawerProps {
 }
 
 /**
- * Bottom-anchored sheet for deck features that need more room than a popover
- * (FX loop routing, EXP controller assignment). Built on the shared Dialog
- * primitive so it inherits the focus trap / Escape / aria contract.
+ * Centered dialog shell for deck features that need more room than a popover
+ * (FX loop routing, EXP controller assignment, CTRL footswitches, drums &
+ * looper). Built on the shared Dialog primitive so it inherits the focus
+ * trap / Escape / aria contract, and matches the centered placement of every
+ * other non-sheet dialog (Effect Picker, Loop Station, Select Preset).
  */
 export function DeckDrawer({ open, onClose, title, children }: DeckDrawerProps) {
   return (
@@ -19,7 +21,7 @@ export function DeckDrawer({ open, onClose, title, children }: DeckDrawerProps) 
       open={open}
       onClose={onClose}
       title={title}
-      placement="bottom"
+      placement="center"
       maxWidth="max-w-4xl"
       className="max-h-[88dvh] overflow-y-auto"
     >

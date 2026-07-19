@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { SysExCodec } from '@/core/SysExCodec';
 import { tunerShow } from '@/core/ccControl';
 import type { CCCommand } from '@/core/ccControl';
@@ -95,6 +96,16 @@ export function DeviceScreen({
 }: DeviceScreenProps) {
   const slotLabel = currentSlot === null ? null : SysExCodec.slotToLabel(currentSlot);
   const panReadout = patchPan === 0 ? 'C' : patchPan < 0 ? `L${-patchPan}` : `R${patchPan}`;
+  // Device tuner toggle (CC58), mirrors BoardTopBar's local best-effort state:
+  // the pedal doesn't report tuner visibility, so a front-panel close can
+  // drift this until the next tap resyncs it.
+  const [tunerOpen, setTunerOpen] = useState(false);
+
+  function handleToggleTuner() {
+    const next = !tunerOpen;
+    setTunerOpen(next);
+    sendCC(tunerShow(next));
+  }
 
   return (
     <div className="m-screen">
@@ -111,7 +122,11 @@ export function DeviceScreen({
               <button type="button" className="m-btn" onClick={onDisconnect}>
                 DISCONNECT
               </button>
-              <button type="button" className="m-btn" onClick={() => sendCC(tunerShow(true))}>
+              <button
+                type="button"
+                className={tunerOpen ? 'm-btn tuner-active' : 'm-btn'}
+                onClick={handleToggleTuner}
+              >
                 TUNER
               </button>
               <button type="button" className="m-btn" onClick={onLoadRequest}>
