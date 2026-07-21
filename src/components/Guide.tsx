@@ -190,8 +190,8 @@ export function Guide({ onBack }: GuideProps) {
             </Card>
             <Shot
               src="/guide/01-landing.png"
-              alt="GP200 Studio landing screen with Connect and Open editor buttons"
-              caption="The landing screen: connect your GP-200 or open the editor with a blank preset."
+              alt="GP200 Studio landing screen with the connect button and the open-without-connecting link"
+              caption="The landing screen: plug in your GP-200 and click the big button — or open without connecting to try the editor on a blank preset."
             />
           </Section>
 

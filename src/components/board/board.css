@@ -1571,6 +1571,25 @@
   background: var(--chrome-text);
   border-color: var(--chrome-text);
   color: var(--chrome-bg);
+  /* keep the long label clear of the absolutely-positioned LED on both sides */
+  padding-inline: 38px;
+}
+/* de-emphasised escape hatch at the foot of the panel: open a blank preset
+   without a device. inline-flex so it shrinks to content and centres under the
+   panel's text-align, instead of stretching like the primary action. */
+.landing-btn.ghost {
+  display: inline-flex;
+  max-width: 100%;
+  margin: 18px auto 0;
+  padding: 10px 16px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  background: transparent;
+  border-style: dashed;
+  color: var(--chrome-muted);
+}
+.landing-btn.ghost:hover:not(:disabled) {
+  color: var(--chrome-text);
 }
 .landing-btn-sub {
   font-size: 9px;
