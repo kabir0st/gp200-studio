@@ -9,6 +9,7 @@ import { ControllerPanel } from '@/components/ControllerPanel';
 import { FootswitchPanel } from '@/components/FootswitchPanel';
 import { LooperPanel } from './LooperPanel';
 import { DrumsPanel } from './DrumsPanel';
+import { DeviceLooperPanel } from './DeviceLooperPanel';
 import { DrumMachinePanel } from './DrumMachinePanel';
 import type { CCCommand } from '@/core/ccControl';
 import type { DrumMachineApi } from '@/hooks/useDrumMachine';
@@ -436,6 +437,11 @@ export function PedalBoard({
           learnNotice={looperLearnNotice}
           learnEnabled={connected}
         />
+        {/* The pedal's own single loop, collapsed: same drawer as the loop
+            station it gets confused with, but never competing with it. */}
+        <div className="mt-4 pt-4 border-t border-border-active">
+          <DeviceLooperPanel connected={connected} sendCC={sendCC} />
+        </div>
       </Dialog>
 
       <DeckDrawer

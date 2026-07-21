@@ -3,6 +3,7 @@ import type { PedalBoardProps } from '@/components/board/PedalBoard';
 import { usePedalManifest } from '@/components/board/pedalManifest';
 import { LooperPanel } from '@/components/board/LooperPanel';
 import { DrumsPanel } from '@/components/board/DrumsPanel';
+import { DeviceLooperPanel } from '@/components/board/DeviceLooperPanel';
 import { DrumMachinePanel } from '@/components/board/DrumMachinePanel';
 import { FxLoopArrows } from '@/components/FxLoopArrows';
 import { ControllerPanel } from '@/components/ControllerPanel';
@@ -164,6 +165,10 @@ export default function MobileShell({
               learnNotice={looperLearnNotice}
               learnEnabled={connected}
             />
+            {/* The pedal's own single loop, collapsed under the loop station */}
+            <div className="mt-4 pt-4 border-t border-border-active">
+              <DeviceLooperPanel connected={connected} sendCC={sendCC} />
+            </div>
           </div>
         )}
 
@@ -171,7 +176,7 @@ export default function MobileShell({
           <div className="m-screen">
             <h2 className="m-screen-title">PRACTICE DRUMS</h2>
             <DrumMachinePanel drums={drumMachine} />
-            <h2 className="m-screen-title mt-6">GP-200 DRUMS &amp; LOOPER</h2>
+            <h2 className="m-screen-title mt-6">GP-200 DRUMS &amp; TUNER</h2>
             <DrumsPanel
               connected={connected}
               sendCC={sendCC}

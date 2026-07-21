@@ -226,7 +226,8 @@ export function LooperPanel({
         >
           <li>
             Records the GP-200's USB audio here in the browser — separate from
-            the pedal's built-in looper (that one lives in the DRUMS drawer).
+            the pedal's built-in looper, which is the collapsed section at the
+            bottom of this drawer.
           </li>
           <li>
             IMPORT loads a backing track and its length becomes one BAR — the
@@ -454,13 +455,17 @@ export function LooperPanel({
           open a learned stomp drives the looper instead of your patch — the app
           undoes the pedal&apos;s own reaction to it.
         </p>
-        {/* The undo is a single toggle-back (revertFor in looperTriggers.ts), so
-            it can only cancel a switch that flips ONE effect block. A CTRL
-            assignment carries a blockMask of many blocks; the extras would stay
-            flipped. The app cannot read the pedal's footswitch config, so this
-            has to be a warning rather than a check — and rewriting that config
-            was tried twice and reverted, because it is write-only and clobbers
-            the user's real setup (see the note in App.tsx). */}
+        {/* Two constraints, both hard: (1) only CTRL 1-8 stomps produce a frame
+            this can fingerprint — a PATCH/BANK switch sends a slot change the
+            dispatcher must keep, and TAP/TUNER emit nothing learnable
+            (looperTriggers.ts, docs/protocol-capture.md §4); (2) the undo is a
+            single toggle-back (revertFor), so it can only cancel a switch that
+            flips ONE effect block — a CTRL assignment carrying a blockMask of
+            many blocks would leave the extras flipped. The app cannot read the
+            pedal's footswitch config, so this has to be a warning rather than a
+            check — and rewriting that config was tried twice and reverted,
+            because it is write-only and clobbers the user's real setup (see the
+            note in App.tsx). */}
         <div
           className="mb-3 px-3 py-2 rounded-lg border border-accent-amber
             bg-accent-amber/10"
@@ -469,12 +474,17 @@ export function LooperPanel({
             ⚠ Before you assign a footswitch
           </p>
           <p className="font-mono-display text-caption text-text-secondary">
-            On the GP-200, make sure the switch you are about to bind has no
-            extra triggers attached to it — set its CTRL / TAP assignment to
-            <strong> None</strong> for the switches you want the looper to own.
-            A switch that still toggles several effects at once cannot be fully
-            undone by the app: the looper action will fire, but the extra pedals
-            will stay flipped. One switch, one job.
+            On the GP-200, the switches you want the looper to own must be set
+            to a <strong>CTRL 1–8</strong> assignment — not PATCH, BANK, TAP or
+            TUNER. Only a CTRL stomp sends something this app can recognise; a
+            patch or bank switch changes the pedal&apos;s slot instead, and the
+            looper will never hear it.
+          </p>
+          <p className="font-mono-display text-caption text-text-secondary mt-2">
+            Give each of those CTRL switches <strong>one effect block only</strong>.
+            A CTRL that toggles several blocks at once cannot be fully undone:
+            the looper action will fire, but the extra pedals stay flipped. One
+            switch, one job.
           </p>
         </div>
         <div className="flex flex-col gap-2">
