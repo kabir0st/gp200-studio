@@ -8,15 +8,6 @@
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   },
-  // Public message wall (see worker/index.js /api/* routes + migrations/).
-  // Fill database_id from `wrangler d1 create gp200-forum` before deploying.
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "gp200-forum",
-      "database_id": "REPLACE_WITH_ID_FROM_WRANGLER_D1_CREATE"
-    }
-  ],
   "routes": [
     {
       "pattern": "kabirtamari.com/gp200studio*",

@@ -32,3 +32,6 @@ prst/
 *.sln
 *.sw?
 dumps
+
+# Cloudflare Wrangler local state / cache
+.wrangler
