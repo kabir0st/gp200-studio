@@ -8,6 +8,8 @@ import { PedalBoard } from '@/components/board/PedalBoard';
 import { isWidePedal, isWideSlot, splitRows } from '@/components/board/boardLayout';
 import { AudioEngineProvider } from '@/components/AudioEngineProvider';
 import { defaultLooperBindings } from '@/core/looperBindings';
+import { getPattern } from '@/core/drumMachine';
+import type { DrumMachineApi } from '@/hooks/useDrumMachine';
 import type { LooperApi } from '@/hooks/useLooper';
 
 // Minimal looper stub: the smoke tests never open the Loop Station drawer, so
@@ -35,6 +37,33 @@ const fakeLooper: LooperApi = {
   clearAll: vi.fn(),
   setTrackGain: vi.fn(),
   setMasterGain: vi.fn(),
+};
+
+// Inert drum machine stub, same rationale as fakeLooper: the smoke tests never
+// open the Drums drawer, they only need the top bar's playing readout.
+const fakeDrumMachine: DrumMachineApi = {
+  playing: false,
+  loading: false,
+  error: null,
+  kitId: 'acoustic',
+  patternId: 'rock-basic',
+  patternName: 'Basic Rock',
+  bpm: 100,
+  swing: 0,
+  volume: 80,
+  currentStep: -1,
+  steps: getPattern('rock-basic').steps,
+  mutedLanes: new Set(),
+  togglePlay: vi.fn(),
+  stop: vi.fn(),
+  setBpm: vi.fn(),
+  setSwing: vi.fn(),
+  setVolume: vi.fn(),
+  selectKit: vi.fn(),
+  selectPattern: vi.fn(),
+  randomize: vi.fn(),
+  toggleStep: vi.fn(),
+  toggleLaneMute: vi.fn(),
 };
 
 // jsdom has no ResizeObserver (CableLayer uses it to re-measure jacks)
@@ -83,6 +112,7 @@ function renderBoard(overrides: Partial<Parameters<typeof PedalBoard>[0]> = {}) 
     onCtrlClear: vi.fn(),
     onOpenPatchManager: vi.fn(),
     looper: fakeLooper,
+    drumMachine: fakeDrumMachine,
     looperBindings: defaultLooperBindings,
     onLooperBindingsChange: vi.fn(),
     onLooperDrawerOpenChange: vi.fn(),

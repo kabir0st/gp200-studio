@@ -3,6 +3,7 @@ import type { PedalBoardProps } from '@/components/board/PedalBoard';
 import { usePedalManifest } from '@/components/board/pedalManifest';
 import { LooperPanel } from '@/components/board/LooperPanel';
 import { DrumsPanel } from '@/components/board/DrumsPanel';
+import { DrumMachinePanel } from '@/components/board/DrumMachinePanel';
 import { FxLoopArrows } from '@/components/FxLoopArrows';
 import { ControllerPanel } from '@/components/ControllerPanel';
 import { FootswitchPanel } from '@/components/FootswitchPanel';
@@ -73,6 +74,7 @@ export default function MobileShell({
   onLooperClearTrigger,
   onLooperClearAll,
   looperLearnNotice,
+  drumMachine,
   sendCC,
   ccChannel,
   onCcChannelChange,
@@ -167,7 +169,9 @@ export default function MobileShell({
 
         {tab === 'drums' && (
           <div className="m-screen">
-            <h2 className="m-screen-title">DRUMS &amp; LOOPER</h2>
+            <h2 className="m-screen-title">PRACTICE DRUMS</h2>
+            <DrumMachinePanel drums={drumMachine} />
+            <h2 className="m-screen-title mt-6">GP-200 DRUMS &amp; LOOPER</h2>
             <DrumsPanel
               connected={connected}
               sendCC={sendCC}

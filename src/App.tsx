@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { usePreset } from '@/hooks/usePreset';
 import { useMidiDevice } from '@/hooks/useMidiDevice';
 import { useLooper } from '@/hooks/useLooper';
+import { useDrumMachine } from '@/hooks/useDrumMachine';
 import { useAudioEngine } from '@/components/AudioEngineProvider';
 import {
   defaultLooperBindings,
@@ -63,6 +64,9 @@ function App() {
   const isPhone = useIsPhone();
   const audioEngine = useAudioEngine();
   const looper = useLooper(audioEngine);
+  // Practice drum machine: lives here (not in a drawer) so the beat keeps
+  // playing while the drawer is closed and across the phone/desktop swap.
+  const drumMachine = useDrumMachine(audioEngine);
 
   // Loop-station hardware bindings. State drives the LooperPanel UI; the ref
   // mirror is what the once-per-connection MIDI callbacks read (so they see the
@@ -678,6 +682,7 @@ function App() {
     onLooperClearTrigger: looperTriggers.clearTrigger,
     onLooperClearAll: looperTriggers.clearAllTriggers,
     looperLearnNotice: looperTriggers.learnNotice,
+    drumMachine: drumMachine,
     sendCC: midiDevice.sendCC,
     ccChannel: midiDevice.ccChannel,
     onCcChannelChange: midiDevice.setCcChannel,

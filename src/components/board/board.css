@@ -1336,6 +1336,16 @@
 .board-view .deck-btn.tuner-active .act-icon {
   color: currentColor;
 }
+/* DRUMS lights up while the browser drum machine plays (it keeps playing
+   with the drawer closed, so the bar needs a "sound is coming from here"). */
+.board-view .deck-btn.drums-active {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: #fff;
+}
+.board-view .deck-btn.drums-active .act-icon {
+  color: currentColor;
+}
 .board-view .deck-btn.mon.on {
   background: #2f9e5f;
   border-color: #2f9e5f;

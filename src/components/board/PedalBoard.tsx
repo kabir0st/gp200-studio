@@ -9,7 +9,9 @@ import { ControllerPanel } from '@/components/ControllerPanel';
 import { FootswitchPanel } from '@/components/FootswitchPanel';
 import { LooperPanel } from './LooperPanel';
 import { DrumsPanel } from './DrumsPanel';
+import { DrumMachinePanel } from './DrumMachinePanel';
 import type { CCCommand } from '@/core/ccControl';
+import type { DrumMachineApi } from '@/hooks/useDrumMachine';
 import type { LooperApi } from '@/hooks/useLooper';
 import type { LooperActionKind, LooperBindings } from '@/core/looperBindings';
 import type { LooperTriggerMap } from '@/core/looperTriggers';
@@ -83,6 +85,8 @@ export interface PedalBoardProps {
   onLooperClearTrigger: (action: LooperActionKind) => void;
   onLooperClearAll: () => void;
   looperLearnNotice: LearnNotice | null;
+  /* browser practice drum machine (Web Audio, plays with or without a device) */
+  drumMachine: DrumMachineApi;
   /* built-in drums/looper/tuner remote (plain MIDI CC, src/core/ccControl.ts) */
   sendCC: (command: CCCommand | CCCommand[]) => void;
   ccChannel: number;
@@ -146,6 +150,7 @@ export function PedalBoard({
   onLooperClearTrigger,
   onLooperClearAll,
   looperLearnNotice,
+  drumMachine,
   sendCC,
   ccChannel,
   onCcChannelChange,
@@ -284,6 +289,7 @@ export function PedalBoard({
         onCloseRequest={onCloseRequest}
         onOpenLooper={() => setOpenDrawer('looper')}
         onOpenDrums={() => setOpenDrawer('drums')}
+        drumsPlaying={drumMachine.playing}
         sendCC={sendCC}
       />
       <ChainStrip effects={preset.effects} onJump={scrollToPedal} />
@@ -435,14 +441,32 @@ export function PedalBoard({
       <DeckDrawer
         open={openDrawer === 'drums'}
         onClose={() => setOpenDrawer(null)}
-        title="GP-200 Drums & Looper"
+        title="Drums"
       >
-        <DrumsPanel
-          connected={connected}
-          sendCC={sendCC}
-          ccChannel={ccChannel}
-          onCcChannelChange={onCcChannelChange}
-        />
+        {/* Browser practice drums first (works offline); the hardware remote
+            below needs a connected GP-200. Playback survives closing this
+            drawer — the hook lives in App. */}
+        <p
+          className="font-mono-display text-label text-text-muted uppercase
+            tracking-widest mb-2"
+        >
+          Practice drum machine · browser audio
+        </p>
+        <DrumMachinePanel drums={drumMachine} />
+        <div className="mt-4 pt-4 border-t border-border-active">
+          <p
+            className="font-mono-display text-label text-text-muted uppercase
+              tracking-widest mb-2"
+          >
+            GP-200 hardware · MIDI remote
+          </p>
+          <DrumsPanel
+            connected={connected}
+            sendCC={sendCC}
+            ccChannel={ccChannel}
+            onCcChannelChange={onCcChannelChange}
+          />
+        </div>
       </DeckDrawer>
 
       {pickerEffect && (

@@ -24,6 +24,8 @@ interface BoardTopBarProps {
   /* feature drawers + device tuner remote (moved up from the deck) */
   onOpenLooper: () => void;
   onOpenDrums: () => void;
+  /** browser drum machine is sounding (it survives the drawer closing) */
+  drumsPlaying: boolean;
   sendCC: (command: CCCommand | CCCommand[]) => void;
   /** Step to another device slot: switches the pedal and pulls the patch. */
   onActivateSlot: (slot: number) => void;
@@ -52,6 +54,11 @@ function tunerBtnClass(open: boolean): string {
   return 'deck-btn';
 }
 
+function drumsBtnClass(playing: boolean): string {
+  if (playing) return 'deck-btn drums-active';
+  return 'deck-btn';
+}
+
 /**
  * Sticky top bar owning the non-patch device actions (device load/save-as,
  * patch manager incl. .prst file import/export, connect/close) and the
@@ -76,6 +83,7 @@ export function BoardTopBar({
   onOpenGuide,
   onOpenLooper,
   onOpenDrums,
+  drumsPlaying,
   sendCC,
   onActivateSlot,
 }: BoardTopBarProps) {
@@ -137,8 +145,8 @@ export function BoardTopBar({
         </button>
         <button
           type="button"
-          className="deck-btn"
-          title="GP-200 built-in drum machine, looper & tuner (MIDI CC remote)"
+          className={drumsBtnClass(drumsPlaying)}
+          title="Practice drum machine (browser) + GP-200 drums/looper remote"
           onClick={onOpenDrums}
         >
           <ActionIcon name="drums" />
