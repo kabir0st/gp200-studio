@@ -19,6 +19,8 @@ import type { GP200Preset } from '@/core/types';
 
 import { Landing } from '@/components/Landing';
 import { Guide } from '@/components/Guide';
+import { ForumSheet } from '@/components/ForumSheet';
+import { recordVisit } from '@/core/forumApi';
 import { PedalBoard, type PedalBoardProps } from '@/components/board/PedalBoard';
 import { useIsPhone } from '@/hooks/useMediaQuery';
 
@@ -129,6 +131,27 @@ function App() {
   const [showPatchManager, setShowPatchManager] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<BulkExportProgress | null>(null);
   const bulkCancelRef = useRef(false);
+
+  // Community message wall: hidden and fully disabled for now. Flip to true to
+  // restore the Landing entry point, the visit ping, and the sheet — no other
+  // changes needed. The backend (worker/index.js + D1) stays deployed either way.
+  const FORUM_ENABLED = false;
+  const [showForum, setShowForum] = useState(false);
+
+  // Count one page visit per browser session. The sessionStorage guard means a
+  // refresh in the same tab (or a StrictMode double-mount) doesn't inflate the
+  // tally; a new tab / fresh session counts once. Best-effort: a failed ping or
+  // unavailable storage is silently ignored (the forum still works).
+  useEffect(() => {
+    if (!FORUM_ENABLED) return;
+    try {
+      if (sessionStorage.getItem('gp200:forum:visited')) return;
+      sessionStorage.setItem('gp200:forum:visited', '1');
+    } catch {
+      // Private mode / disabled storage: skip the guard, still try once.
+    }
+    void recordVisit().catch(() => {});
+  }, [FORUM_ENABLED]);
 
   // Synchronous view of the preset for device-message validation callbacks
   // (the callbacks are registered once per connection, so they'd otherwise
@@ -581,14 +604,20 @@ function App() {
 
   if (!preset) {
     return (
-      <Landing
-        midiDevice={midiDevice}
-        onOpenBlank={() => loadPreset(createDefaultPreset())}
-        onOpenCurrent={() => void handleOpenCurrent()}
-        onOpenGuide={() => setView('guide')}
-        loadError={loadError}
-        onDismissError={() => setLoadError(null)}
-      />
+      <>
+        <Landing
+          midiDevice={midiDevice}
+          onOpenBlank={() => loadPreset(createDefaultPreset())}
+          onOpenCurrent={() => void handleOpenCurrent()}
+          onOpenGuide={() => setView('guide')}
+          onOpenForum={FORUM_ENABLED ? () => setShowForum(true) : undefined}
+          loadError={loadError}
+          onDismissError={() => setLoadError(null)}
+        />
+        {FORUM_ENABLED && (
+          <ForumSheet open={showForum} onClose={() => setShowForum(false)} />
+        )}
+      </>
     );
   }
 

@@ -3,7 +3,7 @@ import type { AudioMeterApi } from '@/hooks/useAudioMeter';
 import {
   DRUM_KITS,
   DRUM_LANES,
-  STEP_COUNT,
+  SIGNATURES,
   drumSamplePath,
   getPattern,
   randomizePattern,
@@ -12,6 +12,7 @@ import {
   type DrumLaneId,
   type DrumPattern,
   type RandomStyle,
+  type SignatureId,
 } from '@/core/drumMachine';
 
 // Browser practice drum machine: schedules the CC0 one-shots in public/drums/
@@ -36,6 +37,7 @@ export interface DrumMachineApi {
   patternName: string;
   bpm: number;
   swing: number;
+  signature: SignatureId;
   /** 0..100 master level */
   volume: number;
   /**
@@ -52,6 +54,7 @@ export interface DrumMachineApi {
   stop: () => void;
   setBpm: (bpm: number) => void;
   setSwing: (swing: number) => void;
+  setSignature: (signature: SignatureId) => void;
   setVolume: (volume: number) => void;
   selectKit: (kitId: string) => void;
   selectPattern: (patternId: string) => void;
@@ -82,10 +85,27 @@ function clampBpm(bpm: number): number {
   return Math.max(DRUM_BPM_MIN, Math.min(DRUM_BPM_MAX, Math.round(bpm)));
 }
 
-function toggledVelocity(current: number, step: number): number {
+function toggledVelocity(current: number, step: number, group: number): number {
   if (current > 0) return 0;
-  if (step % 4 === 0) return 1;
+  if (step % group === 0) return 1;
   return 0.7;
+}
+
+/** Cut or zero-pad every lane to the new bar length. */
+function resizeLanes(
+  steps: Record<DrumLaneId, readonly number[]>,
+  barSteps: number,
+): Record<DrumLaneId, readonly number[]> {
+  const resized = {} as Record<DrumLaneId, readonly number[]>;
+  for (const lane of DRUM_LANES) {
+    const source = steps[lane.id];
+    const next = new Array<number>(barSteps).fill(0);
+    for (let step = 0; step < Math.min(barSteps, source.length); step++) {
+      next[step] = source[step];
+    }
+    resized[lane.id] = next;
+  }
+  return resized;
 }
 
 export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
@@ -98,6 +118,7 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
   const [patternName, setPatternName] = useState(initialPattern.name);
   const [bpm, setBpmState] = useState(initialPattern.bpm);
   const [swing, setSwingState] = useState(initialPattern.swing);
+  const [signature, setSignatureState] = useState<SignatureId>(initialPattern.signature);
   const [volume, setVolumeState] = useState(80);
   const [steps, setSteps] = useState(initialPattern.steps);
   const [mutedLanes, setMutedLanes] = useState<ReadonlySet<DrumLaneId>>(new Set());
@@ -114,6 +135,8 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
   mutedRef.current = mutedLanes;
   const kitIdRef = useRef(kitId);
   kitIdRef.current = kitId;
+  const signatureRef = useRef(signature);
+  signatureRef.current = signature;
 
   const ctxRef = useRef<AudioContext | null>(null);
   const masterGainRef = useRef<GainNode | null>(null);
@@ -197,7 +220,7 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
     const kitBuffers = buffersRef.current.get(kitIdRef.current);
     if (!ctx || !master || !kitBuffers) return;
     for (const lane of DRUM_LANES) {
-      const velocity = stepsRef.current[lane.id][step];
+      const velocity = stepsRef.current[lane.id][step] ?? 0;
       if (velocity <= 0 || mutedRef.current.has(lane.id)) continue;
       const buffer = kitBuffers[lane.id];
       if (!buffer) continue;
@@ -240,7 +263,8 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
       const stepLength = secondsPerStep(bpmRef.current);
       let delta = stepLength * (1 + swingRef.current);
       if (step % 2 === 1) delta = stepLength * (1 - swingRef.current);
-      nextRef.current = { step: (step + 1) % STEP_COUNT, time: time + delta };
+      const barSteps = SIGNATURES[signatureRef.current].steps;
+      nextRef.current = { step: (step + 1) % barSteps, time: time + delta };
     }
     const due = pendingStepsRef.current.filter((pending) => pending.time <= now);
     if (due.length > 0) {
@@ -309,6 +333,20 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
     setSwingState(Math.max(0, Math.min(0.5, nextSwing)));
   }, []);
 
+  const setSignature = useCallback((nextSignature: SignatureId) => {
+    const barSteps = SIGNATURES[nextSignature].steps;
+    setSignatureState(nextSignature);
+    // Keep the groove's head, cut or pad the tail; the edit makes it custom.
+    setSteps((prev) => resizeLanes(prev, barSteps));
+    setPatternId('custom');
+    setPatternName('Custom');
+    // If the scheduler is mid-bar past the new length, wrap it in range.
+    nextRef.current = {
+      step: nextRef.current.step % barSteps,
+      time: nextRef.current.time,
+    };
+  }, []);
+
   const setVolume = useCallback((nextVolume: number) => {
     const clamped = Math.max(0, Math.min(100, Math.round(nextVolume)));
     setVolumeState(clamped);
@@ -331,6 +369,11 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
     setSteps(next.steps);
     setBpmState(next.bpm);
     setSwingState(next.swing);
+    setSignatureState(next.signature);
+    nextRef.current = {
+      step: nextRef.current.step % SIGNATURES[next.signature].steps,
+      time: nextRef.current.time,
+    };
   }, []);
 
   const selectPattern = useCallback((nextPatternId: string) => {
@@ -338,7 +381,7 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
   }, [applyPattern]);
 
   const randomize = useCallback((style: RandomStyle) => {
-    const rolled = randomizePattern(style, Math.random);
+    const rolled = randomizePattern(style, Math.random, signatureRef.current);
     // Keep the user's tempo/swing: randomize varies the groove, not the feel.
     setPatternId(rolled.id);
     setPatternName(rolled.name);
@@ -346,9 +389,10 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
   }, []);
 
   const toggleStep = useCallback((laneId: DrumLaneId, step: number) => {
+    const group = SIGNATURES[signatureRef.current].group;
     setSteps((prev) => {
       const lane = [...prev[laneId]];
-      lane[step] = toggledVelocity(lane[step], step);
+      lane[step] = toggledVelocity(lane[step], step, group);
       return { ...prev, [laneId]: lane };
     });
     setPatternId('custom');
@@ -365,8 +409,8 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
 
   return {
     playing, loading, error, kitId, patternId, patternName,
-    bpm, swing, volume, getCurrentStep, steps, mutedLanes,
-    togglePlay, stop, setBpm, setSwing, setVolume,
+    bpm, swing, signature, volume, getCurrentStep, steps, mutedLanes,
+    togglePlay, stop, setBpm, setSwing, setSignature, setVolume,
     selectKit, selectPattern, randomize, toggleStep, toggleLaneMute,
   };
 }

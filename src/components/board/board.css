@@ -1380,12 +1380,20 @@
   box-shadow: 0 0 0 2px var(--accent-green);
   transition-duration: 40ms, 60ms, 60ms, 60ms;
 }
+/* The pop must stay INSIDE the scroll wrapper: a transform that visually
+   escapes an overflow-x-auto ancestor adds scrollable overflow, and on the
+   bar's last column that flashed a scrollbar (and a layout jump) every time
+   the playhead wrapped back to step 1. Scale stays ≤1.08 and .dm-grid pads
+   the content box so the overhang lands on padding, never past the edge. */
 .dm-cell.dm-now.dm-hit {
-  transform: scale(1.22);
+  transform: scale(1.08);
   box-shadow:
     0 0 0 2px var(--accent-green),
     0 0 12px var(--glow-green);
   z-index: 1;
+}
+.dm-grid {
+  padding: 3px;
 }
 
 /* DRUMS lights up while the browser drum machine plays (it keeps playing

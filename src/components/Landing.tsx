@@ -14,6 +14,8 @@ interface LandingProps {
   onOpenCurrent: () => void;
   /** open the full-page guide */
   onOpenGuide: () => void;
+  /** open the public community message wall; omitted while the wall is disabled */
+  onOpenForum?: () => void;
   loadError: string | null;
   onDismissError: () => void;
 }
@@ -30,7 +32,7 @@ const FEATURES: string[] = [
  * Stage-styled landing: two actions only. Connect the GP-200, or open the
  * editor with a blank preset. No file prompt; import lives in the board deck.
  */
-export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, onOpenGuide, loadError, onDismissError }: LandingProps) {
+export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, onOpenGuide, onOpenForum, loadError, onDismissError }: LandingProps) {
   const { status, handshakeStep, errorMessage, currentSlot, connect } = midiDevice;
   const [webMidiSupported, setWebMidiSupported] = useState(true);
 
@@ -104,6 +106,12 @@ export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, onOpenGuide, l
         <button type="button" className="landing-guide-link" onClick={onOpenGuide}>
           Read the guide →
         </button>
+
+        {onOpenForum && (
+          <button type="button" className="landing-guide-link" onClick={onOpenForum}>
+            Community wall →
+          </button>
+        )}
 
         {status === 'error' && errorMessage && (
           <p className="landing-msg error" role="alert">{errorMessage}</p>

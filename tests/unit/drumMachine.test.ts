@@ -6,7 +6,9 @@ import {
   DRUM_LANES,
   DRUM_PATTERNS,
   RANDOM_STYLES,
-  STEP_COUNT,
+  SIGNATURES,
+  SIGNATURE_IDS,
+  MAX_STEPS,
   drumSamplePath,
   getPattern,
   parseLane,
@@ -17,8 +19,8 @@ import {
 
 describe('parseLane', () => {
   it('maps notation chars to velocities', () => {
-    const lane = parseLane('X-x.------------');
-    expect(lane).toHaveLength(STEP_COUNT);
+    const lane = parseLane('X-x.------------', 16);
+    expect(lane).toHaveLength(16);
     expect(lane[0]).toBe(1);
     expect(lane[1]).toBe(0);
     expect(lane[2]).toBe(0.7);
@@ -26,8 +28,21 @@ describe('parseLane', () => {
   });
 
   it('rejects wrong lengths and unknown chars', () => {
-    expect(() => parseLane('X---')).toThrow();
-    expect(() => parseLane('Q---------------')).toThrow();
+    expect(() => parseLane('X---', 16)).toThrow();
+    expect(() => parseLane('Q---------------', 16)).toThrow();
+  });
+});
+
+describe('SIGNATURES', () => {
+  it('keeps every signature inside the grid bounds with valid anchors', () => {
+    for (const signatureId of SIGNATURE_IDS) {
+      const signature = SIGNATURES[signatureId];
+      expect(signature.steps).toBeLessThanOrEqual(MAX_STEPS);
+      for (const anchor of [...signature.strong, ...signature.back]) {
+        expect(anchor).toBeGreaterThanOrEqual(0);
+        expect(anchor).toBeLessThan(signature.steps);
+      }
+    }
   });
 });
 
@@ -37,11 +52,12 @@ describe('DRUM_PATTERNS', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('gives every lane exactly 16 in-range velocities', () => {
+  it('sizes every lane to its signature with in-range velocities', () => {
     for (const drumPattern of DRUM_PATTERNS) {
+      const barSteps = SIGNATURES[drumPattern.signature].steps;
       for (const lane of DRUM_LANES) {
         const laneSteps = drumPattern.steps[lane.id];
-        expect(laneSteps, `${drumPattern.id}/${lane.id}`).toHaveLength(STEP_COUNT);
+        expect(laneSteps, `${drumPattern.id}/${lane.id}`).toHaveLength(barSteps);
         for (const velocity of laneSteps) {
           expect(velocity).toBeGreaterThanOrEqual(0);
           expect(velocity).toBeLessThanOrEqual(1);
@@ -113,18 +129,43 @@ describe('randomizePattern', () => {
     expect(rolled.steps.snare[12]).toBe(1);
   });
 
-  it('produces valid lanes for every style', () => {
+  it('anchors kick and snare to every signature', () => {
+    const neverHit = () => 0.9999;
+    for (const signatureId of SIGNATURE_IDS) {
+      const signature = SIGNATURES[signatureId];
+      const rolled = randomizePattern('Roots', neverHit, signatureId);
+      expect(rolled.signature).toBe(signatureId);
+      expect(rolled.steps.kick).toHaveLength(signature.steps);
+      expect(rolled.steps.kick[0]).toBe(1);
+      for (const backbeat of signature.back) {
+        expect(rolled.steps.snare[backbeat], `${signatureId} back ${backbeat}`).toBe(1);
+      }
+    }
+  });
+
+  it('produces valid lanes for every style and signature', () => {
     const alwaysHit = () => 0;
     for (const style of RANDOM_STYLES) {
-      const rolled = randomizePattern(style, alwaysHit);
-      for (const lane of DRUM_LANES) {
-        const laneSteps = rolled.steps[lane.id];
-        expect(laneSteps).toHaveLength(STEP_COUNT);
-        for (const velocity of laneSteps) {
-          expect(velocity).toBeGreaterThanOrEqual(0);
-          expect(velocity).toBeLessThanOrEqual(1);
+      for (const signatureId of SIGNATURE_IDS) {
+        const rolled = randomizePattern(style, alwaysHit, signatureId);
+        for (const lane of DRUM_LANES) {
+          const laneSteps = rolled.steps[lane.id];
+          expect(laneSteps).toHaveLength(SIGNATURES[signatureId].steps);
+          for (const velocity of laneSteps) {
+            expect(velocity).toBeGreaterThanOrEqual(0);
+            expect(velocity).toBeLessThanOrEqual(1);
+          }
         }
       }
     }
+  });
+
+  it('never doubles a closed hat under an open hat', () => {
+    const alwaysHit = () => 0;
+    const rolled = randomizePattern('Pop & Dance', alwaysHit);
+    rolled.steps.hatOpen.forEach((openVelocity, stepIndex) => {
+      // index used deliberately: the two hat lanes align by grid position
+      if (openVelocity > 0) expect(rolled.steps.hatClosed[stepIndex]).toBe(0);
+    });
   });
 });

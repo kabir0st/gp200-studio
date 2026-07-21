@@ -4,7 +4,8 @@ import {
   DRUM_LANES,
   DRUM_PATTERNS,
   RANDOM_STYLES,
-  STEP_COUNT,
+  SIGNATURES,
+  SIGNATURE_IDS,
   type DrumPattern,
   type RandomStyle,
 } from '@/core/drumMachine';
@@ -20,8 +21,15 @@ const SELECT_CLASS =
   'bg-bg-primary border border-border-active rounded px-2 py-1 ' +
   'font-mono-display text-caption text-text-secondary';
 
-/** Step positions are the cells' identity, so the grid maps over these. */
-const STEP_INDICES = [...Array(STEP_COUNT).keys()];
+function stepIndices(count: number): number[] {
+  return [...Array(count).keys()];
+}
+
+function patternOptionLabel(drumPattern: DrumPattern): string {
+  const base = `${drumPattern.name} — ${drumPattern.bpm} BPM`;
+  if (drumPattern.signature === '4/4') return base;
+  return `${base} · ${drumPattern.signature}`;
+}
 
 function playLabel(playing: boolean): string {
   if (playing) return '■ STOP';
@@ -124,10 +132,17 @@ export function DrumMachinePanel({ drums }: DrumMachinePanelProps) {
 
   const isPresetPattern = DRUM_PATTERNS.some((candidate) => candidate.id === drums.patternId);
   const swingPercent = Math.round(drums.swing * 100);
+  const signature = SIGNATURES[drums.signature];
+  const barSteps = stepIndices(signature.steps);
 
   function handleStyleChange(value: string) {
     const known = RANDOM_STYLES.find((candidate) => candidate === value);
     setRandomStyle(known ?? 'Rock');
+  }
+
+  function handleSignatureChange(value: string) {
+    const known = SIGNATURE_IDS.find((candidate) => candidate === value);
+    drums.setSignature(known ?? '4/4');
   }
 
   return (
@@ -167,10 +182,23 @@ export function DrumMachinePanel({ drums }: DrumMachinePanelProps) {
             <optgroup key={group.label} label={group.label}>
               {group.patterns.map((drumPattern) => (
                 <option key={drumPattern.id} value={drumPattern.id}>
-                  {drumPattern.name} — {drumPattern.bpm} BPM
+                  {patternOptionLabel(drumPattern)}
                 </option>
               ))}
             </optgroup>
+          ))}
+        </select>
+        <select
+          value={drums.signature}
+          onChange={(event) => handleSignatureChange(event.target.value)}
+          className={SELECT_CLASS}
+          aria-label="Time signature"
+          title="Time signature (bar length of the step grid)"
+        >
+          {SIGNATURE_IDS.map((signatureId) => (
+            <option key={signatureId} value={signatureId}>
+              {signatureId}
+            </option>
           ))}
         </select>
         <select
@@ -235,7 +263,7 @@ export function DrumMachinePanel({ drums }: DrumMachinePanelProps) {
 
       {/* step grid: click a cell to toggle a hit, click a lane name to mute it */}
       <div className="overflow-x-auto">
-        <div className="flex flex-col gap-1 min-w-[34rem]">
+        <div className="dm-grid flex flex-col gap-1 min-w-[34rem]">
           {DRUM_LANES.map((lane) => (
             <div key={lane.id} className="flex items-center gap-1">
               <button
@@ -247,17 +275,17 @@ export function DrumMachinePanel({ drums }: DrumMachinePanelProps) {
               >
                 {lane.label}
               </button>
-              {STEP_INDICES.map((stepIndex) => (
+              {barSteps.map((stepIndex) => (
                 <button
                   key={stepIndex}
                   type="button"
                   className={cellClass(
-                    drums.steps[lane.id][stepIndex],
-                    stepIndex % 4 === 0 && stepIndex > 0,
+                    drums.steps[lane.id][stepIndex] ?? 0,
+                    stepIndex % signature.group === 0 && stepIndex > 0,
                     drums.playing && displayStep === stepIndex,
                   )}
                   aria-label={`${lane.label} step ${stepIndex + 1}`}
-                  aria-pressed={drums.steps[lane.id][stepIndex] > 0}
+                  aria-pressed={(drums.steps[lane.id][stepIndex] ?? 0) > 0}
                   onClick={() => drums.toggleStep(lane.id, stepIndex)}
                 />
               ))}

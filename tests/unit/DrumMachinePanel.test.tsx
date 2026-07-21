@@ -15,6 +15,7 @@ function makeApi(overrides: Partial<DrumMachineApi> = {}): DrumMachineApi {
     patternName: rockBasic.name,
     bpm: rockBasic.bpm,
     swing: 0,
+    signature: rockBasic.signature,
     volume: 80,
     getCurrentStep: () => -1,
     steps: rockBasic.steps,
@@ -23,6 +24,7 @@ function makeApi(overrides: Partial<DrumMachineApi> = {}): DrumMachineApi {
     stop: vi.fn(),
     setBpm: vi.fn(),
     setSwing: vi.fn(),
+    setSignature: vi.fn(),
     setVolume: vi.fn(),
     selectKit: vi.fn(),
     selectPattern: vi.fn(),
@@ -68,6 +70,22 @@ describe('DrumMachinePanel', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: '🎲 RANDOM' }));
     expect(api.randomize).toHaveBeenCalledWith('Groove');
+  });
+
+  it('changes the time signature and resizes the grid', () => {
+    const api = makeApi();
+    render(<DrumMachinePanel drums={api} />);
+    fireEvent.change(screen.getByLabelText('Time signature'), {
+      target: { value: '3/4' },
+    });
+    expect(api.setSignature).toHaveBeenCalledWith('3/4');
+  });
+
+  it('renders a 12-column grid in 3/4', () => {
+    const api = makeApi({ signature: '3/4' });
+    render(<DrumMachinePanel drums={api} />);
+    const cells = screen.getAllByRole('button', { name: /step \d+$/ });
+    expect(cells).toHaveLength(8 * 12);
   });
 
   it('mutes a lane from its label button', () => {
