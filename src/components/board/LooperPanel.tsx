@@ -9,8 +9,12 @@ import {
 } from '@/core/looperBindings';
 import { Button } from '@/components/ui/Button';
 import { Led } from '@/components/ui/Badge';
+import { LooperTimeline } from '@/components/board/LooperTimeline';
 import type { LooperTriggerMap } from '@/core/looperTriggers';
 import type { LearnNotice } from '@/hooks/useLooperTriggers';
+
+/** Audio containers worth offering; the browser decodes whatever it supports. */
+const IMPORT_ACCEPT = 'audio/*,.wav,.mp3,.ogg,.flac,.m4a,.aac';
 
 interface LooperPanelProps {
   looper: LooperApi;
@@ -48,6 +52,13 @@ function fmtLength(sec: number | null): string {
   return `${sec.toFixed(2)}s`;
 }
 
+/** "4 BARS · 8.00s (2.00s/bar)" — the whole length model in one line. */
+function fmtCycle(bars: number, cycleSec: number | null, baseSec: number | null): string {
+  if (cycleSec === null || baseSec === null) return 'no loop yet';
+  const plural = bars === 1 ? '' : 'S';
+  return `${bars} BAR${plural} · ${fmtLength(cycleSec)} (${fmtLength(baseSec)}/bar)`;
+}
+
 function learnLabel(armed: boolean, learned: boolean): string {
   if (armed) return '● STOMP NOW';
   if (learned) return 'REASSIGN';
@@ -79,13 +90,14 @@ function assignStatusClass(armed: boolean, learned: boolean): string {
   return `${base} text-text-muted`;
 }
 
-function recordLabel(recording: boolean): string {
+function recordLabel(recording: boolean, armed: boolean): string {
+  if (armed) return '◌ ARMED';
   if (recording) return '■ STOP REC';
   return '● REC';
 }
 
-function recordVariant(recording: boolean): 'danger' | 'secondary' {
-  if (recording) return 'danger';
+function recordVariant(active: boolean): 'danger' | 'secondary' {
+  if (active) return 'danger';
   return 'secondary';
 }
 
@@ -131,26 +143,13 @@ export function LooperPanel({
   learnNotice,
   learnEnabled,
 }: LooperPanelProps) {
-  const playBar = useRef<HTMLSpanElement>(null);
   const recBar = useRef<HTMLSpanElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
   // Track gains keyed by dynamic track id; default 1 for new tracks.
   const [gains, setGains] = useState<Record<number, number>>({});
-  const { ready, getPlayhead, isRecording } = looper;
+  const [importError, setImportError] = useState<string | null>(null);
+  const { isRecording } = looper;
   const { active: audioActive, getLevels } = useAudioEngine();
-
-  // Drive the master-loop progress bar from a rAF loop (no per-frame React
-  // state), mirroring AudioMeters: read the pure playhead each frame.
-  useEffect(() => {
-    if (!ready) return;
-    let raf = 0;
-    const tick = () => {
-      const pos = getPlayhead();
-      if (playBar.current) playBar.current.style.width = `${(pos * 100).toFixed(1)}%`;
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [ready, getPlayhead]);
 
   // Live input level while actively recording, so silence doesn't go
   // unnoticed — same rAF-driven read AudioMeters uses, gated to the
@@ -176,14 +175,24 @@ export function LooperPanel({
     looper.setTrackGain(id, value);
   };
 
+  const handleImportPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Reset immediately so re-picking the SAME file still fires a change event.
+    e.target.value = '';
+    if (!file) return;
+    setImportError(null);
+    setImportError(await looper.importAudioFile(file));
+  };
+
   if (!looper.ready) {
     return (
       <div className="text-center py-6">
         <p className="font-mono-display text-caption text-text-muted mb-3">
           The loop station records the GP-200's USB audio here in the browser
-          (separate from the pedal's built-in looper): record takes on top of
-          each other, every take becomes its own track, and everything stays in
-          sync with the first loop. Enable audio capture to start.
+          (separate from the pedal's built-in looper): import a backing track,
+          then record guitar takes over it. Every take becomes its own track,
+          and the loop grows to fit the longest one. Enable audio capture to
+          start.
         </p>
         <Button onClick={onEnableAudio} disabled={audioStarting}>
           {audioStarting ? 'ENABLING…' : 'ENABLE AUDIO IN'}
@@ -220,9 +229,19 @@ export function LooperPanel({
             the pedal's built-in looper (that one lives in the DRUMS drawer).
           </li>
           <li>
-            ● REC starts a NEW track; press again to stop. Your first take sets
-            the master loop length; every later take is stretched to a whole
-            number of loops and stays locked in time with it.
+            IMPORT loads a backing track and its length becomes one BAR — the
+            unit everything else is measured in. Record before importing and
+            your first take sets the bar instead.
+          </li>
+          <li>
+            ● REC starts a NEW track; press again to stop. Once a bar exists,
+            recording waits for the downbeat (◌ ARMED) so takes always start in
+            time. Each take is rounded to the nearest whole number of bars.
+          </li>
+          <li>
+            The loop is as long as the LONGEST take. Play past the end and it
+            grows another bar; shorter tracks simply repeat underneath — you can
+            see the repeats ghosted in the timeline.
           </li>
           <li>
             ▶ PLAY stops or restarts all tracks together. ◀ / ▶ move the
@@ -245,14 +264,31 @@ export function LooperPanel({
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <Button
-            variant={recordVariant(looper.isRecording)}
+            variant={recordVariant(looper.isRecording || looper.isArmed)}
             size="sm"
             className="flex-1 sm:flex-none"
             onClick={looper.toggleRecord}
             title="Record a new track / stop recording"
           >
-            {recordLabel(looper.isRecording)}
+            {recordLabel(looper.isRecording, looper.isArmed)}
           </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="flex-1 sm:flex-none"
+            disabled={looper.importing}
+            onClick={() => fileInput.current?.click()}
+            title="Import an audio file as a looping track"
+          >
+            {looper.importing ? 'DECODING…' : '⭳ IMPORT'}
+          </Button>
+          <input
+            ref={fileInput}
+            type="file"
+            accept={IMPORT_ACCEPT}
+            className="hidden"
+            onChange={handleImportPick}
+          />
           {looper.isRecording && (
             <span
               className="flex items-center gap-1.5 basis-full sm:basis-auto"
@@ -314,27 +350,30 @@ export function LooperPanel({
             Clear All
           </Button>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="flex-1 h-3 rounded bg-bg-hover overflow-hidden">
-            <span
-              ref={playBar}
-              className="block h-full bg-accent-amber"
-              style={{ width: '0%' }}
-            />
+        {/* The length model, stated plainly: bars, total, and one bar's worth */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-mono-display text-label text-text-muted uppercase tracking-widest">
+            LOOP
           </span>
           <span className="font-mono-display text-caption text-text-secondary tabular-nums">
-            {fmtLength(looper.masterLoopLengthSec)}
+            {fmtCycle(looper.cycleBars, looper.cycleDurationSec, looper.baseDurationSec)}
           </span>
         </div>
       </div>
 
-      {/* Track rows: one per recorded take, newest last */}
-      {looper.tracks.length === 0 && (
-        <p className="font-mono-display text-caption text-text-muted">
-          No tracks yet — hit ● REC (or an assigned footswitch) to record the
-          first loop; every record/stop cycle adds a track.
+      {importError && (
+        <p
+          className="font-mono-display text-caption text-accent-red px-3 py-2 rounded-lg
+            border border-accent-red bg-accent-red/10"
+        >
+          {importError}
         </p>
       )}
+
+      {/* The visual: waveform lanes across the cycle with a shared playhead */}
+      <LooperTimeline looper={looper} />
+
+      {/* Track rows: the control surface for what the timeline shows */}
       <div className="flex flex-col gap-2">
         {looper.tracks.map((track) => {
           const selected = track.id === looper.selectedTrack;
@@ -347,12 +386,18 @@ export function LooperPanel({
               onClick={() => looper.selectTrack(track.id)}
             >
               <Led active={track.state === 'playing' || track.state === 'recording'} />
-              <span className="font-mono-display text-label text-text-secondary w-14">
-                TRK {position}
+              <span
+                className="font-mono-display text-label text-text-secondary w-24 truncate"
+                title={track.label}
+              >
+                {track.label}
+              </span>
+              <span className="font-mono-display text-micro text-text-muted tabular-nums w-12">
+                {track.bars > 0 ? `${track.bars}b` : '—'}
               </span>
               {recordingThis && (
                 <span className="font-mono-display text-caption text-accent-red">
-                  ● recording
+                  {track.state === 'armed' ? '◌ armed' : '● recording'}
                 </span>
               )}
               <Button
