@@ -38,8 +38,14 @@ export interface DrumMachineApi {
   swing: number;
   /** 0..100 master level */
   volume: number;
-  /** step lit in the grid; -1 while stopped */
-  currentStep: number;
+  /**
+   * Step currently sounding, -1 while stopped. A getter read inside rAF (same
+   * pattern as AudioMeterApi.getLevels), NOT React state: step-rate setState
+   * here would re-render App (the hook lives there) ~8-16×/s, and that churn
+   * re-ran the Dialog focus trap every tick, yanking focus and snapping any
+   * open <select> dropdown shut while the drums played.
+   */
+  getCurrentStep: () => number;
   steps: Record<DrumLaneId, readonly number[]>;
   mutedLanes: ReadonlySet<DrumLaneId>;
   togglePlay: () => void;
@@ -93,7 +99,6 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
   const [bpm, setBpmState] = useState(initialPattern.bpm);
   const [swing, setSwingState] = useState(initialPattern.swing);
   const [volume, setVolumeState] = useState(80);
-  const [currentStep, setCurrentStep] = useState(-1);
   const [steps, setSteps] = useState(initialPattern.steps);
   const [mutedLanes, setMutedLanes] = useState<ReadonlySet<DrumLaneId>>(new Set());
 
@@ -118,6 +123,8 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
   const nextRef = useRef({ step: 0, time: 0 });
   /** steps already scheduled, waiting to light up in the grid */
   const pendingStepsRef = useRef<{ step: number; time: number }[]>([]);
+  /** step currently sounding; read by the panel inside rAF via getCurrentStep */
+  const currentStepRef = useRef(-1);
   const liveSourcesRef = useRef(new Set<AudioBufferSourceNode>());
   /** ringing open hats, so a closed hat can choke them (classic hi-hat rule) */
   const openHatsRef = useRef<{ source: AudioBufferSourceNode; time: number }[]>([]);
@@ -240,9 +247,11 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
       pendingStepsRef.current = pendingStepsRef.current.filter(
         (pending) => pending.time > now,
       );
-      setCurrentStep(due[due.length - 1].step);
+      currentStepRef.current = due[due.length - 1].step;
     }
   }, [scheduleStep]);
+
+  const getCurrentStep = useCallback(() => currentStepRef.current, []);
 
   const stop = useCallback(() => {
     if (tickTimerRef.current !== null) {
@@ -259,8 +268,8 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
     liveSourcesRef.current.clear();
     openHatsRef.current = [];
     pendingStepsRef.current = [];
+    currentStepRef.current = -1;
     setPlaying(false);
-    setCurrentStep(-1);
   }, []);
 
   const start = useCallback(async () => {
@@ -356,7 +365,7 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
 
   return {
     playing, loading, error, kitId, patternId, patternName,
-    bpm, swing, volume, currentStep, steps, mutedLanes,
+    bpm, swing, volume, getCurrentStep, steps, mutedLanes,
     togglePlay, stop, setBpm, setSwing, setVolume,
     selectKit, selectPattern, randomize, toggleStep, toggleLaneMute,
   };

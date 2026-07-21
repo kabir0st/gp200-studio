@@ -1336,6 +1336,58 @@
 .board-view .deck-btn.tuner-active .act-icon {
   color: currentColor;
 }
+/* ── practice drum machine step grid (DrumMachinePanel) ─────────────────
+   Deliberately NOT scoped to .board-view: the panel is reused verbatim in
+   the phone tree, and board.css is always loaded (PedalBoard is a static
+   import in App). The playhead column glows green and hand-off is smoothed
+   by the box-shadow/background transitions; a cell whose sound actually
+   fires additionally "pops" (dm-hit). The global prefers-reduced-motion
+   block in index.css flattens all of these transitions. */
+.dm-cell {
+  height: 1.5rem;
+  min-width: 1.25rem;
+  flex: 1;
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-input);
+  transition:
+    transform 90ms cubic-bezier(0.2, 0.9, 0.3, 1.4),
+    box-shadow 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease;
+}
+.dm-cell:hover {
+  border-color: var(--border-active);
+}
+.dm-cell.dm-beat {
+  margin-left: 0.375rem;
+}
+.dm-cell.dm-ghost {
+  background: color-mix(in srgb, var(--accent-amber-dim) 45%, var(--bg-input));
+  border-color: var(--accent-amber-dim);
+}
+.dm-cell.dm-on {
+  background: var(--accent-amber-dim);
+  border-color: var(--accent-amber-dim);
+}
+.dm-cell.dm-accent {
+  background: var(--accent-amber);
+  border-color: var(--accent-amber);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dm-cell.dm-now {
+  border-color: var(--accent-green);
+  box-shadow: 0 0 0 2px var(--accent-green);
+  transition-duration: 40ms, 60ms, 60ms, 60ms;
+}
+.dm-cell.dm-now.dm-hit {
+  transform: scale(1.22);
+  box-shadow:
+    0 0 0 2px var(--accent-green),
+    0 0 12px var(--glow-green);
+  z-index: 1;
+}
+
 /* DRUMS lights up while the browser drum machine plays (it keeps playing
    with the drawer closed, so the bar needs a "sound is coming from here"). */
 .board-view .deck-btn.drums-active {

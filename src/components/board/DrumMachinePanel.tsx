@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   DRUM_KITS,
   DRUM_LANES,
@@ -28,19 +28,16 @@ function playLabel(playing: boolean): string {
   return '▶ PLAY';
 }
 
+/* Visuals live in board.css (.dm-cell family) so the playhead glow and the
+   hit "pop" animate with CSS transitions instead of utility-class swaps. */
 function cellClass(velocity: number, isBeatStart: boolean, isCurrent: boolean): string {
-  const classes = ['dm-cell h-6 min-w-5 flex-1 rounded-sm border transition-colors'];
-  if (velocity >= 1) {
-    classes.push('bg-accent-amber border-accent-amber');
-  } else if (velocity >= 0.5) {
-    classes.push('bg-accent-amber-dim border-accent-amber-dim');
-  } else if (velocity > 0) {
-    classes.push('bg-accent-amber-dim/50 border-accent-amber-dim');
-  } else {
-    classes.push('bg-bg-input border-border-subtle hover:border-border-active');
-  }
-  if (isBeatStart) classes.push('ml-1.5');
-  if (isCurrent) classes.push('ring-2 ring-accent-green');
+  const classes = ['dm-cell'];
+  if (velocity >= 1) classes.push('dm-accent');
+  else if (velocity >= 0.5) classes.push('dm-on');
+  else if (velocity > 0) classes.push('dm-ghost');
+  if (isBeatStart) classes.push('dm-beat');
+  if (isCurrent) classes.push('dm-now');
+  if (isCurrent && velocity > 0) classes.push('dm-hit');
   return classes.join(' ');
 }
 
@@ -94,6 +91,24 @@ function DrumSlider({ label, min, max, step, value, display, onChange }: DrumSli
  */
 export function DrumMachinePanel({ drums }: DrumMachinePanelProps) {
   const [randomStyle, setRandomStyle] = useState<RandomStyle>('Rock');
+  // Playhead polled inside rAF (getCurrentStep is a ref-read, like the audio
+  // meters): only THIS component re-renders per step, and only when the step
+  // actually changes — the drawer and the selects above never churn.
+  const { playing, getCurrentStep } = drums;
+  const [displayStep, setDisplayStep] = useState(-1);
+  useEffect(() => {
+    if (!playing) {
+      setDisplayStep(-1);
+      return;
+    }
+    let frame = 0;
+    const follow = () => {
+      setDisplayStep(getCurrentStep());
+      frame = requestAnimationFrame(follow);
+    };
+    frame = requestAnimationFrame(follow);
+    return () => cancelAnimationFrame(frame);
+  }, [playing, getCurrentStep]);
   const patternGroups = useMemo(() => {
     const groups: { label: string; patterns: DrumPattern[] }[] = [];
     for (const drumPattern of DRUM_PATTERNS) {
@@ -239,7 +254,7 @@ export function DrumMachinePanel({ drums }: DrumMachinePanelProps) {
                   className={cellClass(
                     drums.steps[lane.id][stepIndex],
                     stepIndex % 4 === 0 && stepIndex > 0,
-                    drums.playing && drums.currentStep === stepIndex,
+                    drums.playing && displayStep === stepIndex,
                   )}
                   aria-label={`${lane.label} step ${stepIndex + 1}`}
                   aria-pressed={drums.steps[lane.id][stepIndex] > 0}

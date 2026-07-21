@@ -16,7 +16,7 @@ function makeApi(overrides: Partial<DrumMachineApi> = {}): DrumMachineApi {
     bpm: rockBasic.bpm,
     swing: 0,
     volume: 80,
-    currentStep: -1,
+    getCurrentStep: () => -1,
     steps: rockBasic.steps,
     mutedLanes: new Set(),
     togglePlay: vi.fn(),

@@ -51,7 +51,7 @@ const fakeDrumMachine: DrumMachineApi = {
   bpm: 100,
   swing: 0,
   volume: 80,
-  currentStep: -1,
+  getCurrentStep: () => -1,
   steps: getPattern('rock-basic').steps,
   mutedLanes: new Set(),
   togglePlay: vi.fn(),
