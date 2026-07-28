@@ -50,12 +50,46 @@ export interface AnalyticsParams {
   preset_import: { target: 'editor' | 'slot'; ok: boolean };
   preset_export: { scope: 'editor' | 'slot' | 'bulk' };
 
+  // ── Looper + drums usage ────────────────────────────────────────────────
+  // panel_open only says a drawer was opened. These say the feature was used.
+  //
+  // The browser loop station is gated on microphone capture, so its funnel is
+  //   panel_open(looper) → audio_capture → looper_record → looper_first_loop
+  // and every step can drop. audio_capture in particular is invisible without
+  // this event: a denied permission kills the feature outright.
+  /** Microphone capture settled. `ok:false` means the loop station cannot work. */
+  audio_capture: { ok: boolean };
+  /** A take was started. `tracks` is the layer count at that moment, so the
+   *  distribution answers "do people stack loops or record one and stop?". */
+  looper_record: { tracks: number };
+  /** First take that actually landed, once per session — the activation metric.
+   *  The gap between looper_record and this is the real-world failure rate. */
+  looper_first_loop: { ui_mode: UiMode };
+  /** Backing track imported. `ext` is the file extension only — never the name. */
+  looper_import_audio: { ok: boolean; ext: string };
+  /** A footswitch was successfully bound to a looper action (MIDI learn). */
+  looper_learn_bound: { action: string };
+  /** A bound footswitch actually drove the looper. Deduped per action per
+   *  session: this measures whether hands-free control gets used at all, and
+   *  keeps a long jam from flooding the event budget. */
+  looper_footswitch: { action: string };
+  /** Practice drum machine started playing. */
+  drums_start: { kit: string; pattern: string; bpm_bucket: string };
+  /** The GP-200's OWN hardware looper (MIDI CC), distinct from the browser
+   *  loop station it nests under. Fire-and-forget, so this is press-intent. */
+  device_looper_record: { connected: boolean };
+
   guide_read: { sections_seen: number; deepest: string; dwell_bucket: string };
 
   session_summary: {
     ui_mode: UiMode;
     connected: boolean;
     panels: number;
+    /** Reached the point of recording a loop / starting the drums, not merely
+     *  opening the panel — lets you cohort ("do people who connect also loop?")
+     *  without joining across events. */
+    looper_used: boolean;
+    drums_used: boolean;
     dwell_bucket: string;
   };
 }
@@ -73,6 +107,24 @@ export function msBucket(ms: number): string {
   if (ms < 120_000) return '30s-2m';
   if (ms < 600_000) return '2-10m';
   return '10m+';
+}
+
+/** Tempo buckets, same reasoning as msBucket: raw BPM is a continuous value and
+ *  would make an unbounded dimension out of the drum machine's 40–300 range. */
+export function bpmBucket(bpm: number): string {
+  if (!Number.isFinite(bpm)) return 'unknown';
+  if (bpm < 80) return '<80';
+  if (bpm < 100) return '80-99';
+  if (bpm < 130) return '100-129';
+  if (bpm < 160) return '130-159';
+  return '160+';
+}
+
+/** File extension only, lowercased and clamped. Never the filename itself. */
+export function fileExt(filename: string): string {
+  const dot = filename.lastIndexOf('.');
+  if (dot < 0 || dot === filename.length - 1) return 'none';
+  return filename.slice(dot + 1).toLowerCase().slice(0, 8);
 }
 
 /** Collapse a thrown error into a bounded enum. Without this an unexpected

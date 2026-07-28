@@ -9,6 +9,7 @@ import {
   processLooperFrame,
   type LooperTriggerMap,
 } from '@/core/looperTriggers';
+import { track, trackOnce } from '@/core/analytics';
 
 const LEARN_NOTICE_MS = 3000;
 
@@ -108,6 +109,7 @@ export function useLooperTriggers(opts: UseLooperTriggersOpts): UseLooperTrigger
           lastMatchAtRef.current.set(decision.key, Date.now());
           setTriggers((prev) => ({ ...prev, [decision.action]: decision.fp }));
           setArmedAction(null);
+          track('looper_learn_bound', { action: decision.action });
           // Always log the raw frame so the user can diff two switches whose
           // sysex08 signatures might collide (docs/protocol-capture.md §4).
           console.log(
@@ -137,6 +139,12 @@ export function useLooperTriggers(opts: UseLooperTriggersOpts): UseLooperTrigger
             midiRef.current.sendToggle(decision.revertToggle.block, decision.revertToggle.enabled);
           }
           if (looperRef.current.ready) {
+            // Deduped per action: this answers "is hands-free control used at
+            // all", and a stomp-heavy jam would otherwise dominate the session's
+            // event budget. Actual loop counts still come from looper_record.
+            trackOnce(`fs:${decision.action}`, 'looper_footswitch', {
+              action: decision.action,
+            });
             dispatchLooperAction(looperRef.current, { kind: decision.action });
           }
           return true;

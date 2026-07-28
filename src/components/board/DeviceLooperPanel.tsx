@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/Button';
 import { Led } from '@/components/ui/Badge';
 import { CcSlider } from '@/components/board/CcControls';
 import { disabledTitle, playStopLabel, toggleVariant } from '@/components/board/ccUi';
+import { trackOnce } from '@/core/analytics';
 
 interface DeviceLooperPanelProps {
   connected: boolean;
@@ -91,7 +92,13 @@ export function DeviceLooperPanel({ connected, sendCC }: DeviceLooperPanelProps)
             size="sm"
             disabled={!connected}
             title={disabledTitle(connected, 'Start recording / overdub')}
-            onClick={() => sendCC(looperRecord())}
+            onClick={() => {
+              // The pedal's OWN looper, not the browser loop station this panel
+              // nests under. Deduped per session: the CC is fire-and-forget with
+              // no device feedback, so this only ever means "pressed record".
+              trackOnce('device-looper', 'device_looper_record', { connected });
+              sendCC(looperRecord());
+            }}
           >
             ● REC
           </Button>

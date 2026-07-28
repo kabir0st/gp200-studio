@@ -128,6 +128,13 @@ function App() {
     errorMessage: midiDevice.errorMessage,
     hasPreset: preset !== null,
     isPhone,
+    audioActive: audioEngine.active,
+    audioError: audioEngine.error,
+    looperTrackCount: looper.tracks.length,
+    drumsPlaying: drumMachine.playing,
+    drumKit: drumMachine.kitId,
+    drumPattern: drumMachine.patternId,
+    drumBpm: drumMachine.bpm,
   });
 
   // One guide entry point for both the landing link and the deck button, so the

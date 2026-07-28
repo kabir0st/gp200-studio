@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { setAnalyticsContext, track, trackOnce } from '@/core/analytics';
 import {
+  bpmBucket,
   errorCode,
   msBucket,
   type EditorEntry,
@@ -36,6 +37,15 @@ interface Args {
   errorMessage: UseMidiDeviceReturn['errorMessage'];
   hasPreset: boolean;
   isPhone: boolean;
+  /** Microphone capture state — the hard gate on the whole loop station. */
+  audioActive: boolean;
+  audioError: string | null;
+  /** Loop station depth; 0 → ≥1 is the activation moment. */
+  looperTrackCount: number;
+  drumsPlaying: boolean;
+  drumKit: string;
+  drumPattern: string;
+  drumBpm: number;
 }
 
 export function useEngagementTracking({
@@ -44,6 +54,13 @@ export function useEngagementTracking({
   errorMessage,
   hasPreset,
   isPhone,
+  audioActive,
+  audioError,
+  looperTrackCount,
+  drumsPlaying,
+  drumKit,
+  drumPattern,
+  drumBpm,
 }: Args): EngagementTracking {
   const uiMode: UiMode = isPhone ? 'phone' : 'desktop';
 
@@ -56,6 +73,9 @@ export function useEngagementTracking({
   const openedAt = useRef(Date.now());
   const panelsSeen = useRef(new Set<PanelId>());
   const everConnected = useRef(false);
+  const everLooped = useRef(false);
+  const everDrummed = useRef(false);
+  const prevDrumsPlaying = useRef(drumsPlaying);
 
   const markEditorEntry = useCallback((entry: EditorEntry) => {
     entryRef.current = entry;
@@ -113,6 +133,36 @@ export function useEngagementTracking({
     track('editor_open', { entry: entryRef.current, ui_mode: uiModeRef.current });
   }, [hasPreset]);
 
+  // Microphone capture settled. Without this the loop station funnel has an
+  // invisible step: a denied prompt makes every later looper event impossible,
+  // and the drop would otherwise look like disinterest rather than a blocker.
+  useEffect(() => {
+    if (audioActive) trackOnce('audio', 'audio_capture', { ok: true });
+    else if (audioError !== null) trackOnce('audio', 'audio_capture', { ok: false });
+  }, [audioActive, audioError]);
+
+  // A take actually landed. looper_record says someone pressed record; this says
+  // it worked, so the gap between the two is the real failure rate.
+  useEffect(() => {
+    if (looperTrackCount === 0) return;
+    everLooped.current = true;
+    trackOnce('looper:first', 'looper_first_loop', { ui_mode: uiModeRef.current });
+  }, [looperTrackCount]);
+
+  // Drums went from stopped to playing. Guarded on the transition, so the extra
+  // deps (kit/pattern/bpm, which the event needs) can't re-fire it.
+  useEffect(() => {
+    const was = prevDrumsPlaying.current;
+    prevDrumsPlaying.current = drumsPlaying;
+    if (was || !drumsPlaying) return;
+    everDrummed.current = true;
+    track('drums_start', {
+      kit: drumKit,
+      pattern: drumPattern,
+      bpm_bucket: bpmBucket(drumBpm),
+    });
+  }, [drumsPlaying, drumKit, drumPattern, drumBpm]);
+
   // One rollup row per session, so cohort questions ("do people who connect
   // also open the looper?") don't need an event-level join.
   useEffect(() => {
@@ -124,6 +174,8 @@ export function useEngagementTracking({
         ui_mode: uiModeRef.current,
         connected: everConnected.current,
         panels: panelsSeen.current.size,
+        looper_used: everLooped.current,
+        drums_used: everDrummed.current,
         dwell_bucket: msBucket(Date.now() - openedAt.current),
       });
     };

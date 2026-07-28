@@ -6,7 +6,7 @@ import {
   setAnalyticsContext,
   __resetAnalyticsForTests,
 } from '@/core/analytics';
-import { msBucket, errorCode } from '@/core/analyticsEvents';
+import { msBucket, bpmBucket, fileExt, errorCode } from '@/core/analyticsEvents';
 
 /** dataLayer holds `arguments` objects, not arrays — spread each to inspect. */
 function calls(): unknown[][] {
@@ -205,6 +205,25 @@ describe('analyticsEvents: bucketing keeps cardinality bounded', () => {
     expect(msBucket(3_600_000)).toBe('10m+');
     expect(msBucket(Number.NaN)).toBe('unknown');
     expect(msBucket(-1)).toBe('unknown');
+  });
+
+  it('buckets drum tempo', () => {
+    expect(bpmBucket(60)).toBe('<80');
+    expect(bpmBucket(90)).toBe('80-99');
+    expect(bpmBucket(120)).toBe('100-129');
+    expect(bpmBucket(140)).toBe('130-159');
+    expect(bpmBucket(200)).toBe('160+');
+    expect(bpmBucket(Number.NaN)).toBe('unknown');
+  });
+
+  it('reduces an imported filename to its extension only', () => {
+    // The filename is user data; only the extension may ever be sent.
+    expect(fileExt('my secret band demo.wav')).toBe('wav');
+    expect(fileExt('Take 3.FLAC')).toBe('flac');
+    expect(fileExt('archive.tar.gz')).toBe('gz');
+    expect(fileExt('no-extension')).toBe('none');
+    expect(fileExt('trailing.')).toBe('none');
+    expect(fileExt(`x.${'y'.repeat(50)}`)).toHaveLength(8);
   });
 
   it('collapses error messages into a closed set of codes', () => {

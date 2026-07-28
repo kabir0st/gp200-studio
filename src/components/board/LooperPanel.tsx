@@ -10,6 +10,8 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Led } from '@/components/ui/Badge';
 import { LooperTimeline } from '@/components/board/LooperTimeline';
+import { track } from '@/core/analytics';
+import { fileExt } from '@/core/analyticsEvents';
 import type { LooperTriggerMap } from '@/core/looperTriggers';
 import type { LearnNotice } from '@/hooks/useLooperTriggers';
 
@@ -181,7 +183,12 @@ export function LooperPanel({
     e.target.value = '';
     if (!file) return;
     setImportError(null);
-    setImportError(await looper.importAudioFile(file));
+    const error = await looper.importAudioFile(file);
+    setImportError(error);
+    // Safe to instrument at the call site (unlike record): import has no
+    // footswitch binding, so this is the only path in. Extension only — the
+    // filename itself is user data and never leaves the browser.
+    track('looper_import_audio', { ok: error === null, ext: fileExt(file.name) });
   };
 
   if (!looper.ready) {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AudioMeterApi } from '@/hooks/useAudioMeter';
+import { track } from '@/core/analytics';
 import {
   quantizeToBase,
   barsForCapture,
@@ -495,7 +496,13 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
   /** Record a new track, or stop (and keep) the recording in progress. */
   const toggleRecord = useCallback(() => {
     if (recordingTrackRef.current !== null) stopRecord();
-    else startRecordNewTrack();
+    else {
+      // Instrumented here rather than in LooperPanel: useLooperTriggers drives
+      // the same call for MIDI-learned footswitches, and a panel-level event
+      // would miss every hands-free loop — arguably the main way this gets used.
+      track('looper_record', { tracks: tracksRef.current.length });
+      startRecordNewTrack();
+    }
   }, [startRecordNewTrack, stopRecord]);
 
   /**
