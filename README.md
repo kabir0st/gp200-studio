@@ -112,6 +112,17 @@ Other useful commands: `npm run build`, `npm run typecheck`, `npm run lint`, `np
 
 Everything is client-side TypeScript. A pure protocol layer in [`src/core/`](src/core/) decodes/encodes the GP-200's binary `.prst` preset format (byte-exact round-trips via raw-source passthrough) and speaks the pedal's **reverse-engineered USB-MIDI SysEx protocol** — parameter changes, effect swaps, toggles, reorders, preset pulls and saves — over the browser's Web MIDI API. React hooks layer connection/session handling on top, and the pedalboard UI sits on that. No server is involved at any point.
 
+## Privacy
+
+Your presets stay on your machine. There is no account, no upload and no server-side storage — the "no backend" claim above is about your data, and it holds.
+
+The hosted site does load Google Analytics to answer questions like "does anyone use the looper?" and "do people connect real hardware or just open the editor blank?". What that means concretely:
+
+- **Never sent:** patch names, author fields, file names, MIDI port names, preset contents, or anything else you type. Every tracked value is either a fixed keyword or a coarse bucket — see [`src/core/analyticsEvents.ts`](src/core/analyticsEvents.ts) for the complete list of ~12 events.
+- **Off by default:** Google Signals and ad personalisation are disabled, and the browser's [Global Privacy Control](https://globalprivacycontrol.org/) signal disables analytics entirely.
+- **Only on the hosted site:** analytics is gated on a production build *and* a hostname allowlist ([`src/core/analytics.ts`](src/core/analytics.ts)), so `npm run dev`, `vite preview`, the test suite and any fork are all silent.
+
+The measurement ID in `.env.production` is committed on purpose. A GA4 measurement ID is a public identifier — it ships inlined in the JS bundle of every site that uses GA and is readable via View Source — so keeping it secret would buy nothing. If you fork this and want your own analytics, set `VITE_GA_MEASUREMENT_ID` and add your hostname to `PROD_HOSTS`.
 
 ## Contributing
 

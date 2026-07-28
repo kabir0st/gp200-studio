@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Local env overrides. .env.production is committed on purpose — see its header;
+# a GA4 measurement id is public by design and the build needs it.
+.env
+.env.local
+.env.*.local
+
 # Local AI-assistant instructions (kept out of the public repo)
 CLAUDE.md
 .claude/

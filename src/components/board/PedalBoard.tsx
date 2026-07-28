@@ -17,6 +17,7 @@ import type { LooperApi } from '@/hooks/useLooper';
 import type { LooperActionKind, LooperBindings } from '@/core/looperBindings';
 import type { LooperTriggerMap } from '@/core/looperTriggers';
 import type { LearnNotice } from '@/hooks/useLooperTriggers';
+import type { PanelId } from '@/core/analyticsEvents';
 import { splitRows } from './boardLayout';
 import { lookupPedalArt, usePedalManifest } from './pedalManifest';
 import { Pedal } from './Pedal';
@@ -72,6 +73,10 @@ export interface PedalBoardProps {
   onOpenPatchManager: () => void;
   onActivateSlot: (slot: number) => void;
   onOpenGuide: () => void;
+  /** Engagement analytics: a drawer (desktop) or tab/sheet (phone) was opened.
+   *  Both trees report into the same PanelId vocabulary so "did anyone find the
+   *  looper?" is one number rather than two incomparable ones. */
+  onPanelOpen: (panel: PanelId) => void;
   /* loop station */
   looper: LooperApi;
   looperBindings: LooperBindings;
@@ -139,6 +144,7 @@ export function PedalBoard({
   onOpenPatchManager,
   onActivateSlot,
   onOpenGuide,
+  onPanelOpen,
   looper,
   looperBindings,
   onLooperBindingsChange,
@@ -180,6 +186,17 @@ export function PedalBoard({
   useEffect(() => {
     onLooperDrawerOpenChange(openDrawer === 'looper');
   }, [openDrawer, onLooperDrawerOpenChange]);
+
+  // Every drawer *opens* through here so the analytics call can't be forgotten
+  // on a new drawer. Closing (setOpenDrawer(null)) stays direct — only the open
+  // is a discovery signal.
+  const openPanel = useCallback(
+    (panel: 'fxloop' | 'exp' | 'ctrl' | 'looper' | 'drums') => {
+      setOpenDrawer(panel);
+      onPanelOpen(panel);
+    },
+    [onPanelOpen],
+  );
 
   const inspectKey = pinnedSlot ?? hoverSlot;
   const inspected = inspectKey !== null
@@ -288,8 +305,8 @@ export function PedalBoard({
         onConnectRequest={onConnectRequest}
         onDisconnect={onDisconnect}
         onCloseRequest={onCloseRequest}
-        onOpenLooper={() => setOpenDrawer('looper')}
-        onOpenDrums={() => setOpenDrawer('drums')}
+        onOpenLooper={() => openPanel('looper')}
+        onOpenDrums={() => openPanel('drums')}
         drumsPlaying={drumMachine.playing}
         sendCC={sendCC}
       />
@@ -350,9 +367,9 @@ export function PedalBoard({
           onVolumeChange={onVolumeChange}
           onPanChange={onPanChange}
           onTempoChange={onTempoChange}
-          onOpenFxLoop={() => setOpenDrawer('fxloop')}
-          onOpenExp={() => setOpenDrawer('exp')}
-          onOpenCtrl={() => setOpenDrawer('ctrl')}
+          onOpenFxLoop={() => openPanel('fxloop')}
+          onOpenExp={() => openPanel('exp')}
+          onOpenCtrl={() => openPanel('ctrl')}
         />
       </main>
 

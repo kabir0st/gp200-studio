@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PedalBoardProps } from '@/components/board/PedalBoard';
 import { usePedalManifest } from '@/components/board/pedalManifest';
 import { LooperPanel } from '@/components/board/LooperPanel';
@@ -14,6 +14,7 @@ import { MobileSheet } from './MobileSheet';
 import { ChainScreen } from './ChainScreen';
 import { PedalEditorScreen } from './PedalEditorScreen';
 import { DeviceScreen } from './DeviceScreen';
+import { track } from '@/core/analytics';
 import './mobile.css';
 
 type Sheet = 'fxloop' | 'exp' | 'ctrl' | 'meta' | null;
@@ -63,6 +64,7 @@ export default function MobileShell({
   onOpenPatchManager,
   onActivateSlot,
   onOpenGuide,
+  onPanelOpen,
   looper,
   looperBindings,
   onLooperBindingsChange,
@@ -107,6 +109,32 @@ export default function MobileShell({
     setTab('chain');
   }, [tab, onOpenPatchManager]);
 
+  // Every sheet opens through here, mirroring PedalBoard's openPanel, so the
+  // phone can't drift out of the shared PanelId vocabulary.
+  const openSheet = useCallback(
+    (next: Exclude<Sheet, null>) => {
+      setSheet(next);
+      onPanelOpen(next === 'meta' ? 'patch_meta' : next);
+    },
+    [onPanelOpen],
+  );
+
+  // Tab changes are the phone's entire navigation model. LOOP and DRUMS are the
+  // same features the desktop hides behind drawers, so they also report
+  // panel_open — that is what keeps "did anyone find the looper?" a single
+  // number across both trees instead of two that can't be added together.
+  const tabSettled = useRef(false);
+  useEffect(() => {
+    // Skip the mount render: landing on the default CHAIN tab isn't navigation.
+    if (!tabSettled.current) {
+      tabSettled.current = true;
+      return;
+    }
+    track('nav_tab', { tab });
+    if (tab === 'loop') onPanelOpen('looper');
+    if (tab === 'drums') onPanelOpen('drums');
+  }, [tab, onPanelOpen]);
+
   const editingSlot = editingIndex === null ? null : preset.effects[editingIndex];
 
   return (
@@ -117,7 +145,7 @@ export default function MobileShell({
         currentSlot={currentSlot}
         pushProgress={pushProgress}
         onActivateSlot={onActivateSlot}
-        onEditMeta={() => setSheet('meta')}
+        onEditMeta={() => openSheet('meta')}
       />
 
       <main className="m-main" ref={mainRef}>
@@ -144,7 +172,7 @@ export default function MobileShell({
             onToggle={onToggle}
             onMove={onMove}
             onOpenSlot={setEditingIndex}
-            onOpenFxLoop={() => setSheet('fxloop')}
+            onOpenFxLoop={() => openSheet('fxloop')}
           />
         )}
 
@@ -202,9 +230,9 @@ export default function MobileShell({
             onLoadRequest={onLoadRequest}
             onPushRequest={onPushRequest}
             onSaveToActiveSlot={onSaveToActiveSlot}
-            onOpenFxLoop={() => setSheet('fxloop')}
-            onOpenExp={() => setSheet('exp')}
-            onOpenCtrl={() => setSheet('ctrl')}
+            onOpenFxLoop={() => openSheet('fxloop')}
+            onOpenExp={() => openSheet('exp')}
+            onOpenCtrl={() => openSheet('ctrl')}
             onOpenGuide={onOpenGuide}
             onCloseRequest={onCloseRequest}
             sendCC={sendCC}

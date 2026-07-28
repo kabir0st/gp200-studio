@@ -6,6 +6,7 @@ import { hexOfBytes } from '@/core/looperTriggers';
 import type { GP200Preset } from '@/core/types';
 import type { CCCommand } from '@/core/ccControl';
 import { presetNameCacheKey, loadCachedNames, saveCachedNames } from '@/core/presetNameCache';
+import { track } from '@/core/analytics';
 import { PRSTEncoder } from '@/core/PRSTEncoder';
 import { useMidiSend } from './useMidiSend';
 
@@ -171,6 +172,10 @@ function collectChunks(
 
 export function useMidiDevice(): UseMidiDeviceReturn {
   const [status, setStatus] = useState<UseMidiDeviceReturn['status']>('disconnected');
+  // Synchronous mirror of `status` for callbacks that must not re-create when it
+  // changes (connect is memoised on [] and would otherwise read a stale value).
+  const statusRef = useRef(status);
+  statusRef.current = status;
   const [handshakeStep, setHandshakeStep] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [deviceName, setDeviceName] = useState<string | null>(null);
@@ -384,6 +389,10 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   }, []);
 
   const connect = useCallback(async () => {
+    // Top of the connect funnel. Instrumented here rather than in the Landing
+    // button because the board deck and the phone DEVICE tab call connect too,
+    // and all three (plus every retry) need to land in the same denominator.
+    track('connect_start', { retry: statusRef.current === 'error' });
     setStatus('connecting');
     setErrorMessage(null);
     try {

@@ -3,6 +3,8 @@ import { Logo } from '@/components/Logo';
 import { Credits } from '@/components/Credits';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { track } from '@/core/analytics';
+import { msBucket } from '@/core/analyticsEvents';
 
 interface GuideProps {
   /** Return to whatever was showing before (Landing or the board). */
@@ -91,6 +93,14 @@ export function Guide({ onBack }: GuideProps) {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [onBack]);
 
+  // How far the reader actually got. The scrollspy below already computes the
+  // section nearest the top, so reading depth is free: collect the distinct ids
+  // it reports and emit one rollup on unmount rather than an event per section.
+  // One object with a stable identity rather than two refs: the unmount handler
+  // can then capture it once and read the mutated fields, instead of touching
+  // `.current` after the component is gone.
+  const readProgress = useRef({ seen: new Set<string>([NAV[0].id]), deepest: NAV[0].id });
+
   // Scrollspy: highlight the nav link for the section nearest the top.
   useEffect(() => {
     const sections = NAV.map((entry) => document.getElementById(entry.id)).filter(
@@ -101,12 +111,31 @@ export function Guide({ onBack }: GuideProps) {
         const visible = entries
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible.length > 0) setActiveId(visible[0].target.id);
+        if (visible.length > 0) {
+          const id = visible[0].target.id;
+          setActiveId(id);
+          readProgress.current.seen.add(id);
+          readProgress.current.deepest = id;
+        }
       },
       { rootMargin: '-72px 0px -60% 0px', threshold: 0 },
     );
     sections.forEach((section) => observer.observe(section));
     return () => observer.disconnect();
+  }, []);
+
+  // One guide_read per visit, on unmount. `deepest` is one of the nine fixed
+  // NAV ids, so it stays a bounded dimension.
+  useEffect(() => {
+    const openedAt = Date.now();
+    const progress = readProgress.current;
+    return () => {
+      track('guide_read', {
+        sections_seen: progress.seen.size,
+        deepest: progress.deepest,
+        dwell_bucket: msBucket(Date.now() - openedAt),
+      });
+    };
   }, []);
 
   return (
@@ -397,6 +426,13 @@ export function Guide({ onBack }: GuideProps) {
             <ul className="list-disc pl-5 space-y-1.5 text-base leading-relaxed text-text-secondary max-w-4xl">
               <li>Live device features need a GP-200 over USB in Chrome or Edge (Web MIDI).</li>
               <li>Offline, you can edit patches and import/export files, but not sync or save to the unit.</li>
+              <li>
+                Your patches never leave your machine — there is no account and no server storing
+                them. The site does record anonymous usage analytics (Google Analytics) to see which
+                features get used: no patch names, file names or device details are ever sent, ad
+                personalisation and Google Signals are switched off, and the browser&rsquo;s Global
+                Privacy Control signal turns it off entirely.
+              </li>
             </ul>
           </Section>
 
