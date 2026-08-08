@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { SysExCodec } from '@/core/SysExCodec';
 import { decodeControlChange } from '@/core/midiControlMap';
-import { isMidiMonitorEnabled } from '@/core/debugFlags';
+import { isAssignmentDumpEnabled, isMidiMonitorEnabled } from '@/core/debugFlags';
 import { hexOfBytes } from '@/core/looperTriggers';
 import type { GP200Preset } from '@/core/types';
 import type { CCCommand } from '@/core/ccControl';
@@ -487,6 +487,25 @@ export function useMidiDevice(): UseMidiDeviceReturn {
           }
         }
         setAssignments(assignmentEntries);
+
+        // Opt-in probe (src/core/debugFlags.ts). Nothing consumes these
+        // responses yet; dumping them is the zero-risk first step of
+        // docs/protocol-capture.md §3 — we're looking for the 8 CTRL block
+        // masks (u16, bits 0..10 = PRE..VOL) somewhere in rawData. If they
+        // show up, 0x12/0x1C is the assignment read side and the write is
+        // very likely its 0x12 sibling.
+        if (isAssignmentDumpEnabled()) {
+          console.log(`[GP-200] assignment sweep: ${assignmentEntries.length} responses`);
+          for (const entry of assignmentEntries) {
+            const hex = [...entry.rawData]
+              .map((byte) => byte.toString(16).padStart(2, '0'))
+              .join(' ');
+            console.log(
+              `  s${entry.section} p${entry.page} b${entry.block} ` +
+              `name="${entry.name}" raw=${hex}`,
+            );
+          }
+        }
 
         // Step 10: Pull current bank (4 slots)
         const bankBase = Math.floor(slot / 4) * 4;

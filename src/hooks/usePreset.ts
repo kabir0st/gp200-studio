@@ -150,7 +150,11 @@ export function usePreset(): PresetActions {
 
   const setCtrlMask = useCallback((ctrlIndex: number, blockMask: number) => {
     if (ctrlIndex < 0 || ctrlIndex > 7) return;
-    const nextMask = blockMask & 0x7FF;
+    // 12 bits, not 11: bit 11 is device-written and unmodeled (no pedal maps to
+    // it), but parseControlRecords keeps it (& 0x0FFF) and applyControlRecords
+    // writes it back, so clamping to 0x7FF here would silently drop it on any
+    // whole-mask edit.
+    const nextMask = blockMask & 0x0FFF;
     setPreset((prev) => {
       if (!prev) return null;
       const ctrlAssignments = (prev.ctrlAssignments ?? defaultCtrlAssignments()).map(
