@@ -15,6 +15,8 @@ function makeRecorder() {
     sendPatchVolume: (value) => events.push(`patchvol:${value}`),
     sendPatchPan: (deviceValue) => events.push(`patchpan:${deviceValue}`),
     sendPatchTempo: (bpm) => events.push(`patchtempo:${bpm}`),
+    sendCtrlAssignment: (ctrlIndex, blockMask, state) =>
+      events.push(`ctrl:${ctrlIndex}:0x${blockMask.toString(16)}:${state}`),
   };
   const sleep = async (ms: number) => {
     events.push(`sleep:${ms}`);
@@ -207,6 +209,38 @@ describe('pushPresetToDevice', () => {
     const afterReorder = nonSleep.slice(reorderIdx + 1);
     expect(afterReorder.some((e) => e.startsWith('fx:') || e.startsWith('param:') || e.startsWith('toggle:'))).toBe(false);
     expect(afterReorder).toContain('author:Tester');
+  });
+
+  it('restores every CTRL mask so stale bits from the previous patch cannot survive', async () => {
+    const { events, sender, sleep } = makeRecorder();
+    const preset = {
+      ...twoBlockPreset(),
+      ctrlAssignments: [
+        { ctrlIndex: 0, blockMask: 0x004, state: 1 },
+        { ctrlIndex: 1, blockMask: 0x000, state: 0 },
+        { ctrlIndex: 2, blockMask: 0x400 }, // state absent → sent as 0
+      ],
+    } as unknown as GP200Preset;
+
+    await pushPresetToDevice(preset, sender, { sleep });
+
+    const ctrlSends = events.filter((e) => e.startsWith('ctrl:'));
+    // Cleared switches are written too — otherwise the previous patch's bits
+    // would linger on the device while the UI shows none.
+    expect(ctrlSends).toEqual(['ctrl:0:0x4:1', 'ctrl:1:0x0:0', 'ctrl:2:0x400:0']);
+
+    // They land in the tail pass: after the reorder, before the author.
+    const nonSleep = events.filter((e) => !e.startsWith('sleep:'));
+    expect(nonSleep.indexOf('ctrl:0:0x4:1')).toBeGreaterThan(
+      nonSleep.findIndex((e) => e.startsWith('reorder:')),
+    );
+    expect(nonSleep.indexOf('ctrl:2:0x400:0')).toBeLessThan(nonSleep.indexOf('author:Tester'));
+  });
+
+  it('sends no CTRL frames when the preset has no assignments', async () => {
+    const { events, sender, sleep } = makeRecorder();
+    await pushPresetToDevice(twoBlockPreset(), sender, { sleep });
+    expect(events.some((e) => e.startsWith('ctrl:'))).toBe(false);
   });
 
   it('reports progress per block across both passes, ending with a done phase', async () => {

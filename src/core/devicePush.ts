@@ -17,6 +17,8 @@ export interface PresetPushSender {
   sendPatchPan: (deviceValue: number) => void;
   /** Per-patch tempo in BPM. */
   sendPatchTempo: (bpm: number) => void;
+  /** Per-patch CTRL footswitch → effect-block mask (whole mask, not per-bit). */
+  sendCtrlAssignment: (ctrlIndex: number, blockMask: number, state?: number) => void;
 }
 
 export interface PushProgress {
@@ -159,6 +161,21 @@ export async function pushPresetToDevice(
   await sleep(paramGap);
   sender.sendPatchTempo(decoded.patchTempo);
   await sleep(paramGap);
+  // CTRL footswitch masks are per-patch too. Without this the device keeps the
+  // PREVIOUS patch's assignments while the UI shows the new patch's — the two
+  // silently disagree until the next save. Every switch is written, including
+  // the cleared ones, so stale bits from the old patch can't survive.
+  if (decoded.ctrlAssignments) {
+    for (const assignment of decoded.ctrlAssignments) {
+      if (signal?.aborted) return;
+      sender.sendCtrlAssignment(
+        assignment.ctrlIndex,
+        assignment.blockMask,
+        assignment.state ?? 0,
+      );
+      await sleep(paramGap);
+    }
+  }
   if (decoded.author) sender.sendAuthor(decoded.author);
   onProgress?.({ completed: total, total, phase: 'done' });
 }

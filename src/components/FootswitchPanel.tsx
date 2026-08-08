@@ -222,14 +222,13 @@ export function FootswitchPanel({
       `${selectedModules.join(', ')}.`;
   }
 
-  // Honest status: no working device write exists for CTRL masks (no live
-  // opcode; the flash upload is rejected by real hardware — see
-  // docs/protocol-capture.md), so don't promise SAVE TO will carry them.
+  // The live CTRL write (0x12/0x14) is decoded and implemented, so edits reach
+  // the device immediately; SAVE TO then persists them from the edit buffer.
   let deviceHint = '';
   if (connected) {
     deviceHint =
-      ' Syncing them to the connected GP-200 is not possible yet — SAVE TO ' +
-      'does not carry them (the write protocol still needs a capture).';
+      ' Changes are sent to the connected GP-200 straight away — use SAVE TO ' +
+      'to keep them in the patch.';
   }
 
   return (

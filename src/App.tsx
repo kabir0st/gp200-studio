@@ -200,6 +200,7 @@ function App() {
           sendPatchVolume: midiDevice.sendPatchVolume,
           sendPatchPan: midiDevice.sendPatchPan,
           sendPatchTempo: midiDevice.sendPatchTempo,
+          sendCtrlAssignment: midiDevice.sendCtrlAssignment,
         },
         {
           signal: ac.signal,
@@ -345,8 +346,8 @@ function App() {
       // flow), so an import lands on the pedal permanently without a
       // separate save step. Both no-op while disconnected; saveToSlot
       // resolves the active slot from its own ref, so no stale closure.
-      // Known gap: CTRL footswitch masks don't survive this (no live opcode;
-      // the flash-upload alternative is rejected by real hardware).
+      // CTRL footswitch masks ride along: pushPresetToDevice writes all 8
+      // records in its tail pass, so the save-commit picks them up too.
       void (async () => {
         await sendPresetToDevice(decoded);
         await new Promise((settle) => setTimeout(settle, 250));
@@ -514,11 +515,10 @@ function App() {
   async function handleSaveToActiveSlot() {
     if (!preset || midiDevice.currentSlot === null) return;
     // Save-commit persists the device's edit buffer, which every live edit
-    // (toggle, param, reorder, VOL/PAN/TEMPO, EXP) already reached. CTRL
-    // footswitch masks are the one thing it cannot carry — no live opcode is
-    // known — and the flash-upload alternative is rejected by real hardware
-    // (docs/protocol-capture.md §0.1), so this stays the save path until the
-    // upload finalize is captured.
+    // (toggle, param, reorder, VOL/PAN/TEMPO, EXP and — since the 0x12/0x14
+    // capture — CTRL footswitch masks) already reached. The flash-upload
+    // alternative is still rejected by real hardware (docs §0.1), so this
+    // stays the save path.
     await midiDevice.saveToSlot(preset.patchName, midiDevice.currentSlot);
   }
 
@@ -714,8 +714,30 @@ function App() {
         midiDevice.sendExpMinMax(page, item, min, max);
       }
     },
-    onCtrlBlockToggle: setCtrlBlock,
-    onCtrlClear: (ctrlIndex) => setCtrlMask(ctrlIndex, 0),
+    // CTRL masks write live (0x12/0x14, decoded from dumps/ctrl-assignment).
+    // The device frame carries the WHOLE mask, so send the resulting mask
+    // rather than the bit that changed, and carry the record's saved toggle
+    // state through untouched so the write can't flip it.
+    onCtrlBlockToggle: (ctrlIndex, blockIndex, on) => {
+      setCtrlBlock(ctrlIndex, blockIndex, on);
+      if (midiDevice.status !== 'connected') return;
+      const current = preset?.ctrlAssignments?.find(
+        (assignment) => assignment.ctrlIndex === ctrlIndex,
+      );
+      const bit = 1 << blockIndex;
+      const base = current?.blockMask ?? 0;
+      let nextMask = base & ~bit;
+      if (on) nextMask = base | bit;
+      midiDevice.sendCtrlAssignment(ctrlIndex, nextMask, current?.state ?? 0);
+    },
+    onCtrlClear: (ctrlIndex) => {
+      setCtrlMask(ctrlIndex, 0);
+      if (midiDevice.status !== 'connected') return;
+      const current = preset?.ctrlAssignments?.find(
+        (assignment) => assignment.ctrlIndex === ctrlIndex,
+      );
+      midiDevice.sendCtrlAssignment(ctrlIndex, 0, current?.state ?? 0);
+    },
     onOpenPatchManager: handleOpenPatchManager,
     onActivateSlot: handleActivateSlot,
     onOpenGuide: openGuide,

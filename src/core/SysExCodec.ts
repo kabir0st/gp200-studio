@@ -733,6 +733,59 @@ export const SysExCodec = {
     return msg;
   },
 
+  /**
+   * Per-patch CTRL footswitch assignment write — the live sibling of
+   * buildExpAssignment (same CMD/sub/length, different record type).
+   *
+   * Ground truth: dumps/ctrl-assignment/ (2026-08-08, fw 1.8.0), six frames
+   * across four captures, cross-validated against the patch the editor then
+   * exported (`01-A strat.prst`, whose tail decodes to CTRL 1 state=1
+   * mask=0x004 and CTRL 8 state=0 mask=0x400 — the last frame of each
+   * session, state byte included).
+   *
+   *   [30-33] 0f 00 00 00  record type u32 LE = TYPE_CTRL (the EXP writer
+   *                        sends 0x0E here; the CTRL TLV type is 0x000F)
+   *   [34-37] 08 00 00 00  record size u32 LE = the 8-byte CTRL payload
+   *   [38-39] ctrlIndex    (ctl-1-* → 00, ctl-8-* → 07)
+   *   [40-41] state        saved toggle position (ctl-1 sessions → 01,
+   *                        ctl-8 → 00, matching the exported tail)
+   *   [42-45] zeros        payload+2..3, the "uninitialized" window the
+   *                        editor writes as zeros
+   *   [46-49] blockMask    u16 LE (ctl-1-assign-dist → 04 00 00 00;
+   *                        ctl-8-assign-vol → 00 00 04 00, confirming bit 10)
+   *
+   * This is a WHOLE-MASK write, not a per-bit toggle: assigning VOL on CTRL 8
+   * sent 0x400 alone and the export shows the previously-set DST bit gone. No
+   * navigation frame precedes it (unlike the EXP path, which needs
+   * buildExpNavigation) — each captured action is exactly one frame.
+   */
+  buildCtrlAssignment(ctrlIndex: number, blockMask: number, state = 0): Uint8Array {
+    const msg = new Uint8Array(54);
+    msg.set([
+      0xF0, 0x21, 0x25, 0x7E, 0x47, 0x50, 0x2D, 0x32, // [0-7]   header
+      0x12, 0x14,                                        // [8-9]   CMD=SET, sub
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // [10-17] padding
+      0x04, 0x00, 0x00, 0x00,                            // [18-21] constant
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // [22-29] padding
+      0x0F, 0x00, 0x00, 0x00,                            // [30-33] type=CTRL assignment
+      0x08, 0x00, 0x00, 0x00,                            // [34-37] payload size 8
+    ]);
+    // Every payload field is nibble-split (4 bits per byte, LOW nibble first)
+    // so no data byte can exceed 0x7F. Note this is NOT nibbleEncode, which
+    // packs a byte array high-nibble-first.
+    msg[38] = ctrlIndex & 0x0F;
+    msg[39] = (ctrlIndex >> 4) & 0x0F;
+    msg[40] = state & 0x0F;
+    msg[41] = (state >> 4) & 0x0F;
+    // [42-45] stay zero.
+    msg[46] = blockMask & 0x0F;
+    msg[47] = (blockMask >> 4) & 0x0F;
+    msg[48] = (blockMask >> 8) & 0x0F;
+    msg[49] = (blockMask >> 12) & 0x0F;
+    msg[53] = 0xF7;                                      // [53]    end
+    return msg;
+  },
+
   buildPresetChange(slot: number): Uint8Array {
     // CMD=0x12, sub=0x08, 30 bytes, switch device to preset slot
     // Slot nibble-encoded at [25:26] (SysEx data bytes must be 0x00-0x7F)

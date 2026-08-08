@@ -60,6 +60,8 @@ export interface UseMidiSendReturn {
   // Expression pedal
   sendExpParamSelect: (page: number, item: number, blockIndex: number, paramIdx: number) => void;
   sendExpMinMax: (page: number, item: number, min: number, max: number) => void;
+  /** Per-patch CTRL footswitch → effect-block mask (whole mask, not per-bit). */
+  sendCtrlAssignment: (ctrlIndex: number, blockMask: number, state?: number) => void;
   // Device-global settings (0x12/0x08 settings-write family, docs §0.2)
   sendFsMode: (mode: number) => void;
   sendFsTarget: (fs: number, kind: 'tap' | 'hold', actionId: number) => void;
@@ -268,6 +270,24 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
     [outputRef],
   );
 
+  /**
+   * Write one CTRL footswitch's whole block mask to the device (per-patch).
+   * Whole-mask, not per-bit — callers pass the resulting mask, not the bit
+   * they toggled. `state` is the switch's saved toggle position, carried
+   * verbatim from the preset so the write doesn't flip it.
+   */
+  const sendCtrlAssignment = useCallback(
+    (ctrlIndex: number, blockMask: number, state = 0) => {
+      if (!outputRef.current) return;
+      suppressFxBriefly();
+      console.log(
+        `[GP-200] CTRL ${ctrlIndex + 1} mask: 0x${blockMask.toString(16)} (state=${state})`,
+      );
+      outputRef.current.send(SysExCodec.buildCtrlAssignment(ctrlIndex, blockMask, state));
+    },
+    [outputRef],
+  );
+
   // Settings writes echo back verbatim with shapes that collide with the
   // FX-state / preset-change branches, so every sender raises the FX
   // suppression window (the dispatcher also has a structural [21]/[22]
@@ -377,6 +397,7 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
     sendPatchTempo,
     sendExpParamSelect,
     sendExpMinMax,
+    sendCtrlAssignment,
     sendFsMode,
     sendFsTarget,
     sendFsCombo,

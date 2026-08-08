@@ -558,6 +558,87 @@ describe('SysExCodec: EXP Assignment', () => {
   });
 });
 
+describe('SysExCodec: buildCtrlAssignment', () => {
+  const hex = (bytes: Uint8Array) =>
+    [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join(' ');
+
+  // Verbatim host→device frames from dumps/ctrl-assignment/*.pcapng (2026-08-08,
+  // fw 1.8.0), decoded with scripts/decode-sysex-capture.mjs. dumps/ is
+  // gitignored, so the expected bytes are inlined rather than read back.
+  const CAPTURES: {
+    label: string; ctrlIndex: number; blockMask: number; state: number; expected: string;
+  }[] = [
+    {
+      label: 'ctl-1-unassingn-assign-pre #1 — CTRL 1 cleared',
+      ctrlIndex: 0, blockMask: 0x000, state: 1,
+      expected: 'f0 21 25 7e 47 50 2d 32 12 14 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 0f 00 00 00 08 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 00 f7',
+    },
+    {
+      label: 'ctl-1-unassingn-assign-pre #2 — CTRL 1 → PRE (bit 0)',
+      ctrlIndex: 0, blockMask: 0x001, state: 1,
+      expected: 'f0 21 25 7e 47 50 2d 32 12 14 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 0f 00 00 00 08 00 00 00 00 00 01 00 00 00 00 00 01 00 00 00 00 00 00 f7',
+    },
+    {
+      label: 'ctl-1-assign-dist — CTRL 1 → DST (bit 2)',
+      ctrlIndex: 0, blockMask: 0x004, state: 1,
+      expected: 'f0 21 25 7e 47 50 2d 32 12 14 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 0f 00 00 00 08 00 00 00 00 00 01 00 00 00 00 00 04 00 00 00 00 00 00 f7',
+    },
+    {
+      label: 'ctl-8-dist-unassign-assign #1 — CTRL 8 cleared',
+      ctrlIndex: 7, blockMask: 0x000, state: 0,
+      expected: 'f0 21 25 7e 47 50 2d 32 12 14 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 0f 00 00 00 08 00 00 00 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 f7',
+    },
+    {
+      label: 'ctl-8-dist-unassign-assign #2 — CTRL 8 → DST (bit 2)',
+      ctrlIndex: 7, blockMask: 0x004, state: 0,
+      expected: 'f0 21 25 7e 47 50 2d 32 12 14 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 0f 00 00 00 08 00 00 00 07 00 00 00 00 00 00 00 04 00 00 00 00 00 00 f7',
+    },
+    {
+      label: 'ctl-8-assign-vol — CTRL 8 → VOL (bit 10)',
+      ctrlIndex: 7, blockMask: 0x400, state: 0,
+      expected: 'f0 21 25 7e 47 50 2d 32 12 14 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 0f 00 00 00 08 00 00 00 07 00 00 00 00 00 00 00 00 00 04 00 00 00 00 f7',
+    },
+  ];
+
+  for (const capture of CAPTURES) {
+    it(`matches capture: ${capture.label}`, () => {
+      const msg = SysExCodec.buildCtrlAssignment(
+        capture.ctrlIndex, capture.blockMask, capture.state,
+      );
+      expect(hex(msg)).toBe(capture.expected);
+    });
+  }
+
+  it('is a 54-byte 0x12/0x14 frame carrying the CTRL record type and size', () => {
+    const msg = SysExCodec.buildCtrlAssignment(0, 0);
+    expect(msg.length).toBe(54);
+    expect(msg[8]).toBe(0x12);
+    expect(msg[9]).toBe(0x14);
+    expect(msg[30]).toBe(0x0F); // TYPE_CTRL — the EXP writer sends 0x0E here
+    expect(msg[34]).toBe(0x08); // CTRL payload size
+    expect(msg[53]).toBe(0xF7);
+  });
+
+  it('nibble-splits the mask low-nibble-first across [46..49]', () => {
+    // Every data byte must stay <= 0x7F, so the u16 mask travels 4 bits per
+    // byte. 0xABC exercises all four nibbles at once.
+    const msg = SysExCodec.buildCtrlAssignment(3, 0xABC, 0);
+    expect([msg[46], msg[47], msg[48], msg[49]]).toEqual([0xC, 0xB, 0xA, 0x0]);
+    expect(msg.every((byte, i) => i === 0 || i === 53 || byte <= 0x7F)).toBe(true);
+  });
+
+  it('keeps bit 11 (device-written, unmodeled) on the wire', () => {
+    const msg = SysExCodec.buildCtrlAssignment(0, 0x800, 0);
+    expect([msg[46], msg[47], msg[48], msg[49]]).toEqual([0x0, 0x0, 0x8, 0x0]);
+  });
+
+  it('defaults state to 0 when omitted', () => {
+    const msg = SysExCodec.buildCtrlAssignment(7, 0x004);
+    expect(msg[40]).toBe(0);
+    expect(msg[38]).toBe(7);
+  });
+});
+
 describe('SysExCodec: buildToggleEffect', () => {
   it('returns a 46-byte SysEx with CMD=0x12, sub=0x10', () => {
     const msg = SysExCodec.buildToggleEffect(0, true);

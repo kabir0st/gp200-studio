@@ -130,7 +130,7 @@ describe.skipIf(!HAS_FIXTURES)('FootswitchPanel', () => {
     expect(container.querySelectorAll('button[aria-pressed="true"]')).toHaveLength(0);
   });
 
-  it('says device sync is unavailable while connected', () => {
+  it('says edits reach the device live while connected', () => {
     const preset = loadFixture();
     const { getByText } = render(
       <FootswitchPanel
@@ -139,7 +139,19 @@ describe.skipIf(!HAS_FIXTURES)('FootswitchPanel', () => {
         onCtrlBlockToggle={vi.fn()}
       />,
     );
-    expect(getByText(/not possible yet/)).toBeTruthy();
-    expect(getByText(/SAVE TO does not carry them/)).toBeTruthy();
+    expect(getByText(/sent to the connected GP-200 straight away/)).toBeTruthy();
+    expect(getByText(/SAVE TO/)).toBeTruthy();
+  });
+
+  it('shows no device hint while disconnected', () => {
+    const preset = loadFixture();
+    const { queryByText } = render(
+      <FootswitchPanel
+        preset={preset}
+        connected={false}
+        onCtrlBlockToggle={vi.fn()}
+      />,
+    );
+    expect(queryByText(/sent to the connected GP-200/)).toBeNull();
   });
 });

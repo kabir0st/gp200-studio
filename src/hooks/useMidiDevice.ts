@@ -79,6 +79,8 @@ export interface UseMidiDeviceReturn {
   sendRawChunks: (chunks: Uint8Array[], delayMs: number, onProgress?: (i: number, total: number) => void) => Promise<void>;
   sendExpParamSelect: (page: number, item: number, blockIndex: number, paramIdx: number) => void;
   sendExpMinMax: (page: number, item: number, min: number, max: number) => void;
+  /** Per-patch CTRL footswitch → effect-block mask (whole mask, not per-bit). */
+  sendCtrlAssignment: (ctrlIndex: number, blockMask: number, state?: number) => void;
   // Device-global settings (0x12/0x08 settings-write family, docs §0.2)
   sendFsMode: (mode: number) => void;
   sendFsTarget: (fs: number, kind: 'tap' | 'hold', actionId: number) => void;
@@ -1036,6 +1038,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     sendPatchTempo: send.sendPatchTempo,
     sendExpParamSelect: send.sendExpParamSelect,
     sendExpMinMax: send.sendExpMinMax,
+    sendCtrlAssignment: send.sendCtrlAssignment,
     sendFsMode: send.sendFsMode,
     sendFsTarget: send.sendFsTarget,
     sendFsCombo: send.sendFsCombo,

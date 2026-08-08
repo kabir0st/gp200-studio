@@ -156,7 +156,10 @@ export function parseControlRecords(
       // uninitialized memory). Strip the high nibble — it carries garbage in
       // real exports — but keep bit 11, which the device does write.
       const blockMask = readU16LE(bytes, p + 4) & 0x0FFF;
-      ctrl.push({ ctrlIndex, blockMask });
+      // The state byte is kept (not just preserved in-place) because the live
+      // CTRL write frame transmits it; see SysExCodec.buildCtrlAssignment.
+      const state = bytes[p + 1] === 1 ? 1 : 0;
+      ctrl.push({ ctrlIndex, blockMask, state });
     }
     // TYPE_UNKNOWN10: opaque, intentionally skipped.
   }
