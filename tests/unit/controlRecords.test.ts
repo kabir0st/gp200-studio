@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import {
   CONTROL_RECORDS_FILE_OFFSET,
@@ -10,23 +10,44 @@ import {
   parseControlRecords,
 } from '@/core/controlRecords';
 
+// Real device exports (firmware 1.8.0). 01-A and 01-C carry uninitialized
+// firmware memory in the CTRL records' unknown windows; 07-D is a clean save
+// with zeros there. 06-B and 07-D encode the same assignments, so together
+// they prove the garbage bytes never leak into the parsed masks.
 function loadFixture(name: string): Uint8Array {
-  return new Uint8Array(readFileSync(join(process.cwd(), 'prst', name)));
+  return new Uint8Array(readFileSync(join(process.cwd(), 'dumps/prts', name)));
 }
 
-describe('parseControlRecords', () => {
-  it('decodes the CTRL masks of a preset with real footswitch assignments', () => {
-    const bytes = loadFixture('63-B American Idiot.prst');
+// dumps/ is gitignored (real device exports, not committed), so these suites
+// only run on a machine that has them. Same convention as PRSTEncoder.test.ts.
+const HAS_FIXTURES = existsSync(join(process.cwd(), 'dumps/prts', '01-A Start Pedal.prst'));
+
+describe.skipIf(!HAS_FIXTURES)('parseControlRecords', () => {
+  it('decodes the CTRL masks of a real device export', () => {
+    const bytes = loadFixture('01-A Start Pedal.prst');
     const parsed = parseControlRecords(bytes, CONTROL_RECORDS_FILE_OFFSET);
     expect(parsed).toBeDefined();
-    const masks = parsed!.ctrl.map((assignment) => assignment.blockMask);
     expect(parsed!.ctrl.map((assignment) => assignment.ctrlIndex))
       .toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
-    expect(masks).toEqual([0x01, 0, 0, 0, 0x83, 0x82, 0x86, 0x8C]);
+    // PRE, EQ, DST, MOD, DLY, RVB, none, bit-11 (unmodeled, kept verbatim).
+    // Regression: the old parser read the mask at payload+1 — the state byte
+    // plus a garbage byte — so CTRL 2 (true mask 0x040 = EQ only) rendered
+    // as phantom PRE/DLY/RVB/VOL.
+    expect(parsed!.ctrl.map((assignment) => assignment.blockMask))
+      .toEqual([0x001, 0x040, 0x004, 0x080, 0x100, 0x200, 0x000, 0x800]);
+  });
+
+  it('decodes identical masks from a garbage-laden and a clean save', () => {
+    const masksOf = (name: string) =>
+      parseControlRecords(loadFixture(name), CONTROL_RECORDS_FILE_OFFSET)!
+        .ctrl.map((assignment) => assignment.blockMask);
+    const expected = [0x004, 0x080, 0x100, 0, 0, 0, 0, 0]; // DST, MOD, DLY
+    expect(masksOf('07-D Scotland Kiss.prst')).toEqual(expected);
+    expect(masksOf('06-B Radio Cat.prst')).toEqual(expected);
   });
 
   it('decodes the default EXP assignments (VOL pedal + WAH position)', () => {
-    const bytes = loadFixture('63-B American Idiot.prst');
+    const bytes = loadFixture('01-A Start Pedal.prst');
     const parsed = parseControlRecords(bytes, CONTROL_RECORDS_FILE_OFFSET);
     expect(parsed!.exp).toHaveLength(9);
     // EXP1 Mode A Para 1 → VOL block param 0
@@ -45,12 +66,6 @@ describe('parseControlRecords', () => {
     expect(unassigned).toHaveLength(7);
   });
 
-  it('decodes all-zero CTRL masks for an untouched preset', () => {
-    const bytes = loadFixture('63-C claude1.prst');
-    const parsed = parseControlRecords(bytes, CONTROL_RECORDS_FILE_OFFSET);
-    expect(parsed!.ctrl.every((assignment) => assignment.blockMask === 0)).toBe(true);
-  });
-
   it('returns undefined for a garbage tail', () => {
     const bytes = new Uint8Array(64).fill(0xAB);
     expect(parseControlRecords(bytes, 0)).toBeUndefined();
@@ -67,17 +82,18 @@ describe('parseControlRecords', () => {
   });
 
   it('returns undefined for a truncated record stream', () => {
-    const bytes = loadFixture('63-B American Idiot.prst')
+    const bytes = loadFixture('01-A Start Pedal.prst')
       .subarray(CONTROL_RECORDS_FILE_OFFSET, CONTROL_RECORDS_FILE_OFFSET + 40);
     expect(parseControlRecords(bytes, 0)).toBeUndefined();
   });
 });
 
 describe('buildDefaultTail', () => {
-  it('matches the byte-exact tail of a factory-fresh export', () => {
-    const bytes = loadFixture('63-C claude1.prst');
-    const realTail = bytes.subarray(CONTROL_RECORDS_FILE_OFFSET, 0x4C6);
-    expect(Array.from(buildDefaultTail())).toEqual(Array.from(realTail));
+  it('parses back to default assignments', () => {
+    const parsed = parseControlRecords(buildDefaultTail(), 0);
+    expect(parsed).toBeDefined();
+    expect(parsed!.ctrl.every((assignment) => assignment.blockMask === 0)).toBe(true);
+    expect(parsed!.exp).toEqual(defaultExpAssignments());
   });
 
   it('round-trips custom assignments through the parser', () => {
@@ -112,19 +128,21 @@ describe('buildDefaultTail', () => {
     expect(parsed!.ctrl[3].blockMask).toBe(0x0F);
   });
 
-  it('keeps a CTRL mask with high bits beyond the 11 modeled blocks', () => {
+  it('keeps bit 11 but strips the garbage nibble above the 12-bit mask', () => {
     const ctrl = defaultCtrlAssignments();
-    ctrl[1] = { ctrlIndex: 1, blockMask: 0x1005 }; // bit 12 set + PRE + DST
+    ctrl[1] = { ctrlIndex: 1, blockMask: 0x805 }; // bit 11 + PRE + DST
+    ctrl[2] = { ctrlIndex: 2, blockMask: 0x1005 }; // bit 12 = garbage territory
     const tail = buildDefaultTail(undefined, ctrl);
     const parsed = parseControlRecords(tail, 0);
     expect(parsed).toBeDefined();
-    expect(parsed!.ctrl[1].blockMask).toBe(0x1005);
+    expect(parsed!.ctrl[1].blockMask).toBe(0x805);
+    expect(parsed!.ctrl[2].blockMask).toBe(0x005);
   });
 });
 
-describe('applyControlRecords', () => {
-  it('overwrites only the targeted mask byte in a real file tail', () => {
-    const original = loadFixture('63-B American Idiot.prst');
+describe.skipIf(!HAS_FIXTURES)('applyControlRecords', () => {
+  it('overwrites only the mask low byte in a real device tail', () => {
+    const original = loadFixture('01-A Start Pedal.prst');
     const modified = new Uint8Array(original);
     const parsed = parseControlRecords(original, CONTROL_RECORDS_FILE_OFFSET)!;
     const ctrl = parsed.ctrl.map((assignment) => ({ ...assignment }));
@@ -133,16 +151,34 @@ describe('applyControlRecords', () => {
     expect(ok).toBe(true);
     const reparsed = parseControlRecords(modified, CONTROL_RECORDS_FILE_OFFSET)!;
     expect(reparsed.ctrl[1].blockMask).toBe(0x88);
-    // Exactly one byte differs (mask low byte of CTRL 2's record)
+    // Exactly one byte differs: the mask low byte at payload+4 of CTRL 2's
+    // record. The state byte and the uninitialized windows stay untouched.
     const diffs: number[] = [];
     for (let i = 0; i < original.length; i++) {
       if (original[i] !== modified[i]) diffs.push(i);
     }
-    expect(diffs).toHaveLength(1);
+    expect(diffs).toEqual([0x474]);
+  });
+
+  it('preserves the garbage high nibble when writing high mask bits', () => {
+    const original = loadFixture('01-A Start Pedal.prst');
+    const modified = new Uint8Array(original);
+    const parsed = parseControlRecords(original, CONTROL_RECORDS_FILE_OFFSET)!;
+    const ctrl = parsed.ctrl.map((assignment) => ({ ...assignment }));
+    ctrl[0] = { ctrlIndex: 0, blockMask: 0x100 }; // PRE → DLY
+    applyControlRecords(modified, CONTROL_RECORDS_FILE_OFFSET, parsed.exp, ctrl);
+    const reparsed = parseControlRecords(modified, CONTROL_RECORDS_FILE_OFFSET)!;
+    expect(reparsed.ctrl[0].blockMask).toBe(0x100);
+    // CTRL 1's record: payload at 0x464, mask at 0x468/0x469. The fixture's
+    // 0x469 byte is 0xE0 (garbage nibble E); the new bit 8 lands in the low
+    // nibble while the E is kept, and the state byte at 0x465 stays 0x01.
+    expect(modified[0x468]).toBe(0x00);
+    expect(modified[0x469]).toBe(0xE1);
+    expect(modified[0x465]).toBe(0x01);
   });
 
   it('is a no-op when neither exp nor ctrl is provided', () => {
-    const original = loadFixture('63-C claude1.prst');
+    const original = loadFixture('06-B Radio Cat.prst');
     const modified = new Uint8Array(original);
     expect(applyControlRecords(modified, CONTROL_RECORDS_FILE_OFFSET, undefined, undefined))
       .toBe(true);

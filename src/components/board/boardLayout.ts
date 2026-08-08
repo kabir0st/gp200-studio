@@ -52,39 +52,6 @@ export function pedalIsWide(slotIndex: number, effectId: number): boolean {
   return isWideSlot(slotIndex) && isWidePedal(effectId);
 }
 
-// Fixed bay *height*, reserved per module so switching an effect within a slot
-// never grows the bay (which would push the row below). Reserving the tallest
-// effect *per module*, rather than one global max, keeps short slots (CAB,
-// VOL) from carrying the delay module's 3-row footprint. Derived from live
-// effect data so new/changed effects stay covered; verified against measured
-// pedal heights (see scripts note in the plan).
-const BAY_CHROME = 196; // header + LED + name + desc + footswitch + brand + padding
-const BAY_ROW = 82; // one control row
-const COMPACT_INNER = 148; // usable width inside a 172px body
-const WIDE_INNER = 286; // usable width inside a 310px body
-
-function controlsPerRow(module: string, wide: boolean): number {
-  const inner = wide ? WIDE_INNER : COMPACT_INNER;
-  const unit = module === 'EQ' ? 30 : 48; // EQ renders narrow faders, the rest knobs
-  return Math.max(1, Math.floor(inner / unit));
-}
-
-const bayHeightCache = new Map<string, number>();
-export function bayMinHeight(slotIndex: number): number {
-  const module = getSlotModule(slotIndex);
-  const cached = bayHeightCache.get(module);
-  if (cached !== undefined) return cached;
-  const perRow = controlsPerRow(module, isWideModule(module));
-  const maxControls = getEffectsByModule(module).reduce(
-    (max, e) => Math.max(max, getEffectParams(e.effectId).length),
-    1,
-  );
-  const rows = Math.max(1, Math.ceil(maxControls / perRow));
-  const height = BAY_CHROME + rows * BAY_ROW;
-  bayHeightCache.set(module, height);
-  return height;
-}
-
 /**
  * Split the chain into the two visual rows, balancing by rendered width
  * (wide pedal = 2 units, compact = 1) instead of a fixed 6/5 count, a

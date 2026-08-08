@@ -1,15 +1,22 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "gp200-studio",
+  "main": "worker/index.js",
   "compatibility_date": "2025-01-01",
   "assets": {
     "directory": "./dist",
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   },
   "routes": [
     {
       "pattern": "kabirtamari.com/gp200studio*",
       "zone_name": "kabirtamari.com"
+    },
+    // Legacy domain, kept attached so the Worker can 301 it to the new home.
+    {
+      "pattern": "gp200.afterhour.uk",
+      "custom_domain": true
     }
   ]
 }

@@ -119,7 +119,7 @@ describe('PRSTEncoder', () => {
     // Regression: the synthetic (no-rawSource) path used to write the marker at
     // base+7, producing `00 0F` where real Valeton files have `0F 00`. That
     // malformed every effect-block header and the official GP-200 editor
-    // rejected the file. See prst/*.prst: block+6 is always 0x0F, block+7 0x00.
+    // rejected the file. See dumps/prts/*.prst: block+6 is always 0x0F, block+7 0x00.
     const bytes = new Uint8Array(new PRSTEncoder().encode(samplePreset));
     for (let i = 0; i < 11; i++) {
       const base = 0xa0 + i * 0x48;
@@ -235,20 +235,30 @@ describe('PRSTEncoder', () => {
 });
 
 describe('PRSTEncoder: controller/EXP assignment records', () => {
-  const fixturePath = join(process.cwd(), 'prst/63-B American Idiot.prst');
+  const fixtureDir = join(process.cwd(), 'dumps/prts');
+  const fixturePath = join(fixtureDir, '01-A Start Pedal.prst');
   function loadCommitted(): Uint8Array {
     return new Uint8Array(readFileSync(fixturePath));
   }
 
-  it.skipIf(!existsSync(fixturePath))(
-    'untouched decode → encode stays byte-exact including the controls tail',
-    () => {
-      const original = loadCommitted();
-      const preset = new PRSTDecoder(original).decode();
-      const encoded = new Uint8Array(new PRSTEncoder().encode(preset));
-      expect(Array.from(encoded)).toEqual(Array.from(original));
-    },
-  );
+  const REAL_EXPORTS = [
+    '01-A Start Pedal.prst',
+    '01-C litte wing drive.prst',
+    '06-B Radio Cat.prst',
+    '07-D Scotland Kiss.prst',
+  ];
+  for (const name of REAL_EXPORTS) {
+    const filePath = join(fixtureDir, name);
+    it.skipIf(!existsSync(filePath))(
+      `untouched decode → encode of "${name}" stays byte-exact including the controls tail`,
+      () => {
+        const original = new Uint8Array(readFileSync(filePath));
+        const preset = new PRSTDecoder(original).decode();
+        const encoded = new Uint8Array(new PRSTEncoder().encode(preset));
+        expect(Array.from(encoded)).toEqual(Array.from(original));
+      },
+    );
+  }
 
   it.skipIf(!existsSync(fixturePath))(
     'flipping one CTRL bit changes only the mask byte (checksum unchanged mod 256 window)',
@@ -256,7 +266,7 @@ describe('PRSTEncoder: controller/EXP assignment records', () => {
       const original = loadCommitted();
       const preset = new PRSTDecoder(original).decode();
       const ctrl = preset.ctrlAssignments!.map((assignment) => ({ ...assignment }));
-      // CTRL 2 (index 1) is 0x00 in the fixture, so set bit 3 (AMP)
+      // CTRL 2 (index 1) is 0x040 (EQ) in the fixture, so switch to AMP (0x08)
       ctrl[1] = { ctrlIndex: 1, blockMask: 0x08 };
       const encoded = new Uint8Array(
         new PRSTEncoder().encode({ ...preset, ctrlAssignments: ctrl }),
@@ -276,6 +286,7 @@ describe('PRSTEncoder: controller/EXP assignment records', () => {
       // and the flip survives a re-decode
       const reDecoded = new PRSTDecoder(encoded).decode();
       expect(reDecoded.ctrlAssignments![1].blockMask).toBe(0x08);
+      expect(reDecoded.ctrlAssignments![4].blockMask).toBe(0x100);
     },
   );
 

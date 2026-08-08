@@ -203,24 +203,24 @@ describe('PRSTDecoder mit echten .prst Dateien', () => {
     });
   }
 
-  const authorFile = join(process.cwd(), 'prst/63-B American Idiot.prst');
-  it.skipIf(!existsSync(authorFile))('reads author "Galtone Studio" from American Idiot.prst', () => {
-    const data = new Uint8Array(readFileSync(authorFile));
+  const deviceExport = join(process.cwd(), 'dumps/prts/01-A Start Pedal.prst');
+  it.skipIf(!existsSync(deviceExport))('decodes a device export without an author', () => {
+    const data = new Uint8Array(readFileSync(deviceExport));
     const preset = new PRSTDecoder(data).decode();
-    expect(preset.patchName).toBe('American Idiot');
-    expect(preset.author).toBe('Galtone Studio');
+    expect(preset.patchName).toBe('Start Pedal');
+    expect(preset.author).toBeUndefined();
   });
 });
 
 describe('PRSTDecoder: controller/EXP assignment records', () => {
-  const fixturePath = join(process.cwd(), 'prst/63-B American Idiot.prst');
+  const fixturePath = join(process.cwd(), 'dumps/prts/01-A Start Pedal.prst');
 
   it.skipIf(!existsSync(fixturePath))('decodes CTRL footswitch masks from a real file', () => {
     const data = new Uint8Array(readFileSync(fixturePath));
     const preset = new PRSTDecoder(data).decode();
     expect(preset.ctrlAssignments).toBeDefined();
     const masks = preset.ctrlAssignments!.map((assignment) => assignment.blockMask);
-    expect(masks).toEqual([0x01, 0, 0, 0, 0x83, 0x82, 0x86, 0x8C]);
+    expect(masks).toEqual([0x001, 0x040, 0x004, 0x080, 0x100, 0x200, 0x000, 0x800]);
   });
 
   it.skipIf(!existsSync(fixturePath))('decodes EXP assignments from a real file', () => {
@@ -241,17 +241,20 @@ describe('PRSTDecoder: controller/EXP assignment records', () => {
 });
 
 describe('PRSTDecoder: per-patch VOL/PAN/TEMPO', () => {
-  it('decodes patch volume/pan/tempo from a real file', () => {
-    const data = new Uint8Array(readFileSync(join(process.cwd(), 'prst/63-B American Idiot.prst')));
+  const scotlandKiss = join(process.cwd(), 'dumps/prts/07-D Scotland Kiss.prst');
+  const startPedal = join(process.cwd(), 'dumps/prts/01-A Start Pedal.prst');
+
+  it.skipIf(!existsSync(scotlandKiss))('decodes patch volume/pan/tempo from a real file', () => {
+    const data = new Uint8Array(readFileSync(scotlandKiss));
     const preset = new PRSTDecoder(data).decode();
     expect(preset.patchVolume).toBe(50);
     expect(preset.patchPan).toBe(5);
     expect(preset.patchTempo).toBe(120);
   });
 
-  it('decodes a non-default patch volume', () => {
-    const data = new Uint8Array(readFileSync(join(process.cwd(), 'prst/63-C claude1.prst')));
+  it.skipIf(!existsSync(startPedal))('decodes a non-default patch volume', () => {
+    const data = new Uint8Array(readFileSync(startPedal));
     const preset = new PRSTDecoder(data).decode();
-    expect(preset.patchVolume).toBe(74);
+    expect(preset.patchVolume).toBe(46);
   });
 });

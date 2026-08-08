@@ -30,6 +30,14 @@ export interface PedalProps {
   /** ⓘ click: pin in the info bar */
   onPin: () => void;
   isPinned: boolean;
+  /**
+   * Show tap ‹ › reorder arrows. HTML5 drag-and-drop never fires on touch, and
+   * the keyboard grip needs arrow keys, so without these a phone can't reorder
+   * the chain at all.
+   */
+  showMoveButtons?: boolean;
+  /** chain length, for the move bounds + the grip's announced position */
+  chainLength: number;
 }
 
 /** One effect slot rendered as a physical pedal (docs/board-design-system.md). */
@@ -46,6 +54,8 @@ export function Pedal({
   onInspect,
   onPin,
   isPinned,
+  showMoveButtons,
+  chainLength,
 }: PedalProps) {
   const [dragging, setDragging] = useState(false);
 
@@ -91,15 +101,28 @@ export function Pedal({
     />
   );
 
+  // data-flip-id: Flip matches captured state to live elements by identity unless
+  // given an id. A cross-row move remounts this pedal as a *different* DOM node
+  // (the two rows are separate parents), so without an id Flip can't reconcile it
+  // and — animating with absolute:true — strands it at an absolute position, out
+  // of flow: the board collapses and pedals overlap at stale coordinates.
+  // slotIndex is the immutable block identity, so it survives reordering.
   return (
     <article
       className={classes.join(' ')}
       style={bodyVars}
       data-chain={index}
       data-row={row}
+      data-flip-id={`pedal-${slot.slotIndex}`}
       draggable
       onDragStart={(e) => {
         e.dataTransfer.effectAllowed = 'move';
+        // Required: a dragstart that sets no data lets the browser abort the drag
+        // outright, after this handler has already set dragIndex. Nothing then
+        // fires dragend (the pedal unmounts on a cross-row move, so even the
+        // bubbled reset can't reach it) and the board stays ghosted with every
+        // cable hidden until reload.
+        e.dataTransfer.setData('text/plain', String(index));
         setDragging(true);
         onDragStart(index);
       }}
@@ -129,12 +152,14 @@ export function Pedal({
         className="chain-num"
         role="button"
         tabIndex={0}
-        aria-label={`Reorder ${effectName}, position ${index + 1} of 11. Use arrow keys.`}
+        aria-label={
+          `Reorder ${effectName}, position ${index + 1} of ${chainLength}. Use arrow keys.`
+        }
         onKeyDown={(e) => {
           if (e.key === 'ArrowLeft' && index > 0) {
             e.preventDefault();
             onMove(index, index - 1);
-          } else if (e.key === 'ArrowRight' && index < 10) {
+          } else if (e.key === 'ArrowRight' && index < chainLength - 1) {
             e.preventDefault();
             onMove(index, index + 1);
           }
@@ -154,11 +179,14 @@ export function Pedal({
       >
         {defs.map((def) => {
           const value = slot.params[def.idx] ?? def.default;
+          // Two defs can share an idx (generated table quirk: Slapback's
+          // Sync + Trail both map param 3), so the key needs the name too.
+          const defKey = `${def.idx}-${def.name}`;
           if (def.type === 'knob') {
             if (isEq) {
               return (
                 <PedalFader
-                  key={def.idx}
+                  key={defKey}
                   param={def}
                   value={value}
                   onChange={(v) => onParamChange(def.idx, v)}
@@ -168,7 +196,7 @@ export function Pedal({
             }
             return (
               <PedalKnob
-                key={def.idx}
+                key={defKey}
                 param={def}
                 value={value}
                 onChange={(v) => onParamChange(def.idx, v)}
@@ -180,11 +208,23 @@ export function Pedal({
           }
           if (def.type === 'switch') {
             return (
-              <MiniSwitch key={def.idx} param={def} value={value} onChange={(v) => onParamChange(def.idx, v)} pedalName={effectName} />
+              <MiniSwitch
+                key={defKey}
+                param={def}
+                value={value}
+                onChange={(v) => onParamChange(def.idx, v)}
+                pedalName={effectName}
+              />
             );
           }
           return (
-            <ComboSelect key={def.idx} param={def} value={value} onChange={(v) => onParamChange(def.idx, v)} pedalName={effectName} />
+            <ComboSelect
+              key={defKey}
+              param={def}
+              value={value}
+              onChange={(v) => onParamChange(def.idx, v)}
+              pedalName={effectName}
+            />
           );
         })}
       </div>
@@ -210,6 +250,31 @@ export function Pedal({
       </p>
 
       {wide ? <div className="fs-row">{footswitch}</div> : footswitch}
+
+      {/* Touch-only chain reorder. Absolutely positioned over the brand strip so
+          enabling them doesn't change the pedal's height (and with it the bay). */}
+      {showMoveButtons && (
+        <>
+          <button
+            type="button"
+            className="pedal-move prev"
+            disabled={index === 0}
+            aria-label={`Move ${effectName} earlier in the chain`}
+            onClick={() => onMove(index, index - 1)}
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            className="pedal-move next"
+            disabled={index === chainLength - 1}
+            aria-label={`Move ${effectName} later in the chain`}
+            onClick={() => onMove(index, index + 1)}
+          >
+            ›
+          </button>
+        </>
+      )}
       <div className="brand-strip">GP200 Studio</div>
     </article>
   );

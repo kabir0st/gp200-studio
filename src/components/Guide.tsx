@@ -3,6 +3,8 @@ import { Logo } from '@/components/Logo';
 import { Credits } from '@/components/Credits';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { track } from '@/core/analytics';
+import { msBucket } from '@/core/analyticsEvents';
 
 interface GuideProps {
   /** Return to whatever was showing before (Landing or the board). */
@@ -31,7 +33,7 @@ interface ShotProps {
 /** A screenshot figure, full-width within the content column. */
 function Shot({ src, alt, caption }: ShotProps) {
   // Resolve root-relative `/guide/*` paths against the Vite base URL so the
-  // images load under the app's subfolder deploy (afterhour.uk/gp200studio/).
+  // images load under the app's subfolder deploy (kabirtamari.com/gp200studio/).
   const resolvedSrc = `${import.meta.env.BASE_URL}${src.replace(/^\//, '')}`;
   return (
     <Card className="p-2 mt-5">
@@ -91,6 +93,14 @@ export function Guide({ onBack }: GuideProps) {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [onBack]);
 
+  // How far the reader actually got. The scrollspy below already computes the
+  // section nearest the top, so reading depth is free: collect the distinct ids
+  // it reports and emit one rollup on unmount rather than an event per section.
+  // One object with a stable identity rather than two refs: the unmount handler
+  // can then capture it once and read the mutated fields, instead of touching
+  // `.current` after the component is gone.
+  const readProgress = useRef({ seen: new Set<string>([NAV[0].id]), deepest: NAV[0].id });
+
   // Scrollspy: highlight the nav link for the section nearest the top.
   useEffect(() => {
     const sections = NAV.map((entry) => document.getElementById(entry.id)).filter(
@@ -101,12 +111,31 @@ export function Guide({ onBack }: GuideProps) {
         const visible = entries
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible.length > 0) setActiveId(visible[0].target.id);
+        if (visible.length > 0) {
+          const id = visible[0].target.id;
+          setActiveId(id);
+          readProgress.current.seen.add(id);
+          readProgress.current.deepest = id;
+        }
       },
       { rootMargin: '-72px 0px -60% 0px', threshold: 0 },
     );
     sections.forEach((section) => observer.observe(section));
     return () => observer.disconnect();
+  }, []);
+
+  // One guide_read per visit, on unmount. `deepest` is one of the nine fixed
+  // NAV ids, so it stays a bounded dimension.
+  useEffect(() => {
+    const openedAt = Date.now();
+    const progress = readProgress.current;
+    return () => {
+      track('guide_read', {
+        sections_seen: progress.seen.size,
+        deepest: progress.deepest,
+        dwell_bucket: msBucket(Date.now() - openedAt),
+      });
+    };
   }, []);
 
   return (
@@ -161,10 +190,20 @@ export function Guide({ onBack }: GuideProps) {
         <main className="flex-1 min-w-0 px-6 sm:px-10 py-9 max-w-[1600px]">
           <Section id="overview" title="Overview">
             <p>
-              GP200 Studio is a browser-based editor for the Valeton GP-200
-              multi-effects floor unit. Load, build, and edit presets entirely in
-              your browser, then push changes live to a connected GP-200 over
-              USB-MIDI.
+              GP200 Studio is a browser-based editor and loop station for the
+              Valeton GP-200 multi-effects floor unit. Load, build, and edit
+              presets entirely in your browser, then push changes live to a
+              connected GP-200 over USB-MIDI. It's free and open source
+              (GPL-3.0); the code lives on{' '}
+              <a
+                href="https://github.com/kabir0st/gp200-studio"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline text-text-secondary hover:text-accent-amber"
+              >
+                GitHub
+              </a>
+              .
             </p>
             <Card className="p-4 mt-4 max-w-4xl">
               <p className="font-mono-display text-micro font-bold tracking-widest uppercase text-text-muted mb-1.5">
@@ -180,8 +219,8 @@ export function Guide({ onBack }: GuideProps) {
             </Card>
             <Shot
               src="/guide/01-landing.png"
-              alt="GP200 Studio landing screen with Connect and Open editor buttons"
-              caption="The landing screen: connect your GP-200 or open the editor with a blank preset."
+              alt="GP200 Studio landing screen with the connect button and the open-without-connecting link"
+              caption="The landing screen: plug in your GP-200 and click the big button — or open without connecting to try the editor on a blank preset."
             />
           </Section>
 
@@ -301,11 +340,21 @@ export function Guide({ onBack }: GuideProps) {
               LOOP: loop station
             </h3>
             <p>
-              A multi-track looper that records the GP-200's USB audio (you'll be
-              asked to enable audio capture first). Each track has Rec / Play /
-              Mute / level / clear, with a master progress bar and Clear All. You
-              can also map the hardware footswitches and the expression pedal to
-              looper actions.
+              A multi-layer loop station that records the GP-200's USB audio
+              (you'll be asked to enable audio capture first) — a capability the
+              pedal doesn't ship with. Your first recording sets the master loop
+              length; every record pass after that adds a new layer, quantized
+              and phase-locked to the first, with no limit on the number of
+              layers. Each track has Play / Mute / level / delete, with a master
+              progress bar and Clear All.
+            </p>
+            <p>
+              You can drive it hands-free from the pedal itself: use MIDI-learn
+              to bind the GP-200's physical footswitches to Record, Play, and
+              track selection, with an optional takeover mode so a stomp
+              controls the looper instead of its normal patch function while the
+              drawer is open. Mapping the expression pedal to loop levels is
+              experimental (its wire format is still being captured).
             </p>
             <Shot
               src="/guide/08-deck-loop.png"
@@ -316,10 +365,11 @@ export function Guide({ onBack }: GuideProps) {
 
           <Section id="patches" title="Managing patches">
             <p>
-              When a device is connected, the <strong>PATCHES</strong> button in
-              the top bar opens the patch manager, a side sheet listing all 256
-              device slots (64 banks × A–D) with names and search. Per slot you
-              can:
+              The <strong>PATCHES</strong> button in the top bar opens the patch
+              manager, a side sheet listing all 256 device slots (64 banks ×
+              A–D) with names and search. It also hosts the <strong>FILE</strong>{' '}
+              row for importing/exporting <code>.prst</code> files, which works
+              without a device. With a GP-200 connected, per slot you can:
             </p>
             <ul className="list-disc pl-5 space-y-1.5">
               <li><strong>Activate</strong>: switch the unit to that slot.</li>
@@ -335,7 +385,7 @@ export function Guide({ onBack }: GuideProps) {
               editor or write the current patch to a chosen slot.
             </p>
             <p className="text-text-muted text-caption">
-              Patch management is a device-connected feature, so it isn't pictured
+              Slot management is a device-connected feature, so it isn't pictured
               here; connect a GP-200 to see your slots.
             </p>
           </Section>
@@ -358,10 +408,12 @@ export function Guide({ onBack }: GuideProps) {
 
           <Section id="files" title="Importing & exporting files">
             <p>
-              <strong>IMPORT</strong> (top bar) accepts native GP-200{' '}
-              <code>.prst</code> presets. <strong>EXPORT</strong> names
-              the patch and downloads it as a <code>.prst</code>. Importing while
-              connected also previews the patch live on the device.
+              The <strong>FILE</strong> row inside the <strong>PATCHES</strong>{' '}
+              sheet handles files: <strong>IMPORT .PRST</strong> accepts native
+              GP-200 <code>.prst</code> presets, and <strong>EXPORT .PRST</strong>{' '}
+              names the current patch and downloads it as a <code>.prst</code>.
+              Importing while connected also previews the patch live on the
+              device.
             </p>
             <Shot
               src="/guide/09-export-dialog.png"
@@ -374,6 +426,13 @@ export function Guide({ onBack }: GuideProps) {
             <ul className="list-disc pl-5 space-y-1.5 text-base leading-relaxed text-text-secondary max-w-4xl">
               <li>Live device features need a GP-200 over USB in Chrome or Edge (Web MIDI).</li>
               <li>Offline, you can edit patches and import/export files, but not sync or save to the unit.</li>
+              <li>
+                Your patches never leave your machine — there is no account and no server storing
+                them. The site does record anonymous usage analytics (Google Analytics) to see which
+                features get used: no patch names, file names or device details are ever sent, ad
+                personalisation and Google Signals are switched off, and the browser&rsquo;s Global
+                Privacy Control signal turns it off entirely.
+              </li>
             </ul>
           </Section>
 
@@ -381,7 +440,7 @@ export function Guide({ onBack }: GuideProps) {
             <Button variant="ghost" size="sm" onClick={onBack}>
               ← Back to the app
             </Button>
-            <Credits className="font-mono-display text-label text-text-muted tracking-wide flex flex-col gap-1 [&_.credits-links]:flex [&_.credits-links]:gap-4 [&_.credits-links]:mt-1 [&_a]:text-text-secondary [&_a]:underline [&_a:hover]:text-accent-amber" />
+            <Credits className="font-mono-display text-label text-text-muted tracking-wide flex flex-col gap-1 [&_.credits-links]:flex [&_.credits-links]:flex-wrap [&_.credits-links]:gap-4 [&_.credits-links]:mt-1 [&_a]:text-text-secondary [&_a]:underline [&_a:hover]:text-accent-amber" />
           </footer>
         </main>
       </div>

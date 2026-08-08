@@ -1,0 +1,968 @@
+/*
+ * Phone UI styles. Every selector is prefixed `.mobile-view` so nothing here
+ * can reach the desktop board — the two trees never render at the same time,
+ * but the scoping is what makes that guarantee structural rather than a
+ * convention. Do not add bare element selectors or :root variables here.
+ *
+ * Sizing rules: 44px minimum on anything tappable, safe-area insets on both
+ * fixed edges, and no fixed pixel widths — everything flexes to the viewport.
+ */
+
+.mobile-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--case);
+  color: var(--chrome-text);
+  overscroll-behavior-y: none;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+/* ---------------------------------------------------------------- header */
+
+.mobile-view .m-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 8px calc(8px);
+  padding-top: max(8px, env(safe-area-inset-top));
+  background: var(--chrome-bg);
+  border-bottom: 1px solid var(--chrome-border);
+  position: relative;
+  z-index: 2;
+}
+
+.mobile-view .m-step {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 8px;
+  background: var(--strip-bg);
+  color: var(--chrome-text);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.mobile-view .m-step:disabled {
+  opacity: 0.35;
+}
+
+.mobile-view .m-header-patch {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 8px;
+  background: var(--strip-bg);
+  text-align: left;
+}
+
+.mobile-view .m-header-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--chrome-text);
+}
+
+.mobile-view .m-header-slot {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--chrome-muted);
+}
+
+.mobile-view .m-header-edit {
+  flex: none;
+  font-size: 13px;
+  color: var(--chrome-muted);
+}
+
+.mobile-view .m-header-sync {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 3px;
+  background: var(--chrome-border);
+}
+
+.mobile-view .m-header-sync-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent-amber, #8a6320);
+  transition: width 120ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-view .m-header-sync-fill {
+    transition: none;
+  }
+}
+
+.mobile-view .m-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--chrome-border);
+}
+
+.mobile-view .m-dot.on {
+  background: #2f7e4f;
+  box-shadow: 0 0 8px rgba(47, 126, 79, 0.6);
+}
+
+/* ------------------------------------------------------------------ main */
+
+.mobile-view .m-main {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+.mobile-view .m-screen {
+  padding: 12px 12px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-view .m-screen-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mobile-view .m-screen-title,
+.mobile-view .m-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--chrome-muted);
+  margin: 0;
+}
+
+.mobile-view .m-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: var(--chrome-bg);
+  border: 1px solid var(--chrome-border);
+  border-radius: 12px;
+}
+
+/* -------------------------------------------------------------- chain list */
+
+.mobile-view .m-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-view .m-row-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-view .m-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  min-height: 72px;
+  background: var(--chrome-bg);
+  border: 1px solid var(--chrome-border);
+  border-radius: 12px;
+  overflow: hidden;
+  /* opacity only — transform belongs to the GSAP drag tweens */
+  transition: opacity 120ms ease;
+}
+
+/* Bypass dims the row but never disables it — the design system forbids
+   greying a block out, and every control stays live while bypassed. */
+.mobile-view .m-row.bypassed {
+  opacity: 0.55;
+}
+
+
+.mobile-view .m-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 4px 0 0;
+  text-align: left;
+  background: none;
+  border: 0;
+}
+
+/* module identity as a color band — what the enclosure body did on desktop */
+.mobile-view .m-row-band {
+  flex: none;
+  width: 6px;
+  align-self: stretch;
+  background: linear-gradient(180deg, var(--body), var(--body-deep, var(--body)));
+}
+
+.mobile-view .m-row-pos {
+  flex: none;
+  width: 22px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--chrome-muted);
+}
+
+.mobile-view .m-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mobile-view .m-row-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* The border keeps near-white module bodies (PRE, EQ, NR) legible as chips
+   against the light case; without it those three read as untinted text. */
+.mobile-view .m-row-module {
+  flex: none;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: var(--body);
+  color: var(--ink);
+}
+
+.mobile-view .m-row-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--chrome-text);
+}
+
+.mobile-view .m-row-summary {
+  font-size: 11px;
+  color: var(--chrome-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-view .m-row-chevron {
+  flex: none;
+  font-size: 20px;
+  color: var(--chrome-muted);
+  padding-right: 2px;
+}
+
+/* --------------------------------------------------------------- switches */
+
+.mobile-view .m-switch {
+  flex: none;
+  align-self: center;
+  width: 56px;
+  height: 32px;
+  margin-right: 10px;
+  border-radius: 999px;
+  border: 1px solid var(--chrome-border);
+  background: var(--bg-deep, #ccc9c1);
+  position: relative;
+  transition: background 140ms ease;
+}
+
+.mobile-view .m-switch.on {
+  background: var(--led, #2f7e4f);
+}
+
+.mobile-view .m-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 140ms ease;
+}
+
+.mobile-view .m-switch.on .m-switch-knob {
+  transform: translateX(24px);
+}
+
+/* --------------------------------------------------------- reorder / markers */
+
+/* The grip is the ONLY element in the mobile tree with touch-action:none.
+   That is what lets a drag start immediately with no long-press delay: the
+   grip claims the gesture, while a press anywhere else on the row still
+   scrolls the list normally. Putting this on .m-row would swallow scroll. */
+.mobile-view .m-grip {
+  flex: none;
+  align-self: stretch;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-right: 1px solid var(--chrome-border);
+  background: var(--strip-bg);
+  touch-action: none;
+  cursor: grab;
+}
+
+.mobile-view .m-grip:active {
+  cursor: grabbing;
+  background: var(--bg-hover, #e2dfd8);
+}
+
+/* Two columns of dots, drawn rather than typed so the texture is even and
+   doesn't depend on how a platform renders U+2833. */
+.mobile-view .m-grip-dots {
+  width: 10px;
+  height: 18px;
+  background-image: radial-gradient(currentColor 1.4px, transparent 1.6px);
+  background-size: 5px 5px;
+  background-position: 0 0;
+  color: var(--chrome-muted);
+  opacity: 0.75;
+}
+
+.mobile-view .m-screen-hint {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--chrome-muted);
+}
+
+/* The lift (scale, shadow, travel) and the stack shift are BOTH driven by GSAP
+   in useDragReorder — see docs/design-system.md "Motion" for the CSS-vs-GSAP
+   rule: this is a multi-element timeline over a live gesture, which is the
+   GSAP case. Do not add `transform`, `box-shadow` or a `transition` for these
+   here; CSS would fight the tweens for the same properties. */
+.mobile-view .m-row.dragging {
+  border-color: var(--border-active, #aaa69d);
+}
+
+.mobile-view .m-row.dragging .m-grip {
+  background: var(--bg-hover, #e2dfd8);
+  cursor: grabbing;
+}
+
+/* No text selection or long-press callout while dragging by the grip. */
+.mobile-view .m-list.dragging {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* The row transition is for bypass opacity only; naming the property keeps it
+   from also animating the GSAP-owned transform. */
+.mobile-view .m-row {
+  transition-property: opacity;
+}
+
+.mobile-view .m-marker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px dashed var(--chrome-border);
+  border-radius: 8px;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--chrome-muted);
+}
+
+.mobile-view .m-marker.fx {
+  min-height: 44px;
+  border-style: solid;
+  background: var(--strip-bg);
+}
+
+.mobile-view .m-marker-edit {
+  font-size: 10px;
+  color: var(--accent-amber, #8a6320);
+}
+
+/* ----------------------------------------------------------- pedal editor */
+
+.mobile-view .m-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mobile-view .m-back {
+  min-height: 44px;
+  padding: 0 12px 0 4px;
+  background: none;
+  border: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--chrome-text);
+}
+
+.mobile-view .m-editor-pos {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--chrome-muted);
+}
+
+.mobile-view .m-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--chrome-border);
+  background: linear-gradient(160deg, var(--body), var(--body-deep, var(--body)));
+  color: var(--ink);
+  text-align: left;
+  min-height: 72px;
+}
+
+.mobile-view .m-identity-art {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.mobile-view .m-identity-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mobile-view .m-identity-name {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-view .m-identity-based {
+  font-size: 11px;
+  opacity: 0.7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-view .m-identity-swap {
+  flex: none;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid currentColor;
+  opacity: 0.8;
+}
+
+.mobile-view .m-params {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mobile-view .m-empty {
+  font-size: 12px;
+  color: var(--chrome-muted);
+  padding: 16px 4px;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------- params */
+
+.mobile-view .m-param {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--chrome-border);
+}
+
+.mobile-view .m-param.row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+}
+
+.mobile-view .m-param-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mobile-view .m-param-name {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--chrome-text);
+}
+
+.mobile-view .m-param-value {
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--chrome-text);
+}
+
+.mobile-view .m-param-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-view .m-nudge {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 8px;
+  background: var(--strip-bg);
+  color: var(--chrome-text);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.mobile-view .m-nudge:disabled {
+  opacity: 0.3;
+}
+
+/* Horizontal slider inside a vertical scroller: the axes are orthogonal, so
+   the browser resolves drag-vs-scroll on its own and we never need
+   touch-action:none here. */
+.mobile-view .m-slider {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+
+.mobile-view .m-slider::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--knob-track, #ccc9c1);
+}
+
+.mobile-view .m-slider::-moz-range-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--knob-track, #ccc9c1);
+}
+
+.mobile-view .m-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  margin-top: -10px;
+  border-radius: 50%;
+  background: var(--chrome-text);
+  border: 2px solid var(--chrome-bg);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-view .m-slider::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--chrome-text);
+  border: 2px solid var(--chrome-bg);
+}
+
+.mobile-view .m-slider:disabled {
+  opacity: 0.4;
+}
+
+.mobile-view .m-select {
+  min-height: 44px;
+  max-width: 60%;
+  padding: 0 10px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 8px;
+  background: var(--bg-input, #fff);
+  color: var(--chrome-text);
+  font-size: 14px;
+}
+
+/* ---------------------------------------------------------------- bypass */
+
+/* The editor screen always fills the viewport so the bypass control sits in
+   the thumb zone even for a two-param effect, instead of floating wherever
+   the param list happens to end. */
+.mobile-view .m-screen.editor {
+  min-height: 100%;
+}
+
+.mobile-view .m-editor-foot {
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  padding-top: 8px;
+  background: linear-gradient(180deg, transparent, var(--case) 40%);
+}
+
+.mobile-view .m-bypass {
+  width: 100%;
+  min-height: 56px;
+  border-radius: 12px;
+  border: 1px solid var(--chrome-border);
+  background: var(--chrome-bg);
+  color: var(--chrome-muted);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.mobile-view .m-bypass.on {
+  background: var(--strip-bg);
+  color: var(--chrome-text);
+}
+
+.mobile-view .m-bypass-led {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--chrome-border);
+}
+
+.mobile-view .m-bypass.on .m-bypass-led {
+  background: var(--led, #2f7e4f);
+  box-shadow: 0 0 10px var(--led, #2f7e4f);
+}
+
+/* --------------------------------------------------------------- buttons */
+
+.mobile-view .m-btn {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 10px;
+  background: var(--strip-bg);
+  color: var(--chrome-text);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mobile-view .m-btn.small {
+  min-height: 36px;
+  font-size: 11px;
+  padding: 0 10px;
+}
+
+.mobile-view .m-btn.primary {
+  background: var(--stub-ink, #3c3a35);
+  border-color: var(--stub-ink, #3c3a35);
+  color: #f6f5f0;
+}
+
+.mobile-view .m-btn.ghost {
+  background: transparent;
+  color: var(--chrome-muted);
+}
+
+.mobile-view .m-btn.active {
+  background: var(--stub-ink, #3c3a35);
+  border-color: var(--stub-ink, #3c3a35);
+  color: #f6f5f0;
+}
+
+.mobile-view .m-btn.tuner-active {
+  background: var(--accent-red);
+  border-color: var(--accent-red);
+  color: #fff;
+}
+
+.mobile-view .m-btn.wide {
+  grid-column: 1 / -1;
+}
+
+.mobile-view .m-btn:disabled {
+  opacity: 0.4;
+}
+
+.mobile-view .m-btn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mobile-view .m-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--chrome-text);
+}
+
+.mobile-view .m-status-fw {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--chrome-muted);
+}
+
+.mobile-view .m-sticky-foot {
+  position: sticky;
+  bottom: 0;
+  padding-top: 8px;
+  background: linear-gradient(180deg, transparent, var(--case) 40%);
+}
+
+/* ----------------------------------------------------------------- tabbar */
+
+.mobile-view .m-tabbar {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2px;
+  padding: 4px 4px 0;
+  padding-bottom: max(4px, env(safe-area-inset-bottom));
+  background: var(--chrome-bg);
+  border-top: 1px solid var(--chrome-border);
+}
+
+.mobile-view .m-tab {
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--chrome-muted);
+}
+
+.mobile-view .m-tab.active {
+  color: var(--chrome-text);
+  background: var(--strip-bg);
+}
+
+.mobile-view .m-tab-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.mobile-view .m-tab-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* ----------------------------------------------------------------- sheets */
+
+.mobile-view .m-sheet,
+.m-sheet {
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.m-sheet .m-sheet-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 12px 8px;
+  border-bottom: 1px solid var(--chrome-border);
+}
+
+.m-sheet .m-sheet-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--chrome-text);
+}
+
+.m-sheet .m-sheet-close {
+  width: 44px;
+  height: 44px;
+  margin: -8px -8px -8px 0;
+  border: 0;
+  background: none;
+  color: var(--chrome-muted);
+  font-size: 16px;
+}
+
+.m-sheet .m-sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.m-sheet .m-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.m-sheet .m-field-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--chrome-muted);
+}
+
+.m-sheet .m-input {
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 8px;
+  background: var(--bg-input, #fff);
+  color: var(--chrome-text);
+  font-size: 16px; /* 16px keeps iOS from zooming the viewport on focus */
+  font-family: inherit;
+}
+
+/* ------------------------------------------- overrides for reused panels */
+
+/* EffectPicker, reused verbatim from the board. Its rail is a fixed 172px
+   column; here it becomes a horizontal chip scroller above a single-column
+   list. Selectors carry `.effect-picker` so they out-specify board.css's own
+   `.effect-picker .ep-*` rules rather than relying on stylesheet order — this
+   file is lazy-loaded and its position is not something to depend on. */
+.mobile-view .effect-picker .ep-body {
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.mobile-view .effect-picker .ep-rail {
+  flex-direction: row;
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 6px;
+  padding: 0 0 6px;
+}
+
+.mobile-view .effect-picker .ep-cat {
+  flex: none;
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+.mobile-view .effect-picker .ep-row {
+  min-height: 56px;
+}
+
+/* The per-row type badge is redundant on a narrow screen — rows are already
+   grouped under a heading of that exact type, and the badge was squeezing the
+   name into a two-line wrap and truncating "based on" to three characters. */
+.mobile-view .effect-picker .ep-type-badge {
+  display: none;
+}
+
+.mobile-view .effect-picker .ep-name,
+.mobile-view .effect-picker .ep-based {
+  white-space: normal;
+}
+
+.mobile-view .effect-picker .ep-search {
+  max-width: none;
+  margin-left: 0;
+}
+
+/* Desktop lays the head out as title · close · search on one row. At 390px the
+   search needs the full width, so it drops to its own line and the close
+   button goes where a close button belongs — the top right corner. */
+.mobile-view .effect-picker .ep-head {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mobile-view .effect-picker .ep-title {
+  flex: 1;
+  order: 0;
+}
+
+.mobile-view .effect-picker .ep-close {
+  order: 1;
+}
+
+.mobile-view .effect-picker .ep-search {
+  order: 2;
+  flex-basis: 100%;
+}
+
+/* ------------------------------------------------------- reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-view .m-row,
+  .mobile-view .m-switch,
+  .mobile-view .m-switch-knob {
+    transition: none;
+  }
+
+  /* The drag's lift/shift/settle are GSAP-driven and therefore invisible to
+     this block — useDragReorder collapses those tweens itself via
+     prefersReducedMotion(), the same gate useFlipReorder uses. */
+}

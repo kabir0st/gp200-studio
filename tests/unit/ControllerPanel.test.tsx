@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render } from '@testing-library/react';
@@ -8,7 +8,7 @@ import type { ExpAssignment, GP200Preset } from '@/core/types';
 import { defaultExpAssignments } from '@/core/controlRecords';
 
 function loadFixture(): GP200Preset {
-  const bytes = readFileSync(join(process.cwd(), 'prst/63-B American Idiot.prst'));
+  const bytes = readFileSync(join(process.cwd(), 'dumps/prts/01-A Start Pedal.prst'));
   return new PRSTDecoder(new Uint8Array(bytes)).decode();
 }
 
@@ -22,7 +22,11 @@ function withAssignment(overrides: Partial<ExpAssignment>): GP200Preset {
   return { ...loadFixture(), expAssignments };
 }
 
-describe('ControllerPanel', () => {
+// dumps/ is gitignored (real device exports, not committed), so this suite only
+// runs on a machine that has them. Same convention as PRSTEncoder.test.ts.
+const HAS_FIXTURES = existsSync(join(process.cwd(), 'dumps/prts/01-A Start Pedal.prst'));
+
+describe.skipIf(!HAS_FIXTURES)('ControllerPanel', () => {
   it('renders 3 page selectors and 3 Para cards with pedal + parameter selects', () => {
     const { getAllByRole } = render(
       <ControllerPanel

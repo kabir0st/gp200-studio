@@ -138,6 +138,40 @@ select option {
   color: var(--text-primary);
 }
 
+/* ── App shell height ──────────────────────────────────────────────────── */
+/* Dynamic viewport height so the shell tracks mobile browser URL-bar
+   show/hide instead of clipping the sticky deck; 100vh is the fallback. */
+.app-shell {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* ── Touch ergonomics (WCAG 2.5.5) ─────────────────────────────────────── */
+/* On coarse pointers (touch), lift every interactive control to a usable
+   target: the shared Button primitive (.ui-btn), native selects, and range
+   sliders. Pedal knobs/faders are SVG + Pointer Events and unaffected. */
+@media (pointer: coarse) {
+  .ui-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  select {
+    min-height: 40px;
+  }
+  input[type='range'] {
+    height: 36px;
+  }
+  input[type='range']::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+    margin-top: -10px;
+  }
+  input[type='range']::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+  }
+}
+
 /* ── LED glow animation ── */
 @keyframes led-pulse {
   0%, 100% { opacity: 1; }

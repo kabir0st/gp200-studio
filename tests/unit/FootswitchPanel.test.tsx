@@ -1,23 +1,31 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render } from '@testing-library/react';
 import { PRSTDecoder } from '@/core/PRSTDecoder';
 import { FootswitchPanel } from '@/components/FootswitchPanel';
 
+// Real device export; CTRL masks: PRE, EQ, DST, MOD, DLY, RVB, none, bit-11.
 function loadFixture() {
-  const bytes = readFileSync(join(process.cwd(), 'prst/63-B American Idiot.prst'));
+  const bytes = readFileSync(join(process.cwd(), 'dumps/prts/01-A Start Pedal.prst'));
   return new PRSTDecoder(new Uint8Array(bytes)).decode();
 }
 
-describe('FootswitchPanel', () => {
+// Module name from a pedal card's title, e.g. "CTRL 2 → EQ: Guitar EQ 1" → "EQ".
+function moduleOf(card: Element): string {
+  return /→ (\w+):/.exec(card.getAttribute('title') ?? '')?.[1] ?? '';
+}
+
+// dumps/ is gitignored (real device exports, not committed), so this suite only
+// runs on a machine that has them. Same convention as PRSTEncoder.test.ts.
+const HAS_FIXTURES = existsSync(join(process.cwd(), 'dumps/prts/01-A Start Pedal.prst'));
+
+describe.skipIf(!HAS_FIXTURES)('FootswitchPanel', () => {
   it('renders 8 footswitch selectors and 11 pedal cards', () => {
     const preset = loadFixture();
     const { container, getAllByRole } = render(
       <FootswitchPanel
-        preset={preset}
-        currentSlot={null}
-        connected={false}
+        preset={preset}        connected={false}
         onCtrlBlockToggle={vi.fn()}
       />,
     );
@@ -26,21 +34,29 @@ describe('FootswitchPanel', () => {
     expect(cards).toHaveLength(11);
   });
 
-  it('shows the selected CTRL mask on the pedal cards', () => {
+  it('shows the selected CTRL mask on the pedal cards, by module name', () => {
     const preset = loadFixture();
     const { container, getByRole } = render(
       <FootswitchPanel
-        preset={preset}
-        currentSlot={null}
-        connected={false}
+        preset={preset}        connected={false}
         onCtrlBlockToggle={vi.fn()}
       />,
     );
-    // Fixture: CTRL 1 mask 0x01 → only PRE assigned on the default selection.
-    expect(container.querySelectorAll('button[aria-pressed="true"]')).toHaveLength(1);
-    // Fixture: CTRL 5 mask 0x83 → PRE + WAH + MOD assigned.
+    const pressed = () =>
+      Array.from(container.querySelectorAll('button[aria-pressed="true"]'));
+    // Fixture: CTRL 1 mask 0x001 → exactly PRE on the default selection.
+    expect(pressed().map(moduleOf)).toEqual(['PRE']);
+    // CTRL 2 mask 0x040 → exactly EQ. Regression: the old parser read the
+    // state byte + uninitialized memory as the mask and lit phantom
+    // PRE/DLY/RVB/VOL pedals here.
+    fireEvent.click(getByRole('radio', { name: /CTRL 2/ }));
+    expect(pressed().map(moduleOf)).toEqual(['EQ']);
+    // CTRL 5 mask 0x100 → exactly DLY.
     fireEvent.click(getByRole('radio', { name: /CTRL 5/ }));
-    expect(container.querySelectorAll('button[aria-pressed="true"]')).toHaveLength(3);
+    expect(pressed().map(moduleOf)).toEqual(['DLY']);
+    // CTRL 8 mask 0x800 (bit 11, beyond the 11 modeled blocks) → nothing lit.
+    fireEvent.click(getByRole('radio', { name: /CTRL 8/ }));
+    expect(pressed()).toHaveLength(0);
   });
 
   it('reports card toggles with ctrl index, block index, and next state', () => {
@@ -48,14 +64,12 @@ describe('FootswitchPanel', () => {
     const onToggle = vi.fn();
     const { container } = render(
       <FootswitchPanel
-        preset={preset}
-        currentSlot={null}
-        connected={false}
+        preset={preset}        connected={false}
         onCtrlBlockToggle={onToggle}
       />,
     );
     const cards = container.querySelectorAll('button[aria-pressed]');
-    // First card = PRE, assigned on CTRL 1 in the fixture (mask 0x01) → off
+    // First card = PRE, assigned on CTRL 1 in the fixture (mask 0x001) → off
     fireEvent.click(cards[0]);
     expect(onToggle).toHaveBeenCalledWith(0, 0, false);
     // Second card = WAH, unassigned → on
@@ -68,9 +82,7 @@ describe('FootswitchPanel', () => {
     const onToggle = vi.fn();
     const { container, getByRole } = render(
       <FootswitchPanel
-        preset={preset}
-        currentSlot={null}
-        connected={false}
+        preset={preset}        connected={false}
         onCtrlBlockToggle={onToggle}
       />,
     );
@@ -85,9 +97,7 @@ describe('FootswitchPanel', () => {
     const onClear = vi.fn();
     const { getByRole, getByText } = render(
       <FootswitchPanel
-        preset={preset}
-        currentSlot={null}
-        connected={false}
+        preset={preset}        connected={false}
         onCtrlBlockToggle={vi.fn()}
         onCtrlClear={onClear}
       />,
@@ -101,9 +111,7 @@ describe('FootswitchPanel', () => {
     const preset = { ...loadFixture(), ctrlAssignments: undefined };
     const { getByText } = render(
       <FootswitchPanel
-        preset={preset}
-        currentSlot={null}
-        connected={false}
+        preset={preset}        connected={false}
         onCtrlBlockToggle={vi.fn()}
         onCtrlClear={vi.fn()}
       />,
@@ -115,25 +123,23 @@ describe('FootswitchPanel', () => {
     const preset = { ...loadFixture(), ctrlAssignments: undefined };
     const { container } = render(
       <FootswitchPanel
-        preset={preset}
-        currentSlot={null}
-        connected={false}
+        preset={preset}        connected={false}
         onCtrlBlockToggle={vi.fn()}
       />,
     );
     expect(container.querySelectorAll('button[aria-pressed="true"]')).toHaveLength(0);
   });
 
-  it('mentions the device save target when connected', () => {
+  it('says device sync is unavailable while connected', () => {
     const preset = loadFixture();
     const { getByText } = render(
       <FootswitchPanel
         preset={preset}
-        currentSlot={249}
         connected
         onCtrlBlockToggle={vi.fn()}
       />,
     );
-    expect(getByText(/SAVE TO 63B/)).toBeTruthy();
+    expect(getByText(/not possible yet/)).toBeTruthy();
+    expect(getByText(/SAVE TO does not carry them/)).toBeTruthy();
   });
 });

@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import {
   secondsToSamples,
   samplesToSeconds,
-  quantizeToMaster,
+  barsForCapture,
+  quantizeToBase,
+  cycleBars,
   nextBoundary,
   loopIndex,
   playhead,
@@ -20,23 +22,63 @@ describe('sample/second conversion', () => {
   });
 });
 
-describe('quantizeToMaster', () => {
-  const master = 96000; // 2s @ 48k
+describe('barsForCapture', () => {
+  const base = 96000; // one bar = 2s @ 48k
 
-  it('snaps a near-master capture to exactly one loop', () => {
-    expect(quantizeToMaster(97000, master)).toEqual({ loops: 1, samples: 96000 });
+  it('rounds a slight overrun back down rather than growing the loop', () => {
+    // A ringing last chord must not double everyone else's loop.
+    expect(barsForCapture(base + 4000, base)).toBe(1);
+    expect(barsForCapture(base * 1.4, base)).toBe(1);
   });
 
-  it('snaps a ~2x capture to two whole loops', () => {
-    expect(quantizeToMaster(191000, master)).toEqual({ loops: 2, samples: 192000 });
+  it('rounds a genuine overrun up to the next bar', () => {
+    expect(barsForCapture(base * 1.6, base)).toBe(2);
+    expect(barsForCapture(base * 2, base)).toBe(2);
+    expect(barsForCapture(base * 3.9, base)).toBe(4);
   });
 
-  it('never returns fewer than one loop', () => {
-    expect(quantizeToMaster(1000, master)).toEqual({ loops: 1, samples: 96000 });
+  it('never returns fewer than one bar', () => {
+    expect(barsForCapture(1000, base)).toBe(1);
+    expect(barsForCapture(0, base)).toBe(1);
   });
 
-  it('falls back safely when there is no master yet', () => {
-    expect(quantizeToMaster(50000, 0)).toEqual({ loops: 1, samples: 50000 });
+  it('returns one bar when no base is established yet', () => {
+    expect(barsForCapture(50000, 0)).toBe(1);
+  });
+});
+
+describe('quantizeToBase', () => {
+  const base = 96000; // 2s @ 48k
+
+  it('snaps a near-base capture to exactly one bar', () => {
+    expect(quantizeToBase(97000, base)).toEqual({ bars: 1, samples: 96000 });
+  });
+
+  it('snaps a ~2x capture to two whole bars', () => {
+    expect(quantizeToBase(191000, base)).toEqual({ bars: 2, samples: 192000 });
+  });
+
+  it('never returns fewer than one bar', () => {
+    expect(quantizeToBase(1000, base)).toEqual({ bars: 1, samples: 96000 });
+  });
+
+  it('passes a capture through untouched when it is establishing the base', () => {
+    expect(quantizeToBase(50000, 0)).toEqual({ bars: 1, samples: 50000 });
+  });
+});
+
+describe('cycleBars', () => {
+  it('is the widest track present', () => {
+    expect(cycleBars([1, 4, 2])).toBe(4);
+  });
+
+  it('shrinks back when the widest track is removed', () => {
+    // Derived, not a running max — deleting the 4-bar take narrows the loop.
+    expect(cycleBars([1, 2])).toBe(2);
+  });
+
+  it('is one bar with no tracks at all', () => {
+    expect(cycleBars([])).toBe(1);
   });
 });
 

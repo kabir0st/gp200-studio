@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { LooperApi } from './useLooper';
 import type { UseMidiDeviceReturn } from './useMidiDevice';
-import { dispatchLooperAction, type LooperBindings } from '@/core/looperBindings';
+import { dispatchLooperAction, type LooperActionKind } from '@/core/looperBindings';
 import {
   fingerprintKey,
   hexOfBytes,
@@ -9,12 +9,13 @@ import {
   processLooperFrame,
   type LooperTriggerMap,
 } from '@/core/looperTriggers';
+import { track, trackOnce } from '@/core/analytics';
 
 const LEARN_NOTICE_MS = 3000;
 
 export interface LearnNotice {
-  fs: number;
-  duplicateOfFs: number;
+  action: LooperActionKind;
+  duplicateOf: LooperActionKind;
 }
 
 interface UseLooperTriggersOpts {
@@ -22,20 +23,21 @@ interface UseLooperTriggersOpts {
   /** Ref mirrors (App.tsx pattern) so the once-per-connection tap closure
    *  always reads current values without re-registering. */
   looperRef: React.MutableRefObject<LooperApi>;
-  bindingsRef: React.MutableRefObject<LooperBindings>;
   panelOpenRef: React.MutableRefObject<boolean>;
 }
 
 export interface UseLooperTriggersReturn {
-  /** Learned fingerprints per footswitch row, for UI badges + persistence. */
+  /** Learned fingerprints per transport action, for UI badges + persistence. */
   triggers: LooperTriggerMap;
-  /** Row currently armed for MIDI-learn, or null. */
-  armedFs: number | null;
-  /** Arm a row (stomp binds the next frame); arming the armed row cancels. */
-  armLearn: (fs: number) => void;
+  /** Action currently armed for MIDI-learn, or null. */
+  armedAction: LooperActionKind | null;
+  /** Arm an action (stomp binds the next frame); arming the armed one cancels. */
+  armLearn: (action: LooperActionKind) => void;
   cancelLearn: () => void;
-  clearTrigger: (fs: number) => void;
-  /** Transient "same frame already bound to FS n" feedback for the panel. */
+  clearTrigger: (action: LooperActionKind) => void;
+  /** Forget every learned stomp at once. */
+  clearAllTriggers: () => void;
+  /** Transient "same stomp already assigned to X" feedback for the panel. */
   learnNotice: LearnNotice | null;
 }
 
@@ -47,19 +49,19 @@ export interface UseLooperTriggersReturn {
  * the revert toggle, and console logging.
  */
 export function useLooperTriggers(opts: UseLooperTriggersOpts): UseLooperTriggersReturn {
-  const { midiDevice, looperRef, bindingsRef, panelOpenRef } = opts;
+  const { midiDevice, looperRef, panelOpenRef } = opts;
   const { status } = midiDevice;
 
   const [triggers, setTriggers] = useState<LooperTriggerMap>(() => {
     return loadLooperStore()?.triggers ?? {};
   });
-  const [armedFs, setArmedFs] = useState<number | null>(null);
+  const [armedAction, setArmedAction] = useState<LooperActionKind | null>(null);
   const [learnNotice, setLearnNotice] = useState<LearnNotice | null>(null);
 
   const triggersRef = useRef(triggers);
   triggersRef.current = triggers;
-  const armedFsRef = useRef(armedFs);
-  armedFsRef.current = armedFs;
+  const armedActionRef = useRef(armedAction);
+  armedActionRef.current = armedAction;
   const midiRef = useRef(midiDevice);
   midiRef.current = midiDevice;
 
@@ -84,24 +86,34 @@ export function useLooperTriggers(opts: UseLooperTriggersOpts): UseLooperTrigger
         currentSlot: ctx.currentSlot,
         suppressed: ctx.suppressed,
         panelOpen: panelOpenRef.current,
-        armedFs: armedFsRef.current,
+        armedAction: armedActionRef.current,
         triggers: triggersRef.current,
-        bindings: bindingsRef.current,
         lastMatchAt: lastMatchAtRef.current,
         now: Date.now(),
       });
 
       switch (decision.type) {
         case 'pass':
+          // While armed, an unclassified frame is the interesting case: the
+          // stomp reached us but classifyFrame didn't recognize its shape (all
+          // shapes there are hypotheses pending capture, docs/protocol-capture.md
+          // §4). Log it so the real footswitch frame can be identified.
+          if (armedActionRef.current !== null) {
+            console.log(
+              `[GP-200] looper learn: unclassified frame while armed for` +
+                ` ${armedActionRef.current} raw: ${hexOfBytes(data)}`,
+            );
+          }
           return false;
         case 'learned': {
           lastMatchAtRef.current.set(decision.key, Date.now());
-          setTriggers((prev) => ({ ...prev, [decision.fs]: decision.fp }));
-          setArmedFs(null);
+          setTriggers((prev) => ({ ...prev, [decision.action]: decision.fp }));
+          setArmedAction(null);
+          track('looper_learn_bound', { action: decision.action });
           // Always log the raw frame so the user can diff two switches whose
           // sysex08 signatures might collide (docs/protocol-capture.md §4).
           console.log(
-            `[GP-200] looper learn: FS${decision.fs} ← ${fingerprintKey(decision.fp)}` +
+            `[GP-200] looper learn: ${decision.action} ← ${fingerprintKey(decision.fp)}` +
               ` raw: ${hexOfBytes(data)}`,
           );
           if (decision.revertToggle) {
@@ -110,11 +122,11 @@ export function useLooperTriggers(opts: UseLooperTriggersOpts): UseLooperTrigger
           return true;
         }
         case 'learnRejected': {
-          setArmedFs(null);
-          showNotice({ fs: decision.fs, duplicateOfFs: decision.duplicateOfFs });
+          setArmedAction(null);
+          showNotice({ action: decision.action, duplicateOf: decision.duplicateOf });
           console.warn(
-            `[GP-200] looper learn rejected: FS${decision.fs} frame already bound to` +
-              ` FS${decision.duplicateOfFs} raw: ${hexOfBytes(data)}`,
+            `[GP-200] looper learn rejected: ${decision.action} frame already assigned to` +
+              ` ${decision.duplicateOf} raw: ${hexOfBytes(data)}`,
           );
           return true;
         }
@@ -127,7 +139,13 @@ export function useLooperTriggers(opts: UseLooperTriggersOpts): UseLooperTrigger
             midiRef.current.sendToggle(decision.revertToggle.block, decision.revertToggle.enabled);
           }
           if (looperRef.current.ready) {
-            dispatchLooperAction(looperRef.current, decision.action);
+            // Deduped per action: this answers "is hands-free control used at
+            // all", and a stomp-heavy jam would otherwise dominate the session's
+            // event budget. Actual loop counts still come from looper_record.
+            trackOnce(`fs:${decision.action}`, 'looper_footswitch', {
+              action: decision.action,
+            });
+            dispatchLooperAction(looperRef.current, { kind: decision.action });
           }
           return true;
         }
@@ -136,12 +154,12 @@ export function useLooperTriggers(opts: UseLooperTriggersOpts): UseLooperTrigger
       }
     });
     return () => setTap(null);
-  }, [status, looperRef, bindingsRef, panelOpenRef]);
+  }, [status, looperRef, panelOpenRef]);
 
   // Disarm when the device goes away; a stranded arm would otherwise bind the
   // first frame of the next session.
   useEffect(() => {
-    if (status !== 'connected') setArmedFs(null);
+    if (status !== 'connected') setArmedAction(null);
   }, [status]);
 
   useEffect(() => {
@@ -150,23 +168,37 @@ export function useLooperTriggers(opts: UseLooperTriggersOpts): UseLooperTrigger
     };
   }, []);
 
-  const armLearn = (fs: number) => {
+  const armLearn = (action: LooperActionKind) => {
     setLearnNotice(null);
-    setArmedFs((prev) => {
-      if (prev === fs) return null;
-      return fs;
+    setArmedAction((prev) => {
+      if (prev === action) return null;
+      return action;
     });
   };
 
-  const cancelLearn = () => setArmedFs(null);
+  const cancelLearn = () => setArmedAction(null);
 
-  const clearTrigger = (fs: number) => {
+  const clearTrigger = (action: LooperActionKind) => {
     setTriggers((prev) => {
       const next = { ...prev };
-      delete next[fs];
+      delete next[action];
       return next;
     });
   };
 
-  return { triggers, armedFs, armLearn, cancelLearn, clearTrigger, learnNotice };
+  const clearAllTriggers = () => {
+    setLearnNotice(null);
+    setArmedAction(null);
+    setTriggers({});
+  };
+
+  return {
+    triggers,
+    armedAction,
+    armLearn,
+    cancelLearn,
+    clearTrigger,
+    clearAllTriggers,
+    learnNotice,
+  };
 }

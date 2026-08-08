@@ -35,7 +35,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={`font-mono-display font-bold tracking-wider uppercase rounded transition-all duration-150 disabled:opacity-40 disabled:pointer-events-none ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${className}`}
+      className={`ui-btn font-mono-display font-bold tracking-wider uppercase rounded transition-all duration-150 disabled:opacity-40 disabled:pointer-events-none ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${className}`}
       {...props}
     />
   );

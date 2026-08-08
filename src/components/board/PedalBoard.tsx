@@ -1,21 +1,23 @@
-import { useEffect, useState, type CSSProperties, type DragEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type DragEvent } from 'react';
 import type { GP200Preset, EffectSlot } from '@/core/types';
 import type { PushProgress } from '@/core/devicePush';
 import { getSlotModule } from '@/core/effectNames';
-import { bayMinHeight, isWideSlot } from './boardLayout';
+import { isWideSlot } from './boardLayout';
 import { useFlipReorder } from './useFlipReorder';
 import { FxLoopArrows } from '@/components/FxLoopArrows';
 import { ControllerPanel } from '@/components/ControllerPanel';
 import { FootswitchPanel } from '@/components/FootswitchPanel';
 import { LooperPanel } from './LooperPanel';
 import { DrumsPanel } from './DrumsPanel';
-import { DevicePanel } from './DevicePanel';
+import { DeviceLooperPanel } from './DeviceLooperPanel';
+import { DrumMachinePanel } from './DrumMachinePanel';
 import type { CCCommand } from '@/core/ccControl';
-import type { DeviceSettings } from '@/core/deviceSettings';
+import type { DrumMachineApi } from '@/hooks/useDrumMachine';
 import type { LooperApi } from '@/hooks/useLooper';
-import type { LooperBindings } from '@/core/looperBindings';
+import type { LooperActionKind, LooperBindings } from '@/core/looperBindings';
 import type { LooperTriggerMap } from '@/core/looperTriggers';
 import type { LearnNotice } from '@/hooks/useLooperTriggers';
+import type { PanelId } from '@/core/analyticsEvents';
 import { splitRows } from './boardLayout';
 import { lookupPedalArt, usePedalManifest } from './pedalManifest';
 import { Pedal } from './Pedal';
@@ -26,6 +28,9 @@ import { CableLayer } from './CableLayer';
 import { SwitcherUnit } from './SwitcherUnit';
 import { BoardTopBar } from './BoardTopBar';
 import { DeckDrawer } from './DeckDrawer';
+import { Dialog } from '@/components/ui/Dialog';
+import { useCoarsePointer, useSingleRowBoard } from '@/hooks/useMediaQuery';
+import { prefersReducedMotion } from '@/lib/motion';
 import './board.css';
 
 export interface PedalBoardProps {
@@ -47,14 +52,12 @@ export interface PedalBoardProps {
   connected: boolean;
   onLoadRequest: () => void;
   onSaveToActiveSlot?: () => void;
-  /* deck: metadata, live settings, file I/O, drawers */
+  /* deck: metadata, live settings, drawers */
   onPatchNameChange: (name: string) => void;
   onAuthorChange: (author: string) => void;
   onVolumeChange: (value: number) => void;
   onPanChange: (value: number) => void;
   onTempoChange: (bpm: number) => void;
-  onImportFile: (buffer: Uint8Array) => void;
-  onExportRequest: () => void;
   onCloseRequest: () => void;
   onFxSendChange: (pos: number) => void;
   onFxReturnChange: (pos: number) => void;
@@ -68,33 +71,32 @@ export interface PedalBoardProps {
   onCtrlBlockToggle: (ctrlIndex: number, blockIndex: number, on: boolean) => void;
   onCtrlClear: (ctrlIndex: number) => void;
   onOpenPatchManager: () => void;
+  onActivateSlot: (slot: number) => void;
   onOpenGuide: () => void;
+  /** Engagement analytics: a drawer (desktop) or tab/sheet (phone) was opened.
+   *  Both trees report into the same PanelId vocabulary so "did anyone find the
+   *  looper?" is one number rather than two incomparable ones. */
+  onPanelOpen: (panel: PanelId) => void;
   /* loop station */
   looper: LooperApi;
   looperBindings: LooperBindings;
   onLooperBindingsChange: (next: LooperBindings) => void;
   onEnableAudio: () => void;
   audioStarting: boolean;
-  /** Stomp-hijacking only applies while the looper drawer is open. */
+  /** Stomp-hijacking (and the FS takeover) only apply while the looper is open. */
   onLooperDrawerOpenChange: (open: boolean) => void;
   looperTriggers: LooperTriggerMap;
-  looperArmedFs: number | null;
-  onLooperArmLearn: (fs: number) => void;
-  onLooperClearTrigger: (fs: number) => void;
+  looperArmedAction: LooperActionKind | null;
+  onLooperArmLearn: (action: LooperActionKind) => void;
+  onLooperClearTrigger: (action: LooperActionKind) => void;
+  onLooperClearAll: () => void;
   looperLearnNotice: LearnNotice | null;
-  /** FS takeover: bound switches rewritten to CTRLs while the drawer is open */
-  looperTakeover: boolean;
-  onLooperTakeoverChange: (active: boolean) => void;
+  /* browser practice drum machine (Web Audio, plays with or without a device) */
+  drumMachine: DrumMachineApi;
   /* built-in drums/looper/tuner remote (plain MIDI CC, src/core/ccControl.ts) */
   sendCC: (command: CCCommand | CCCommand[]) => void;
   ccChannel: number;
   onCcChannelChange: (channel: number) => void;
-  /* device-global settings (footswitch mode/targets, Auto Cab Match) */
-  deviceSettings: DeviceSettings;
-  onDeviceModeChange: (mode: number) => void;
-  onDeviceTargetChange: (fs: number, kind: 'tap' | 'hold', actionId: number) => void;
-  onDeviceComboChange: (comboIndex: number, actionId: number) => void;
-  onDeviceAutoCabChange: (on: boolean) => void;
   /* device session controls (deck-hosted; there is no separate status bar) */
   onConnectRequest: () => void;
   onDisconnect: () => void;
@@ -132,8 +134,6 @@ export function PedalBoard({
   onVolumeChange,
   onPanChange,
   onTempoChange,
-  onImportFile,
-  onExportRequest,
   onCloseRequest,
   onFxSendChange,
   onFxReturnChange,
@@ -142,7 +142,9 @@ export function PedalBoard({
   onCtrlBlockToggle,
   onCtrlClear,
   onOpenPatchManager,
+  onActivateSlot,
   onOpenGuide,
+  onPanelOpen,
   looper,
   looperBindings,
   onLooperBindingsChange,
@@ -150,20 +152,15 @@ export function PedalBoard({
   audioStarting,
   onLooperDrawerOpenChange,
   looperTriggers,
-  looperArmedFs,
+  looperArmedAction,
   onLooperArmLearn,
   onLooperClearTrigger,
+  onLooperClearAll,
   looperLearnNotice,
-  looperTakeover,
-  onLooperTakeoverChange,
+  drumMachine,
   sendCC,
   ccChannel,
   onCcChannelChange,
-  deviceSettings,
-  onDeviceModeChange,
-  onDeviceTargetChange,
-  onDeviceComboChange,
-  onDeviceAutoCabChange,
   onConnectRequest,
   onDisconnect,
   onPushRequest,
@@ -172,11 +169,16 @@ export function PedalBoard({
 }: PedalBoardProps) {
   const artIndex = usePedalManifest();
 
+  // Phones fold the two rows into one swipeable row (see useSingleRowBoard) and
+  // get tap reorder arrows, since HTML5 drag-and-drop never fires on touch.
+  const singleRow = useSingleRowBoard();
+  const touch = useCoarsePointer();
+
   // hover inspects, ⓘ pins; both keyed by slotIndex (stable across reorders)
   const [hoverSlot, setHoverSlot] = useState<number | null>(null);
   const [pinnedSlot, setPinnedSlot] = useState<number | null>(null);
   const [openDrawer, setOpenDrawer] =
-    useState<'fxloop' | 'exp' | 'ctrl' | 'looper' | 'drums' | 'device' | null>(null);
+    useState<'fxloop' | 'exp' | 'ctrl' | 'looper' | 'drums' | null>(null);
   const [pickerSlot, setPickerSlot] = useState<number | null>(null);
 
   // Report the looper drawer's open state up to App: the MIDI dispatcher tap
@@ -185,6 +187,17 @@ export function PedalBoard({
     onLooperDrawerOpenChange(openDrawer === 'looper');
   }, [openDrawer, onLooperDrawerOpenChange]);
 
+  // Every drawer *opens* through here so the analytics call can't be forgotten
+  // on a new drawer. Closing (setOpenDrawer(null)) stays direct — only the open
+  // is a discovery signal.
+  const openPanel = useCallback(
+    (panel: 'fxloop' | 'exp' | 'ctrl' | 'looper' | 'drums') => {
+      setOpenDrawer(panel);
+      onPanelOpen(panel);
+    },
+    [onPanelOpen],
+  );
+
   const inspectKey = pinnedSlot ?? hoverSlot;
   const inspected = inspectKey !== null
     ? preset.effects.find((e) => e.slotIndex === inspectKey) ?? null
@@ -192,8 +205,15 @@ export function PedalBoard({
 
   const pickerEffect = preset.effects.find((slot) => slot.slotIndex === pickerSlot) ?? null;
 
-  const modules = preset.effects.map((e) => getSlotModule(e.slotIndex));
   const orderKey = preset.effects.map((e) => `${e.slotIndex}:${e.effectId}`).join(',');
+  // Memoised because CableLayer takes this as an effect dependency: rebuilt inline,
+  // a new array identity on every render made each hover/drag-over tear down the
+  // ResizeObserver and re-measure, scheduling a rAF and a ~460ms settle timeout each
+  // time. That thrash is what read as the board "glitching" while dragging.
+  const modules = useMemo(
+    () => preset.effects.map((e) => getSlotModule(e.slotIndex)),
+    [preset.effects],
+  );
 
   // FLIP: capture pedal positions before a reorder, then spring them to place
   const { scopeRef, capture } = useFlipReorder(orderKey);
@@ -204,11 +224,27 @@ export function PedalBoard({
   const handleReorderMove = (from: number, to: number) => {
     capture();
     onMove(from, to);
+    // keep the pedal you just moved on screen (it can leave the viewport on a
+    // narrow board); wait a frame so the new order is laid out first
+    requestAnimationFrame(() => scrollToPedal(to));
   };
 
   // rows balanced by rendered width so a wide AMP can't push the last
   // front-row pedal (usually CAB) off the stage
   const { front, back } = splitRows(preset.effects);
+
+  // chain strip / reorder arrows scroll the moved pedal back into view —
+  // on a phone the target is usually off-screen after the move
+  const scrollToPedal = useCallback(
+    (index: number) => {
+      const pedal = scopeRef.current?.querySelector<HTMLElement>(`[data-chain="${index}"]`);
+      if (!pedal) return;
+      let behavior: ScrollBehavior = 'smooth';
+      if (prefersReducedMotion()) behavior = 'auto';
+      pedal.scrollIntoView({ behavior, block: 'nearest', inline: 'center' });
+    },
+    [scopeRef],
+  );
 
   // each pedal sits in a fixed-size bay (compact/wide, keyed to the slot's module
   // (see isWideSlot). The pedal keeps its own natural size; the bay absorbs any
@@ -225,7 +261,6 @@ export function PedalBoard({
       <div
         key={`slot-${slot.slotIndex}`}
         className={bayClasses.join(' ')}
-        style={{ '--bay-h': `${bayMinHeight(slot.slotIndex)}px` } as CSSProperties}
         onDragOver={(e) => onDragOver(e, index)}
         onDrop={() => handleReorderDrop(index)}
       >
@@ -244,6 +279,8 @@ export function PedalBoard({
           }
           onPin={() => setPinnedSlot((prev) => (prev === slot.slotIndex ? null : slot.slotIndex))}
           isPinned={pinnedSlot === slot.slotIndex}
+          showMoveButtons={touch}
+          chainLength={preset.effects.length}
         />
       </div>
     );
@@ -256,17 +293,24 @@ export function PedalBoard({
         currentSlot={currentSlot}
         firmware={firmware}
         pushProgress={pushProgress}
-        onImportFile={onImportFile}
-        onExportRequest={onExportRequest}
         onLoadRequest={onLoadRequest}
         onPushRequest={onPushRequest}
+        patchName={preset.patchName}
+        author={preset.author ?? ''}
+        onPatchNameChange={onPatchNameChange}
+        onAuthorChange={onAuthorChange}
         onOpenPatchManager={onOpenPatchManager}
+        onActivateSlot={onActivateSlot}
         onOpenGuide={onOpenGuide}
         onConnectRequest={onConnectRequest}
         onDisconnect={onDisconnect}
         onCloseRequest={onCloseRequest}
+        onOpenLooper={() => openPanel('looper')}
+        onOpenDrums={() => openPanel('drums')}
+        drumsPlaying={drumMachine.playing}
+        sendCC={sendCC}
       />
-      <ChainStrip effects={preset.effects} />
+      <ChainStrip effects={preset.effects} onJump={scrollToPedal} />
       <InfoBar
         slot={inspected}
         art={inspected ? lookupPedalArt(artIndex, inspected.effectId) : undefined}
@@ -279,17 +323,34 @@ export function PedalBoard({
               screens, and the cables live inside it so they scroll in lockstep
               with the pedals (the top/bottom bars stay put) */}
           <div className="board-scroll">
-            <div className="board-rows" ref={scopeRef}>
-              <CableLayer modules={modules} orderKey={orderKey} hidden={dragIndex !== null} />
-              {/* reading order = chain order: front row first, remainder below */}
-              <div className="board-row">
-                <span className="flow-badge" aria-hidden="true">IN ›</span>
-                {front.map((slot, i) => renderPedal(slot, i, 'front'))}
-              </div>
-              <div className="board-row">
-                {back.map((slot, i) => renderPedal(slot, i + front.length, 'back'))}
-                <span className="flow-badge" aria-hidden="true">› OUT</span>
-              </div>
+            <div className={`board-rows${singleRow ? ' single' : ''}`} ref={scopeRef}>
+              <CableLayer
+                modules={modules}
+                orderKey={`${orderKey}|${singleRow ? 1 : 2}`}
+                hidden={dragIndex !== null}
+              />
+              {/* Phones get one row: two 340px+ rows plus the chrome don't fit a
+                  phone viewport, and one row keeps the whole chain in a single
+                  left-to-right swipe (cables stay same-row beziers throughout). */}
+              {singleRow ? (
+                <div className="board-row">
+                  <span className="flow-badge" aria-hidden="true">IN ›</span>
+                  {preset.effects.map((slot, i) => renderPedal(slot, i, 'front'))}
+                  <span className="flow-badge" aria-hidden="true">› OUT</span>
+                </div>
+              ) : (
+                <>
+                  {/* reading order = chain order: front row first, remainder below */}
+                  <div className="board-row">
+                    <span className="flow-badge" aria-hidden="true">IN ›</span>
+                    {front.map((slot, i) => renderPedal(slot, i, 'front'))}
+                  </div>
+                  <div className="board-row">
+                    {back.map((slot, i) => renderPedal(slot, i + front.length, 'back'))}
+                    <span className="flow-badge" aria-hidden="true">› OUT</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </section>
@@ -303,18 +364,12 @@ export function PedalBoard({
           currentSlot={currentSlot}
           connected={connected}
           onSaveToActiveSlot={onSaveToActiveSlot}
-          onPatchNameChange={onPatchNameChange}
-          onAuthorChange={onAuthorChange}
           onVolumeChange={onVolumeChange}
           onPanChange={onPanChange}
           onTempoChange={onTempoChange}
-          onOpenFxLoop={() => setOpenDrawer('fxloop')}
-          onOpenExp={() => setOpenDrawer('exp')}
-          onOpenCtrl={() => setOpenDrawer('ctrl')}
-          onOpenLooper={() => setOpenDrawer('looper')}
-          onOpenDrums={() => setOpenDrawer('drums')}
-          onOpenDevice={() => setOpenDrawer('device')}
-          sendCC={sendCC}
+          onOpenFxLoop={() => openPanel('fxloop')}
+          onOpenExp={() => openPanel('exp')}
+          onOpenCtrl={() => openPanel('ctrl')}
         />
       </main>
 
@@ -354,18 +409,37 @@ export function PedalBoard({
       >
         <FootswitchPanel
           preset={preset}
-          currentSlot={currentSlot}
           connected={connected}
           onCtrlBlockToggle={onCtrlBlockToggle}
           onCtrlClear={onCtrlClear}
         />
       </DeckDrawer>
 
-      <DeckDrawer
+      {/* The loop station is a big centred dialog (same footprint as the effect
+          picker), not a bottom sheet: it's a full workspace, not a quick tweak. */}
+      <Dialog
         open={openDrawer === 'looper'}
         onClose={() => setOpenDrawer(null)}
         title="Loop Station"
+        maxWidth="max-w-4xl"
       >
+        <div className="flex items-center justify-between mb-4">
+          <span
+            className="font-mono-display text-label font-bold tracking-wider uppercase
+              text-text-secondary"
+          >
+            Loop Station
+          </span>
+          <button
+            type="button"
+            onClick={() => setOpenDrawer(null)}
+            aria-label="Close Loop Station"
+            className="ui-btn font-mono-display text-xs font-bold px-3 py-1.5 -my-1 rounded
+              text-text-muted hover:text-text-primary"
+          >
+            ✕
+          </button>
+        </div>
         <LooperPanel
           looper={looper}
           bindings={looperBindings}
@@ -373,42 +447,49 @@ export function PedalBoard({
           onEnableAudio={onEnableAudio}
           audioStarting={audioStarting}
           triggers={looperTriggers}
-          armedFs={looperArmedFs}
+          armedAction={looperArmedAction}
           onArmLearn={onLooperArmLearn}
           onClearTrigger={onLooperClearTrigger}
+          onClearAll={onLooperClearAll}
           learnNotice={looperLearnNotice}
           learnEnabled={connected}
-          takeoverActive={looperTakeover}
-          onTakeoverChange={onLooperTakeoverChange}
         />
-      </DeckDrawer>
+        {/* The pedal's own single loop, collapsed: same drawer as the loop
+            station it gets confused with, but never competing with it. */}
+        <div className="mt-4 pt-4 border-t border-border-active">
+          <DeviceLooperPanel connected={connected} sendCC={sendCC} />
+        </div>
+      </Dialog>
 
       <DeckDrawer
         open={openDrawer === 'drums'}
         onClose={() => setOpenDrawer(null)}
-        title="GP-200 Drums & Looper"
+        title="Drums"
       >
-        <DrumsPanel
-          connected={connected}
-          sendCC={sendCC}
-          ccChannel={ccChannel}
-          onCcChannelChange={onCcChannelChange}
-        />
-      </DeckDrawer>
-
-      <DeckDrawer
-        open={openDrawer === 'device'}
-        onClose={() => setOpenDrawer(null)}
-        title="Device Setup"
-      >
-        <DevicePanel
-          connected={connected}
-          settings={deviceSettings}
-          onModeChange={onDeviceModeChange}
-          onTargetChange={onDeviceTargetChange}
-          onComboChange={onDeviceComboChange}
-          onAutoCabChange={onDeviceAutoCabChange}
-        />
+        {/* Browser practice drums first (works offline); the hardware remote
+            below needs a connected GP-200. Playback survives closing this
+            drawer — the hook lives in App. */}
+        <p
+          className="font-mono-display text-label text-text-muted uppercase
+            tracking-widest mb-2"
+        >
+          Practice drum machine · browser audio
+        </p>
+        <DrumMachinePanel drums={drumMachine} />
+        <div className="mt-4 pt-4 border-t border-border-active">
+          <p
+            className="font-mono-display text-label text-text-muted uppercase
+              tracking-widest mb-2"
+          >
+            GP-200 hardware · MIDI remote
+          </p>
+          <DrumsPanel
+            connected={connected}
+            sendCC={sendCC}
+            ccChannel={ccChannel}
+            onCcChannelChange={onCcChannelChange}
+          />
+        </div>
       </DeckDrawer>
 
       {pickerEffect && (

@@ -19,6 +19,7 @@ interface LandingProps {
 }
 
 const FEATURES: string[] = [
+  'Multi-layer loop station: stack unlimited loops over USB audio, hands-free from the pedal',
   'Visual pedalboard editor: drag to reorder, tweak every knob',
   'Assign EXP pedals, CTRL footswitches, and the FX loop',
   'Live USB-MIDI sync with your GP-200 (Chrome / Edge)',
@@ -42,6 +43,13 @@ export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, onOpenGuide, l
   const slotLabel = currentSlot !== null ? SysExCodec.slotToLabel(currentSlot) : null;
   const deviceName = currentSlot !== null ? midiDevice.presetNames[currentSlot] : null;
 
+  let connectLabel = 'AFTER CONNECTING YOUR GP-200, CLICK HERE';
+  if (busy) {
+    connectLabel = handshakeStep ?? 'CONNECTING…';
+  } else if (status === 'error') {
+    connectLabel = 'RETRY CONNECT';
+  }
+
   return (
     <div className="landing-view">
       <div className="landing-panel">
@@ -61,7 +69,7 @@ export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, onOpenGuide, l
           <Logo size={72} />
         </div>
         <h1 className="landing-title">GP200 Studio</h1>
-        <p className="landing-sub">Valeton GP-200 pedalboard editor</p>
+        <p className="landing-sub">Valeton GP-200 pedalboard editor &amp; loop station</p>
 
         <div className="landing-actions">
           {connected ? (
@@ -82,14 +90,9 @@ export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, onOpenGuide, l
               onClick={() => void connect()}
             >
               <span className={`landing-led${busy ? ' busy' : ''}`} aria-hidden="true" />
-              {busy ? (handshakeStep ?? 'CONNECTING…') : status === 'error' ? 'RETRY CONNECT' : 'CONNECT YOUR GP-200'}
+              {connectLabel}
             </button>
           )}
-
-          <button type="button" className="landing-btn" onClick={onOpenBlank}>
-            OPEN EDITOR
-            <span className="landing-btn-sub">start from a blank preset</span>
-          </button>
         </div>
 
         <ul className="landing-features">
@@ -120,8 +123,15 @@ export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, onOpenGuide, l
           </p>
         )}
         {!connected && webMidiSupported && status !== 'error' && (
-          <p className="landing-msg">Connect over USB, or open the editor and import a file from the deck.</p>
+          <p className="landing-msg">
+            Plug the GP-200 into your computer over USB and power it on, then click the button above.
+          </p>
         )}
+
+        <button type="button" className="landing-btn ghost" onClick={onOpenBlank}>
+          OPEN WITHOUT CONNECTING
+          <span className="landing-btn-sub">for tests · blank preset</span>
+        </button>
 
         <Credits className="landing-credits" />
       </div>

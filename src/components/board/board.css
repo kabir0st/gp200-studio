@@ -25,6 +25,12 @@
   border-bottom: 1px solid var(--chrome-border);
   overflow-x: auto;
   flex-shrink: 0;
+  /* the nowrap pill chain must not leak overflow to the document: on mobile
+     Chrome it inflates the layout viewport (fixed overlays and dialogs then
+     render wider than the screen). Layout+paint containment keeps the strip
+     at the shell's width; the pills still scroll inside it. */
+  contain: content;
+  min-width: 0;
 }
 .board-view .chain-strip .strip-lbl {
   font-family: var(--font-jetbrains-mono), monospace;
@@ -40,7 +46,12 @@
   gap: 4px;
   flex: 1;
 }
+/* Each chip is a button that scrolls its pedal into view — the board's nav on
+   narrow screens, where only a couple of pedals fit at a time. */
 .board-view .chain-node {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
   font-family: var(--font-jetbrains-mono), monospace;
   font-size: 10px;
   font-weight: 800;
@@ -51,10 +62,21 @@
   color: var(--ink, #eee);
   border: 1px solid color-mix(in srgb, var(--ink, #888) 25%, transparent);
   white-space: nowrap;
-  transition: opacity 0.15s ease;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.board-view .chain-node:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--ink, #888) 60%, transparent);
+}
+.board-view .chain-node:active {
+  transform: none;
 }
 .board-view .chain-node.off {
   opacity: 0.32;
+}
+.board-view .chain-node.off:hover {
+  opacity: 0.6;
 }
 .board-view .chain-arrow {
   color: var(--chrome-muted);
@@ -173,6 +195,9 @@
   min-height: 0;
   overflow: auto;
   padding: 8px 16px 10px;
+  /* keep board scrolling from chaining into page bounce / browser
+     back-forward swipe gestures on touch devices */
+  overscroll-behavior: contain;
 }
 .board-view .cables-svg {
   position: absolute;
@@ -215,6 +240,7 @@
 .board-view .board-scroll {
   overflow-x: auto;
   overflow-y: hidden;
+  overscroll-behavior-x: contain;
   /* room for pedal drop-shadows so overflow-y:hidden doesn't clip them */
   padding: 6px 2px 10px;
   margin: -6px -2px -10px;
@@ -230,20 +256,35 @@
 .board-view .board-row {
   display: flex;
   gap: 18px;
-  align-items: flex-end;
+  /* Bays stretch to the row's height (the pedal itself still sits bottom-centre,
+     via the bay's own align-items). A bay IS the drop target, so a bay that only
+     hugged its pedal gave short effects a short, unpredictable hit area and left
+     the space above them belonging to no slot at all. */
+  align-items: stretch;
   justify-content: space-evenly;
   flex-wrap: nowrap;
 }
 .board-view .board-row + .board-row {
-  margin-top: 12px;
+  /* matches the row's own horizontal `gap`, so spacing between pedals reads the
+     same in both axes */
+  margin-top: 28px;
 }
 
 /* ── pedal bay ──
-   Fixed-size cell per slot. The pedal keeps its own natural size and sits at the
-   bottom-centre; the bay absorbs any width/height difference as padding, so
-   swapping an effect only changes the padding, never a neighbour's position.
-   Width/height are keyed to the slot's module (isWideSlot), which is stable, so
-   the whole row's footprint is constant across effect changes. */
+   Fixed-*width* cell per slot: the pedal keeps its natural size and sits at the
+   bottom-centre, and the bay absorbs any width difference as padding, so
+   swapping an effect never shifts a neighbour sideways. Width is keyed to the
+   slot's module (isWideSlot), which is stable.
+
+   Height is deliberately NOT reserved per module. Reserving each module's tallest
+   possible effect (the old bayMinHeight) left up to ~140px of dead air above short
+   pedals (the DLY bay reserved 442px for a 305px pedal), which read as a broken gap
+   between the two rows. Rows hug their tallest *current* pedal instead.
+
+   The bay still stretches to that row height (see .board-row align-items), so every
+   drop target is full-height and uniform without any dead air. Don't set an explicit
+   height here: it reintroduces the gap. The trade remains that swapping an effect can
+   nudge the row below it vertically. */
 .board-view .pedal-bay {
   position: relative;
   display: flex;
@@ -251,8 +292,6 @@
   justify-content: center;
   flex: none;
   width: 172px;
-  /* per-module reserved height (bayMinHeight): set inline; falls back if unset */
-  min-height: var(--bay-h, 342px);
 }
 .board-view .pedal-bay.wide {
   width: 310px;
@@ -431,6 +470,44 @@
   color: var(--ink);
   opacity: 0.6;
 }
+/* ── touch chain reorder ──
+   Drag-and-drop is HTML5 DnD, which never fires on touch, and the keyboard grip
+   needs arrow keys — so touch devices get explicit ‹ › arrows (rendered only
+   when the pointer is coarse, see PedalBoard). Absolutely positioned over the
+   brand strip so they cost no layout height and the bays keep their size. */
+.board-view .pedal-move {
+  position: absolute;
+  bottom: 5px;
+  width: 44px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ink) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  color: var(--ink);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 3;
+}
+.board-view .pedal-move.prev {
+  left: 4px;
+}
+.board-view .pedal-move.next {
+  right: 4px;
+}
+.board-view .pedal-move:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+.board-view .pedal-move:active:not(:disabled) {
+  background: color-mix(in srgb, var(--ink) 28%, transparent);
+}
+
 .board-view .info-chip {
   position: absolute;
   top: 6px;
@@ -828,11 +905,14 @@
 .board-view .board-topbar {
   position: relative;
   z-index: 20;
-  display: flex;
+  /* Three tracks, not space-between: the side groups have different widths, so
+     flex would park the patch cluster off-centre and shift it whenever an
+     action button appears (CONNECT vs LOAD/SAVE AS). An auto middle track with
+     equal flexible sides keeps it centred on the bar itself. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 18px;
-  flex-wrap: wrap;
   flex-shrink: 0;
   margin-bottom: 16px;
   padding: 10px 16px;
@@ -841,12 +921,60 @@
   border: 1px solid var(--chrome-border);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
-.board-view .board-topbar-status {
+.board-view .board-topbar-left {
   display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-self: start;
+}
+/* Middle grid track: dot · [− name slot +] · connection+sync. Nested as another
+   1fr-auto-1fr grid so the dot and the (much wider) connection badge occupy
+   equal side tracks — otherwise they flank the stepper asymmetrically and the
+   cluster reads ~25px left of centre. */
+.board-view .board-topbar-status {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 10px;
   min-width: 0;
   font-family: var(--font-jetbrains-mono), monospace;
+}
+.board-view .board-topbar-status > .deck-dot {
+  justify-self: end;
+}
+.board-view .board-topbar-conn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: start;
+  min-width: 0;
+}
+/* the deck anchors its popovers upward; from the top bar they must drop down */
+.board-view .board-topbar .deck-pop {
+  top: calc(100% + 12px);
+  bottom: auto;
+}
+/* the Patch −/+ steppers read as one unit with name + slot between them */
+.board-view .deck-slot-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.board-view .deck-slot-stepper .deck-btn.quiet {
+  padding: 4px;
+  flex: none;
+}
+/* Fixed width so a long patch name truncates rather than pushing the arrows
+   outward — the cluster must not resize as you step through patches. */
+.board-view .deck-patch-well {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  width: 230px;
+  min-width: 0;
 }
 .board-view .board-topbar-actions {
   display: flex;
@@ -900,6 +1028,10 @@
   letter-spacing: 0.08em;
   color: var(--chrome-text);
 }
+.board-view .deck-patch-well .deck-slot {
+  flex: none;
+  color: var(--chrome-muted);
+}
 .board-view .deck-name {
   font-family: var(--font-dm-sans), sans-serif;
   font-size: 15px;
@@ -946,6 +1078,11 @@
   padding: 0;
   cursor: pointer;
   text-align: left;
+}
+.board-view .deck-patch-well .deck-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 .board-view .deck-name.editable:hover {
   text-decoration: underline dotted;
@@ -1143,17 +1280,36 @@
   margin-left: auto;
 }
 .board-view .deck-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font-family: var(--font-jetbrains-mono), monospace;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.1em;
-  padding: 7px 14px;
+  padding: 7px 12px;
   border-radius: 6px;
   background: #fff;
   border: 1px solid var(--chrome-border);
   color: var(--chrome-text);
   cursor: pointer;
   transition: background 0.1s ease, border-color 0.1s ease;
+}
+/* Colour-coded action mark (ActionIcon.tsx). The hue is set inline per action;
+   it only carries meaning alongside the label, never instead of it. */
+.board-view .act-icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+/* on the inverted primary face the hue would fall through the dark fill —
+   inherit the button's own ink instead */
+.board-view .deck-btn.primary .act-icon {
+  color: currentColor;
+}
+.board-view .deck-btn:disabled .act-icon {
+  color: var(--chrome-muted);
 }
 .board-view .deck-btn:hover:not(:disabled) {
   border-color: var(--chrome-muted);
@@ -1169,6 +1325,86 @@
 }
 .board-view .deck-btn.quiet {
   padding: 7px 9px;
+}
+.board-view .deck-btn.tuner-active {
+  background: var(--accent-red);
+  border-color: var(--accent-red);
+  color: #fff;
+}
+/* on the solid red fill the icon's own hue would clash — inherit ink instead,
+   same treatment as .deck-btn.primary .act-icon above */
+.board-view .deck-btn.tuner-active .act-icon {
+  color: currentColor;
+}
+/* ── practice drum machine step grid (DrumMachinePanel) ─────────────────
+   Deliberately NOT scoped to .board-view: the panel is reused verbatim in
+   the phone tree, and board.css is always loaded (PedalBoard is a static
+   import in App). The playhead column glows green and hand-off is smoothed
+   by the box-shadow/background transitions; a cell whose sound actually
+   fires additionally "pops" (dm-hit). The global prefers-reduced-motion
+   block in index.css flattens all of these transitions. */
+.dm-cell {
+  height: 1.5rem;
+  min-width: 1.25rem;
+  flex: 1;
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-input);
+  transition:
+    transform 90ms cubic-bezier(0.2, 0.9, 0.3, 1.4),
+    box-shadow 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease;
+}
+.dm-cell:hover {
+  border-color: var(--border-active);
+}
+.dm-cell.dm-beat {
+  margin-left: 0.375rem;
+}
+.dm-cell.dm-ghost {
+  background: color-mix(in srgb, var(--accent-amber-dim) 45%, var(--bg-input));
+  border-color: var(--accent-amber-dim);
+}
+.dm-cell.dm-on {
+  background: var(--accent-amber-dim);
+  border-color: var(--accent-amber-dim);
+}
+.dm-cell.dm-accent {
+  background: var(--accent-amber);
+  border-color: var(--accent-amber);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dm-cell.dm-now {
+  border-color: var(--accent-green);
+  box-shadow: 0 0 0 2px var(--accent-green);
+  transition-duration: 40ms, 60ms, 60ms, 60ms;
+}
+/* The pop must stay INSIDE the scroll wrapper: a transform that visually
+   escapes an overflow-x-auto ancestor adds scrollable overflow, and on the
+   bar's last column that flashed a scrollbar (and a layout jump) every time
+   the playhead wrapped back to step 1. Scale stays ≤1.08 and .dm-grid pads
+   the content box so the overhang lands on padding, never past the edge. */
+.dm-cell.dm-now.dm-hit {
+  transform: scale(1.08);
+  box-shadow:
+    0 0 0 2px var(--accent-green),
+    0 0 12px var(--glow-green);
+  z-index: 1;
+}
+.dm-grid {
+  padding: 3px;
+}
+
+/* DRUMS lights up while the browser drum machine plays (it keeps playing
+   with the drawer closed, so the bar needs a "sound is coming from here"). */
+.board-view .deck-btn.drums-active {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: #fff;
+}
+.board-view .deck-btn.drums-active .act-icon {
+  color: currentColor;
 }
 .board-view .deck-btn.mon.on {
   background: #2f9e5f;
@@ -1244,6 +1480,7 @@
    ════════════════════════════════════════════════════════════════════════ */
 .landing-view {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--case);
   display: flex;
   align-items: center;
@@ -1334,6 +1571,25 @@
   background: var(--chrome-text);
   border-color: var(--chrome-text);
   color: var(--chrome-bg);
+  /* keep the long label clear of the absolutely-positioned LED on both sides */
+  padding-inline: 38px;
+}
+/* de-emphasised escape hatch at the foot of the panel: open a blank preset
+   without a device. inline-flex so it shrinks to content and centres under the
+   panel's text-align, instead of stretching like the primary action. */
+.landing-btn.ghost {
+  display: inline-flex;
+  max-width: 100%;
+  margin: 18px auto 0;
+  padding: 10px 16px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  background: transparent;
+  border-style: dashed;
+  color: var(--chrome-muted);
+}
+.landing-btn.ghost:hover:not(:disabled) {
+  color: var(--chrome-text);
 }
 .landing-btn-sub {
   font-size: 9px;
@@ -1436,7 +1692,9 @@
 }
 .landing-credits .credits-links {
   display: inline-flex;
-  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 16px;
 }
 .landing-credits a {
   color: var(--chrome-text);
@@ -1919,5 +2177,198 @@
   .patch-picker .pp-row,
   .patch-picker .pp-cat {
     transition: none;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   Board layout ≤720px: the two pedal rows fold into ONE swipeable row (see
+   useSingleRowBoard — PedalBoard renders the markup, this styles it). Two
+   340px+ rows plus the chain strip, info bar and deck don't fit a phone
+   viewport, and one row keeps the whole chain in a single left-to-right
+   swipe with no cross-row cable stubs to read.
+   ════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 720px) {
+  .board-view .board-deck {
+    padding: 10px 10px 8px;
+  }
+  .board-view .board-rows.single .board-row {
+    gap: 12px;
+    /* one row of 11 pedals is always wider than the screen: pack them from the
+       left so the chain starts at IN instead of centring on a mid-chain pedal */
+    justify-content: flex-start;
+  }
+  /* Drop the reserved bay height. It buys a stable layout when you swap an
+     effect (nothing above shifts), but it costs the height of the tallest
+     effect in the module — 200-300px of empty board above a short pedal, on
+     the one screen where vertical space is scarcest. Bays collapse to their
+     pedal instead; the row still bottom-aligns, so the chain stays level. */
+  .board-view .board-rows.single .pedal-bay {
+    min-height: 0;
+  }
+  /* snap each pedal to the viewport centre as you swipe the chain */
+  .board-view .board-scroll {
+    scroll-snap-type: x proximity;
+    scroll-padding: 0 16px;
+  }
+  .board-view .board-rows.single .pedal-bay {
+    scroll-snap-align: center;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   Mobile chrome (≤640px): the top bar wraps its actions into a tidy grid
+   (a horizontal scroller hid half of them behind an invisible affordance);
+   the deck sheds its desktop-only readouts (live treadle bars) and the
+   audio meters; the deck popovers become viewport-clamped bottom sheets
+   instead of absolute flyouts that clip off-screen.
+   ════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .board-view .stage {
+    padding: 6px 8px 8px;
+  }
+
+  /* chain strip: it's the board's nav on mobile, so keep it but tighten it */
+  .board-view .chain-strip {
+    gap: 8px;
+    padding: 7px 10px;
+  }
+  .board-view .chain-strip .strip-lbl {
+    display: none;
+  }
+
+  /* info bar: hover doesn't exist on touch, so the "hover a pedal" hint is
+     dead weight — the bar only earns its height once a pedal's ⓘ is pinned */
+  .board-view .info-bar {
+    padding: 0 10px;
+  }
+  .board-view .info-bar .i-empty {
+    display: none;
+  }
+
+  /* top bar: status on its own line, actions wrapped into an even grid so
+     every action is visible without a hidden horizontal swipe */
+  /* one column: the three groups stack instead of sharing a row */
+  .board-view .board-topbar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+  }
+  /* stacked: no need to reserve symmetric side tracks, just run left-to-right */
+  .board-view .board-topbar-status {
+    display: flex;
+    justify-content: flex-start;
+  }
+  .board-view .deck-patch-well {
+    width: auto;
+    flex: 1 1 auto;
+    justify-content: flex-start;
+  }
+  .board-view .board-topbar-left,
+  .board-view .board-topbar-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-left: 0;
+    justify-self: stretch;
+  }
+  .board-view .board-topbar-left .deck-btn,
+  .board-view .board-topbar-actions .deck-btn {
+    /* grow to share the row evenly; the basis is the natural icon+label width */
+    flex: 1 0 auto;
+    white-space: nowrap;
+  }
+  .board-view .board-topbar-left .deck-btn.quiet,
+  .board-view .board-topbar-actions .deck-btn.quiet {
+    flex: 0 0 auto;
+  }
+
+  /* bottom deck: fewer readouts, tighter spacing, clear of the iOS home bar */
+  .board-view .deck {
+    gap: 8px 12px;
+    padding: 10px 12px;
+    margin: 10px 2px 4px;
+    bottom: calc(8px + env(safe-area-inset-bottom));
+  }
+  .board-view .deck-live {
+    display: none;
+  }
+  /* Drop the IN/OUT level bars — they're a passive readout, and they're the
+     widest thing in the deck. The audio *controls* (AUDIO IN, MONITOR, output
+     device, stop) stay: nothing else in the board exposes them. */
+  .board-view .audio-meters {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .board-view .audio-meters .am-row {
+    display: none;
+  }
+  .board-view .audio-meters .am-out-select {
+    max-width: 120px;
+  }
+  .board-view .deck-status {
+    flex: 1 1 100%;
+  }
+  .board-view .deck-name {
+    max-width: 100%;
+  }
+  .board-view .deck-readouts {
+    flex: 1 1 100%;
+    gap: 12px;
+  }
+  .board-view .deck-vol {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .board-view .deck-vol-slider {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .board-view .deck-actions {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-left: 0;
+  }
+  .board-view .deck-actions .deck-btn {
+    flex: 1 0 auto;
+  }
+
+  /* deck popovers: fixed bottom sheets clamped to the viewport */
+  .board-view .deck-pop,
+  .board-view .deck-pop.wide {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    top: auto;
+    min-width: 0;
+    z-index: 60;
+    max-height: 70dvh;
+    overflow-y: auto;
+  }
+}
+
+/* Touch ergonomics for the board chrome buttons (see index.css for the
+   shared .ui-btn rule): deck/topbar buttons get real touch targets. */
+@media (pointer: coarse) {
+  .board-view .deck-btn {
+    min-height: 44px;
+    padding: 10px 12px;
+  }
+  .board-view .deck-btn.quiet {
+    padding: 10px;
+    min-width: 44px;
+  }
+  /* reserve the strip the ‹ › reorder arrows sit in, so they get full-size tap
+     targets without overlapping the bypass treadle above them */
+  .board-view .pedal {
+    padding-bottom: 50px;
+  }
+  .board-view .dp-btn {
+    min-height: 40px;
+    padding: 8px 12px;
+  }
+  .board-view .deck-meta-btn {
+    min-height: 44px;
   }
 }

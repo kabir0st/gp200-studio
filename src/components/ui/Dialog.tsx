@@ -18,17 +18,24 @@ interface DialogProps {
    *  className does NOT reliably override the default (stylesheet order
    *  wins, not class order); wide dialogs must set it here. */
   maxWidth?: string;
+  /** Tailwind padding utilities for the panel; same stylesheet-order caveat
+   *  as maxWidth, so padding overrides must come through here. */
+  padding?: string;
 }
 
+/* Mobile-first placements: bottom sheets hug the screen edges below sm
+ * (native-sheet feel, square bottom corners, safe-area padding for the iOS
+ * home indicator); center dialogs cap their height and scroll internally. */
 const OVERLAY_PLACEMENT: Record<'center' | 'bottom' | 'right', string> = {
-  center: 'justify-center items-center p-4',
-  bottom: 'justify-center items-end p-4',
+  center: 'justify-center items-center p-3 sm:p-4',
+  bottom: 'justify-center items-end p-0 sm:p-4',
   right: 'justify-end items-stretch',
 };
 
 const PANEL_PLACEMENT: Record<'center' | 'bottom' | 'right', string> = {
-  center: '',
-  bottom: '',
+  center: 'max-h-[90dvh] overflow-y-auto',
+  bottom:
+    'rounded-b-none sm:rounded-b-lg pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-6',
   right: 'h-full rounded-none overflow-y-auto',
 };
 
@@ -49,6 +56,7 @@ export function Dialog({
   role = 'dialog',
   placement = 'center',
   maxWidth = 'max-w-md',
+  padding = 'p-4 sm:p-6',
 }: DialogProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
@@ -116,7 +124,7 @@ export function Dialog({
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className={`${maxWidth} w-full p-6 focus:outline-none ${PANEL_PLACEMENT[placement]} ${className}`}
+        className={`${maxWidth} w-full ${padding} focus:outline-none ${PANEL_PLACEMENT[placement]} ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {children}

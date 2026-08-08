@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
@@ -8,7 +8,8 @@ import { PedalBoard } from '@/components/board/PedalBoard';
 import { isWidePedal, isWideSlot, splitRows } from '@/components/board/boardLayout';
 import { AudioEngineProvider } from '@/components/AudioEngineProvider';
 import { defaultLooperBindings } from '@/core/looperBindings';
-import { defaultDeviceSettings } from '@/core/deviceSettings';
+import { getPattern } from '@/core/drumMachine';
+import type { DrumMachineApi } from '@/hooks/useDrumMachine';
 import type { LooperApi } from '@/hooks/useLooper';
 
 // Minimal looper stub: the smoke tests never open the Loop Station drawer, so
@@ -18,13 +19,21 @@ const fakeLooper: LooperApi = {
   ready: false,
   tracks: [],
   isRecording: false,
+  isArmed: false,
   recordArmedTrack: null,
-  masterLoopLengthSec: null,
+  baseDurationSec: null,
+  cycleBars: 1,
+  cycleDurationSec: null,
   selectedTrack: null,
   anyPlaying: false,
   getPlayhead: () => 0,
+  getRecordElapsedSec: () => 0,
+  importing: false,
+  importAudioFile: vi.fn(async () => null),
   toggleRecord: vi.fn(),
   togglePlayAll: vi.fn(),
+  togglePlaySelected: vi.fn(),
+  toggleMuteSelected: vi.fn(),
   selectNextTrack: vi.fn(),
   selectPrevTrack: vi.fn(),
   selectTrack: vi.fn(),
@@ -36,6 +45,35 @@ const fakeLooper: LooperApi = {
   setMasterGain: vi.fn(),
 };
 
+// Inert drum machine stub, same rationale as fakeLooper: the smoke tests never
+// open the Drums drawer, they only need the top bar's playing readout.
+const fakeDrumMachine: DrumMachineApi = {
+  playing: false,
+  loading: false,
+  error: null,
+  kitId: 'acoustic',
+  patternId: 'rock-basic',
+  patternName: 'Basic Rock',
+  bpm: 100,
+  swing: 0,
+  signature: '4/4',
+  volume: 80,
+  getCurrentStep: () => -1,
+  steps: getPattern('rock-basic').steps,
+  mutedLanes: new Set(),
+  togglePlay: vi.fn(),
+  stop: vi.fn(),
+  setBpm: vi.fn(),
+  setSwing: vi.fn(),
+  setSignature: vi.fn(),
+  setVolume: vi.fn(),
+  selectKit: vi.fn(),
+  selectPattern: vi.fn(),
+  randomize: vi.fn(),
+  toggleStep: vi.fn(),
+  toggleLaneMute: vi.fn(),
+};
+
 // jsdom has no ResizeObserver (CableLayer uses it to re-measure jacks)
 class ResizeObserverStub {
   observe() {}
@@ -44,7 +82,7 @@ class ResizeObserverStub {
 }
 
 function loadFixture() {
-  const bytes = readFileSync(join(process.cwd(), 'prst/63-B American Idiot.prst'));
+  const bytes = readFileSync(join(process.cwd(), 'dumps/prts/01-A Start Pedal.prst'));
   return new PRSTDecoder(new Uint8Array(bytes)).decode();
 }
 
@@ -73,8 +111,6 @@ function renderBoard(overrides: Partial<Parameters<typeof PedalBoard>[0]> = {}) 
     onVolumeChange: vi.fn(),
     onPanChange: vi.fn(),
     onTempoChange: vi.fn(),
-    onImportFile: vi.fn(),
-    onExportRequest: vi.fn(),
     onCloseRequest: vi.fn(),
     onFxSendChange: vi.fn(),
     onFxReturnChange: vi.fn(),
@@ -83,7 +119,9 @@ function renderBoard(overrides: Partial<Parameters<typeof PedalBoard>[0]> = {}) 
     onCtrlBlockToggle: vi.fn(),
     onCtrlClear: vi.fn(),
     onOpenPatchManager: vi.fn(),
+    onPanelOpen: vi.fn(),
     looper: fakeLooper,
+    drumMachine: fakeDrumMachine,
     looperBindings: defaultLooperBindings,
     onLooperBindingsChange: vi.fn(),
     onLooperDrawerOpenChange: vi.fn(),
@@ -97,11 +135,6 @@ function renderBoard(overrides: Partial<Parameters<typeof PedalBoard>[0]> = {}) 
     sendCC: vi.fn(),
     ccChannel: 0,
     onCcChannelChange: vi.fn(),
-    deviceSettings: defaultDeviceSettings,
-    onDeviceModeChange: vi.fn(),
-    onDeviceTargetChange: vi.fn(),
-    onDeviceComboChange: vi.fn(),
-    onDeviceAutoCabChange: vi.fn(),
     onEnableAudio: vi.fn(),
     audioStarting: false,
     onConnectRequest: vi.fn(),
@@ -115,7 +148,11 @@ function renderBoard(overrides: Partial<Parameters<typeof PedalBoard>[0]> = {}) 
   return { preset, props, ...utils };
 }
 
-describe('PedalBoard (render smoke test)', () => {
+// dumps/ is gitignored (real device exports, not committed), so this suite only
+// runs on a machine that has them. Same convention as PRSTEncoder.test.ts.
+const HAS_FIXTURES = existsSync(join(process.cwd(), 'dumps/prts/01-A Start Pedal.prst'));
+
+describe.skipIf(!HAS_FIXTURES)('PedalBoard (render smoke test)', () => {
   beforeAll(() => {
     vi.stubGlobal('ResizeObserver', ResizeObserverStub);
   });

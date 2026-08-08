@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AudioMeterApi } from '@/hooks/useAudioMeter';
+import { track } from '@/core/analytics';
 import {
-  quantizeToMaster,
+  quantizeToBase,
+  barsForCapture,
+  cycleBars as widestBars,
   samplesToSeconds,
   nextBoundary,
   playhead,
 } from '@/core/looperTransport';
+import {
+  computePeaks,
+  peaksFromChannels,
+  bucketsForBars,
+  type Waveform,
+} from '@/core/waveformPeaks';
 
 // `new URL(..., import.meta.url)` (not a `?url` import): Vite always emits this
 // as a real, separately-fetchable asset file. A `?url` import to a small file
@@ -16,26 +25,53 @@ const recorderWorkletUrl = new URL('../audio/looper-recorder.worklet.js', import
 // Multi-track loop station built on the shared audio engine (useAudioMeter via
 // AudioEngineProvider). It taps the same GP-200 input source node, records raw
 // PCM through an AudioWorklet, and plays each track back as a looping
-// AudioBufferSourceNode. The first recorded track sets the master loop length;
-// later tracks are quantized to whole multiples of it and launched on the next
-// loop boundary so everything stays phase-locked. All timing math lives in the
-// pure `looperTransport` core; this hook is the Web Audio glue + React state.
+// AudioBufferSourceNode. Timing math lives in the pure `looperTransport` core;
+// waveform reduction in `waveformPeaks`. This hook is the Web Audio glue +
+// React state.
 //
-// Tracks are DYNAMIC: every record→stop cycle appends a new track (there is no
-// fixed slot count). The four transport controls the hardware bindings target:
-// toggleRecord (record new track / stop), togglePlayAll (play all / stop all),
-// selectNextTrack / selectPrevTrack (move the selection the UI and EXP pedal
-// operate on).
+// ── The length model (the part worth reading) ────────────────────────────────
+//
+//   BASE   one "bar". Set ONCE by the first thing that lands: an imported file
+//          takes its own length as the base, or — if you record before
+//          importing — the first free-running take does. Never changes after.
+//   CYCLE  the loop you hear and see: base x cycleBars, where cycleBars is the
+//          LARGEST bar count across all tracks. Recording a take longer than the
+//          current cycle GROWS it; deleting the take that was holding it wide
+//          shrinks it back.
+//
+// Every track is TILED to exactly one cycle and looped, so all sources share an
+// identical loop length and cannot drift apart — a 1-bar take under a 4-bar
+// cycle is stored as that bar repeated four times. Growth re-tiles and relaunches
+// everything on a boundary; the copy is a memcpy of already-decoded PCM and only
+// happens when the cycle actually changes, which is rare.
+//
+// Recording is boundary-aligned once a base exists: REC ARMS the take and
+// capture begins on the next cycle downbeat, so content always starts at cycle
+// position 0 and the timeline can draw it truthfully. With no base yet there is
+// no grid to wait for, so the first take rolls immediately.
+//
+// Tracks are DYNAMIC: every record->stop cycle appends a track, as does every
+// import. The four transport controls the hardware bindings target: toggleRecord,
+// togglePlayAll, selectNextTrack / selectPrevTrack.
 
-export type TrackState = 'empty' | 'recording' | 'playing' | 'stopped';
+export type TrackState = 'empty' | 'armed' | 'recording' | 'playing' | 'stopped';
+export type TrackKind = 'record' | 'import';
 
 export interface LooperTrack {
   id: number;
+  /** where the audio came from — drives the lane's colour and label */
+  kind: TrackKind;
+  /** "TAKE 1" for recordings, the file's name for imports */
+  label: string;
   state: TrackState;
   muted: boolean;
   hasAudio: boolean;
-  /** whole master-loop multiples this track spans (0 when empty) */
-  lengthLoops: number;
+  /** whole bars of content this track holds (0 while empty) */
+  bars: number;
+  /** content duration in seconds (bars x base) */
+  durationSec: number;
+  /** reduced peak envelope for the timeline; null until audio is finalised */
+  waveform: Waveform | null;
 }
 
 export interface LooperApi {
@@ -43,18 +79,35 @@ export interface LooperApi {
   ready: boolean;
   tracks: LooperTrack[];
   isRecording: boolean;
-  /** id of the track currently being recorded, or null */
+  /** true between hitting REC and the downbeat that starts capture */
+  isArmed: boolean;
+  /** id of the track currently being recorded/armed, or null */
   recordArmedTrack: number | null;
-  masterLoopLengthSec: number | null;
+  /** length of one bar in seconds; null until the first track lands */
+  baseDurationSec: number | null;
+  /** how many bars wide the loop currently is (1 when no tracks) */
+  cycleBars: number;
+  /** the full loop length in seconds; null until the first track lands */
+  cycleDurationSec: number | null;
   /** the track the UI highlights and Track +/- moves; null when no tracks */
   selectedTrack: number | null;
   anyPlaying: boolean;
-  /** 0..1 within the master loop; read inside rAF, not React state */
+  /** 0..1 within the cycle; read inside rAF, not React state */
   getPlayhead: () => number;
+  /** seconds captured so far in the take in progress (0 when not recording) */
+  getRecordElapsedSec: () => number;
+  /** true while an import is being decoded */
+  importing: boolean;
+  /** decode an audio file and add it as a track; resolves to an error or null */
+  importAudioFile: (file: File) => Promise<string | null>;
   /** record a NEW track, or stop the recording in progress */
   toggleRecord: () => void;
   /** stop every playing track, or restart all recorded tracks together */
   togglePlayAll: () => void;
+  /** Play/stop the selected track only (the footswitch-bound action). */
+  togglePlaySelected: () => void;
+  /** Mute/unmute the selected track only (the footswitch-bound action). */
+  toggleMuteSelected: () => void;
   selectNextTrack: () => void;
   selectPrevTrack: () => void;
   selectTrack: (trackId: number) => void;
@@ -70,16 +123,56 @@ export interface LooperApi {
 interface TrackNodes {
   gain: GainNode;
   gainValue: number;
-  buffer: AudioBuffer | null;
+  /** the track's own audio, exactly `bars` long */
+  content: AudioBuffer | null;
+  /** `content` tiled/truncated to exactly one cycle — what actually plays */
+  tiled: AudioBuffer | null;
   source: AudioBufferSourceNode | null;
-  lengthLoops: number;
+  bars: number;
+}
+
+/** Seconds of fade applied where a capture is trimmed, so the splice is silent. */
+const TRIM_FADE_SEC = 0.005;
+
+/**
+ * Ramp the last `TRIM_FADE_SEC` of a trimmed capture down to zero, in place.
+ * Rounding a take to the nearest bar can cut mid-waveform; without this the
+ * loop point ticks audibly on every pass.
+ */
+function fadeTail(samples: Float32Array, sampleRate: number): void {
+  const fade = Math.min(Math.round(TRIM_FADE_SEC * sampleRate), samples.length);
+  if (fade <= 1) return;
+  const start = samples.length - fade;
+  for (let i = 0; i < fade; i++) samples[start + i] *= 1 - i / fade;
+}
+
+/**
+ * Repeat `content` until it fills exactly `cycleSamples`, truncating any partial
+ * final repeat. Returns `content` untouched when it already is one cycle long,
+ * which is the common case for the track defining the cycle.
+ */
+function tileToCycle(ctx: BaseAudioContext, content: AudioBuffer, cycleSamples: number): AudioBuffer {
+  if (content.length === cycleSamples) return content;
+  const tiled = ctx.createBuffer(content.numberOfChannels, cycleSamples, content.sampleRate);
+  for (let ch = 0; ch < content.numberOfChannels; ch++) {
+    const src = content.getChannelData(ch);
+    const dst = tiled.getChannelData(ch);
+    for (let offset = 0; offset < cycleSamples; offset += content.length) {
+      const take = Math.min(content.length, cycleSamples - offset);
+      dst.set(take === content.length ? src : src.subarray(0, take), offset);
+    }
+  }
+  return tiled;
 }
 
 export function useLooper(engine: AudioMeterApi): LooperApi {
   const [tracks, setTracks] = useState<LooperTrack[]>([]);
   const [isRecording, setIsRecording] = useState(false);
+  const [isArmed, setIsArmed] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [recordArmedTrack, setRecordArmedTrack] = useState<number | null>(null);
-  const [masterLoopLengthSec, setMasterLoopLengthSec] = useState<number | null>(null);
+  const [baseDurationSec, setBaseDurationSec] = useState<number | null>(null);
+  const [cycleBars, setCycleBars] = useState(1);
   const [selectedTrack, setSelectedTrack] = useState<number | null>(null);
 
   // Ref mirrors so transport callbacks registered once (MIDI dispatch) always
@@ -99,13 +192,24 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
   // Recording accumulation + transport anchor.
   const recordChunksRef = useRef<Float32Array[]>([]);
   const recordingTrackRef = useRef<number | null>(null);
-  const masterSamplesRef = useRef<number | null>(null);
-  const transportStartRef = useRef<number>(0);
-  const loopDurationRef = useRef<number>(0);
+  const recordStartTimeRef = useRef(0);
+  const armTimerRef = useRef<number | null>(null);
+  // The length model: one bar, and how many bars wide the cycle is.
+  const baseSamplesRef = useRef<number | null>(null);
+  const cycleBarsRef = useRef(1);
+  const transportStartRef = useRef(0);
   const nextTrackIdRef = useRef(0);
+  const takeCountRef = useRef(0);
 
   const patchTrack = useCallback((id: number, next: Partial<LooperTrack>) => {
     setTracks((prev) => prev.map((t) => (t.id === id ? { ...t, ...next } : t)));
+  }, []);
+
+  /** Cycle length in seconds, straight off the refs (safe inside rAF). */
+  const cycleDuration = useCallback((): number => {
+    const ctx = graphCtxRef.current;
+    if (!ctx || baseSamplesRef.current === null) return 0;
+    return samplesToSeconds(baseSamplesRef.current * cycleBarsRef.current, ctx.sampleRate);
   }, []);
 
   // Build (or rebuild) the node graph for the engine's current context. Loads
@@ -150,7 +254,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     return true;
   }, [engine]);
 
-  /** Create the per-track gain chain for a newly recorded track. */
+  /** Create the per-track gain chain for a newly added track. */
   const createTrackNodes = useCallback((id: number): TrackNodes | null => {
     const ctx = graphCtxRef.current;
     const master = masterGainRef.current;
@@ -158,44 +262,147 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     const gain = ctx.createGain();
     gain.gain.value = 1;
     gain.connect(master);
-    const nodes: TrackNodes = { gain, gainValue: 1, buffer: null, source: null, lengthLoops: 0 };
+    const nodes: TrackNodes = {
+      gain,
+      gainValue: 1,
+      content: null,
+      tiled: null,
+      source: null,
+      bars: 0,
+    };
     trackNodesRef.current.set(id, nodes);
     return nodes;
   }, []);
 
-  // Launch a track's buffer looping. First track anchors the transport at
-  // ctx.currentTime; later tracks begin on the next master-loop boundary.
+  /**
+   * Launch a track's tiled buffer looping, entered at the CURRENT cycle phase
+   * rather than waiting for the next downbeat. Because every tiled buffer is
+   * exactly one cycle long, starting at phase p with offset p*cycle lands the
+   * track perfectly in sync immediately — so un-muting or re-playing a track
+   * mid-loop is instant instead of stalling for up to a full cycle.
+   */
   const startTrackPlayback = useCallback((id: number) => {
     const ctx = graphCtxRef.current;
     const nodes = trackNodesRef.current.get(id);
-    if (!ctx || !nodes?.buffer) return;
+    if (!ctx || !nodes?.tiled) return;
     nodes.source?.stop();
     nodes.source?.disconnect();
 
     const src = ctx.createBufferSource();
-    src.buffer = nodes.buffer;
+    src.buffer = nodes.tiled;
     src.loop = true;
     src.loopStart = 0;
-    src.loopEnd = nodes.buffer.duration;
+    src.loopEnd = nodes.tiled.duration;
     src.connect(nodes.gain);
 
-    let startAt = ctx.currentTime;
-    if (masterSamplesRef.current !== null && loopDurationRef.current > 0) {
-      startAt = nextBoundary(ctx.currentTime, transportStartRef.current, loopDurationRef.current);
-    }
-    src.start(startAt);
+    const duration = cycleDuration();
+    const phase = playhead(ctx.currentTime, transportStartRef.current, duration);
+    src.start(ctx.currentTime, phase * duration);
     nodes.source = src;
     patchTrack(id, { state: 'playing' });
-  }, [patchTrack]);
+  }, [cycleDuration, patchTrack]);
+
+  const stopTrack = useCallback((id: number) => {
+    const nodes = trackNodesRef.current.get(id);
+    if (nodes?.source) {
+      nodes.source.stop();
+      nodes.source.disconnect();
+      nodes.source = null;
+    }
+  }, []);
+
+  /**
+   * Recompute the cycle from the tracks present, re-tile every track to it and
+   * relaunch whatever was playing. Called after any add or delete: the cycle is
+   * DERIVED from the widest track, so this both grows it for a long new take and
+   * shrinks it again when that take is deleted.
+   */
+  const applyCycle = useCallback(() => {
+    const ctx = graphCtxRef.current;
+    const base = baseSamplesRef.current;
+    if (!ctx || base === null) return;
+
+    const bars: number[] = [];
+    for (const nodes of trackNodesRef.current.values()) {
+      if (nodes.content) bars.push(nodes.bars);
+    }
+    const nextBars = widestBars(bars);
+    const changed = nextBars !== cycleBarsRef.current;
+    cycleBarsRef.current = nextBars;
+    setCycleBars(nextBars);
+
+    const cycleSamples = base * nextBars;
+    const wasPlaying: number[] = [];
+    for (const [id, nodes] of trackNodesRef.current) {
+      if (!nodes.content) continue;
+      if (changed || !nodes.tiled) {
+        if (nodes.source) wasPlaying.push(id);
+        nodes.tiled = tileToCycle(ctx, nodes.content, cycleSamples);
+      }
+    }
+    if (!changed) return;
+
+    // The cycle length moved under the running sources, so they all have to be
+    // rebuilt. Re-anchor to now: the loop restarts from its downbeat, which is
+    // the natural "you just made the loop longer, here it goes from the top".
+    for (const id of wasPlaying) stopTrack(id);
+    transportStartRef.current = ctx.currentTime;
+    for (const id of wasPlaying) startTrackPlayback(id);
+  }, [startTrackPlayback, stopTrack]);
+
+  /**
+   * Install finalised audio on a track: set the base if this is the first thing
+   * in, record the bar count, reduce the waveform, then re-derive the cycle.
+   * Shared by both the recorder and the file importer.
+   */
+  const installTrackAudio = useCallback((
+    id: number,
+    content: AudioBuffer,
+    bars: number,
+    waveform: Waveform,
+  ) => {
+    const ctx = graphCtxRef.current;
+    const nodes = trackNodesRef.current.get(id);
+    if (!ctx || !nodes) return;
+    nodes.content = content;
+    nodes.bars = bars;
+    nodes.tiled = null; // forces applyCycle to (re)tile it
+    patchTrack(id, {
+      hasAudio: true,
+      bars,
+      durationSec: content.duration,
+      waveform,
+    });
+    applyCycle();
+    startTrackPlayback(id);
+  }, [applyCycle, patchTrack, startTrackPlayback]);
+
+  /** Drop a track that never got audio (empty capture, failed decode). */
+  const dropEmptyTrack = useCallback((trackId: number) => {
+    trackNodesRef.current.get(trackId)?.gain.disconnect();
+    trackNodesRef.current.delete(trackId);
+    setTracks((prev) => prev.filter((t) => t.id !== trackId));
+    setSelectedTrack((prev) => {
+      if (prev !== trackId) return prev;
+      const remaining = tracksRef.current.filter((t) => t.id !== trackId);
+      if (remaining.length === 0) return null;
+      return remaining[remaining.length - 1].id;
+    });
+  }, []);
 
   const stopRecord = useCallback(() => {
     const ctx = graphCtxRef.current;
     const recorder = recorderRef.current;
     const trackId = recordingTrackRef.current;
     if (!ctx || !recorder || trackId === null) return;
+    if (armTimerRef.current !== null) {
+      clearTimeout(armTimerRef.current);
+      armTimerRef.current = null;
+    }
     recorder.port.postMessage({ type: 'stop' });
     recordingTrackRef.current = null;
     setIsRecording(false);
+    setIsArmed(false);
     setRecordArmedTrack(null);
 
     const chunks = recordChunksRef.current;
@@ -210,83 +417,171 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     const trimmed = flat.subarray(Math.min(calibration, Math.max(0, captured - 1)));
 
     if (trimmed.length === 0) {
-      // Nothing captured: drop the just-created track again.
-      trackNodesRef.current.delete(trackId);
-      setTracks((prev) => prev.filter((t) => t.id !== trackId));
-      setSelectedTrack((prev) => {
-        if (prev !== trackId) return prev;
-        const remaining = tracksRef.current.filter((t) => t.id !== trackId);
-        if (remaining.length === 0) return null;
-        return remaining[remaining.length - 1].id;
-      });
+      dropEmptyTrack(trackId);
       return;
     }
 
-    let lengthSamples: number;
-    let lengthLoops: number;
-    if (masterSamplesRef.current === null) {
-      // First track defines the master loop length + transport anchor.
-      lengthSamples = trimmed.length;
-      lengthLoops = 1;
-      masterSamplesRef.current = lengthSamples;
-      loopDurationRef.current = samplesToSeconds(lengthSamples, ctx.sampleRate);
+    // Round to whole bars against the base — or, with no base yet, become it.
+    const { bars, samples } = quantizeToBase(trimmed.length, baseSamplesRef.current ?? 0);
+    if (baseSamplesRef.current === null) {
+      baseSamplesRef.current = samples;
       transportStartRef.current = ctx.currentTime;
-      setMasterLoopLengthSec(loopDurationRef.current);
-    } else {
-      const q = quantizeToMaster(trimmed.length, masterSamplesRef.current);
-      lengthSamples = q.samples;
-      lengthLoops = q.loops;
+      setBaseDurationSec(samplesToSeconds(samples, ctx.sampleRate));
     }
 
-    const buffer = ctx.createBuffer(1, lengthSamples, ctx.sampleRate);
-    buffer.copyToChannel(trimmed.subarray(0, Math.min(trimmed.length, lengthSamples)), 0);
-    const nodes = trackNodesRef.current.get(trackId);
-    if (!nodes) return;
-    nodes.buffer = buffer;
-    nodes.lengthLoops = lengthLoops;
-    patchTrack(trackId, { hasAudio: true, lengthLoops });
-    startTrackPlayback(trackId);
-  }, [patchTrack, startTrackPlayback]);
+    // Pad (short) or truncate (long) to the exact bar length, fading a cut so
+    // the loop point does not click.
+    const content = ctx.createBuffer(1, samples, ctx.sampleRate);
+    const fitted = new Float32Array(samples);
+    fitted.set(trimmed.subarray(0, Math.min(trimmed.length, samples)));
+    if (trimmed.length > samples) fadeTail(fitted, ctx.sampleRate);
+    content.copyToChannel(fitted, 0);
+
+    installTrackAudio(trackId, content, bars, computePeaks(fitted, bucketsForBars(bars)));
+  }, [dropEmptyTrack, installTrackAudio]);
 
   const startRecordNewTrack = useCallback(() => {
     void (async () => {
       const ok = await ensureGraph();
+      const ctx = graphCtxRef.current;
       const recorder = recorderRef.current;
-      if (!ok || !recorder || recordingTrackRef.current !== null) return;
+      if (!ok || !ctx || !recorder || recordingTrackRef.current !== null) return;
       const trackId = nextTrackIdRef.current;
       nextTrackIdRef.current += 1;
+      takeCountRef.current += 1;
       if (!createTrackNodes(trackId)) return;
       recordChunksRef.current = [];
       recordingTrackRef.current = trackId;
-      setIsRecording(true);
       setRecordArmedTrack(trackId);
       setTracks((prev) => [
         ...prev,
-        { id: trackId, state: 'recording', muted: false, hasAudio: false, lengthLoops: 0 },
+        {
+          id: trackId,
+          kind: 'record',
+          label: `TAKE ${takeCountRef.current}`,
+          state: 'armed',
+          muted: false,
+          hasAudio: false,
+          bars: 0,
+          durationSec: 0,
+          waveform: null,
+        },
       ]);
       setSelectedTrack(trackId);
-      recorder.port.postMessage({ type: 'start' });
+
+      const begin = () => {
+        armTimerRef.current = null;
+        // A stop between arming and the downbeat cancels the take.
+        if (recordingTrackRef.current !== trackId) return;
+        recordStartTimeRef.current = ctx.currentTime;
+        setIsArmed(false);
+        setIsRecording(true);
+        patchTrack(trackId, { state: 'recording' });
+        recorder.port.postMessage({ type: 'start' });
+      };
+
+      // No base yet means no grid to wait for: roll immediately and let this
+      // take define the bar. Otherwise arm and drop in on the next downbeat.
+      const duration = cycleDuration();
+      if (baseSamplesRef.current === null || duration <= 0) {
+        begin();
+        return;
+      }
+      setIsArmed(true);
+      const at = nextBoundary(ctx.currentTime, transportStartRef.current, duration);
+      armTimerRef.current = window.setTimeout(begin, Math.max(0, (at - ctx.currentTime) * 1000));
     })();
-  }, [createTrackNodes, ensureGraph]);
+  }, [createTrackNodes, cycleDuration, ensureGraph, patchTrack]);
 
   /** Record a new track, or stop (and keep) the recording in progress. */
   const toggleRecord = useCallback(() => {
     if (recordingTrackRef.current !== null) stopRecord();
-    else startRecordNewTrack();
+    else {
+      // Instrumented here rather than in LooperPanel: useLooperTriggers drives
+      // the same call for MIDI-learned footswitches, and a panel-level event
+      // would miss every hands-free loop — arguably the main way this gets used.
+      track('looper_record', { tracks: tracksRef.current.length });
+      startRecordNewTrack();
+    }
   }, [startRecordNewTrack, stopRecord]);
 
-  const stopTrack = useCallback((id: number) => {
-    const nodes = trackNodesRef.current.get(id);
-    if (nodes?.source) {
-      nodes.source.stop();
-      nodes.source.disconnect();
-      nodes.source = null;
+  /**
+   * Decode an audio file and add it as a track. The FIRST import sets the base
+   * bar; later ones are rounded to whole bars like any take. Stereo is preserved
+   * — only the recorder's own capture is mono.
+   */
+  const importAudioFile = useCallback(async (file: File): Promise<string | null> => {
+    setImporting(true);
+    try {
+      const ok = await ensureGraph();
+      const ctx = graphCtxRef.current;
+      if (!ok || !ctx) return 'Enable audio capture first.';
+
+      let decoded: AudioBuffer;
+      try {
+        decoded = await ctx.decodeAudioData(await file.arrayBuffer());
+      } catch {
+        return `Could not decode "${file.name}" — try WAV, MP3, OGG or FLAC.`;
+      }
+      if (decoded.length === 0) return `"${file.name}" contains no audio.`;
+      // The context can close while a long file decodes.
+      if (graphCtxRef.current !== ctx) return 'Audio capture stopped during import.';
+
+      const trackId = nextTrackIdRef.current;
+      nextTrackIdRef.current += 1;
+      if (!createTrackNodes(trackId)) return 'Could not create the track.';
+      setTracks((prev) => [
+        ...prev,
+        {
+          id: trackId,
+          kind: 'import',
+          label: file.name,
+          state: 'stopped',
+          muted: false,
+          hasAudio: false,
+          bars: 0,
+          durationSec: 0,
+          waveform: null,
+        },
+      ]);
+      setSelectedTrack(trackId);
+
+      const bars = baseSamplesRef.current === null
+        ? 1
+        : barsForCapture(decoded.length, baseSamplesRef.current);
+      if (baseSamplesRef.current === null) {
+        // First thing in: the file's own length IS the bar, used verbatim.
+        baseSamplesRef.current = decoded.length;
+        transportStartRef.current = ctx.currentTime;
+        setBaseDurationSec(decoded.duration);
+      }
+      const samples = baseSamplesRef.current * bars;
+
+      // Fit to whole bars. An exact fit (always true for the first import)
+      // reuses the decoded buffer untouched.
+      let content = decoded;
+      if (decoded.length !== samples) {
+        content = ctx.createBuffer(decoded.numberOfChannels, samples, ctx.sampleRate);
+        for (let ch = 0; ch < decoded.numberOfChannels; ch++) {
+          const fitted = new Float32Array(samples);
+          fitted.set(decoded.getChannelData(ch).subarray(0, Math.min(decoded.length, samples)));
+          if (decoded.length > samples) fadeTail(fitted, ctx.sampleRate);
+          content.copyToChannel(fitted, ch);
+        }
+      }
+
+      const channels: Float32Array[] = [];
+      for (let ch = 0; ch < content.numberOfChannels; ch++) channels.push(content.getChannelData(ch));
+      installTrackAudio(trackId, content, bars, peaksFromChannels(channels, bucketsForBars(bars)));
+      return null;
+    } finally {
+      setImporting(false);
     }
-  }, []);
+  }, [createTrackNodes, ensureGraph, installTrackAudio]);
 
   const togglePlay = useCallback((id: number) => {
     const nodes = trackNodesRef.current.get(id);
-    if (!nodes?.buffer) return;
+    if (!nodes?.tiled) return;
     if (nodes.source) {
       stopTrack(id);
       patchTrack(id, { state: 'stopped' });
@@ -294,6 +589,18 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
       startTrackPlayback(id);
     }
   }, [patchTrack, startTrackPlayback, stopTrack]);
+
+  /**
+   * Play/stop ONLY the selected track — what the bound footswitch drives.
+   * Deliberately not togglePlayAll: a stomp acts on the track the ◀ ▶ switches
+   * have selected, leaving the rest of the loop playing underneath. Reads the
+   * ref, not state, because the MIDI tap holds a stable looper ref.
+   */
+  const togglePlaySelected = useCallback(() => {
+    const id = selectedTrackRef.current;
+    if (id === null) return;
+    togglePlay(id);
+  }, [togglePlay]);
 
   /** Stop everything, or restart every recorded track phase-locked. */
   const togglePlayAll = useCallback(() => {
@@ -342,17 +649,27 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     patchTrack(id, { muted });
   }, [patchTrack]);
 
+  /** Mute/unmute ONLY the selected track — the footswitch counterpart of the
+   *  per-row MUTE button, same selected-track scope as togglePlaySelected.
+   *  Declared after setMute so the dep array isn't a TDZ reference. */
+  const toggleMuteSelected = useCallback(() => {
+    const id = selectedTrackRef.current;
+    if (id === null) return;
+    const track = tracksRef.current.find((t) => t.id === id);
+    if (!track) return;
+    setMute(id, !track.muted);
+  }, [setMute]);
+
   const resetTransportIfEmpty = useCallback(() => {
-    let anyAudio = false;
     for (const nodes of trackNodesRef.current.values()) {
-      if (nodes.buffer) anyAudio = true;
+      if (nodes.content) return;
     }
-    if (!anyAudio) {
-      masterSamplesRef.current = null;
-      loopDurationRef.current = 0;
-      transportStartRef.current = 0;
-      setMasterLoopLengthSec(null);
-    }
+    baseSamplesRef.current = null;
+    cycleBarsRef.current = 1;
+    transportStartRef.current = 0;
+    takeCountRef.current = 0;
+    setBaseDurationSec(null);
+    setCycleBars(1);
   }, []);
 
   /** Remove a track entirely (tracks are dynamic; clearing deletes the row). */
@@ -363,7 +680,13 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     trackNodesRef.current.delete(id);
     if (recordingTrackRef.current === id) {
       recordingTrackRef.current = null;
+      if (armTimerRef.current !== null) {
+        clearTimeout(armTimerRef.current);
+        armTimerRef.current = null;
+      }
+      recorderRef.current?.port.postMessage({ type: 'stop' });
       setIsRecording(false);
+      setIsArmed(false);
       setRecordArmedTrack(null);
     }
     const remaining = tracksRef.current.filter((t) => t.id !== id);
@@ -373,20 +696,30 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
       if (remaining.length === 0) return null;
       return remaining[remaining.length - 1].id;
     });
+    // Deleting the widest track narrows the loop back down.
+    applyCycle();
     resetTransportIfEmpty();
-  }, [resetTransportIfEmpty, stopTrack]);
+  }, [applyCycle, resetTransportIfEmpty, stopTrack]);
 
   const clearAll = useCallback(() => {
     for (const track of tracksRef.current) stopTrack(track.id);
     for (const nodes of trackNodesRef.current.values()) nodes.gain.disconnect();
     trackNodesRef.current = new Map();
+    if (armTimerRef.current !== null) {
+      clearTimeout(armTimerRef.current);
+      armTimerRef.current = null;
+    }
+    recorderRef.current?.port.postMessage({ type: 'stop' });
     recordingTrackRef.current = null;
-    masterSamplesRef.current = null;
-    loopDurationRef.current = 0;
+    baseSamplesRef.current = null;
+    cycleBarsRef.current = 1;
     transportStartRef.current = 0;
+    takeCountRef.current = 0;
     setIsRecording(false);
+    setIsArmed(false);
     setRecordArmedTrack(null);
-    setMasterLoopLengthSec(null);
+    setBaseDurationSec(null);
+    setCycleBars(1);
     setTracks([]);
     setSelectedTrack(null);
   }, [stopTrack]);
@@ -408,14 +741,24 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
 
   const getPlayhead = useCallback(() => {
     const ctx = graphCtxRef.current;
-    if (!ctx || masterSamplesRef.current === null) return 0;
-    return playhead(ctx.currentTime, transportStartRef.current, loopDurationRef.current);
+    if (!ctx || baseSamplesRef.current === null) return 0;
+    return playhead(ctx.currentTime, transportStartRef.current, cycleDuration());
+  }, [cycleDuration]);
+
+  const getRecordElapsedSec = useCallback(() => {
+    const ctx = graphCtxRef.current;
+    if (!ctx || recordingTrackRef.current === null || recordStartTimeRef.current === 0) return 0;
+    return Math.max(0, ctx.currentTime - recordStartTimeRef.current);
   }, []);
 
   // Tear down the graph and reset when the audio engine goes inactive (the
   // context is closed by useAudioMeter.disable, invalidating every node).
   useEffect(() => {
     if (engine.active) return;
+    if (armTimerRef.current !== null) {
+      clearTimeout(armTimerRef.current);
+      armTimerRef.current = null;
+    }
     recorderRef.current = null;
     masterGainRef.current = null;
     trackNodesRef.current = new Map();
@@ -423,27 +766,45 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     workletLoadRef.current = null;
     recordChunksRef.current = [];
     recordingTrackRef.current = null;
-    masterSamplesRef.current = null;
-    loopDurationRef.current = 0;
+    baseSamplesRef.current = null;
+    cycleBarsRef.current = 1;
     transportStartRef.current = 0;
+    takeCountRef.current = 0;
     setIsRecording(false);
+    setIsArmed(false);
     setRecordArmedTrack(null);
-    setMasterLoopLengthSec(null);
+    setBaseDurationSec(null);
+    setCycleBars(1);
     setTracks([]);
     setSelectedTrack(null);
   }, [engine.active]);
+
+  // Never leave an arm timer behind on unmount.
+  useEffect(() => () => {
+    if (armTimerRef.current !== null) clearTimeout(armTimerRef.current);
+  }, []);
+
+  const cycleDurationSec = baseDurationSec === null ? null : baseDurationSec * cycleBars;
 
   return {
     ready: engine.active,
     tracks,
     isRecording,
+    isArmed,
     recordArmedTrack,
-    masterLoopLengthSec,
+    baseDurationSec,
+    cycleBars,
+    cycleDurationSec,
     selectedTrack,
     anyPlaying: tracks.some((track) => track.state === 'playing'),
     getPlayhead,
+    getRecordElapsedSec,
+    importing,
+    importAudioFile,
     toggleRecord,
     togglePlayAll,
+    togglePlaySelected,
+    toggleMuteSelected,
     selectNextTrack,
     selectPrevTrack,
     selectTrack,

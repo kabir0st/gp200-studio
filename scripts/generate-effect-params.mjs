@@ -47,7 +47,11 @@ function parseAttrs(str) {
 }
 
 // Parse children (Knob, Switch, Combox) from body
-function parseParams(body) {
+function parseParams(rawBody) {
+  // Strip XML comments first: the regex parsing below would otherwise
+  // resurrect commented-out params (Slapback's disabled Sync switch shares
+  // idx 3 with the live Trail switch and produced duplicate React keys).
+  const body = rawBody.replace(/<!--[\s\S]*?-->/g, '');
   const params = [];
 
   // Parse Knob and Slider elements (same structure, both render as sliders)
