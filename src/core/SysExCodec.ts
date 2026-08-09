@@ -773,6 +773,13 @@ export const SysExCodec = {
     // Every payload field is nibble-split (4 bits per byte, LOW nibble first)
     // so no data byte can exceed 0x7F. Note this is NOT nibbleEncode, which
     // packs a byte array high-nibble-first.
+    //
+    // KNOWN WRONG for mask bits 4-7 (NR/CAB/EQ/MOD → byte [47]). The capture
+    // only ever exercised bits 0, 2 and 10, i.e. bytes [46] and [48]; [47] is
+    // interpolation, and hardware testing 2026-08-08 shows the device ignores
+    // it. A rival model — [46] carrying the whole low byte — fits every
+    // captured frame equally well. Needs an EQ/MOD capture to settle;
+    // docs/protocol-capture.md §3.
     msg[38] = ctrlIndex & 0x0F;
     msg[39] = (ctrlIndex >> 4) & 0x0F;
     msg[40] = state & 0x0F;

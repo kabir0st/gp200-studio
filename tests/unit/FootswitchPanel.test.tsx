@@ -141,6 +141,10 @@ describe.skipIf(!HAS_FIXTURES)('FootswitchPanel', () => {
     );
     expect(getByText(/sent to the connected GP-200 straight away/)).toBeTruthy();
     expect(getByText(/SAVE TO/)).toBeTruthy();
+    // Bits 4-7 ride in the one wire nibble the capture never exercised, and
+    // hardware testing showed the device ignores it — say so rather than
+    // claiming every module syncs.
+    expect(getByText(/NR, CAB, EQ, MOD/)).toBeTruthy();
   });
 
   it('shows no device hint while disconnected', () => {

@@ -17,6 +17,17 @@ const BLOCK_COUNT = 11;
 const CTRL_INDICES = Array.from({ length: CTRL_COUNT }, (_, ctrlIndex) => ctrlIndex);
 const BLOCK_INDICES = Array.from({ length: BLOCK_COUNT }, (_, blockIndex) => blockIndex);
 
+/**
+ * Mask bits 4-7 travel in SysEx byte [47] of the CTRL write, the one nibble
+ * the dumps/ctrl-assignment capture never exercised (it covered bits 0, 2 and
+ * 10 only). Hardware testing 2026-08-08 showed the device ignores whatever we
+ * put there, so these four modules save to the patch but don't sync live.
+ * Derived from the block table rather than spelled out, so it tracks
+ * SLOT_MODULES. Delete once the EQ/MOD capture lands (docs §3).
+ */
+const UNCONFIRMED_BLOCKS = [4, 5, 6, 7];
+const UNCONFIRMED_MODULES = UNCONFIRMED_BLOCKS.map(getSlotModule);
+
 function assignmentsOf(preset: GP200Preset): CtrlAssignment[] {
   return preset.ctrlAssignments ?? defaultCtrlAssignments();
 }
@@ -222,13 +233,18 @@ export function FootswitchPanel({
       `${selectedModules.join(', ')}.`;
   }
 
-  // The live CTRL write (0x12/0x14) is decoded and implemented, so edits reach
-  // the device immediately; SAVE TO then persists them from the edit buffer.
+  // The live CTRL write (0x12/0x14) is decoded and implemented, but only the
+  // mask bits the capture actually exercised are confirmed on the wire: bits
+  // 0-3 (byte [46]) and 8-10 (byte [48]). Bits 4-7 — NR, CAB, EQ, MOD — ride
+  // in byte [47], which the editor was never observed writing, and hardware
+  // testing 2026-08-08 showed the device ignores them. Pending a capture of
+  // an EQ/MOD assignment; see docs/protocol-capture.md §3.
   let deviceHint = '';
   if (connected) {
     deviceHint =
-      ' Changes are sent to the connected GP-200 straight away — use SAVE TO ' +
-      'to keep them in the patch.';
+      ` Changes are sent to the connected GP-200 straight away — except ` +
+      `${UNCONFIRMED_MODULES.join(', ')}, which are saved with the patch but ` +
+      `don't reach the pedal live yet. Use SAVE TO to keep changes in the patch.`;
   }
 
   return (
