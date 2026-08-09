@@ -5,15 +5,16 @@ import { fireEvent, render } from '@testing-library/react';
 import { PRSTDecoder } from '@/core/PRSTDecoder';
 import { FootswitchPanel } from '@/components/FootswitchPanel';
 
-// Real device export; CTRL masks: PRE, EQ, DST, MOD, DLY, RVB, none, bit-11.
+// Real device export; CTRL masks: PRE, EQ, DST, MOD, DLY, RVB, none, FX LOOP.
 function loadFixture() {
   const bytes = readFileSync(join(process.cwd(), 'dumps/prts/01-A Start Pedal.prst'));
   return new PRSTDecoder(new Uint8Array(bytes)).decode();
 }
 
-// Module name from a pedal card's title, e.g. "CTRL 2 → EQ: Guitar EQ 1" → "EQ".
+// Module label from a pedal card's title, e.g. "CTRL 2 → EQ: Guitar EQ 1" → "EQ"
+// or "CTRL 8 → FX LOOP: …" → "FX LOOP" (labels can contain a space).
 function moduleOf(card: Element): string {
-  return /→ (\w+):/.exec(card.getAttribute('title') ?? '')?.[1] ?? '';
+  return /→ (.+?):/.exec(card.getAttribute('title') ?? '')?.[1] ?? '';
 }
 
 // dumps/ is gitignored (real device exports, not committed), so this suite only
@@ -21,7 +22,7 @@ function moduleOf(card: Element): string {
 const HAS_FIXTURES = existsSync(join(process.cwd(), 'dumps/prts/01-A Start Pedal.prst'));
 
 describe.skipIf(!HAS_FIXTURES)('FootswitchPanel', () => {
-  it('renders 8 footswitch selectors and 11 pedal cards', () => {
+  it('renders 8 footswitch selectors and 12 pedal cards (11 blocks + FX LOOP)', () => {
     const preset = loadFixture();
     const { container, getAllByRole } = render(
       <FootswitchPanel
@@ -31,7 +32,7 @@ describe.skipIf(!HAS_FIXTURES)('FootswitchPanel', () => {
     );
     expect(getAllByRole('radio')).toHaveLength(8);
     const cards = container.querySelectorAll('button[aria-pressed]');
-    expect(cards).toHaveLength(11);
+    expect(cards).toHaveLength(12);
   });
 
   it('shows the selected CTRL mask on the pedal cards, by module name', () => {
@@ -54,9 +55,9 @@ describe.skipIf(!HAS_FIXTURES)('FootswitchPanel', () => {
     // CTRL 5 mask 0x100 → exactly DLY.
     fireEvent.click(getByRole('radio', { name: /CTRL 5/ }));
     expect(pressed().map(moduleOf)).toEqual(['DLY']);
-    // CTRL 8 mask 0x800 (bit 11, beyond the 11 modeled blocks) → nothing lit.
+    // CTRL 8 mask 0x800 → bit 11 = the FX LOOP target (a real export value).
     fireEvent.click(getByRole('radio', { name: /CTRL 8/ }));
-    expect(pressed()).toHaveLength(0);
+    expect(pressed().map(moduleOf)).toEqual(['FX LOOP']);
   });
 
   it('reports card toggles with ctrl index, block index, and next state', () => {
@@ -141,10 +142,10 @@ describe.skipIf(!HAS_FIXTURES)('FootswitchPanel', () => {
     );
     expect(getByText(/sent to the connected GP-200 straight away/)).toBeTruthy();
     expect(getByText(/SAVE TO/)).toBeTruthy();
-    // Bits 4-7 ride in the one wire nibble the capture never exercised, and
-    // hardware testing showed the device ignores it — say so rather than
-    // claiming every module syncs.
-    expect(getByText(/NR, CAB, EQ, MOD/)).toBeTruthy();
+    // Bits 4-7 (NR/CAB/EQ/MOD) and bit 11 (FX LOOP) were never seen on the
+    // wire, so the hint holds them back from the "synced live" promise rather
+    // than claiming every target reaches the pedal.
+    expect(getByText(/NR, CAB, EQ, MOD, FX LOOP/)).toBeTruthy();
   });
 
   it('shows no device hint while disconnected', () => {

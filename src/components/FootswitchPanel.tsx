@@ -12,21 +12,40 @@ interface FootswitchPanelProps {
 }
 
 const CTRL_COUNT = 8;
-const BLOCK_COUNT = 11;
+// The 11 chain effect blocks (bits 0-10) plus the FX LOOP insert (bit 11), which
+// a CTRL footswitch can toggle like any block. FX LOOP is a routing element, not
+// an effect module, so it has no SLOT_MODULES / getSlotModule entry of its own.
+const FX_LOOP_BLOCK = 11;
+const FX_LOOP_LABEL = 'FX LOOP';
+const BLOCK_COUNT = 12;
 
 const CTRL_INDICES = Array.from({ length: CTRL_COUNT }, (_, ctrlIndex) => ctrlIndex);
 const BLOCK_INDICES = Array.from({ length: BLOCK_COUNT }, (_, blockIndex) => blockIndex);
 
+// Blocks 0-10 map to a real effect module; block 11 is the FX loop insert. Its
+// color lives in MODULE_COLORS under FX_LOOP_LABEL (the sanctioned data-driven
+// color source), so no hex is hardcoded here.
+function blockLabel(blockIndex: number): string {
+  if (blockIndex === FX_LOOP_BLOCK) return FX_LOOP_LABEL;
+  return getSlotModule(blockIndex);
+}
+
+function blockEffectName(blockIndex: number, effectName: string | undefined): string {
+  if (blockIndex === FX_LOOP_BLOCK) return 'Effects loop send/return';
+  return effectName ?? '';
+}
+
 /**
- * Mask bits 4-7 travel in SysEx byte [47] of the CTRL write, the one nibble
- * the dumps/ctrl-assignment capture never exercised (it covered bits 0, 2 and
- * 10 only). Hardware testing 2026-08-08 showed the device ignores whatever we
- * put there, so these four modules save to the patch but don't sync live.
- * Derived from the block table rather than spelled out, so it tracks
- * SLOT_MODULES. Delete once the EQ/MOD capture lands (docs §3).
+ * Every block persists correctly in the patch — confirmed by decoding real
+ * device exports (dumps/prts/01-A carries EQ, MOD and the FX-loop bit), so this
+ * caveat is about LIVE sync only, never patch save. The live CTRL write
+ * (0x12/0x14) is capture-confirmed for bits 0-3 (byte [46]) and 8-10 (byte
+ * [48]); bits 4-7 (NR/CAB/EQ/MOD, byte [47]) and bit 11 (FX LOOP) were never
+ * seen on the wire, so they save with the patch but their live-sync is
+ * unverified. See docs/windows-exe-reversing.md.
  */
-const UNCONFIRMED_BLOCKS = [4, 5, 6, 7];
-const UNCONFIRMED_MODULES = UNCONFIRMED_BLOCKS.map(getSlotModule);
+const LIVE_UNVERIFIED_BLOCKS = [4, 5, 6, 7, FX_LOOP_BLOCK];
+const LIVE_UNVERIFIED_LABELS = LIVE_UNVERIFIED_BLOCKS.map(blockLabel);
 
 function assignmentsOf(preset: GP200Preset): CtrlAssignment[] {
   return preset.ctrlAssignments ?? defaultCtrlAssignments();
@@ -39,7 +58,7 @@ function blockBit(blockIndex: number): number {
 function assignedModules(mask: number): string[] {
   return BLOCK_INDICES
     .filter((blockIndex) => (mask & blockBit(blockIndex)) !== 0)
-    .map((blockIndex) => getSlotModule(blockIndex));
+    .map((blockIndex) => blockLabel(blockIndex));
 }
 
 interface FootswitchButtonProps {
@@ -133,7 +152,7 @@ function PedalCard({
   ctrlIndex,
   onToggle,
 }: PedalCardProps) {
-  const moduleName = getSlotModule(blockIndex);
+  const moduleName = blockLabel(blockIndex);
   const colors = MODULE_COLORS[moduleName];
   // Data-driven per-module tint via inline style: the sanctioned second
   // color source (see docs/design-system.md).
@@ -193,8 +212,9 @@ function PedalCard({
 
 /**
  * Per-patch CTRL footswitch assignment: each of the GP-200's 8 assignable
- * CTRL footswitches toggles any subset of the 11 effect blocks. Stored in
- * the preset's controls tail (controlRecords.ts) and saved with the patch.
+ * CTRL footswitches toggles any subset of the 11 effect blocks plus the FX
+ * loop insert (bit 11). Stored in the preset's controls tail
+ * (controlRecords.ts) and saved with the patch.
  *
  * UX model mirrors the hardware: pick a footswitch from the bank on top,
  * then tap the pedals below that the switch should stomp on/off together.
@@ -233,17 +253,15 @@ export function FootswitchPanel({
       `${selectedModules.join(', ')}.`;
   }
 
-  // The live CTRL write (0x12/0x14) is decoded and implemented, but only the
-  // mask bits the capture actually exercised are confirmed on the wire: bits
-  // 0-3 (byte [46]) and 8-10 (byte [48]). Bits 4-7 — NR, CAB, EQ, MOD — ride
-  // in byte [47], which the editor was never observed writing, and hardware
-  // testing 2026-08-08 showed the device ignores them. Pending a capture of
-  // an EQ/MOD assignment; see docs/protocol-capture.md §3.
+  // Live-sync caveat only — every block saves to the patch correctly (see the
+  // LIVE_UNVERIFIED_BLOCKS note above). Bits 4-7 (byte [47]) and bit 11 (FX
+  // LOOP) were never seen on the wire, so they're held back from the "sent
+  // live" promise until a capture confirms them; see docs/windows-exe-reversing.md.
   let deviceHint = '';
   if (connected) {
     deviceHint =
       ` Changes are sent to the connected GP-200 straight away — except ` +
-      `${UNCONFIRMED_MODULES.join(', ')}, which are saved with the patch but ` +
+      `${LIVE_UNVERIFIED_LABELS.join(', ')}, which are saved with the patch but ` +
       `don't reach the pedal live yet. Use SAVE TO to keep changes in the patch.`;
   }
 
@@ -299,7 +317,7 @@ export function FootswitchPanel({
             <PedalCard
               key={blockIndex}
               blockIndex={blockIndex}
-              effectName={slotInfo?.effectName ?? ''}
+              effectName={blockEffectName(blockIndex, slotInfo?.effectName)}
               bypassed={slotInfo?.bypassed ?? false}
               active={(selectedMask & blockBit(blockIndex)) !== 0}
               ctrlIndex={selectedCtrl}
