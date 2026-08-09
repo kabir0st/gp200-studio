@@ -745,27 +745,33 @@ describe('SysExCodec: buildCtrlAssignment', () => {
     expect(msg[53]).toBe(0xF7);
   });
 
-  it('7+1-splits each mask byte across [46..49]', () => {
-    // Each payload byte b travels as (b & 0x7F, b >> 7) so no data byte
-    // exceeds 0x7F. 0xABC exercises both bytes and the bit-7 carry at once:
-    // low byte 0xBC -> [46]=0x3C, [47]=1; high byte 0x0A -> [48]=0x0A, [49]=0.
+  it('nibble-encodes each mask byte high-first across [45..48]', () => {
+    // Each mask byte travels as (b >> 4, b & 0xF) — the encoding the official
+    // editor uses (fs-1-mod-assign-unassign.pcapng, 2026-08-09). 0xABC
+    // exercises every nibble slot: low byte 0xBC -> [45]=0xB, [46]=0xC;
+    // high byte 0x0A -> [47]=0x0, [48]=0xA.
     const msg = SysExCodec.buildCtrlAssignment(3, 0xABC, 0);
-    expect([msg[46], msg[47], msg[48], msg[49]]).toEqual([0x3C, 0x01, 0x0A, 0x00]);
+    expect([msg[45], msg[46], msg[47], msg[48]]).toEqual([0x0B, 0x0C, 0x00, 0x0A]);
     expect(msg.every((byte, i) => i === 0 || i === 53 || byte <= 0x7F)).toBe(true);
   });
 
-  it('sends bits 4-6 (NR/CAB/EQ) whole in [46], MOD as the [47] carry', () => {
-    // NR/CAB/EQ in [46] are hardware-confirmed live (2026-08-09). The [47]
-    // carry for MOD is the only self-consistent 7-bit placement left but the
-    // device is known to ignore it — see docs/protocol-capture.md Gap A.
-    expect(SysExCodec.buildCtrlAssignment(0, 0x010, 0).slice(46, 50))
-      .toEqual(new Uint8Array([0x10, 0x00, 0x00, 0x00])); // NR
-    expect(SysExCodec.buildCtrlAssignment(0, 0x020, 0).slice(46, 50))
-      .toEqual(new Uint8Array([0x20, 0x00, 0x00, 0x00])); // CAB
-    expect(SysExCodec.buildCtrlAssignment(0, 0x040, 0).slice(46, 50))
-      .toEqual(new Uint8Array([0x40, 0x00, 0x00, 0x00])); // EQ
-    expect(SysExCodec.buildCtrlAssignment(0, 0x080, 0).slice(46, 50))
-      .toEqual(new Uint8Array([0x00, 0x01, 0x00, 0x00])); // MOD
+  it('puts MOD (bit 7) in the low byte high nibble [45], like the editor', () => {
+    // Verbatim mask nibbles from fs-1-mod-assign-unassign.pcapng: the editor
+    // assigned MOD on a CTRL 1 that already carried FX LOOP (mask 0x880,
+    // frame bytes [45..48] = 08 00 00 08) then removed it (0x800 → 00 00 00 08).
+    expect(SysExCodec.buildCtrlAssignment(0, 0x880, 0).slice(45, 49))
+      .toEqual(new Uint8Array([0x08, 0x00, 0x00, 0x08]));
+    expect(SysExCodec.buildCtrlAssignment(0, 0x800, 0).slice(45, 49))
+      .toEqual(new Uint8Array([0x00, 0x00, 0x00, 0x08]));
+  });
+
+  it('splits bits 4-6 (NR/CAB/EQ) into the [45] high nibble', () => {
+    expect(SysExCodec.buildCtrlAssignment(0, 0x010, 0).slice(45, 49))
+      .toEqual(new Uint8Array([0x01, 0x00, 0x00, 0x00])); // NR
+    expect(SysExCodec.buildCtrlAssignment(0, 0x020, 0).slice(45, 49))
+      .toEqual(new Uint8Array([0x02, 0x00, 0x00, 0x00])); // CAB
+    expect(SysExCodec.buildCtrlAssignment(0, 0x040, 0).slice(45, 49))
+      .toEqual(new Uint8Array([0x04, 0x00, 0x00, 0x00])); // EQ
   });
 
   it('keeps bit 11 (FX LOOP) on the wire in confirmed byte [48]', () => {

@@ -914,23 +914,39 @@ export const SysExCodec = {
    * across four captures, cross-validated against the patch the editor then
    * exported (`01-A strat.prst`, whose tail decodes to CTRL 1 state=1
    * mask=0x004 and CTRL 8 state=0 mask=0x400 — the last frame of each
-   * session, state byte included).
+   * session, state byte included), plus `fs-1-mod-assign-unassign.pcapng`
+   * (2026-08-09), the MOD-bit capture that settled the mask encoding.
    *
    *   [30-33] 0f 00 00 00  record type u32 LE = TYPE_CTRL (the EXP writer
    *                        sends 0x0E here; the CTRL TLV type is 0x000F)
    *   [34-37] 08 00 00 00  record size u32 LE = the 8-byte CTRL payload
    *   [38-39] ctrlIndex    (ctl-1-* → 00, ctl-8-* → 07)
-   *   [40-41] state        saved toggle position (ctl-1 sessions → 01,
+   *   [40]    state        saved toggle position (ctl-1 sessions → 01,
    *                        ctl-8 → 00, matching the exported tail)
-   *   [42-45] zeros        payload+2..3, the "uninitialized" window the
-   *                        editor writes as zeros
-   *   [46-49] blockMask    u16 LE (ctl-1-assign-dist → 04 00 00 00;
-   *                        ctl-8-assign-vol → 00 00 04 00, confirming bit 10)
+   *   [41-44] payload+2..3 nibble pairs — the "uninitialized" window; the
+   *                        editor carries the patch's stored garbage through
+   *                        (5c 53 in the MOD capture), we write zeros
+   *   [45-48] blockMask    two nibbleEncode pairs, one per mask byte:
+   *                        [45]=(m>>4)&0xF [46]=m&0xF (low byte),
+   *                        [47]=(m>>12)&0xF [48]=(m>>8)&0xF (high byte)
+   *   [49-52] payload+6..7 nibble pairs, same uninitialized window
+   *
+   * The mask travels NIBBLE-ENCODED high-first, not 7+1-split. The first six
+   * captures never exercised a high nibble (every observed byte was ≤ 0x0F),
+   * which is what let three models fit them; the MOD capture disambiguated:
+   * assigning MOD flipped [45] 08→00 (mask 0x880→0x800, FX LOOP already on
+   * that switch). This also explains both hardware rounds — the firmware
+   * evidently decodes byte = wire[2i]<<4 | wire[2i+1] without masking the low
+   * slot to 4 bits, so our old 7+1 frames worked for bits 0-6 and 8-11 (whole
+   * byte in the low-nibble slot, e.g. [46]=0x40 for EQ) while MOD's carry at
+   * [47] landed in the HIGH byte's high nibble (bit 12) and did nothing.
    *
    * This is a WHOLE-MASK write, not a per-bit toggle: assigning VOL on CTRL 8
    * sent 0x400 alone and the export shows the previously-set DST bit gone. No
    * navigation frame precedes it (unlike the EXP path, which needs
-   * buildExpNavigation) — each captured action is exactly one frame.
+   * buildExpNavigation) — each captured action is exactly one frame. The MOD
+   * capture also showed [26]=03 where earlier captures had 00; meaning
+   * unknown, but frames with [26]=00 are hardware-confirmed accepted.
    */
   buildCtrlAssignment(ctrlIndex: number, blockMask: number, state = 0): Uint8Array {
     const msg = new Uint8Array(54);
@@ -943,29 +959,15 @@ export const SysExCodec = {
       0x0F, 0x00, 0x00, 0x00,                            // [30-33] type=CTRL assignment
       0x08, 0x00, 0x00, 0x00,                            // [34-37] payload size 8
     ]);
-    // Each payload byte b is 7+1-split across two wire bytes — [2i] = b & 0x7F,
-    // [2i+1] = b >> 7 — keeping every data byte ≤ 0x7F. Note this is NOT
-    // nibbleEncode, which packs high-nibble-first.
-    //
-    // Hardware status (2026-08-09, docs/protocol-capture.md Gap A): bits 0-6
-    // whole in [46] and bits 8-11 in [48] are CONFIRMED live (an earlier
-    // nibble-split model, [47] = bits 4-7, was falsified — NR/CAB/EQ were dead
-    // until moved into [46]). Bit 7 (MOD) is the one open bit: the device
-    // ignored both [47]=8 (nibble model) and the [47]=1 carry sent here, so
-    // either MOD's live encoding lives in a byte not yet identified or the
-    // firmware simply drops bit 7 from live writes (it always applies from a
-    // flashed patch — SAVE TO). Capturing the official editor assigning MOD
-    // decides it; until then the carry stays: it's harmless and matches the
-    // only self-consistent 7-bit model left.
-    msg[38] = ctrlIndex & 0x7F;
-    msg[39] = (ctrlIndex >> 7) & 0x01;
-    msg[40] = state & 0x7F;
-    msg[41] = (state >> 7) & 0x01;
-    // [42-45] stay zero.
-    msg[46] = blockMask & 0x7F;        // mask low byte bits 0-6 — confirmed live
-    msg[47] = (blockMask >> 7) & 0x01; // bit 7 (MOD) carry — device ignores it
-    msg[48] = (blockMask >> 8) & 0x7F; // bits 8-11 incl. FX LOOP — confirmed live
-    msg[49] = 0;                       // bit-15 carry, always 0 for a 12-bit mask
+    msg[38] = ctrlIndex & 0x0F;
+    msg[39] = 0;
+    msg[40] = state & 0x7F;             // observed 0/1; low slot takes a whole byte
+    // [41-44] stay zero (uninitialized payload window).
+    msg[45] = (blockMask >> 4) & 0x0F;  // mask low byte, high nibble — MOD (bit 7)
+    msg[46] = blockMask & 0x0F;         // mask low byte, low nibble
+    msg[47] = (blockMask >> 12) & 0x0F; // mask high byte, high nibble (always 0)
+    msg[48] = (blockMask >> 8) & 0x0F;  // mask high byte, low nibble — VOL/FX LOOP
+    // [49-52] stay zero (uninitialized payload window).
     msg[53] = 0xF7;                                      // [53]    end
     return msg;
   },

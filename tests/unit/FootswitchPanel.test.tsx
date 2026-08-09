@@ -133,7 +133,7 @@ describe.skipIf(!HAS_FIXTURES)('FootswitchPanel', () => {
 
   it('says edits reach the device live while connected', () => {
     const preset = loadFixture();
-    const { getByText } = render(
+    const { getByText, queryByText } = render(
       <FootswitchPanel
         preset={preset}
         connected
@@ -141,11 +141,10 @@ describe.skipIf(!HAS_FIXTURES)('FootswitchPanel', () => {
       />,
     );
     expect(getByText(/sent to the connected GP-200 straight away/)).toBeTruthy();
-    expect(getByText(/SAVE TO/)).toBeTruthy();
-    // MOD (bit 7) has no known live wire encoding — the device ignores byte
-    // [47] — so the hint singles it out as needing SAVE TO. Everything else,
-    // including FX LOOP in the confirmed [48] byte, is hardware-verified live.
-    expect(getByText(/except MOD/)).toBeTruthy();
+    // No SAVE TO caveat anymore: MOD's live encoding (mask nibble [45]) was
+    // captured from the official editor on 2026-08-09, so every block —
+    // including MOD — syncs live like the rest.
+    expect(queryByText(/except MOD/)).toBeNull();
   });
 
   it('shows no device hint while disconnected', () => {
