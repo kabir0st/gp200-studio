@@ -1,12 +1,17 @@
 // Plain MIDI CC control surface for the GP-200's built-in looper, drum
-// machine, and tuner.
+// machine, tuner, and remote commands (CTRL taps, module on/off, bank/patch
+// stepping, tempo, EXP1, quick-access knobs).
 //
-// CC map extracted from the gp2-controller.xyz web app bundle (decompiled
-// chunk-CAUTDAHB.js, 2026-07); it mirrors Valeton's official MIDI Control
-// Information chart. Unlike everything in SysExCodec.ts, these are ordinary
-// 3-byte control changes — no SysEx involved — sent on the device's global
-// MIDI channel (GP-200 factory default: channel 1, i.e. index 0). See
-// docs/protocol-capture.md §5/§6.
+// CC map from Valeton's official "MIDI Control Information List" (Manual EN
+// fw 1.8.0, pp. 74–76), cross-checked against the gp2-controller.xyz bundle
+// (decompiled chunk-CAUTDAHB.js, 2026-07). Unlike everything in
+// SysExCodec.ts, these are ordinary 3-byte control changes — no SysEx
+// involved — sent on the device's global MIDI channel (GP-200 factory
+// default: channel 1, i.e. index 0). See docs/protocol-capture.md §5/§6.
+//
+// Deliberately NOT modeled: absolute patch select via CC0 (bank MSB) +
+// Program Change — the app already selects slots over SysEx
+// (buildPresetChange), and PC would be the only non-CC message here.
 //
 // This module is pure: byte building, typed command descriptors, and the
 // localStorage envelope for the user's channel choice. Actual sending lives
@@ -21,8 +26,31 @@ export interface CCCommand {
 /** GP-200 global MIDI channel default is 1 → channel index 0 → status 0xB0. */
 export const DEFAULT_CC_CHANNEL = 0;
 
-/** CC numbers, verbatim from the gp2-controller.xyz command table. */
+/** CC numbers, verbatim from the manual's MIDI Control Information List. */
 export const CC = {
+  PATCH_VOLUME: 7,
+  EXP1: 11,
+  EXP1_AB: 13,
+  QUICK_PARA_1: 16,
+  QUICK_STEP_1: 17,
+  QUICK_PARA_2: 18,
+  QUICK_STEP_2: 19,
+  QUICK_PARA_3: 20,
+  QUICK_STEP_3: 21,
+  BANK_DOWN: 22,
+  BANK_UP: 23,
+  PATCH_DOWN: 24,
+  PATCH_UP: 25,
+  MODULE_PRE: 48,
+  MODULE_DST: 49,
+  MODULE_AMP: 50,
+  MODULE_NR: 51,
+  MODULE_CAB: 52,
+  MODULE_EQ: 53,
+  MODULE_MOD: 54,
+  MODULE_DLY: 55,
+  MODULE_RVB: 56,
+  MODULE_WAH: 57,
   TUNER: 58,
   LOOPER_MENU: 59,
   LOOPER_RECORD: 60,
@@ -34,7 +62,17 @@ export const CC = {
   LOOPER_REC_VOLUME: 66,
   LOOPER_PLAYBACK_VOLUME: 67,
   LOOPER_PLACEMENT: 68,
+  CTRL_1: 69,
+  CTRL_2: 70,
+  CTRL_3: 71,
+  CTRL_4: 72,
+  TEMPO_MSB: 73,
+  TEMPO_VALUE: 74,
   TAP_TEMPO: 75,
+  CTRL_5: 76,
+  CTRL_6: 77,
+  CTRL_7: 78,
+  CTRL_8: 79,
   DRUMS_MENU: 92,
   DRUMS_PLAY: 93,
   DRUMS_RHYTHM: 94,
@@ -136,6 +174,120 @@ export function drumsVolume(volume: number): CCCommand {
 
 export function tapTempo(): CCCommand {
   return { cc: CC.TAP_TEMPO, value: 0 };
+}
+
+// ---------------------------------------------------------------------------
+// Remote commands (manual pp. 74–76): CTRL taps, module on/off, bank/patch
+// stepping, direct tempo, patch volume, EXP1, quick-access knobs.
+// ---------------------------------------------------------------------------
+
+const CTRL_CCS = [
+  CC.CTRL_1,
+  CC.CTRL_2,
+  CC.CTRL_3,
+  CC.CTRL_4,
+  CC.CTRL_5,
+  CC.CTRL_6,
+  CC.CTRL_7,
+  CC.CTRL_8,
+] as const;
+
+/** Virtually tap CTRL footswitch 1..8 (fires its assigned action). */
+export function ctrlTap(ctrlNumber: number): CCCommand {
+  const ctrlIndex = clamp(ctrlNumber, 1, 8) - 1;
+  return { cc: CTRL_CCS[ctrlIndex], value: CC_ON };
+}
+
+/**
+ * Module on/off CC per effect-block index (SLOT_MODULES order: 0 PRE, 1 WAH,
+ * 2 DST, 3 AMP, 4 NR, 5 CAB, 6 EQ, 7 MOD, 8 DLY, 9 RVB). The chart has no
+ * CC for VOL (block 10) or FX LOOP (block 11) — those return null.
+ */
+const MODULE_CCS = [
+  CC.MODULE_PRE,
+  CC.MODULE_WAH,
+  CC.MODULE_DST,
+  CC.MODULE_AMP,
+  CC.MODULE_NR,
+  CC.MODULE_CAB,
+  CC.MODULE_EQ,
+  CC.MODULE_MOD,
+  CC.MODULE_DLY,
+  CC.MODULE_RVB,
+] as const;
+
+/** Toggle an effect module by block index; null when no CC exists for it. */
+export function moduleToggle(blockIndex: number, on: boolean): CCCommand | null {
+  const moduleCc = MODULE_CCS[blockIndex];
+  if (moduleCc === undefined) return null;
+  return { cc: moduleCc, value: onOff(on) };
+}
+
+/** Step the active bank down/up (initial mode; CC22/CC23). */
+export function bankStep(direction: 'down' | 'up'): CCCommand {
+  if (direction === 'down') return { cc: CC.BANK_DOWN, value: CC_ON };
+  return { cc: CC.BANK_UP, value: CC_ON };
+}
+
+/** Step the active patch down/up within the bank (CC24/CC25). */
+export function patchStep(direction: 'down' | 'up'): CCCommand {
+  if (direction === 'down') return { cc: CC.PATCH_DOWN, value: CC_ON };
+  return { cc: CC.PATCH_UP, value: CC_ON };
+}
+
+/** Device tempo range per the chart: CC73/CC74 pair covers 40–250 BPM. */
+export const TEMPO_MIN_BPM = 40;
+export const TEMPO_MAX_BPM = 250;
+
+/**
+ * Set the device tempo directly. Two-CC encoding from the chart:
+ * CC73=0 + CC74=40..127 → 40..127 BPM; CC73=1 + CC74=0..122 → 128..250 BPM.
+ * Send both, MSB first.
+ */
+export function tempoBpm(bpm: number): [CCCommand, CCCommand] {
+  const clamped = clamp(bpm, TEMPO_MIN_BPM, TEMPO_MAX_BPM);
+  if (clamped <= 127) {
+    return [
+      { cc: CC.TEMPO_MSB, value: 0 },
+      { cc: CC.TEMPO_VALUE, value: clamped },
+    ];
+  }
+  return [
+    { cc: CC.TEMPO_MSB, value: 1 },
+    { cc: CC.TEMPO_VALUE, value: clamped - 128 },
+  ];
+}
+
+/** Patch volume 0..100 (CC7). */
+export function patchVolume(volume: number): CCCommand {
+  return { cc: CC.PATCH_VOLUME, value: clamp(volume, 0, 100) };
+}
+
+/** EXP 1 pedal position 0..100 (CC11). */
+export function exp1Position(position: number): CCCommand {
+  return { cc: CC.EXP1, value: clamp(position, 0, 100) };
+}
+
+/** Switch the EXP1 assignment between A (0..63) and B (64..127) via CC13. */
+export function exp1Select(side: 'A' | 'B'): CCCommand {
+  if (side === 'A') return { cc: CC.EXP1_AB, value: CC_OFF };
+  return { cc: CC.EXP1_AB, value: CC_ON };
+}
+
+const QUICK_PARA_CCS = [CC.QUICK_PARA_1, CC.QUICK_PARA_2, CC.QUICK_PARA_3] as const;
+const QUICK_STEP_CCS = [CC.QUICK_STEP_1, CC.QUICK_STEP_2, CC.QUICK_STEP_3] as const;
+
+/** Set Quick Access knob 1..3 to an absolute 0..100 value. */
+export function quickAccessParam(knobNumber: number, value: number): CCCommand {
+  const knobIndex = clamp(knobNumber, 1, 3) - 1;
+  return { cc: QUICK_PARA_CCS[knobIndex], value: clamp(value, 0, 100) };
+}
+
+/** Nudge Quick Access knob 1..3 one step (0..63 down, 64..127 up). */
+export function quickAccessStep(knobNumber: number, direction: 'down' | 'up'): CCCommand {
+  const knobIndex = clamp(knobNumber, 1, 3) - 1;
+  if (direction === 'down') return { cc: QUICK_STEP_CCS[knobIndex], value: CC_OFF };
+  return { cc: QUICK_STEP_CCS[knobIndex], value: CC_ON };
 }
 
 // ---------------------------------------------------------------------------

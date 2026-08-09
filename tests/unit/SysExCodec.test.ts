@@ -484,6 +484,132 @@ describe('SysExCodec: parseStateDump', () => {
     const result = SysExCodec.parseStateDump([]);
     expect(result.slot).toBe(0);
   });
+
+  /** Wrap a decoded TLV stream in a single 0x12/0x4E chunk envelope. */
+  function chunkOf(decoded: number[]): Uint8Array {
+    const nibbles = SysExCodec.nibbleEncode(Uint8Array.from(decoded));
+    return new Uint8Array([
+      0xF0, 0x21, 0x25, 0x7E, 0x47, 0x50, 0x2D, 0x32, 0x12, 0x4E,
+      0x06, 0x00, 0x00,
+      ...nibbles,
+      0xF7,
+    ]);
+  }
+
+  it('walks the TLV table: slot, tuner A4, EQ floats, drum style names', () => {
+    // Record layouts from dumps/connection-and-opening-gp200.pcapng
+    // (docs/protocol-capture.md §4): [u16 type LE][u16 len LE][payload].
+    const eqFloats = [1.0, 40.0, 0.71];
+    const eqBytes = [...new Uint8Array(Float32Array.from(eqFloats).buffer)];
+    const decoded = [
+      // 0x1007 general (len 8 here; slot 13 at payload[4:6])
+      0x07, 0x10, 0x08, 0x00, 0x00, 0x06, 0x01, 0x00, 0x0D, 0x00, 0x00, 0x00,
+      // 0x1010 tuner: A4 = 440 Hz
+      0x10, 0x10, 0x04, 0x00, 0xB8, 0x01, 0x01, 0x00,
+      // 0x1004 global EQ: 3 float32 LE
+      0x04, 0x10, 0x0C, 0x00, ...eqBytes,
+      // 0x000a drum style-group: index 1, "Metal", stale-RAM tail bytes
+      0x0A, 0x00, 0x14, 0x00,
+      0x01, 0x00, 0x00, 0x00,
+      0x4D, 0x65, 0x74, 0x61, 0x6C, 0x00,
+      0xF0, 0x21, 0x25, 0x7E, 0x47, 0x50, 0x2D, 0x32, 0x11, 0x04,
+    ];
+    const result = SysExCodec.parseStateDump([chunkOf(decoded)]);
+    expect(result.slot).toBe(13);
+    expect(result.tunerA4Hz).toBe(440);
+    expect(result.globalEqFloats).toHaveLength(3);
+    expect(result.globalEqFloats?.[1]).toBeCloseTo(40.0);
+    expect(result.drumStyleNames).toEqual([{ index: 1, name: 'Metal' }]);
+    expect(result.records).toHaveLength(4);
+  });
+
+  it('stops the TLV walk at an implausible record without losing prior ones', () => {
+    const decoded = [
+      // valid tuner record
+      0x10, 0x10, 0x04, 0x00, 0xB8, 0x01, 0x00, 0x00,
+      // truncated record: claims 200-byte payload that isn't there
+      0x07, 0x10, 0xC8, 0x00, 0x01, 0x02,
+    ];
+    const result = SysExCodec.parseStateDump([chunkOf(decoded)]);
+    expect(result.tunerA4Hz).toBe(440);
+    expect(result.records).toHaveLength(1);
+  });
+
+  it('rejects out-of-range tuner values and non-ASCII drum names', () => {
+    const decoded = [
+      // tuner record claiming 900 Hz (0x0384): implausible, dropped
+      0x10, 0x10, 0x04, 0x00, 0x84, 0x03, 0x00, 0x00,
+      // drum record whose name bytes are binary garbage: dropped
+      0x0A, 0x00, 0x08, 0x00, 0x02, 0x00, 0x00, 0x00, 0x9F, 0x03, 0x01, 0x00,
+    ];
+    const result = SysExCodec.parseStateDump([chunkOf(decoded)]);
+    expect(result.tunerA4Hz).toBeUndefined();
+    expect(result.drumStyleNames).toBeUndefined();
+    expect(result.records).toHaveLength(2);
+  });
+});
+
+describe('SysExCodec: buildFrame (generic wire framer)', () => {
+  it('frames CMD, 7-bit length, offset, nibbles, F7', () => {
+    const payload = new Uint8Array([0x07, 0x20, 0x04, 0x00, 0x01, 0x00, 0x02, 0x00]);
+    const msg = SysExCodec.buildFrame(0x12, payload);
+    expect(msg.length).toBe(14 + 16);
+    expect([...msg.slice(0, 13)]).toEqual([
+      0xF0, 0x21, 0x25, 0x7E, 0x47, 0x50, 0x2D, 0x32, 0x12, 0x08, 0x00, 0x00, 0x00,
+    ]);
+    expect(msg[msg.length - 1]).toBe(0xF7);
+    expect(SysExCodec.nibbleDecode(msg.slice(13, msg.length - 1))).toEqual(payload);
+  });
+
+  it('splits lengths over 127 across wire[9]/wire[10] (state-dump 846 = 0x4E/6)', () => {
+    const msg = SysExCodec.buildFrame(0x12, new Uint8Array(846));
+    expect(msg[9]).toBe(0x4E);
+    expect(msg[10]).toBe(6);
+  });
+
+  it('reproduces buildAuthorName byte-for-byte from its decoded payload', () => {
+    const author = SysExCodec.buildAuthorName('Someone');
+    const decoded = SysExCodec.nibbleDecode(author.slice(13, author.length - 1));
+    expect(SysExCodec.buildFrame(0x12, decoded)).toEqual(author);
+  });
+});
+
+describe('SysExCodec: patch move frames (exe-derived, unverified)', () => {
+  it('encodes TLV 0x2007 {from, to}', () => {
+    const msg = SysExCodec.buildPatchMove(3, 260);
+    const decoded = SysExCodec.nibbleDecode(msg.slice(13, msg.length - 1));
+    expect([...decoded]).toEqual([0x07, 0x20, 0x04, 0x00, 0x03, 0x00, 0x04, 0x01]);
+  });
+
+  it('encodes the commit TLV 0x2008 {1, 0}', () => {
+    const msg = SysExCodec.buildPatchMoveCommit();
+    const decoded = SysExCodec.nibbleDecode(msg.slice(13, msg.length - 1));
+    expect([...decoded]).toEqual([0x08, 0x20, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00]);
+  });
+});
+
+describe('SysExCodec: experimental single-field writes', () => {
+  it('buildPatchName mirrors the author frame at field address 0x0B60', () => {
+    const name = SysExCodec.buildPatchName('Same Text');
+    const author = SysExCodec.buildAuthorName('Same Text');
+    expect(name.length).toBe(78);
+    const nameDecoded = SysExCodec.nibbleDecode(name.slice(13, 77));
+    const authorDecoded = SysExCodec.nibbleDecode(author.slice(13, 77));
+    expect(nameDecoded[14]).toBe(0x60);
+    expect(authorDecoded[14]).toBe(0x70);
+    nameDecoded[14] = 0x70;
+    expect(nameDecoded).toEqual(authorDecoded);
+  });
+
+  it('buildIrRename is the confirmed 0x1009 query record with CMD 0x12 and a name', () => {
+    const msg = SysExCodec.buildIrRename(2, 'My 4x12');
+    expect(msg[8]).toBe(0x12);
+    expect(msg[9]).toBe(28);
+    const decoded = SysExCodec.nibbleDecode(msg.slice(13, msg.length - 1));
+    expect([...decoded.slice(0, 8)]).toEqual([0x09, 0x10, 0x18, 0x00, 0x02, 0x00, 0x01, 0x00]);
+    expect(String.fromCharCode(...decoded.slice(8, 15))).toBe('My 4x12');
+    expect(decoded[15]).toBe(0);
+  });
 });
 
 describe('SysExCodec: EXP Assignment', () => {
@@ -629,8 +755,9 @@ describe('SysExCodec: buildCtrlAssignment', () => {
   });
 
   it('sends bits 4-6 (NR/CAB/EQ) whole in [46], MOD as the [47] carry', () => {
-    // The four blocks that were dead under the falsified nibble-split model
-    // (docs/protocol-capture.md Gap A).
+    // NR/CAB/EQ in [46] are hardware-confirmed live (2026-08-09). The [47]
+    // carry for MOD is the only self-consistent 7-bit placement left but the
+    // device is known to ignore it — see docs/protocol-capture.md Gap A.
     expect(SysExCodec.buildCtrlAssignment(0, 0x010, 0).slice(46, 50))
       .toEqual(new Uint8Array([0x10, 0x00, 0x00, 0x00])); // NR
     expect(SysExCodec.buildCtrlAssignment(0, 0x020, 0).slice(46, 50))

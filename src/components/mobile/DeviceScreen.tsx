@@ -3,6 +3,7 @@ import { SysExCodec } from '@/core/SysExCodec';
 import { tunerShow } from '@/core/ccControl';
 import type { CCCommand } from '@/core/ccControl';
 import { AudioMeters } from '@/components/board/AudioMeters';
+import { RemotePanel } from '@/components/board/RemotePanel';
 
 interface DeviceScreenProps {
   connected: boolean;
@@ -188,6 +189,11 @@ export function DeviceScreen({
             CTRL FOOTSWITCHES
           </button>
         </div>
+      </section>
+
+      <section className="m-section">
+        <h3 className="m-section-title">MIDI REMOTE</h3>
+        <RemotePanel connected={connected} sendCC={sendCC} />
       </section>
 
       <section className="m-section">

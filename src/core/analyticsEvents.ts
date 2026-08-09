@@ -22,6 +22,7 @@ export type PanelId =
   | 'ctrl'
   | 'looper'
   | 'drums'
+  | 'remote'
   | 'patch_manager'
   | 'slot_browser'
   | 'patch_meta';

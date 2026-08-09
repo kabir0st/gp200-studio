@@ -815,6 +815,7 @@ function App() {
         onRefreshNames={() => void midiDevice.refreshNames()}
         onImportFile={handleFile}
         onExportRequest={() => setShowExportDialog(true)}
+        userIrNames={midiDevice.userIrNames}
       />
 
       {slotBrowserMode && (

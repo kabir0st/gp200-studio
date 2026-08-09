@@ -2,11 +2,17 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   CC,
   DEFAULT_CC_CHANNEL,
+  TEMPO_MAX_BPM,
+  TEMPO_MIN_BPM,
+  bankStep,
   buildCC,
+  ctrlTap,
   drumsPlay,
   drumsRhythm,
   drumsShow,
   drumsVolume,
+  exp1Position,
+  exp1Select,
   loadCcChannel,
   looperAutoRecord,
   looperDelete,
@@ -18,8 +24,14 @@ import {
   looperRecord,
   looperReverse,
   looperShow,
+  moduleToggle,
+  patchStep,
+  patchVolume,
+  quickAccessParam,
+  quickAccessStep,
   saveCcChannel,
   tapTempo,
+  tempoBpm,
   tunerShow,
 } from '../../src/core/ccControl';
 
@@ -95,6 +107,89 @@ describe('tuner and tempo commands', () => {
     expect(tunerShow(true)).toEqual({ cc: CC.TUNER, value: 127 });
     expect(tunerShow(false)).toEqual({ cc: CC.TUNER, value: 0 });
     expect(tapTempo()).toEqual({ cc: 75, value: 0 });
+  });
+});
+
+describe('remote commands (manual MIDI Control Information List)', () => {
+  it('taps CTRL 1-8 on CC69-72/76-79', () => {
+    expect(ctrlTap(1)).toEqual({ cc: 69, value: 127 });
+    expect(ctrlTap(4)).toEqual({ cc: 72, value: 127 });
+    expect(ctrlTap(5)).toEqual({ cc: 76, value: 127 });
+    expect(ctrlTap(8)).toEqual({ cc: 79, value: 127 });
+  });
+
+  it('clamps CTRL numbers into 1-8', () => {
+    expect(ctrlTap(0)).toEqual({ cc: 69, value: 127 });
+    expect(ctrlTap(99)).toEqual({ cc: 79, value: 127 });
+  });
+
+  it('maps block indexes to module CCs in SLOT_MODULES order', () => {
+    expect(moduleToggle(0, true)).toEqual({ cc: CC.MODULE_PRE, value: 127 });
+    expect(moduleToggle(1, true)).toEqual({ cc: CC.MODULE_WAH, value: 127 });
+    expect(moduleToggle(2, false)).toEqual({ cc: CC.MODULE_DST, value: 0 });
+    expect(moduleToggle(3, true)).toEqual({ cc: CC.MODULE_AMP, value: 127 });
+    expect(moduleToggle(9, false)).toEqual({ cc: CC.MODULE_RVB, value: 0 });
+  });
+
+  it('returns null for blocks with no module CC (VOL, FX LOOP)', () => {
+    expect(moduleToggle(10, true)).toBeNull();
+    expect(moduleToggle(11, true)).toBeNull();
+    expect(moduleToggle(-1, true)).toBeNull();
+  });
+
+  it('steps banks and patches', () => {
+    expect(bankStep('down')).toEqual({ cc: 22, value: 127 });
+    expect(bankStep('up')).toEqual({ cc: 23, value: 127 });
+    expect(patchStep('down')).toEqual({ cc: 24, value: 127 });
+    expect(patchStep('up')).toEqual({ cc: 25, value: 127 });
+  });
+
+  it('encodes the low tempo range as CC73=0 + CC74=bpm', () => {
+    expect(tempoBpm(40)).toEqual([
+      { cc: 73, value: 0 },
+      { cc: 74, value: 40 },
+    ]);
+    expect(tempoBpm(127)).toEqual([
+      { cc: 73, value: 0 },
+      { cc: 74, value: 127 },
+    ]);
+  });
+
+  it('encodes the high tempo range as CC73=1 + CC74=bpm-128', () => {
+    expect(tempoBpm(128)).toEqual([
+      { cc: 73, value: 1 },
+      { cc: 74, value: 0 },
+    ]);
+    expect(tempoBpm(250)).toEqual([
+      { cc: 73, value: 1 },
+      { cc: 74, value: 122 },
+    ]);
+  });
+
+  it('clamps tempo into the device 40-250 BPM range', () => {
+    expect(tempoBpm(10)).toEqual(tempoBpm(TEMPO_MIN_BPM));
+    expect(tempoBpm(999)).toEqual(tempoBpm(TEMPO_MAX_BPM));
+  });
+
+  it('sends patch volume and EXP1 position on the 0-100 scale', () => {
+    expect(patchVolume(80)).toEqual({ cc: 7, value: 80 });
+    expect(patchVolume(127)).toEqual({ cc: 7, value: 100 });
+    expect(exp1Position(0)).toEqual({ cc: 11, value: 0 });
+    expect(exp1Position(120)).toEqual({ cc: 11, value: 100 });
+  });
+
+  it('selects EXP1 A as 0 and B as 127', () => {
+    expect(exp1Select('A')).toEqual({ cc: 13, value: 0 });
+    expect(exp1Select('B')).toEqual({ cc: 13, value: 127 });
+  });
+
+  it('drives the quick access knobs absolutely and by step', () => {
+    expect(quickAccessParam(1, 50)).toEqual({ cc: 16, value: 50 });
+    expect(quickAccessParam(2, 101)).toEqual({ cc: 18, value: 100 });
+    expect(quickAccessParam(3, -1)).toEqual({ cc: 20, value: 0 });
+    expect(quickAccessStep(1, 'down')).toEqual({ cc: 17, value: 0 });
+    expect(quickAccessStep(2, 'up')).toEqual({ cc: 19, value: 127 });
+    expect(quickAccessStep(3, 'up')).toEqual({ cc: 21, value: 127 });
   });
 });
 

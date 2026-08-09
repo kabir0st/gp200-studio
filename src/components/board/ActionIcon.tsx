@@ -87,6 +87,11 @@ const ACTIONS: Record<string, ActionSpec> = {
     d: '<path d="M2.6 12.4 13.4 4v5.2l-10.8 4z" /><path d="M2.6 12.4v1.2" />',
     color: '#2f6fa8',
   },
+  // MIDI remote: a handheld remote control
+  remote: {
+    d: '<rect x="5" y="2.4" width="6" height="11.2" rx="1.6" /><circle cx="8" cy="5.2" r="0.9" /><path d="M6.6 8.2h2.8M6.6 10.6h2.8" />',
+    color: '#8a2f6f',
+  },
   // ctrl footswitches: a bank of stomps
   ctrl: {
     d: '<circle cx="5.2" cy="5.2" r="2.2" /><circle cx="10.8" cy="5.2" r="2.2" /><circle cx="5.2" cy="10.8" r="2.2" /><circle cx="10.8" cy="10.8" r="2.2" />',

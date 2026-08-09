@@ -1,7 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { SysExCodec } from '@/core/SysExCodec';
+import { SysExCodec, type DeviceStateDump } from '@/core/SysExCodec';
 import { decodeControlChange } from '@/core/midiControlMap';
-import { isAssignmentDumpEnabled, isMidiMonitorEnabled } from '@/core/debugFlags';
+import {
+  isAssignmentDumpEnabled,
+  isMidiMonitorEnabled,
+  isNameWriteEnabled,
+} from '@/core/debugFlags';
 import { hexOfBytes } from '@/core/looperTriggers';
 import type { GP200Preset } from '@/core/types';
 import type { CCCommand } from '@/core/ccControl';
@@ -43,10 +47,15 @@ export interface UseMidiDeviceReturn {
   namesSyncing: boolean;
   deviceInfo: { deviceType: number; firmwareValues: number[]; versionAccepted: boolean } | null;
   currentPreset: GP200Preset | null;
-  /** Controller/EXP assignment readback collected during the handshake
-   *  (0x11/0x1C query → 0x12/0x1C response). Raw substrate for decoding
-   *  device-truth CTRL/EXP assignments. */
-  assignmentInfo: { section: number; page: number; block: number; name: string; rawData: Uint8Array }[];
+  /** User-IR slot names enumerated during the handshake (0x11/0x1C query →
+   *  0x12/0x1C response; re-identified 2026-08-08 as User-IR enumeration, see
+   *  docs/protocol-capture.md §3). 30 entries in device slot order; empty
+   *  array until the sweep runs (or when the device didn't answer). */
+  userIrNames: string[];
+  /** Typed view of the connect-time 0x4E state dump (tuner A4, global-EQ
+   *  floats, drum style-group names, raw TLV records). Null until the
+   *  handshake completes; see DeviceStateDump for per-field caveats. */
+  deviceState: DeviceStateDump | null;
 
   connect: () => Promise<void>;
   disconnect: () => void;
@@ -190,7 +199,8 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   const wasConnectedRef = useRef(false);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef(0);
-  const [assignmentInfo, setAssignments] = useState<UseMidiDeviceReturn['assignmentInfo']>([]);
+  const [userIrNames, setUserIrNames] = useState<string[]>([]);
+  const [deviceState, setDeviceState] = useState<DeviceStateDump | null>(null);
 
   const outputRef          = useRef<GP200Output | null>(null);
   const inputRef           = useRef<GP200Input | null>(null);
@@ -450,7 +460,9 @@ export function useMidiDevice(): UseMidiDeviceReturn {
         setHandshakeStep('State Dump…');
         output.send(SysExCodec.buildStateDumpRequest());
         const dumpChunks = await collectChunks(input, 0x12, 0x4E, 5, READ_TIMEOUT_MS, onMidiMessage);
-        const { slot } = SysExCodec.parseStateDump(dumpChunks);
+        const stateDump = SysExCodec.parseStateDump(dumpChunks);
+        const slot = stateDump.slot;
+        setDeviceState(stateDump);
         setCurrentSlot(slot); currentSlotRef.current = slot;
 
         // Step 7-8: Version check
@@ -462,10 +474,17 @@ export function useMidiDevice(): UseMidiDeviceReturn {
         const { accepted } = SysExCodec.parseVersionResponse(versionMsg);
         setDeviceInfo({ ...identity, versionAccepted: accepted });
 
-        // Step 9: Assignment polling (non-critical, short timeout, bail on first failure)
-        setHandshakeStep('Controller…');
+        // Step 9: User-IR slot enumeration (non-critical, short timeout, bail
+        // on first failure). The 0x11/0x1C sweep was long believed to be a
+        // controller-assignment readback; decoded 2026-08-08 as the device's
+        // 30 User-IR slot names (docs/protocol-capture.md §3). The query plan
+        // below mirrors the official editor's own connect sweep verbatim; the
+        // flat response order is the IR slot order 0..29.
+        setHandshakeStep('User IRs…');
         const ASSIGN_TIMEOUT = 300;
-        const assignmentEntries: UseMidiDeviceReturn['assignmentInfo'] = [];
+        const assignmentEntries: {
+          section: number; page: number; block: number; name: string; rawData: Uint8Array;
+        }[] = [];
         const assignmentPlan = [
           { section: 0, pages: [[0, 16], [1, 4]] },
           { section: 1, pages: [[0, 10]] },
@@ -488,16 +507,12 @@ export function useMidiDevice(): UseMidiDeviceReturn {
             }
           }
         }
-        setAssignments(assignmentEntries);
+        setUserIrNames(assignmentEntries.map((entry) => entry.name));
 
-        // Opt-in probe (src/core/debugFlags.ts). Nothing consumes these
-        // responses yet; dumping them is the zero-risk first step of
-        // docs/protocol-capture.md §3 — we're looking for the 8 CTRL block
-        // masks (u16, bits 0..10 = PRE..VOL) somewhere in rawData. If they
-        // show up, 0x12/0x1C is the assignment read side and the write is
-        // very likely its 0x12 sibling.
+        // Opt-in raw dump (src/core/debugFlags.ts): hex of each 0x12/0x1C
+        // response, for eyeballing the record layout beyond the name field.
         if (isAssignmentDumpEnabled()) {
-          console.log(`[GP-200] assignment sweep: ${assignmentEntries.length} responses`);
+          console.log(`[GP-200] User-IR sweep: ${assignmentEntries.length} responses`);
           for (const entry of assignmentEntries) {
             const hex = [...entry.rawData]
               .map((byte) => byte.toString(16).padStart(2, '0'))
@@ -573,7 +588,8 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     setErrorMessage(null);
     setDeviceInfo(null);
     setCurrentPreset(null);
-    setAssignments([]);
+    setUserIrNames([]);
+    setDeviceState(null);
     fastNameReadRef.current = null;
   }, []);
 
@@ -978,6 +994,14 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // is untouched because nothing else was edited in between.
     output.send(SysExCodec.buildPresetChange(slot));
     await new Promise(r => setTimeout(r, 200));
+    // Gap C experiment (docs §2b): the device ignores the name inside
+    // save-commit, so renames don't persist. Behind the debug flag, try the
+    // hypothesized single-field name write first; the save-commit then
+    // persists the edit buffer it (hopefully) just changed.
+    if (isNameWriteEnabled()) {
+      output.send(SysExCodec.buildPatchName(name));
+      await new Promise(r => setTimeout(r, 150));
+    }
     output.send(SysExCodec.buildSaveCommit(name, slot));
     await new Promise(r => setTimeout(r, 300));
     presetNamesRef.current[slot] = name;
@@ -1020,7 +1044,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   return {
     status, handshakeStep, errorMessage, deviceName, currentSlot, presetNames, namesLoadProgress,
     namesSyncing,
-    deviceInfo, currentPreset, assignmentInfo,
+    deviceInfo, currentPreset, userIrNames, deviceState,
     connect, disconnect, loadPresetNames, syncPresetNames, refreshNames,
     pullPreset, pushPreset, writePresetToSlot, saveToSlot, renameSlot,
     // Send operations + device-callback registration are owned by useMidiSend.

@@ -10,6 +10,7 @@ import { FootswitchPanel } from '@/components/FootswitchPanel';
 import { LooperPanel } from './LooperPanel';
 import { DrumsPanel } from './DrumsPanel';
 import { DeviceLooperPanel } from './DeviceLooperPanel';
+import { RemotePanel } from './RemotePanel';
 import { DrumMachinePanel } from './DrumMachinePanel';
 import type { CCCommand } from '@/core/ccControl';
 import type { DrumMachineApi } from '@/hooks/useDrumMachine';
@@ -178,7 +179,7 @@ export function PedalBoard({
   const [hoverSlot, setHoverSlot] = useState<number | null>(null);
   const [pinnedSlot, setPinnedSlot] = useState<number | null>(null);
   const [openDrawer, setOpenDrawer] =
-    useState<'fxloop' | 'exp' | 'ctrl' | 'looper' | 'drums' | null>(null);
+    useState<'fxloop' | 'exp' | 'ctrl' | 'looper' | 'drums' | 'remote' | null>(null);
   const [pickerSlot, setPickerSlot] = useState<number | null>(null);
 
   // Report the looper drawer's open state up to App: the MIDI dispatcher tap
@@ -191,7 +192,7 @@ export function PedalBoard({
   // on a new drawer. Closing (setOpenDrawer(null)) stays direct — only the open
   // is a discovery signal.
   const openPanel = useCallback(
-    (panel: 'fxloop' | 'exp' | 'ctrl' | 'looper' | 'drums') => {
+    (panel: 'fxloop' | 'exp' | 'ctrl' | 'looper' | 'drums' | 'remote') => {
       setOpenDrawer(panel);
       onPanelOpen(panel);
     },
@@ -307,6 +308,7 @@ export function PedalBoard({
         onCloseRequest={onCloseRequest}
         onOpenLooper={() => openPanel('looper')}
         onOpenDrums={() => openPanel('drums')}
+        onOpenRemote={() => openPanel('remote')}
         drumsPlaying={drumMachine.playing}
         sendCC={sendCC}
       />
@@ -490,6 +492,14 @@ export function PedalBoard({
             onCcChannelChange={onCcChannelChange}
           />
         </div>
+      </DeckDrawer>
+
+      <DeckDrawer
+        open={openDrawer === 'remote'}
+        onClose={() => setOpenDrawer(null)}
+        title="MIDI Remote"
+      >
+        <RemotePanel connected={connected} sendCC={sendCC} />
       </DeckDrawer>
 
       {pickerEffect && (

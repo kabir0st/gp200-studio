@@ -2,6 +2,39 @@ import type { GP200Preset } from './types';
 import { GP200PresetSchema } from './types';
 import { CONTROL_RECORDS_DUMP_OFFSET, parseControlRecords } from './controlRecords';
 
+/**
+ * Typed view of the 0x4E state dump (846 decoded bytes on fw 1.8.0). The dump
+ * is a flat TLV table: [u16 type LE][u16 len LE][payload], walked from offset
+ * 0. Record types decoded from dumps/connection-and-opening-gp200.pcapng
+ * (docs/protocol-capture.md §4):
+ *   0x1007 len=72  general block; current slot at payload[4:6] LE
+ *   0x1002 len=8   unknown (u16s 61, 110, 53, …)
+ *   0x1010 len=4   tuner: payload[0:2] LE = A4 reference Hz (observed 440;
+ *                  manual range 430–450) — field mapping unverified on
+ *                  hardware, do not build UI on it yet
+ *   0x1000 len=6   unknown
+ *   0x1004 len=124 global EQ: 31 float32 LE (master enable + 6 filters:
+ *                  low cut, 4 bands, high cut — per-field mapping pending a
+ *                  hardware diff pass; exposed raw)
+ *   0x000a len=20  drum style-group name: u16 index, name ASCII @ payload[4],
+ *                  zero-terminated (indexes 1..11 factory genres, 12..19
+ *                  "User1".."User8"; trailing bytes are stale device RAM)
+ *   0x100e len=40  footswitch-mode template: u16 index (0..2), then 8
+ *                  action-id pairs — raw until the FS template decode lands
+ */
+export interface DeviceStateDump {
+  /** Currently active preset slot 0..255. */
+  slot: number;
+  /** Tuner A4 reference in Hz (record 0x1010), when present and plausible. */
+  tunerA4Hz?: number;
+  /** Raw 31-float global-EQ block (record 0x1004), field mapping pending. */
+  globalEqFloats?: number[];
+  /** Drum style-group names by dump index (record 0x000a). */
+  drumStyleNames?: { index: number; name: string }[];
+  /** Every TLV record, raw, for forensics and future decodes. */
+  records?: { type: number; data: Uint8Array }[];
+}
+
 export const SysExCodec = {
   /**
    * Encode a parameter value into the 2-byte logarithmic "display value" field
@@ -388,17 +421,60 @@ export const SysExCodec = {
     return { section, page, block, name, rawData: decoded };
   },
 
-  parseStateDump(chunks: Uint8Array[]): { slot: number } {
+  parseStateDump(chunks: Uint8Array[]): DeviceStateDump {
     // State dump uses same nibble-encoded chunk format as read responses.
-    // Decoded header: [0:8] constants, [8:10] current slot as LE16.
-    // Verified via captures 084047 (slot 13 = 04-B) and 084156 (slot 0 = 01-A).
+    // The decoded stream is a TLV table (see DeviceStateDump); the historical
+    // slot read at decoded[8:10] is the general record's payload[4:6]
+    // (record header 4 bytes + payload offset 4). Verified via captures
+    // 084047 (slot 13 = 04-B) and 084156 (slot 0 = 01-A).
     if (chunks.length === 0) return { slot: 0 };
     const decoded = this.assembleChunks(chunks);
+
+    let slot = 0;
     if (decoded.length >= 10) {
-      const slot = decoded[8] | (decoded[9] << 8);
-      if (slot >= 0 && slot < 256) return { slot };
+      const rawSlot = decoded[8] | (decoded[9] << 8);
+      if (rawSlot >= 0 && rawSlot < 256) slot = rawSlot;
     }
-    return { slot: 0 };
+
+    // Defensive TLV walk: any implausible header ends the walk, keeping
+    // whatever parsed cleanly before it. Firmware revisions may append or
+    // resize records, so nothing below assumes a fixed record order.
+    const dump: DeviceStateDump = { slot };
+    const records: { type: number; data: Uint8Array }[] = [];
+    const drumStyleNames: { index: number; name: string }[] = [];
+    let offset = 0;
+    while (offset + 4 <= decoded.length) {
+      const type = decoded[offset] | (decoded[offset + 1] << 8);
+      const len = decoded[offset + 2] | (decoded[offset + 3] << 8);
+      if (len === 0 || offset + 4 + len > decoded.length) break;
+      const payload = decoded.slice(offset + 4, offset + 4 + len);
+      records.push({ type, data: payload });
+
+      if (type === 0x1010 && len >= 2) {
+        const hz = payload[0] | (payload[1] << 8);
+        if (hz >= 430 && hz <= 450) dump.tunerA4Hz = hz;
+      } else if (type === 0x1004 && len % 4 === 0) {
+        const view = new DataView(payload.buffer, payload.byteOffset, payload.byteLength);
+        const floats: number[] = [];
+        for (let i = 0; i + 4 <= len; i += 4) floats.push(view.getFloat32(i, true));
+        dump.globalEqFloats = floats;
+      } else if (type === 0x000a && len >= 5) {
+        const index = payload[0] | (payload[1] << 8);
+        let name = '';
+        for (let i = 4; i < len; i++) {
+          const byte = payload[i];
+          if (byte === 0) break;
+          if (byte < 0x20 || byte >= 0x7f) { name = ''; break; }
+          name += String.fromCharCode(byte);
+        }
+        if (name) drumStyleNames.push({ index, name });
+      }
+
+      offset += 4 + len;
+    }
+    if (records.length > 0) dump.records = records;
+    if (drumStyleNames.length > 0) dump.drumStyleNames = drumStyleNames;
+    return dump;
   },
 
   // ── Real-time editing commands (reverse-engineered 2026-03-19) ──────────
@@ -671,6 +747,103 @@ export const SysExCodec = {
     return msg;
   },
 
+  /**
+   * Generic wire framer, exe-confirmed (editor FSM `FUN_005ae6d0`,
+   * dumps/re-output/ir-handlers.txt): F0, 7-byte header, CMD, then the
+   * decoded payload length and chunk offset as 7-bit splits, then the
+   * payload as nibbles (high first), F7. What the protocol notes long
+   * called the "sub-opcode" (wire[9]) is decodedLen & 0x7F — message
+   * semantics live in the payload's leading TLV record id instead
+   * (docs/protocol-capture.md §4). Reproduces every existing hand-built
+   * frame byte-for-byte for payloads under 128 bytes.
+   */
+  buildFrame(cmd: number, decoded: Uint8Array, chunkOffset = 0): Uint8Array {
+    const nibbles = this.nibbleEncode(decoded);
+    const msg = new Uint8Array(14 + nibbles.length);
+    msg.set([
+      0xF0, 0x21, 0x25, 0x7E, 0x47, 0x50, 0x2D, 0x32,
+      cmd & 0xFF,
+      decoded.length & 0x7F, (decoded.length >> 7) & 0x7F,
+      chunkOffset & 0x7F, (chunkOffset >> 7) & 0x7F,
+    ]);
+    msg.set(nibbles, 13);
+    msg[msg.length - 1] = 0xF7;
+    return msg;
+  },
+
+  /**
+   * Move a patch between slots (the editor's "Patch Number" reorder).
+   * TLV {0x2007, len 4, {u16 from, u16 to}}, CMD 0x12. Decompile-evidenced
+   * (`FUN_005955d0`: local = 0x42007 + from + to, logged "move:%d to %d";
+   * dumps/re-output/name-writer.txt) but NOT yet hardware-verified.
+   */
+  buildPatchMove(fromSlot: number, toSlot: number): Uint8Array {
+    const decoded = new Uint8Array([
+      0x07, 0x20, 0x04, 0x00,
+      fromSlot & 0xFF, (fromSlot >> 8) & 0xFF,
+      toSlot & 0xFF, (toSlot >> 8) & 0xFF,
+    ]);
+    return this.buildFrame(0x12, decoded);
+  },
+
+  /**
+   * Commit a batch of patch moves. TLV {0x2008, len 4, {u16 1, u16 0}},
+   * CMD 0x12; the editor sends it once after its 0x2007 moves
+   * (`FUN_00595480`, dumps/re-output/name-writer.txt). NOT yet
+   * hardware-verified.
+   */
+  buildPatchMoveCommit(): Uint8Array {
+    const decoded = new Uint8Array([0x08, 0x20, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00]);
+    return this.buildFrame(0x12, decoded);
+  },
+
+  /**
+   * EXPERIMENTAL patch-name single-field write — hypothesis, NOT observed
+   * on the wire and NOT found in the editor binary. Shape: the confirmed
+   * author frame (type 0x09 @ field address 0x0B70) with the address moved
+   * to 0x0B60 — name precedes author by 0x10 both in the editor's preset
+   * model (+0x88/+0x98) and in the .prst file (28/44). The editor's own
+   * rename dialog instead persists names via a full preset write; this
+   * frame exists purely for the guarded hardware experiment in renameSlot
+   * (docs/protocol-capture.md §2b). Do not send it outside that gate.
+   */
+  buildPatchName(name: string): Uint8Array {
+    const decoded = new Uint8Array(32);
+    decoded[2] = 0x04;
+    decoded[6] = 0x01;
+    decoded[8] = 0x09;                          // msg type: string field
+    decoded[10] = 0x14;
+    decoded[12] = 0x01;
+    decoded[14] = 0x60;                         // field address 0x0B60 (author is 0x0B70)
+    decoded[15] = 0x0B;
+    for (let i = 0; i < 16 && i < name.length; i++) {
+      decoded[16 + i] = name.charCodeAt(i);
+    }
+    return this.buildFrame(0x12, decoded);
+  },
+
+  /**
+   * EXPERIMENTAL User-IR slot rename — hypothesis. The read side is
+   * confirmed (query TLV {0x1009, len 0x18, {u16 slot, u16 1, 16-byte
+   * name, 4 spare}}, CMD 0x11 — `FUN_005b4170`); this is the same record
+   * with the name filled and CMD 0x12. The editor's actual IR-rename
+   * builder was not found in any dump, so treat as unverified until a
+   * hardware trial on a scratch IR slot.
+   */
+  buildIrRename(irSlot: number, name: string): Uint8Array {
+    const decoded = new Uint8Array(28);
+    decoded[0] = 0x09;
+    decoded[1] = 0x10;
+    decoded[2] = 0x18;
+    decoded[4] = irSlot & 0xFF;
+    decoded[5] = (irSlot >> 8) & 0xFF;
+    decoded[6] = 0x01;
+    for (let i = 0; i < 16 && i < name.length; i++) {
+      decoded[8 + i] = name.charCodeAt(i);
+    }
+    return this.buildFrame(0x12, decoded);
+  },
+
   buildExpNavigation(page: number, item?: number, blockIndex?: number, paramIndex?: number): Uint8Array {
     // CMD=0x12, sub=0x18, 62 bytes, nibble-encoded "section navigation"
     // Selects which EXP/Mode to edit AND which effect parameter to assign.
@@ -770,27 +943,28 @@ export const SysExCodec = {
       0x0F, 0x00, 0x00, 0x00,                            // [30-33] type=CTRL assignment
       0x08, 0x00, 0x00, 0x00,                            // [34-37] payload size 8
     ]);
-    // Every payload byte b is 7+1-split across two wire bytes — [2i] = b & 0x7F,
-    // [2i+1] = b >> 7 (the carry bit) — the standard MIDI trick to keep data
-    // bytes ≤ 0x7F. Note this is NOT nibbleEncode, which packs high-nibble-first.
+    // Each payload byte b is 7+1-split across two wire bytes — [2i] = b & 0x7F,
+    // [2i+1] = b >> 7 — keeping every data byte ≤ 0x7F. Note this is NOT
+    // nibbleEncode, which packs high-nibble-first.
     //
-    // Why 7+1 and not a 4-bit nibble split: the six captured editor frames only
-    // exercised mask bits 0, 2 and 10, where both models emit identical bytes.
-    // The nibble model ([47] = mask bits 4-7) was falsified on hardware twice
-    // (2026-08-08, 2026-08-09): the device ignores NR/CAB/EQ live and reads an
-    // NR frame's [47]=1 as bit 7 (MOD). Under 7+1 the mask's low byte rides
-    // whole in [46] (legal — bits 4-6 stay under 0x7F) with only MOD's bit 7
-    // carried into [47], which also dissolves the "MOD = 0x80 would be an
-    // illegal data byte" objection. Fits all captures; final hardware
-    // confirmation of bits 4-7 pending (docs/protocol-capture.md Gap A).
+    // Hardware status (2026-08-09, docs/protocol-capture.md Gap A): bits 0-6
+    // whole in [46] and bits 8-11 in [48] are CONFIRMED live (an earlier
+    // nibble-split model, [47] = bits 4-7, was falsified — NR/CAB/EQ were dead
+    // until moved into [46]). Bit 7 (MOD) is the one open bit: the device
+    // ignored both [47]=8 (nibble model) and the [47]=1 carry sent here, so
+    // either MOD's live encoding lives in a byte not yet identified or the
+    // firmware simply drops bit 7 from live writes (it always applies from a
+    // flashed patch — SAVE TO). Capturing the official editor assigning MOD
+    // decides it; until then the carry stays: it's harmless and matches the
+    // only self-consistent 7-bit model left.
     msg[38] = ctrlIndex & 0x7F;
     msg[39] = (ctrlIndex >> 7) & 0x01;
     msg[40] = state & 0x7F;
     msg[41] = (state >> 7) & 0x01;
     // [42-45] stay zero.
-    msg[46] = blockMask & 0x7F;        // mask low byte, bits 0-6
-    msg[47] = (blockMask >> 7) & 0x01; // bit 7 (MOD) carry
-    msg[48] = (blockMask >> 8) & 0x7F; // mask high byte: bits 8-11 incl. FX LOOP
+    msg[46] = blockMask & 0x7F;        // mask low byte bits 0-6 — confirmed live
+    msg[47] = (blockMask >> 7) & 0x01; // bit 7 (MOD) carry — device ignores it
+    msg[48] = (blockMask >> 8) & 0x7F; // bits 8-11 incl. FX LOOP — confirmed live
     msg[49] = 0;                       // bit-15 carry, always 0 for a 12-bit mask
     msg[53] = 0xF7;                                      // [53]    end
     return msg;

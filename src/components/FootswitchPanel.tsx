@@ -36,15 +36,16 @@ function blockEffectName(blockIndex: number, effectName: string | undefined): st
 }
 
 /**
- * The live CTRL write (SysExCodec.buildCtrlAssignment) 7+1-splits each mask
- * byte ([46] = bits 0-6, [47] = the bit-7 carry, [48] = bits 8-11). Bits 0-3
- * and 8-11 are hardware-confirmed; bits 4-7 (NR/CAB/EQ/MOD) were dead under
- * the earlier nibble-split encoding and the 7+1 fix awaits one hardware
- * re-test before this caveat can go. All targets always persist in the patch,
- * which the device reads on load — so SAVE TO applies them regardless. See
- * docs/protocol-capture.md Gap A.
+ * The live CTRL write (SysExCodec.buildCtrlAssignment) sends the mask's low
+ * 7 bits whole in wire byte [46] and bits 8-11 in [48] — both
+ * hardware-confirmed 2026-08-09. Bit 7 (MOD) is the one open bit: the device
+ * provably ignores byte [47] (both the nibble-era [47]=8 and the 7+1-carry
+ * [47]=1 encodings did nothing on hardware), so where — or whether — MOD can
+ * go live is unknown until the official editor's MOD frame is captured. MOD
+ * still persists in the patch, which the device reads on load — so SAVE TO
+ * applies it. See docs/protocol-capture.md Gap A.
  */
-const LIVE_UNVERIFIED_BLOCKS = [4, 5, 6, 7];
+const LIVE_UNVERIFIED_BLOCKS = [7];
 const LIVE_UNVERIFIED_LABELS = LIVE_UNVERIFIED_BLOCKS.map(blockLabel);
 
 function assignmentsOf(preset: GP200Preset): CtrlAssignment[] {
@@ -253,16 +254,15 @@ export function FootswitchPanel({
       `${selectedModules.join(', ')}.`;
   }
 
-  // Live-sync caveat only — every block persists in the patch. Bits 4-7 got a
-  // corrected wire encoding (7+1 split) that still awaits one hardware re-test
-  // before the caveat can go.
+  // Live-sync caveat only — every block persists in the patch. MOD's mask bit
+  // has no known live wire encoding yet (the device ignores every candidate
+  // byte tried), so it needs the SAVE TO flash path to reach the hardware.
   let deviceHint = '';
   if (connected) {
     deviceHint =
-      ` Changes are sent to the connected GP-200 straight away. ` +
-      `${LIVE_UNVERIFIED_LABELS.join(', ')} use a corrected wire encoding not ` +
-      `yet hardware-confirmed, so double-check they toggle live — ` +
-      `they're always stored in the patch (SAVE TO / export).`;
+      ` Changes are sent to the connected GP-200 straight away, except ` +
+      `${LIVE_UNVERIFIED_LABELS.join(', ')}, which the device only picks up ` +
+      `from a saved patch — hit SAVE TO after assigning it.`;
   }
 
   return (

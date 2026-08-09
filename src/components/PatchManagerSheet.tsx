@@ -31,6 +31,8 @@ export interface PatchManagerSheetProps {
   onImportFile: (bytes: Uint8Array) => void;
   /** Open the editor's export-preset dialog for the current patch. */
   onExportRequest: () => void;
+  /** User-IR slot names enumerated at connect (30 entries; empty offline). */
+  userIrNames: string[];
 }
 
 function bankSlotsOf(slot: number): number[] {
@@ -65,8 +67,10 @@ export function PatchManagerSheet({
   onRefreshNames,
   onImportFile,
   onExportRequest,
+  userIrNames,
 }: PatchManagerSheetProps) {
   const [selected, setSelected] = useState<number | null>(null);
+  const [irListOpen, setIrListOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [busy, setBusy] = useState(false);
@@ -251,6 +255,47 @@ export function PatchManagerSheet({
           onChange={handleEditorFilePick}
         />
       </div>
+
+      {/* User-IR slots, enumerated once per connect. Read-only: the IR
+          import/rename/delete write side is pending its protocol decode
+          (docs/protocol-capture.md §3). */}
+      {connected && userIrNames.length > 0 && (
+        <div
+          className="px-4 py-2 flex-shrink-0"
+          style={{ borderBottom: '1px solid var(--border-active)' }}
+        >
+          <button
+            type="button"
+            onClick={() => setIrListOpen(!irListOpen)}
+            aria-expanded={irListOpen}
+            className="font-mono-display text-caption flex items-center gap-2"
+            style={{ color: 'var(--text-muted)' }}
+            title="Cabinet impulse responses stored on the device"
+          >
+            {irListOpen && <span aria-hidden="true">▾</span>}
+            {!irListOpen && <span aria-hidden="true">▸</span>}
+            USER IRS ({userIrNames.length})
+          </button>
+          {irListOpen && (
+            <ol
+              className="mt-2 max-h-40 overflow-y-auto grid grid-cols-2 gap-x-4
+                font-mono-display text-caption"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              {userIrNames.map((irName, slotPosition) => (
+                // index IS the identity here: User-IR slots are positional on
+                // the device, and duplicate default names are expected
+                <li key={slotPosition} className="flex gap-2 py-0.5">
+                  <span style={{ color: 'var(--text-muted)' }}>
+                    {String(slotPosition + 1).padStart(2, '0')}
+                  </span>
+                  <span className="truncate">{irName || '—'}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      )}
 
       {/* Name-loading progress */}
       {connected && namesLoading && (

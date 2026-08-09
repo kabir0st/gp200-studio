@@ -12,18 +12,29 @@ export function isMidiMonitorEnabled(): boolean {
   return isFlagEnabled(MIDI_MONITOR_FLAG);
 }
 
-// Hex-dump the controller-assignment sweep the handshake already performs
+// Hex-dump the User-IR enumeration sweep the handshake performs
 // (0x11/0x1C → 0x12/0x1C, useMidiDevice step 9) with:
 //   localStorage.setItem('gp200:debug:assignments', '1')
-// The responses are collected into `assignmentInfo` and currently consumed by
-// nothing. They're the candidate read side for device-truth CTRL/EXP masks
-// (docs/protocol-capture.md §3 step 4), so dumping them is the zero-risk first
-// probe before any write capture: if the masks are in there, the 0x11/0x1C ↔
-// 0x12/0x1C pair is very likely the read/write pair we're missing.
+// The sweep was re-identified 2026-08-08 as the device's 30 User-IR slot
+// names (docs/protocol-capture.md §3); the names feed `userIrNames`, and this
+// flag dumps each raw record for eyeballing the layout beyond the name field.
 export const ASSIGNMENT_DUMP_FLAG = 'gp200:debug:assignments';
 
 export function isAssignmentDumpEnabled(): boolean {
   return isFlagEnabled(ASSIGNMENT_DUMP_FLAG);
+}
+
+// Hardware experiment for Gap C (docs/protocol-capture.md §2b): when set,
+// renameSlot additionally sends the EXPERIMENTAL single-field patch-name
+// frame (SysExCodec.buildPatchName, address hypothesis 0x0B60) before the
+// save-commit. Enable with:
+//   localStorage.setItem('gp200:debug:nameWrite', '1')
+// If the rename then survives a power cycle, the hypothesis is confirmed and
+// the frame can be promoted to the default path.
+export const NAME_WRITE_FLAG = 'gp200:debug:nameWrite';
+
+export function isNameWriteEnabled(): boolean {
+  return isFlagEnabled(NAME_WRITE_FLAG);
 }
 
 function isFlagEnabled(flag: string): boolean {

@@ -29,6 +29,7 @@ function renderSheet(overrides: Partial<Parameters<typeof PatchManagerSheet>[0]>
     onRefreshNames: vi.fn(),
     onImportFile: vi.fn(),
     onExportRequest: vi.fn(),
+    userIrNames: [] as string[],
     ...overrides,
   };
   const utils = render(<PatchManagerSheet {...props} />);
@@ -79,6 +80,22 @@ describe('PatchManagerSheet', () => {
     fireEvent.click(exportButton!);
     expect(props.onClose).toHaveBeenCalled();
     expect(props.onExportRequest).toHaveBeenCalled();
+  });
+
+  it('lists User-IR slots behind a collapsible toggle when connected', () => {
+    renderSheet({ userIrNames: ['My 4x12', 'User IR', 'User IR'] });
+    const toggle = screen.getByText(/USER IRS \(3\)/);
+    expect(screen.queryByText('My 4x12')).toBeNull();
+    fireEvent.click(toggle);
+    expect(screen.getByText('My 4x12')).toBeTruthy();
+    expect(screen.getAllByText('User IR')).toHaveLength(2);
+  });
+
+  it('hides the User-IR section offline and when the sweep returned nothing', () => {
+    renderSheet({ userIrNames: [] });
+    expect(screen.queryByText(/USER IRS/)).toBeNull();
+    renderSheet({ connected: false, userIrNames: ['User IR'] });
+    expect(screen.queryByText(/USER IRS/)).toBeNull();
   });
 
   it('shows bulk progress with a cancel control', () => {

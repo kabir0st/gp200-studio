@@ -142,10 +142,10 @@ describe.skipIf(!HAS_FIXTURES)('FootswitchPanel', () => {
     );
     expect(getByText(/sent to the connected GP-200 straight away/)).toBeTruthy();
     expect(getByText(/SAVE TO/)).toBeTruthy();
-    // Bits 4-7 (NR/CAB/EQ/MOD) carry the corrected 7+1 wire encoding that
-    // still awaits a hardware re-test, so the hint flags them. FX LOOP
-    // (bit 11) rides in the confirmed [48] byte, so it is not held back.
-    expect(getByText(/NR, CAB, EQ, MOD/)).toBeTruthy();
+    // MOD (bit 7) has no known live wire encoding — the device ignores byte
+    // [47] — so the hint singles it out as needing SAVE TO. Everything else,
+    // including FX LOOP in the confirmed [48] byte, is hardware-verified live.
+    expect(getByText(/except MOD/)).toBeTruthy();
   });
 
   it('shows no device hint while disconnected', () => {

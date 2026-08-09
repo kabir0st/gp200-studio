@@ -24,6 +24,7 @@ interface BoardTopBarProps {
   /* feature drawers + device tuner remote (moved up from the deck) */
   onOpenLooper: () => void;
   onOpenDrums: () => void;
+  onOpenRemote: () => void;
   /** browser drum machine is sounding (it survives the drawer closing) */
   drumsPlaying: boolean;
   sendCC: (command: CCCommand | CCCommand[]) => void;
@@ -83,6 +84,7 @@ export function BoardTopBar({
   onOpenGuide,
   onOpenLooper,
   onOpenDrums,
+  onOpenRemote,
   drumsPlaying,
   sendCC,
   onActivateSlot,
@@ -161,6 +163,15 @@ export function BoardTopBar({
         >
           <ActionIcon name="tuner" />
           <span className="db-label">TUNER</span>
+        </button>
+        <button
+          type="button"
+          className="deck-btn"
+          title="MIDI remote: virtual CTRL taps, bank/patch stepping, tempo, EXP1, quick knobs"
+          onClick={onOpenRemote}
+        >
+          <ActionIcon name="remote" />
+          <span className="db-label">REMOTE</span>
         </button>
       </div>
 
