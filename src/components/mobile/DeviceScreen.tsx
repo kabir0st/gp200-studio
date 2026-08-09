@@ -4,6 +4,8 @@ import { tunerShow } from '@/core/ccControl';
 import type { CCCommand } from '@/core/ccControl';
 import { AudioMeters } from '@/components/board/AudioMeters';
 import { RemotePanel } from '@/components/board/RemotePanel';
+import { DeviceStatePanel } from '@/components/board/DeviceStatePanel';
+import type { DeviceStateDump } from '@/core/SysExCodec';
 
 interface DeviceScreenProps {
   connected: boolean;
@@ -21,11 +23,11 @@ interface DeviceScreenProps {
   onPushRequest: () => void;
   onSaveToActiveSlot?: () => void;
   onOpenFxLoop: () => void;
-  onOpenExp: () => void;
-  onOpenCtrl: () => void;
+  onOpenPatchSettings: () => void;
   onOpenGuide: () => void;
   onCloseRequest: () => void;
   sendCC: (command: CCCommand | CCCommand[]) => void;
+  deviceState: DeviceStateDump | null;
 }
 
 /** Labelled full-width slider, the same control ParamSlider uses. */
@@ -89,11 +91,11 @@ export function DeviceScreen({
   onPushRequest,
   onSaveToActiveSlot,
   onOpenFxLoop,
-  onOpenExp,
-  onOpenCtrl,
+  onOpenPatchSettings,
   onOpenGuide,
   onCloseRequest,
   sendCC,
+  deviceState,
 }: DeviceScreenProps) {
   const slotLabel = currentSlot === null ? null : SysExCodec.slotToLabel(currentSlot);
   const panReadout = patchPan === 0 ? 'C' : patchPan < 0 ? `L${-patchPan}` : `R${patchPan}`;
@@ -182,11 +184,8 @@ export function DeviceScreen({
           <button type="button" className="m-btn" onClick={onOpenFxLoop}>
             FX LOOP
           </button>
-          <button type="button" className="m-btn" onClick={onOpenExp}>
-            EXP PEDAL
-          </button>
-          <button type="button" className="m-btn wide" onClick={onOpenCtrl}>
-            CTRL FOOTSWITCHES
+          <button type="button" className="m-btn" onClick={onOpenPatchSettings}>
+            PATCH SETTINGS
           </button>
         </div>
       </section>
@@ -194,6 +193,11 @@ export function DeviceScreen({
       <section className="m-section">
         <h3 className="m-section-title">MIDI REMOTE</h3>
         <RemotePanel connected={connected} sendCC={sendCC} />
+      </section>
+
+      <section className="m-section">
+        <h3 className="m-section-title">DEVICE STATE</h3>
+        <DeviceStatePanel connected={connected} state={deviceState} />
       </section>
 
       <section className="m-section">

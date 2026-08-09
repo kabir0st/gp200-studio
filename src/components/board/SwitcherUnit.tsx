@@ -19,8 +19,7 @@ interface SwitcherUnitProps {
   onPanChange: (value: number) => void;
   onTempoChange: (bpm: number) => void;
   onOpenFxLoop: () => void;
-  onOpenExp: () => void;
-  onOpenCtrl: () => void;
+  onOpenPatchSettings: () => void;
 }
 
 interface LiveBar {
@@ -92,8 +91,7 @@ export function SwitcherUnit({
   onPanChange,
   onTempoChange,
   onOpenFxLoop,
-  onOpenExp,
-  onOpenCtrl,
+  onOpenPatchSettings,
 }: SwitcherUnitProps) {
   const [openPop, setOpenPop] = useState<'settings' | null>(null);
 
@@ -226,18 +224,14 @@ export function SwitcherUnit({
           <ActionIcon name="fxloop" />
           <span className="db-label">FX LOOP</span>
         </button>
-        <button type="button" className="deck-btn" onClick={onOpenExp}>
-          <ActionIcon name="exp" />
-          <span className="db-label">EXP</span>
-        </button>
         <button
           type="button"
           className="deck-btn"
-          title="Assign CTRL footswitches to effect blocks"
-          onClick={onOpenCtrl}
+          title="Patch settings: expression pedals, CTRL footswitches, bulk apply"
+          onClick={onOpenPatchSettings}
         >
           <ActionIcon name="ctrl" />
-          <span className="db-label">CTRL</span>
+          <span className="db-label">SETTINGS</span>
         </button>
         {connected && (
           <button

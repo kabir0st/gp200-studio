@@ -11,6 +11,10 @@ import { LooperPanel } from './LooperPanel';
 import { DrumsPanel } from './DrumsPanel';
 import { DeviceLooperPanel } from './DeviceLooperPanel';
 import { RemotePanel } from './RemotePanel';
+import { DeviceStatePanel } from './DeviceStatePanel';
+import { BulkApplySection } from '@/components/BulkApplySection';
+import type { DeviceStateDump } from '@/core/SysExCodec';
+import type { BulkApplyProgress, BulkScope } from '@/core/bulkApply';
 import { DrumMachinePanel } from './DrumMachinePanel';
 import type { CCCommand } from '@/core/ccControl';
 import type { DrumMachineApi } from '@/hooks/useDrumMachine';
@@ -98,6 +102,13 @@ export interface PedalBoardProps {
   sendCC: (command: CCCommand | CCCommand[]) => void;
   ccChannel: number;
   onCcChannelChange: (channel: number) => void;
+  /* connect-time 0x4E state dump (read-only device settings view) */
+  deviceState: DeviceStateDump | null;
+  /* bulk apply (PATCH SETTINGS drawer): CTRL/volume across many patches */
+  canCopyCtrl: boolean;
+  onBulkApply: (scope: BulkScope, apply: { ctrl: boolean; volume: number | null }) => void;
+  bulkApplyProgress: BulkApplyProgress | null;
+  onCancelBulkApply: () => void;
   /* device session controls (deck-hosted; there is no separate status bar) */
   onConnectRequest: () => void;
   onDisconnect: () => void;
@@ -160,6 +171,11 @@ export function PedalBoard({
   looperLearnNotice,
   drumMachine,
   sendCC,
+  deviceState,
+  canCopyCtrl,
+  onBulkApply,
+  bulkApplyProgress,
+  onCancelBulkApply,
   ccChannel,
   onCcChannelChange,
   onConnectRequest,
@@ -179,7 +195,7 @@ export function PedalBoard({
   const [hoverSlot, setHoverSlot] = useState<number | null>(null);
   const [pinnedSlot, setPinnedSlot] = useState<number | null>(null);
   const [openDrawer, setOpenDrawer] =
-    useState<'fxloop' | 'exp' | 'ctrl' | 'looper' | 'drums' | 'remote' | null>(null);
+    useState<'fxloop' | 'patch' | 'looper' | 'drums' | 'remote' | null>(null);
   const [pickerSlot, setPickerSlot] = useState<number | null>(null);
 
   // Report the looper drawer's open state up to App: the MIDI dispatcher tap
@@ -192,7 +208,7 @@ export function PedalBoard({
   // on a new drawer. Closing (setOpenDrawer(null)) stays direct — only the open
   // is a discovery signal.
   const openPanel = useCallback(
-    (panel: 'fxloop' | 'exp' | 'ctrl' | 'looper' | 'drums' | 'remote') => {
+    (panel: 'fxloop' | 'patch' | 'looper' | 'drums' | 'remote') => {
       setOpenDrawer(panel);
       onPanelOpen(panel);
     },
@@ -370,8 +386,7 @@ export function PedalBoard({
           onPanChange={onPanChange}
           onTempoChange={onTempoChange}
           onOpenFxLoop={() => openPanel('fxloop')}
-          onOpenExp={() => openPanel('exp')}
-          onOpenCtrl={() => openPanel('ctrl')}
+          onOpenPatchSettings={() => openPanel('patch')}
         />
       </main>
 
@@ -391,30 +406,57 @@ export function PedalBoard({
         </p>
       </DeckDrawer>
 
+      {/* One consolidated per-patch settings surface: EXP assignment (with
+          the live position/A-B row, moved here from the REMOTE panel), CTRL
+          footswitch masks, and the bulk-apply tool that copies them across
+          patches. */}
       <DeckDrawer
-        open={openDrawer === 'exp'}
+        open={openDrawer === 'patch'}
         onClose={() => setOpenDrawer(null)}
-        title="Expression Pedals"
+        title="Patch Settings"
       >
+        <p
+          className="font-mono-display text-label text-text-muted uppercase
+            tracking-widest mb-2"
+        >
+          Expression pedals
+        </p>
         <ControllerPanel
           preset={preset}
           connected={connected}
           onParamSelect={onExpParamSelect}
           onMinMax={onExpMinMax}
+          sendCC={sendCC}
         />
-      </DeckDrawer>
-
-      <DeckDrawer
-        open={openDrawer === 'ctrl'}
-        onClose={() => setOpenDrawer(null)}
-        title="CTRL Footswitches"
-      >
-        <FootswitchPanel
-          preset={preset}
-          connected={connected}
-          onCtrlBlockToggle={onCtrlBlockToggle}
-          onCtrlClear={onCtrlClear}
-        />
+        <div className="mt-4 pt-4 border-t border-border-active">
+          <p
+            className="font-mono-display text-label text-text-muted uppercase
+              tracking-widest mb-2"
+          >
+            CTRL footswitches
+          </p>
+          <FootswitchPanel
+            preset={preset}
+            connected={connected}
+            onCtrlBlockToggle={onCtrlBlockToggle}
+            onCtrlClear={onCtrlClear}
+          />
+        </div>
+        <div className="mt-4 pt-4 border-t border-border-active">
+          <p
+            className="font-mono-display text-label text-text-muted uppercase
+              tracking-widest mb-2"
+          >
+            Bulk apply · many patches
+          </p>
+          <BulkApplySection
+            connected={connected}
+            canCopyCtrl={canCopyCtrl}
+            progress={bulkApplyProgress}
+            onApply={onBulkApply}
+            onCancel={onCancelBulkApply}
+          />
+        </div>
       </DeckDrawer>
 
       {/* The loop station is a big centred dialog (same footprint as the effect
@@ -500,6 +542,15 @@ export function PedalBoard({
         title="MIDI Remote"
       >
         <RemotePanel connected={connected} sendCC={sendCC} />
+        <div className="mt-4 pt-4 border-t border-border-active">
+          <p
+            className="font-mono-display text-label text-text-muted uppercase
+              tracking-widest mb-2"
+          >
+            Device state · read-only
+          </p>
+          <DeviceStatePanel connected={connected} state={deviceState} />
+        </div>
       </DeckDrawer>
 
       {pickerEffect && (

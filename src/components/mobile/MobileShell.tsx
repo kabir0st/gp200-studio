@@ -4,6 +4,7 @@ import { usePedalManifest } from '@/components/board/pedalManifest';
 import { LooperPanel } from '@/components/board/LooperPanel';
 import { DrumsPanel } from '@/components/board/DrumsPanel';
 import { DeviceLooperPanel } from '@/components/board/DeviceLooperPanel';
+import { BulkApplySection } from '@/components/BulkApplySection';
 import { DrumMachinePanel } from '@/components/board/DrumMachinePanel';
 import { FxLoopArrows } from '@/components/FxLoopArrows';
 import { ControllerPanel } from '@/components/ControllerPanel';
@@ -17,7 +18,7 @@ import { DeviceScreen } from './DeviceScreen';
 import { track } from '@/core/analytics';
 import './mobile.css';
 
-type Sheet = 'fxloop' | 'exp' | 'ctrl' | 'meta' | null;
+type Sheet = 'fxloop' | 'patch' | 'meta' | null;
 
 /**
  * Root of the phone tree, rendered below 640px in place of PedalBoard.
@@ -79,6 +80,11 @@ export default function MobileShell({
   looperLearnNotice,
   drumMachine,
   sendCC,
+  deviceState,
+  canCopyCtrl,
+  onBulkApply,
+  bulkApplyProgress,
+  onCancelBulkApply,
   ccChannel,
   onCcChannelChange,
   onConnectRequest,
@@ -114,7 +120,11 @@ export default function MobileShell({
   const openSheet = useCallback(
     (next: Exclude<Sheet, null>) => {
       setSheet(next);
-      onPanelOpen(next === 'meta' ? 'patch_meta' : next);
+      if (next === 'meta') {
+        onPanelOpen('patch_meta');
+        return;
+      }
+      onPanelOpen(next);
     },
     [onPanelOpen],
   );
@@ -231,11 +241,11 @@ export default function MobileShell({
             onPushRequest={onPushRequest}
             onSaveToActiveSlot={onSaveToActiveSlot}
             onOpenFxLoop={() => openSheet('fxloop')}
-            onOpenExp={() => openSheet('exp')}
-            onOpenCtrl={() => openSheet('ctrl')}
+            onOpenPatchSettings={() => openSheet('patch')}
             onOpenGuide={onOpenGuide}
             onCloseRequest={onCloseRequest}
             sendCC={sendCC}
+            deviceState={deviceState}
           />
         )}
       </main>
@@ -274,21 +284,32 @@ export default function MobileShell({
         />
       </MobileSheet>
 
-      <MobileSheet open={sheet === 'exp'} onClose={() => setSheet(null)} title="Expression Pedal">
+      {/* One consolidated per-patch settings sheet, mirroring the desktop
+          PATCH SETTINGS drawer: EXP assignment (+ live test row), CTRL
+          footswitch masks, bulk apply. */}
+      <MobileSheet open={sheet === 'patch'} onClose={() => setSheet(null)} title="Patch Settings">
+        <h3 className="m-section-title">EXPRESSION PEDALS</h3>
         <ControllerPanel
           preset={preset}
           connected={connected}
           onParamSelect={onExpParamSelect}
           onMinMax={onExpMinMax}
+          sendCC={sendCC}
         />
-      </MobileSheet>
-
-      <MobileSheet open={sheet === 'ctrl'} onClose={() => setSheet(null)} title="CTRL Footswitches">
+        <h3 className="m-section-title mt-6">CTRL FOOTSWITCHES</h3>
         <FootswitchPanel
           preset={preset}
           connected={connected}
           onCtrlBlockToggle={onCtrlBlockToggle}
           onCtrlClear={onCtrlClear}
+        />
+        <h3 className="m-section-title mt-6">BULK APPLY</h3>
+        <BulkApplySection
+          connected={connected}
+          canCopyCtrl={canCopyCtrl}
+          progress={bulkApplyProgress}
+          onApply={onBulkApply}
+          onCancel={onCancelBulkApply}
         />
       </MobileSheet>
     </div>

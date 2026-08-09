@@ -33,6 +33,7 @@ import {
 } from '@/components/PatchManagerSheet';
 import { createDefaultPreset } from '@/core/defaultPreset';
 import { createZip, type ZipEntry } from '@/core/zipStore';
+import { slotsForScope, type BulkScope } from '@/core/bulkApply';
 import { SysExCodec } from '@/core/SysExCodec';
 import { track, trackVirtualPageView } from '@/core/analytics';
 import { useEngagementTracking } from '@/hooks/useEngagementTracking';
@@ -479,6 +480,29 @@ function App() {
     }
   }
 
+  async function handleBulkApply(
+    scope: BulkScope,
+    apply: { ctrl: boolean; volume: number | null },
+  ) {
+    if (midiDevice.status !== 'connected') return;
+    const options: Parameters<typeof midiDevice.bulkApply>[1] = {};
+    if (apply.ctrl && preset?.ctrlAssignments?.length) {
+      options.ctrlAssignments = preset.ctrlAssignments;
+    }
+    if (apply.volume !== null) options.volume = apply.volume;
+    if (!options.ctrlAssignments && options.volume === undefined) return;
+    try {
+      const { done, cancelled } = await midiDevice.bulkApply(slotsForScope(scope), options);
+      setLoadError(null);
+      track('bulk_apply', { ok: true, done, cancelled });
+    } catch (err) {
+      let detail = String(err);
+      if (err instanceof Error) detail = err.message;
+      setLoadError(`Bulk apply failed: ${detail}`);
+      track('bulk_apply', { ok: false });
+    }
+  }
+
   function handleOpenPatchManager() {
     setShowPatchManager(true);
     trackPanelOpen('patch_manager');
@@ -759,6 +783,11 @@ function App() {
     looperLearnNotice: looperTriggers.learnNotice,
     drumMachine: drumMachine,
     sendCC: midiDevice.sendCC,
+    deviceState: midiDevice.deviceState,
+    canCopyCtrl: (preset?.ctrlAssignments?.length ?? 0) > 0,
+    onBulkApply: handleBulkApply,
+    bulkApplyProgress: midiDevice.bulkApplyProgress,
+    onCancelBulkApply: midiDevice.cancelBulkApply,
     ccChannel: midiDevice.ccChannel,
     onCcChannelChange: midiDevice.setCcChannel,
     onEnableAudio: () => void audioEngine.enable(),

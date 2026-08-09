@@ -5,15 +5,13 @@ import {
   TEMPO_MIN_BPM,
   bankStep,
   ctrlTap,
-  exp1Position,
-  exp1Select,
   patchStep,
   quickAccessParam,
   tempoBpm,
 } from '@/core/ccControl';
 import { Button } from '@/components/ui/Button';
 import { CcSlider, SectionHeading } from '@/components/board/CcControls';
-import { SELECT_CLASS, disabledTitle, toggleVariant } from '@/components/board/ccUi';
+import { SELECT_CLASS, disabledTitle } from '@/components/board/ccUi';
 
 interface RemotePanelProps {
   connected: boolean;
@@ -25,9 +23,11 @@ const QUICK_KNOB_NUMBERS = [1, 2, 3];
 
 /**
  * MIDI-CC remote for GP-200 commands the app has no other surface for:
- * virtual CTRL 1–8 footswitch taps, bank/patch stepping, direct tempo,
- * EXP1 position/A-B, and the three Quick Access knobs. All plain CC from
- * the manual's MIDI Control Information List (src/core/ccControl.ts).
+ * virtual CTRL 1–8 footswitch taps, bank/patch stepping, direct tempo, and
+ * the three Quick Access knobs. All plain CC from the manual's MIDI Control
+ * Information List (src/core/ccControl.ts). The EXP 1 position/A-B live
+ * controls deliberately live in ControllerPanel (PATCH SETTINGS drawer),
+ * next to the assignments they exercise.
  *
  * Fire-and-forget like the drums/looper panels: the device sends no
  * feedback, so slider state is what was last sent, and the CTRL taps are
@@ -37,8 +37,6 @@ const QUICK_KNOB_NUMBERS = [1, 2, 3];
  */
 export function RemotePanel({ connected, sendCC }: RemotePanelProps) {
   const [tempo, setTempo] = useState(120);
-  const [expPosition, setExpPosition] = useState(0);
-  const [expSide, setExpSide] = useState<'A' | 'B'>('A');
   const [quickValues, setQuickValues] = useState<number[]>([50, 50, 50]);
 
   function handleQuickChange(knobNumber: number, value: number) {
@@ -145,46 +143,6 @@ export function RemotePanel({ connected, sendCC }: RemotePanelProps) {
         >
           SET BPM
         </Button>
-      </div>
-
-      {/* EXP 1 */}
-      <div className="flex flex-col gap-2">
-        <SectionHeading>EXP 1</SectionHeading>
-        <CcSlider
-          label="POSITION"
-          value={expPosition}
-          disabled={!connected}
-          onChange={(value) => {
-            setExpPosition(value);
-            sendCC(exp1Position(value));
-          }}
-        />
-        <div className="flex items-center gap-2">
-          <Button
-            variant={toggleVariant(expSide === 'A')}
-            size="sm"
-            disabled={!connected}
-            title={disabledTitle(connected, 'Switch EXP1 to assignment A')}
-            onClick={() => {
-              setExpSide('A');
-              sendCC(exp1Select('A'));
-            }}
-          >
-            A
-          </Button>
-          <Button
-            variant={toggleVariant(expSide === 'B')}
-            size="sm"
-            disabled={!connected}
-            title={disabledTitle(connected, 'Switch EXP1 to assignment B')}
-            onClick={() => {
-              setExpSide('B');
-              sendCC(exp1Select('B'));
-            }}
-          >
-            B
-          </Button>
-        </div>
       </div>
 
       {/* Quick Access knobs */}

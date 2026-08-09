@@ -40,6 +40,7 @@ function bankSlotsOf(slot: number): number[] {
   return [base, base + 1, base + 2, base + 3];
 }
 
+
 /**
  * Right-anchored side sheet listing all 256 device slots (64 banks × A–D)
  * with search, activate, open-in-editor, rename, per-slot .prst export /

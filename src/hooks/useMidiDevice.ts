@@ -10,6 +10,7 @@ import { hexOfBytes } from '@/core/looperTriggers';
 import type { GP200Preset } from '@/core/types';
 import type { CCCommand } from '@/core/ccControl';
 import { presetNameCacheKey, loadCachedNames, saveCachedNames } from '@/core/presetNameCache';
+import type { BulkApplyOptions, BulkApplyProgress } from '@/core/bulkApply';
 import { track } from '@/core/analytics';
 import { PRSTEncoder } from '@/core/PRSTEncoder';
 import { useMidiSend } from './useMidiSend';
@@ -73,6 +74,15 @@ export interface UseMidiDeviceReturn {
    *  device to the target slot (required to load the editing buffer), then
    *  save-commits under the new name and restores the previous slot. */
   renameSlot: (slot: number, name: string) => Promise<void>;
+  /** Write the same CTRL assignments and/or patch volume into every listed
+   *  slot (preset-change → live writes → save-commit per slot). Progress in
+   *  bulkApplyProgress; cancel with cancelBulkApply (finishes current slot). */
+  bulkApply: (
+    slots: number[],
+    options: BulkApplyOptions,
+  ) => Promise<{ done: number; cancelled: boolean }>;
+  bulkApplyProgress: BulkApplyProgress | null;
+  cancelBulkApply: () => void;
   sendToggle: (blockIndex: number, enabled: boolean) => void;
   sendParamChange: (blockIndex: number, paramIndex: number, effectId: number, value: number) => void;
   sendReorder: (order: number[], send: number, ret: number) => void;
@@ -1015,6 +1025,72 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     }
   }, [pauseNameLoading, persistNames]);
 
+  // Bulk apply: write the same CTRL assignments and/or patch volume into many
+  // saved patches. Per slot this replays the proven renameSlot sequence —
+  // preset-change loads the slot into the edit buffer, live writes mutate it,
+  // save-commit persists it — so it inherits that path's hardware guarantees
+  // (and its caveats: CTRL mask bit 7/MOD does not apply live, docs §3).
+  const bulkApplyAbortRef = useRef(false);
+  const [bulkApplyProgress, setBulkApplyProgress] = useState<BulkApplyProgress | null>(null);
+
+  const cancelBulkApply = useCallback(() => {
+    bulkApplyAbortRef.current = true;
+  }, []);
+
+  const bulkApply = useCallback(async (
+    slots: number[],
+    options: BulkApplyOptions,
+  ): Promise<{ done: number; cancelled: boolean }> => {
+    await pauseNameLoading();
+    if (!outputRef.current) throw new Error('Not connected');
+    const output = outputRef.current;
+    const previousSlot = currentSlotRef.current;
+    bulkApplyAbortRef.current = false;
+    let done = 0;
+
+    try {
+      for (const slot of slots) {
+        if (bulkApplyAbortRef.current) break;
+        setBulkApplyProgress({ done, total: slots.length, slot });
+        // Long enough to cover every frame this iteration sends, so the FX
+        // dispatcher can't mistake device echoes for hardware-initiated edits.
+        suppressFxFor(1200);
+        output.send(SysExCodec.buildPresetChange(slot));
+        await new Promise(r => setTimeout(r, 200));
+
+        if (options.volume !== undefined) {
+          output.send(SysExCodec.buildPatchSetting(0x00, options.volume));
+          await new Promise(r => setTimeout(r, 30));
+        }
+        if (options.ctrlAssignments) {
+          for (const assignment of options.ctrlAssignments) {
+            output.send(SysExCodec.buildCtrlAssignment(
+              assignment.ctrlIndex,
+              assignment.blockMask,
+              assignment.state,
+            ));
+            await new Promise(r => setTimeout(r, 30));
+          }
+        }
+
+        // The device ignores the name field in save-commit (docs §2b), so a
+        // cached name is cosmetic; the buffer's own name is what persists.
+        output.send(SysExCodec.buildSaveCommit(presetNamesRef.current[slot] ?? '', slot));
+        await new Promise(r => setTimeout(r, 300));
+        done++;
+        setBulkApplyProgress({ done, total: slots.length, slot });
+      }
+    } finally {
+      setBulkApplyProgress(null);
+      if (previousSlot !== null) {
+        output.send(SysExCodec.buildPresetChange(previousSlot));
+        await new Promise(r => setTimeout(r, 200));
+        setCurrentSlot(previousSlot); currentSlotRef.current = previousSlot;
+      }
+    }
+    return { done, cancelled: bulkApplyAbortRef.current };
+  }, [pauseNameLoading, suppressFxFor]);
+
   // All send* helpers + device-callback setters come from useMidiSend (see
   // the top of the hook where `send` is instantiated). The return value at
   // the bottom spreads them onto the public API.
@@ -1047,6 +1123,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     deviceInfo, currentPreset, userIrNames, deviceState,
     connect, disconnect, loadPresetNames, syncPresetNames, refreshNames,
     pullPreset, pushPreset, writePresetToSlot, saveToSlot, renameSlot,
+    bulkApply, bulkApplyProgress, cancelBulkApply,
     // Send operations + device-callback registration are owned by useMidiSend.
     sendEffectChange: send.sendEffectChange,
     sendToggle: send.sendToggle,

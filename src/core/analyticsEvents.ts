@@ -18,8 +18,9 @@
  *  the two editor trees report into a single comparable `panel_open` metric. */
 export type PanelId =
   | 'fxloop'
-  | 'exp'
-  | 'ctrl'
+  /** Consolidated per-patch settings drawer/sheet (EXP + CTRL + bulk apply);
+   *  replaced the separate 'exp' and 'ctrl' panels 2026-08-09. */
+  | 'patch'
   | 'looper'
   | 'drums'
   | 'remote'
@@ -50,6 +51,8 @@ export interface AnalyticsParams {
 
   preset_import: { target: 'editor' | 'slot'; ok: boolean };
   preset_export: { scope: 'editor' | 'slot' | 'bulk' };
+  /** Bulk CTRL/volume write across many slots. `done` = patches written. */
+  bulk_apply: { ok: boolean; done?: number; cancelled?: boolean };
 
   // ── Looper + drums usage ────────────────────────────────────────────────
   // panel_open only says a drawer was opened. These say the feature was used.
