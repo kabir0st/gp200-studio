@@ -770,25 +770,28 @@ export const SysExCodec = {
       0x0F, 0x00, 0x00, 0x00,                            // [30-33] type=CTRL assignment
       0x08, 0x00, 0x00, 0x00,                            // [34-37] payload size 8
     ]);
-    // Every payload field is nibble-split (4 bits per byte, LOW nibble first)
-    // so no data byte can exceed 0x7F. Note this is NOT nibbleEncode, which
-    // packs a byte array high-nibble-first.
+    // Every payload byte b is 7+1-split across two wire bytes — [2i] = b & 0x7F,
+    // [2i+1] = b >> 7 (the carry bit) — the standard MIDI trick to keep data
+    // bytes ≤ 0x7F. Note this is NOT nibbleEncode, which packs high-nibble-first.
     //
-    // KNOWN WRONG for mask bits 4-7 (NR/CAB/EQ/MOD → byte [47]). The capture
-    // only ever exercised bits 0, 2 and 10, i.e. bytes [46] and [48]; [47] is
-    // interpolation, and hardware testing 2026-08-08 shows the device ignores
-    // it. A rival model — [46] carrying the whole low byte — fits every
-    // captured frame equally well. Needs an EQ/MOD capture to settle;
-    // docs/protocol-capture.md §3.
-    msg[38] = ctrlIndex & 0x0F;
-    msg[39] = (ctrlIndex >> 4) & 0x0F;
-    msg[40] = state & 0x0F;
-    msg[41] = (state >> 4) & 0x0F;
+    // Why 7+1 and not a 4-bit nibble split: the six captured editor frames only
+    // exercised mask bits 0, 2 and 10, where both models emit identical bytes.
+    // The nibble model ([47] = mask bits 4-7) was falsified on hardware twice
+    // (2026-08-08, 2026-08-09): the device ignores NR/CAB/EQ live and reads an
+    // NR frame's [47]=1 as bit 7 (MOD). Under 7+1 the mask's low byte rides
+    // whole in [46] (legal — bits 4-6 stay under 0x7F) with only MOD's bit 7
+    // carried into [47], which also dissolves the "MOD = 0x80 would be an
+    // illegal data byte" objection. Fits all captures; final hardware
+    // confirmation of bits 4-7 pending (docs/protocol-capture.md Gap A).
+    msg[38] = ctrlIndex & 0x7F;
+    msg[39] = (ctrlIndex >> 7) & 0x01;
+    msg[40] = state & 0x7F;
+    msg[41] = (state >> 7) & 0x01;
     // [42-45] stay zero.
-    msg[46] = blockMask & 0x0F;
-    msg[47] = (blockMask >> 4) & 0x0F;
-    msg[48] = (blockMask >> 8) & 0x0F;
-    msg[49] = (blockMask >> 12) & 0x0F;
+    msg[46] = blockMask & 0x7F;        // mask low byte, bits 0-6
+    msg[47] = (blockMask >> 7) & 0x01; // bit 7 (MOD) carry
+    msg[48] = (blockMask >> 8) & 0x7F; // mask high byte: bits 8-11 incl. FX LOOP
+    msg[49] = 0;                       // bit-15 carry, always 0 for a 12-bit mask
     msg[53] = 0xF7;                                      // [53]    end
     return msg;
   },

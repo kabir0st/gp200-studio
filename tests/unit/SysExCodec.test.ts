@@ -619,15 +619,29 @@ describe('SysExCodec: buildCtrlAssignment', () => {
     expect(msg[53]).toBe(0xF7);
   });
 
-  it('nibble-splits the mask low-nibble-first across [46..49]', () => {
-    // Every data byte must stay <= 0x7F, so the u16 mask travels 4 bits per
-    // byte. 0xABC exercises all four nibbles at once.
+  it('7+1-splits each mask byte across [46..49]', () => {
+    // Each payload byte b travels as (b & 0x7F, b >> 7) so no data byte
+    // exceeds 0x7F. 0xABC exercises both bytes and the bit-7 carry at once:
+    // low byte 0xBC -> [46]=0x3C, [47]=1; high byte 0x0A -> [48]=0x0A, [49]=0.
     const msg = SysExCodec.buildCtrlAssignment(3, 0xABC, 0);
-    expect([msg[46], msg[47], msg[48], msg[49]]).toEqual([0xC, 0xB, 0xA, 0x0]);
+    expect([msg[46], msg[47], msg[48], msg[49]]).toEqual([0x3C, 0x01, 0x0A, 0x00]);
     expect(msg.every((byte, i) => i === 0 || i === 53 || byte <= 0x7F)).toBe(true);
   });
 
-  it('keeps bit 11 (device-written, unmodeled) on the wire', () => {
+  it('sends bits 4-6 (NR/CAB/EQ) whole in [46], MOD as the [47] carry', () => {
+    // The four blocks that were dead under the falsified nibble-split model
+    // (docs/protocol-capture.md Gap A).
+    expect(SysExCodec.buildCtrlAssignment(0, 0x010, 0).slice(46, 50))
+      .toEqual(new Uint8Array([0x10, 0x00, 0x00, 0x00])); // NR
+    expect(SysExCodec.buildCtrlAssignment(0, 0x020, 0).slice(46, 50))
+      .toEqual(new Uint8Array([0x20, 0x00, 0x00, 0x00])); // CAB
+    expect(SysExCodec.buildCtrlAssignment(0, 0x040, 0).slice(46, 50))
+      .toEqual(new Uint8Array([0x40, 0x00, 0x00, 0x00])); // EQ
+    expect(SysExCodec.buildCtrlAssignment(0, 0x080, 0).slice(46, 50))
+      .toEqual(new Uint8Array([0x00, 0x01, 0x00, 0x00])); // MOD
+  });
+
+  it('keeps bit 11 (FX LOOP) on the wire in confirmed byte [48]', () => {
     const msg = SysExCodec.buildCtrlAssignment(0, 0x800, 0);
     expect([msg[46], msg[47], msg[48], msg[49]]).toEqual([0x0, 0x0, 0x8, 0x0]);
   });

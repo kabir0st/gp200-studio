@@ -65,12 +65,20 @@ describe('usePreset CTRL mask mutators', () => {
     expect(result.current.preset!.ctrlAssignments![7].blockMask).toBe(0);
   });
 
+  it('sets bit 11 (FX LOOP) via setCtrlBlock', () => {
+    const { result } = renderHook(() => usePreset());
+    act(() => result.current.loadPreset(presetWithMask(0, 0x001)));
+
+    act(() => result.current.setCtrlBlock(0, 11, true));
+    expect(result.current.preset!.ctrlAssignments![0].blockMask).toBe(0x801);
+  });
+
   it('ignores out-of-range ctrl and block indices', () => {
     const { result } = renderHook(() => usePreset());
     act(() => result.current.loadPreset(presetWithMask(0, 0x001)));
 
     act(() => result.current.setCtrlBlock(8, 0, true));
-    act(() => result.current.setCtrlBlock(0, 11, true));
+    act(() => result.current.setCtrlBlock(0, 12, true));
     act(() => result.current.setCtrlMask(-1, 0x0FF));
     expect(result.current.preset!.ctrlAssignments![0].blockMask).toBe(0x001);
   });

@@ -16,9 +16,9 @@ import type { CtrlAssignment, ExpAssignment } from './types';
  *   0x460  8 × 12-byte CTRL records: header 0F 00 08 00 (type 0x000F, size 8)
  *          payload: [ctrlIndex u8 0–7][state u8 0/1][2 bytes uninitialized]
  *                   [blockMask u16 LE][2 bytes uninitialized]
- *          bit n of blockMask = fixed block n (0=PRE..10=VOL); bit 11 also
- *          appears in real exports (unmodeled, kept verbatim; possibly the
- *          FX loop). The state byte is the CTRL's saved toggle position, not
+ *          bit n of blockMask = fixed block n (0=PRE..10=VOL); bit 11 is the
+ *          FX loop (docs/windows-exe-reversing.md), the panel's 12th target.
+ *          The state byte is the CTRL's saved toggle position, not
  *          an enable gate (masks are honored with state 0). The two 2-byte
  *          windows and the mask's high nibble carry uninitialized firmware
  *          memory (repeating strides, ASCII fragments) and must round-trip

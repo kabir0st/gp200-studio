@@ -142,10 +142,10 @@ describe.skipIf(!HAS_FIXTURES)('FootswitchPanel', () => {
     );
     expect(getByText(/sent to the connected GP-200 straight away/)).toBeTruthy();
     expect(getByText(/SAVE TO/)).toBeTruthy();
-    // Bits 4-7 (NR/CAB/EQ/MOD) and bit 11 (FX LOOP) were never seen on the
-    // wire, so the hint holds them back from the "synced live" promise rather
-    // than claiming every target reaches the pedal.
-    expect(getByText(/NR, CAB, EQ, MOD, FX LOOP/)).toBeTruthy();
+    // Bits 4-7 (NR/CAB/EQ/MOD) carry the corrected 7+1 wire encoding that
+    // still awaits a hardware re-test, so the hint flags them. FX LOOP
+    // (bit 11) rides in the confirmed [48] byte, so it is not held back.
+    expect(getByText(/NR, CAB, EQ, MOD/)).toBeTruthy();
   });
 
   it('shows no device hint while disconnected', () => {

@@ -36,15 +36,15 @@ function blockEffectName(blockIndex: number, effectName: string | undefined): st
 }
 
 /**
- * Every block persists correctly in the patch — confirmed by decoding real
- * device exports (dumps/prts/01-A carries EQ, MOD and the FX-loop bit), so this
- * caveat is about LIVE sync only, never patch save. The live CTRL write
- * (0x12/0x14) is capture-confirmed for bits 0-3 (byte [46]) and 8-10 (byte
- * [48]); bits 4-7 (NR/CAB/EQ/MOD, byte [47]) and bit 11 (FX LOOP) were never
- * seen on the wire, so they save with the patch but their live-sync is
- * unverified. See docs/windows-exe-reversing.md.
+ * The live CTRL write (SysExCodec.buildCtrlAssignment) 7+1-splits each mask
+ * byte ([46] = bits 0-6, [47] = the bit-7 carry, [48] = bits 8-11). Bits 0-3
+ * and 8-11 are hardware-confirmed; bits 4-7 (NR/CAB/EQ/MOD) were dead under
+ * the earlier nibble-split encoding and the 7+1 fix awaits one hardware
+ * re-test before this caveat can go. All targets always persist in the patch,
+ * which the device reads on load — so SAVE TO applies them regardless. See
+ * docs/protocol-capture.md Gap A.
  */
-const LIVE_UNVERIFIED_BLOCKS = [4, 5, 6, 7, FX_LOOP_BLOCK];
+const LIVE_UNVERIFIED_BLOCKS = [4, 5, 6, 7];
 const LIVE_UNVERIFIED_LABELS = LIVE_UNVERIFIED_BLOCKS.map(blockLabel);
 
 function assignmentsOf(preset: GP200Preset): CtrlAssignment[] {
@@ -253,16 +253,16 @@ export function FootswitchPanel({
       `${selectedModules.join(', ')}.`;
   }
 
-  // Live-sync caveat only — every block saves to the patch correctly (see the
-  // LIVE_UNVERIFIED_BLOCKS note above). Bits 4-7 (byte [47]) and bit 11 (FX
-  // LOOP) were never seen on the wire, so they're held back from the "sent
-  // live" promise until a capture confirms them; see docs/windows-exe-reversing.md.
+  // Live-sync caveat only — every block persists in the patch. Bits 4-7 got a
+  // corrected wire encoding (7+1 split) that still awaits one hardware re-test
+  // before the caveat can go.
   let deviceHint = '';
   if (connected) {
     deviceHint =
-      ` Changes are sent to the connected GP-200 straight away — except ` +
-      `${LIVE_UNVERIFIED_LABELS.join(', ')}, which are saved with the patch but ` +
-      `don't reach the pedal live yet. Use SAVE TO to keep changes in the patch.`;
+      ` Changes are sent to the connected GP-200 straight away. ` +
+      `${LIVE_UNVERIFIED_LABELS.join(', ')} use a corrected wire encoding not ` +
+      `yet hardware-confirmed, so double-check they toggle live — ` +
+      `they're always stored in the patch (SAVE TO / export).`;
   }
 
   return (
