@@ -16,8 +16,25 @@
     />
     <meta name="author" content="GP200 Studio" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
-    <meta name="theme-color" content="#232220" />
+    <meta name="theme-color" content="#d8d5ce" />
     <link rel="canonical" href="https://kabirtamari.com/gp200studio/" />
+
+    <!-- Stage theme, applied before first paint so a dark-mode reload doesn't
+         flash the light board. React adopts this value (src/hooks/useTheme.ts);
+         it must not re-decide it. -->
+    <script>
+      try {
+        var t = localStorage.getItem('gp200:theme');
+        if (t === 'dark' || t === 'light') {
+          document.documentElement.dataset.theme = t;
+          document
+            .querySelector('meta[name="theme-color"]')
+            .setAttribute('content', t === 'dark' ? '#17181a' : '#d8d5ce');
+        }
+      } catch (e) {
+        /* blocked storage: fall through to the light default */
+      }
+    </script>
 
     <!-- Icons & manifest -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

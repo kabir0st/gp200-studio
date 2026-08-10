@@ -50,12 +50,17 @@ export function useFlipReorder<T extends HTMLElement = HTMLDivElement>(
    * to zero and the whole board implodes , measured live at 672px → 72px, with
    * pedals piled up at stale coordinates. Pinning the height is what the old
    * per-bay min-height was accidentally doing, minus the dead air at rest.
+   *
+   * The rect is in client px, which useBoardFit's `zoom` on this same scope
+   * has already scaled; an inline `height` is in the scope's own (pre-zoom)
+   * px, so the factor has to come back out or every row locks open too tall.
    */
   const lockRowHeights = useCallback(() => {
     const scope = scopeRef.current;
     if (!scope) return;
+    const zoom = parseFloat(getComputedStyle(scope).zoom) || 1;
     scope.querySelectorAll<HTMLElement>('.board-row').forEach((row) => {
-      row.style.height = `${row.getBoundingClientRect().height}px`;
+      row.style.height = `${row.getBoundingClientRect().height / zoom}px`;
     });
   }, []);
 

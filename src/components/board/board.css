@@ -227,11 +227,11 @@
   background:
     repeating-linear-gradient(0deg, transparent 0 118px, rgba(0, 0, 0, 0.14) 118px 122px, rgba(255, 255, 255, 0.3) 122px 124px),
     repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.015) 0 2px, transparent 2px 6px),
-    linear-gradient(180deg, #d4d1c9, var(--board));
-  border: 1px solid #a9a59c;
+    linear-gradient(180deg, var(--board-top), var(--board));
+  border: 1px solid var(--board-edge);
   box-shadow:
-    inset 0 0 0 3px #b5b1a8,
-    inset 0 0 0 4px #e6e3dc,
+    inset 0 0 0 3px var(--board-bezel),
+    inset 0 0 0 4px var(--board-bezel-hi),
     0 24px 48px rgba(0, 0, 0, 0.25);
 }
 /* horizontal scroll wrapper: keeps the two rows intact on narrow screens
@@ -245,29 +245,186 @@
   padding: 6px 2px 10px;
   margin: -6px -2px -10px;
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   Stage lights: the illuminated rocker in the top bar. Lit = lights on =
+   light theme; dark = dark theme (src/hooks/useTheme.ts). Toggling fires an
+   electric flicker through the lamp and a mains surge across the whole stage
+   (.stage-flicker below); both are plain CSS animations, so the global
+   prefers-reduced-motion block collapses them.
+   ════════════════════════════════════════════════════════════════════════ */
+.board-view .power-switch {
+  appearance: none;
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  line-height: 0;
+}
+/* the black moulded housing the rocker sits in */
+.board-view .power-switch .ps-bezel {
+  position: relative;
+  display: block;
+  width: 52px;
+  height: 28px;
+  border-radius: 4px;
+  padding: 3px;
+  background: linear-gradient(180deg, #35373b, #17181a 45%, #0d0e10);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.85),
+    0 2px 4px rgba(0, 0, 0, 0.4);
+}
+/* the rocker itself: pressed on the O side when off, the I side when on */
+.board-view .power-switch .ps-rocker {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #4a1210, #7c1f1c 60%, #8d2a25);
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.75);
+  transform: perspective(80px) rotateY(7deg);
+  transition:
+    transform 140ms ease,
+    background 200ms ease;
+}
+.board-view .power-switch.on .ps-rocker {
+  transform: perspective(80px) rotateY(-7deg);
+  background: linear-gradient(90deg, #f0504a, #cf2f26 60%, #a5241e);
+}
+/* the bulb behind the translucent rocker */
+.board-view .power-switch .ps-lamp {
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  opacity: 0;
+  background:
+    radial-gradient(circle at 38% 50%, rgba(255, 235, 225, 0.95), rgba(255, 90, 70, 0.55) 45%, rgba(150, 20, 15, 0.2) 80%),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0 2px, transparent 2px 4px);
+  transition: opacity 180ms ease;
+}
+.board-view .power-switch.on .ps-lamp {
+  opacity: 1;
+}
+.board-view .power-switch.on .ps-bezel {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.85),
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 0 14px 2px rgba(226, 66, 52, 0.55);
+}
+/* moulded I / O marks on the two halves of the rocker */
+.board-view .power-switch .ps-mark {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.5);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+}
+.board-view .power-switch .ps-mark-i { left: 8px; }
+.board-view .power-switch .ps-mark-o { right: 8px; }
+.board-view .power-switch.on .ps-mark-i { color: rgba(255, 255, 255, 0.9); }
+.board-view .power-switch:not(.on) .ps-mark-o { color: rgba(255, 255, 255, 0.7); }
+
+/* mains flicker: the lamp sputters while the stage surges */
+@keyframes ps-lamp-flicker {
+  0% { opacity: 0.1; }
+  6% { opacity: 1; }
+  11% { opacity: 0.12; }
+  17% { opacity: 0.9; }
+  23% { opacity: 0.2; }
+  31% { opacity: 1; }
+  39% { opacity: 0.35; }
+  47% { opacity: 1; }
+  61% { opacity: 0.55; }
+  73% { opacity: 1; }
+  86% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+.board-view .power-switch.flickering .ps-lamp {
+  animation: ps-lamp-flicker 700ms steps(1, end);
+  transition: none;
+}
+
+/* The surge covers the whole stage, not just the switch: mains flickering one
+   button would read as a bug in that button. Fixed to the viewport so the top
+   bar, chain strip, board and deck all catch it at once, and painted above
+   everything (dialogs included) , it is pointer-events: none and lasts 700ms,
+   so it can never swallow a click. `background`, not `filter`: a filter on an
+   ancestor would make it the containing block for every fixed-position
+   descendant (deck popovers, dialogs) and reposition them mid-flicker. */
+.board-view .stage-flicker {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  pointer-events: none;
+  background: transparent;
+}
+/* steps(1, end): hard cuts between states. Interpolated, a surge reads as a
+   gentle pulse; the whole point is that it stutters. */
+@keyframes stage-surge {
+  0% { background: var(--stage-dim); }
+  6% { background: var(--stage-flash); }
+  10% { background: transparent; }
+  15% { background: var(--stage-dim); }
+  21% { background: var(--stage-flash); }
+  26% { background: transparent; }
+  34% { background: var(--stage-dim); }
+  40% { background: transparent; }
+  52% { background: var(--stage-flash); }
+  58% { background: transparent; }
+  70% { background: var(--stage-dim); }
+  76% { background: transparent; }
+  88% { background: var(--stage-flash); }
+  93% { background: transparent; }
+  100% { background: transparent; }
+}
+.board-view.flickering .stage-flicker {
+  animation: stage-surge 700ms steps(1, end);
+}
+
 .board-view .board-rows {
   position: relative;
-  /* fill the available width so pedals spread edge-to-edge (no wasted side
-     space), but grow past it when the chain is wider than the screen so the
-     wrapper can scroll horizontally and the cables still span every pedal */
-  width: max-content;
-  min-width: 100%;
+  /* Bounded by the stage, NOT max-content: the chain is one wrapping row, so it
+     has to have a width to wrap inside. Overflow stacks downward (and the stage
+     scrolls vertically) instead of running off the right edge. */
+  width: 100%;
 }
 .board-view .board-row {
   display: flex;
-  gap: 18px;
-  /* Bays stretch to the row's height (the pedal itself still sits bottom-centre,
-     via the bay's own align-items). A bay IS the drop target, so a bay that only
-     hugged its pedal gave short effects a short, unpredictable hit area and left
-     the space above them belonging to no slot at all. */
+  /* row-gap matches the column gap plus the cable droop, so the stubs between
+     two lines have room to read */
+  gap: 30px 18px;
+  /* Bays stretch to their line's height (the pedal itself still sits
+     bottom-centre, via the bay's own align-items). A bay IS the drop target, so
+     a bay that only hugged its pedal gave short effects a short, unpredictable
+     hit area and left the space above them belonging to no slot at all.
+     It also makes every bay on a line share a top edge, which is how CableLayer
+     tells "same line" from "line break". */
   align-items: stretch;
-  justify-content: space-evenly;
-  flex-wrap: nowrap;
+  justify-content: center;
+  flex-wrap: wrap;
+  /* Side gutters so a full line never packs flush to the chassis edge: a line
+     break draws a short cable stub off each end, and with no gutter it (and
+     its label) would be clipped by the board , see CableLayer's stub(). */
+  padding: 0 40px;
 }
-.board-view .board-row + .board-row {
-  /* matches the row's own horizontal `gap`, so spacing between pedals reads the
-     same in both axes */
-  margin-top: 28px;
+/* The ≤720px board keeps the old single swiped line: wrapping a phone-width
+   viewport would bury the chain under five short lines. */
+.board-view .board-rows.single {
+  width: max-content;
+  min-width: 100%;
+}
+.board-view .board-rows.single .board-row {
+  flex-wrap: nowrap;
+  /* one swiped line never wraps, so it needs no stub gutters */
+  padding: 0;
 }
 
 /* ── pedal bay ──
@@ -1016,7 +1173,7 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #b0aca3;
+  background: var(--dot-off);
   flex: none;
 }
 .board-view .deck-dot.on {
@@ -1141,7 +1298,7 @@
   letter-spacing: normal;
   text-transform: none;
   color: var(--chrome-text);
-  background: #fff;
+  background: var(--chrome-face);
   border: 1px solid var(--chrome-border);
   border-radius: 6px;
   padding: 6px 8px;
@@ -1178,7 +1335,7 @@
   padding: 5px 9px;
   border-radius: 6px;
   border: 1px solid var(--chrome-border);
-  background: #fff;
+  background: var(--chrome-face);
   color: var(--chrome-text);
   cursor: pointer;
 }
@@ -1187,7 +1344,7 @@
   cursor: default;
 }
 .board-view .dp-btn:not(:disabled):hover {
-  background: color-mix(in srgb, var(--chrome-text) 8%, #fff);
+  background: color-mix(in srgb, var(--chrome-text) 8%, var(--chrome-face));
 }
 .board-view .dp-scale {
   display: flex;
@@ -1203,7 +1360,7 @@
   text-transform: none;
   text-align: center;
   color: var(--chrome-text);
-  background: #fff;
+  background: var(--chrome-face);
   border: 1px solid var(--chrome-border);
   border-radius: 6px;
   padding: 5px 6px;
@@ -1290,7 +1447,7 @@
   letter-spacing: 0.1em;
   padding: 7px 12px;
   border-radius: 6px;
-  background: #fff;
+  background: var(--chrome-face);
   border: 1px solid var(--chrome-border);
   color: var(--chrome-text);
   cursor: pointer;
@@ -1459,7 +1616,7 @@
   max-width: 150px;
   padding: 6px 4px;
   border-radius: 6px;
-  background: #fff;
+  background: var(--chrome-face);
   border: 1px solid var(--chrome-border);
   color: var(--chrome-text);
   cursor: pointer;
@@ -1549,7 +1706,7 @@
   letter-spacing: 0.12em;
   padding: 16px 18px;
   border-radius: 10px;
-  background: #fff;
+  background: var(--chrome-face);
   border: 1px solid var(--chrome-border);
   color: var(--chrome-text);
   cursor: pointer;
@@ -1606,7 +1763,7 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #b0aca3;
+  background: var(--dot-off);
 }
 .landing-led.on {
   background: #2f9e5f;
@@ -2191,6 +2348,11 @@
   .board-view .board-deck {
     padding: 10px 10px 8px;
   }
+  /* the switch keeps a 44px-tall tap target on touch (see the pointer:coarse
+     block) but sheds width where the bar is tight */
+  .board-view .power-switch .ps-bezel {
+    width: 44px;
+  }
   .board-view .board-rows.single .board-row {
     gap: 12px;
     /* one row of 11 pedals is always wider than the screen: pack them from the
@@ -2351,6 +2513,10 @@
 /* Touch ergonomics for the board chrome buttons (see index.css for the
    shared .ui-btn rule): deck/topbar buttons get real touch targets. */
 @media (pointer: coarse) {
+  /* WCAG 2.5.5: the rocker is 28px of skin, so the button pads out to 44 */
+  .board-view .power-switch {
+    padding: 8px 0;
+  }
   .board-view .deck-btn {
     min-height: 44px;
     padding: 10px 12px;

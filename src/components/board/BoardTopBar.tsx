@@ -3,6 +3,7 @@ import type { PushProgress } from '@/core/devicePush';
 import { SysExCodec } from '@/core/SysExCodec';
 import { tunerShow, type CCCommand } from '@/core/ccControl';
 import { ActionIcon } from './ActionIcon';
+import { PowerSwitch } from './PowerSwitch';
 import { DeckPop } from './DeckPop';
 
 interface BoardTopBarProps {
@@ -30,6 +31,10 @@ interface BoardTopBarProps {
   sendCC: (command: CCCommand | CCCommand[]) => void;
   /** Step to another device slot: switches the pedal and pulls the patch. */
   onActivateSlot: (slot: number) => void;
+  /* stage lights: the red rocker that switches light/dark (hooks/useTheme.ts) */
+  lightsOn: boolean;
+  lightsFlickering: boolean;
+  onToggleLights: () => void;
 }
 
 /** Device slots are 0..255, and the Patch −/+ steppers wrap across both ends. */
@@ -88,6 +93,9 @@ export function BoardTopBar({
   drumsPlaying,
   sendCC,
   onActivateSlot,
+  lightsOn,
+  lightsFlickering,
+  onToggleLights,
 }: BoardTopBarProps) {
   // Device tuner toggle (CC58). Local best-effort state: the pedal doesn't
   // report tuner visibility, so a front-panel close can drift this until the
@@ -173,6 +181,14 @@ export function BoardTopBar({
           <ActionIcon name="remote" />
           <span className="db-label">REMOTE</span>
         </button>
+        {/* Stage lights: lit = light theme, dark = dark theme. It sits with the
+            other environment controls in the bar rather than on the board, so
+            the pedals own the board. */}
+        <PowerSwitch
+          on={lightsOn}
+          flickering={lightsFlickering}
+          onToggle={onToggleLights}
+        />
       </div>
 
       <div className="board-topbar-status">

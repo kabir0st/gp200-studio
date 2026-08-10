@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState, type DragEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import type { GP200Preset, EffectSlot } from '@/core/types';
 import type { PushProgress } from '@/core/devicePush';
 import { getSlotModule } from '@/core/effectNames';
 import { isWideSlot } from './boardLayout';
 import { useFlipReorder } from './useFlipReorder';
+import { useBoardFit } from './useBoardFit';
 import { FxLoopArrows } from '@/components/FxLoopArrows';
 import { ControllerPanel } from '@/components/ControllerPanel';
 import { FootswitchPanel } from '@/components/FootswitchPanel';
@@ -23,7 +24,7 @@ import type { LooperActionKind, LooperBindings } from '@/core/looperBindings';
 import type { LooperTriggerMap } from '@/core/looperTriggers';
 import type { LearnNotice } from '@/hooks/useLooperTriggers';
 import type { PanelId } from '@/core/analyticsEvents';
-import { splitRows } from './boardLayout';
+import type { ThemeName } from '@/hooks/useTheme';
 import { lookupPedalArt, usePedalManifest } from './pedalManifest';
 import { Pedal } from './Pedal';
 import { EffectPicker } from './EffectPicker';
@@ -118,6 +119,9 @@ export interface PedalBoardProps {
   onBulkApply: (scope: BulkScope, apply: { ctrl: boolean; volume: number | null }) => void;
   bulkApplyProgress: BulkApplyProgress | null;
   onCancelBulkApply: () => void;
+  /* stage theme: the board's power switch drives it (see hooks/useTheme.ts) */
+  theme: ThemeName;
+  onToggleTheme: () => void;
   /* device session controls (deck-hosted; there is no separate status bar) */
   onConnectRequest: () => void;
   onDisconnect: () => void;
@@ -127,10 +131,12 @@ export interface PedalBoardProps {
 }
 
 /**
- * The skeuomorphic board view: chain strip → info bar → stage (cables +
- * two pedal rows + switcher). Chain order = effects array order; the first
- * 6 pedals sit on the front row, the rest on the back row (rows are purely
- * visual; the signal path is the array order, made legible by the cables).
+ * The skeuomorphic board view: chain strip → info bar → stage (cables + the
+ * pedal row + switcher). Chain order = effects array order, rendered as one
+ * row that wraps onto as many lines as the window needs and scales to fit it
+ * (useBoardFit) rather than running off the right edge. Where a line breaks is
+ * a layout outcome, not a JS split: CableLayer measures it to decide between a
+ * same-line cable and a labeled stub pair.
  */
 export function PedalBoard({
   preset,
@@ -187,6 +193,8 @@ export function PedalBoard({
   onCancelBulkApply,
   ccChannel,
   onCcChannelChange,
+  theme,
+  onToggleTheme,
   onConnectRequest,
   onDisconnect,
   onPushRequest,
@@ -195,8 +203,10 @@ export function PedalBoard({
 }: PedalBoardProps) {
   const artIndex = usePedalManifest();
 
-  // Phones fold the two rows into one swipeable row (see useSingleRowBoard) and
-  // get tap reorder arrows, since HTML5 drag-and-drop never fires on touch.
+  // Below 720px the row stops wrapping and becomes one swiped line (see
+  // useSingleRowBoard): wrapping a phone-width viewport buries the chain under
+  // five short lines. Touch also gets tap reorder arrows, since HTML5
+  // drag-and-drop never fires on touch.
   const singleRow = useSingleRowBoard();
   const touch = useCoarsePointer();
 
@@ -250,6 +260,22 @@ export function PedalBoard({
 
   // FLIP: capture pedal positions before a reorder, then spring them to place
   const { scopeRef, capture } = useFlipReorder(orderKey);
+  // …and shrink the rows to whatever the window actually leaves for them. Off
+  // for the single-row board, which is meant to be swiped at full size.
+  const { stageRef } = useBoardFit(scopeRef, orderKey, !singleRow);
+
+  // Flipping the stage lights runs an electric flicker: the lamp sputters and
+  // the board catches the flash. One timer for both, owned here because the
+  // flash element lives on the chassis, not inside the switch.
+  const [flickering, setFlickering] = useState(false);
+  const flickerTimer = useRef(0);
+  useEffect(() => () => window.clearTimeout(flickerTimer.current), []);
+  const handleToggleTheme = useCallback(() => {
+    onToggleTheme();
+    setFlickering(true);
+    window.clearTimeout(flickerTimer.current);
+    flickerTimer.current = window.setTimeout(() => setFlickering(false), 720);
+  }, [onToggleTheme]);
   const handleReorderDrop = (index: number) => {
     capture();
     onDrop(index);
@@ -261,10 +287,6 @@ export function PedalBoard({
     // narrow board); wait a frame so the new order is laid out first
     requestAnimationFrame(() => scrollToPedal(to));
   };
-
-  // rows balanced by rendered width so a wide AMP can't push the last
-  // front-row pedal (usually CAB) off the stage
-  const { front, back } = splitRows(preset.effects);
 
   // chain strip / reorder arrows scroll the moved pedal back into view —
   // on a phone the target is usually off-screen after the move
@@ -284,7 +306,7 @@ export function PedalBoard({
   // difference as padding, so swapping an effect never shifts a neighbour. The bay
   // (not just the pedal) is the drop target, so you don't have to aim precisely at
   // the pedal body, and while a drag is in flight every bay shows a drop slot.
-  const renderPedal = (slot: EffectSlot, index: number, row: 'front' | 'back') => {
+  const renderPedal = (slot: EffectSlot, index: number) => {
     const bayClasses = ['pedal-bay'];
     if (isWideSlot(slot.slotIndex)) bayClasses.push('wide');
     if (dragIndex !== null) bayClasses.push('droppable');
@@ -300,7 +322,6 @@ export function PedalBoard({
         <Pedal
           slot={slot}
           index={index}
-          row={row}
           art={lookupPedalArt(artIndex, slot.effectId)}
           onToggle={() => onToggle(slot.slotIndex, slot.enabled)}
           onOpenPicker={() => setPickerSlot(slot.slotIndex)}
@@ -320,7 +341,7 @@ export function PedalBoard({
   };
 
   return (
-    <div className="board-view">
+    <div className={`board-view${flickering ? ' flickering' : ''}`}>
       <BoardTopBar
         connected={connected}
         currentSlot={currentSlot}
@@ -341,6 +362,9 @@ export function PedalBoard({
         onOpenLooper={() => openPanel('looper')}
         onOpenDrums={() => openPanel('drums')}
         onOpenRemote={() => openPanel('remote')}
+        lightsOn={theme === 'light'}
+        lightsFlickering={flickering}
+        onToggleLights={handleToggleTheme}
         drumsPlaying={drumMachine.playing}
         sendCC={sendCC}
       />
@@ -351,7 +375,7 @@ export function PedalBoard({
         pinned={pinnedSlot !== null && inspected !== null}
         onUnpin={() => setPinnedSlot(null)}
       />
-      <main className="stage">
+      <main className="stage" ref={stageRef}>
         <section className="board-deck">
           {/* rows never wrap; the scroll wrapper handles overflow on narrow
               screens, and the cables live inside it so they scroll in lockstep
@@ -363,28 +387,20 @@ export function PedalBoard({
                 orderKey={`${orderKey}|${singleRow ? 1 : 2}`}
                 hidden={dragIndex !== null}
               />
-              {/* Phones get one row: two 340px+ rows plus the chrome don't fit a
-                  phone viewport, and one row keeps the whole chain in a single
-                  left-to-right swipe (cables stay same-row beziers throughout). */}
-              {singleRow ? (
-                <div className="board-row">
-                  <span className="flow-badge" aria-hidden="true">IN ›</span>
-                  {preset.effects.map((slot, i) => renderPedal(slot, i, 'front'))}
-                  <span className="flow-badge" aria-hidden="true">› OUT</span>
-                </div>
-              ) : (
-                <>
-                  {/* reading order = chain order: front row first, remainder below */}
-                  <div className="board-row">
-                    <span className="flow-badge" aria-hidden="true">IN ›</span>
-                    {front.map((slot, i) => renderPedal(slot, i, 'front'))}
-                  </div>
-                  <div className="board-row">
-                    {back.map((slot, i) => renderPedal(slot, i + front.length, 'back'))}
-                    <span className="flow-badge" aria-hidden="true">› OUT</span>
-                  </div>
-                </>
-              )}
+              {/* One row in chain order that *wraps*: the chain stacks onto as
+                  many lines as the window needs instead of running off the
+                  right edge, and useBoardFit scales it so those lines fit the
+                  stage. Rows are no longer split in JS , where a line breaks is
+                  a layout outcome, which is also how CableLayer decides between
+                  a same-line bezier and a labeled stub pair.
+                  Below 720px (.single) the row goes back to nowrap and is
+                  swiped horizontally: wrapping on a phone buries the chain
+                  under many short lines. */}
+              <div className="board-row">
+                <span className="flow-badge" aria-hidden="true">IN ›</span>
+                {preset.effects.map((slot, i) => renderPedal(slot, i))}
+                <span className="flow-badge" aria-hidden="true">› OUT</span>
+              </div>
             </div>
           </div>
         </section>

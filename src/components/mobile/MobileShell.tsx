@@ -96,6 +96,8 @@ export default function MobileShell({
   onCancelBulkApply,
   ccChannel,
   onCcChannelChange,
+  theme,
+  onToggleTheme,
   onConnectRequest,
   onDisconnect,
   onPushRequest,
@@ -241,28 +243,47 @@ export default function MobileShell({
         )}
 
         {tab === 'device' && (
-          <DeviceScreen
-            connected={connected}
-            firmware={firmware}
-            currentSlot={currentSlot}
-            patchVolume={patchVolume}
-            patchPan={patchPan}
-            patchTempo={patchTempo}
-            onVolumeChange={onVolumeChange}
-            onPanChange={onPanChange}
-            onTempoChange={onTempoChange}
-            onConnectRequest={onConnectRequest}
-            onDisconnect={onDisconnect}
-            onLoadRequest={onLoadRequest}
-            onPushRequest={onPushRequest}
-            onSaveToActiveSlot={onSaveToActiveSlot}
-            onOpenFxLoop={() => openSheet('fxloop')}
-            onOpenPatchSettings={() => openSheet('patch')}
-            onOpenGuide={onOpenGuide}
-            onCloseRequest={onCloseRequest}
-            sendCC={sendCC}
-            deviceState={deviceState}
-          />
+          <>
+            {/* The desktop board wears the red rocker on its chassis rail; the
+                phone has no chassis, so the same theme toggle lives in the
+                DEVICE tab as a plain mobile button (the rocker's skin is
+                .board-view-scoped, and the phone tree does not restyle
+                borrowed chrome — it borrows whole components or nothing). */}
+            <div className="m-screen pb-0">
+              <h2 className="m-screen-title">STAGE LIGHTS</h2>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={theme === 'light'}
+                className={`m-btn wide${theme === 'light' ? ' active' : ''}`}
+                onClick={onToggleTheme}
+              >
+                {theme === 'light' ? '☀ LIGHTS ON' : '☾ DARK STAGE'}
+              </button>
+            </div>
+            <DeviceScreen
+              connected={connected}
+              firmware={firmware}
+              currentSlot={currentSlot}
+              patchVolume={patchVolume}
+              patchPan={patchPan}
+              patchTempo={patchTempo}
+              onVolumeChange={onVolumeChange}
+              onPanChange={onPanChange}
+              onTempoChange={onTempoChange}
+              onConnectRequest={onConnectRequest}
+              onDisconnect={onDisconnect}
+              onLoadRequest={onLoadRequest}
+              onPushRequest={onPushRequest}
+              onSaveToActiveSlot={onSaveToActiveSlot}
+              onOpenFxLoop={() => openSheet('fxloop')}
+              onOpenPatchSettings={() => openSheet('patch')}
+              onOpenGuide={onOpenGuide}
+              onCloseRequest={onCloseRequest}
+              sendCC={sendCC}
+              deviceState={deviceState}
+            />
+          </>
         )}
       </main>
 

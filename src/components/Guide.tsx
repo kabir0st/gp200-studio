@@ -17,7 +17,11 @@ const NAV: { id: string; label: string }[] = [
   { id: 'editor', label: 'The pedalboard editor' },
   { id: 'pedals', label: 'Changing & managing pedals' },
   { id: 'deck', label: 'The control deck' },
-  { id: 'drawers', label: 'Deck drawers' },
+  { id: 'drawers', label: 'Patch settings' },
+  { id: 'bulk', label: 'Bulk apply' },
+  { id: 'looper', label: 'The loop station' },
+  { id: 'drums', label: 'Drums' },
+  { id: 'remote', label: 'MIDI remote & device state' },
   { id: 'patches', label: 'Managing patches' },
   { id: 'connect', label: 'Connecting your GP-200' },
   { id: 'files', label: 'Importing & exporting' },
@@ -226,12 +230,30 @@ export function Guide({ onBack }: GuideProps) {
 
           <Section id="editor" title="The pedalboard editor">
             <p>
-              The editor lays your signal chain out as physical stompboxes across
-              two rows, with patch cables showing the flow from input to output.
-              The chain strip at the top is a compact overview of the whole chain;
-              hovering a pedal (or clicking its <strong>i</strong>) shows its
-              details in the info bar. The rows are visual only; the real order is
-              the chain order shown in the strip.
+              The editor lays your signal chain out as physical stompboxes, with
+              patch cables showing the flow from input to output. The chain reads
+              left to right and <strong>wraps onto as many rows as it needs</strong>,
+              so it stacks downward instead of running off the side of the screen;
+              a short labeled stub marks where one row hands over to the next. The
+              chain strip at the top is a compact overview of the whole chain
+              (click a block to jump to it), and hovering a pedal , or clicking
+              its <strong>i</strong> , shows its details in the info bar.
+            </p>
+            <p>
+              The board also <strong>scales itself to fit your window</strong>: on
+              a smaller screen the pedals shrink just enough to keep the whole
+              chain and the control deck visible at once, down to a floor where
+              the knobs are still comfortable to turn. Below that the stage
+              scrolls.
+            </p>
+            <p>
+              The red rocker switch in the top bar is the{' '}
+              <strong>stage lights</strong>. Lit means the light stage; flip it
+              off for <strong>dark mode</strong>, which dims the room (chassis,
+              chrome, dialogs) while leaving the pedals their own colours , with
+              a suitably unreliable mains flicker on the way. Your choice is
+              remembered on this device. On a phone the same toggle lives at the
+              top of the <strong>DEVICE</strong> tab.
             </p>
             <Shot
               src="/guide/02-editor-board.png"
@@ -268,7 +290,8 @@ export function Guide({ onBack }: GuideProps) {
               <li>
                 <strong>Reorder</strong>: drag a pedal into another bay, or focus
                 its <strong>#n</strong> chain number and use the Left/Right arrow
-                keys.
+                keys. Blocks animate to their new places, including across a row
+                break.
               </li>
             </ul>
             <Shot
@@ -282,15 +305,33 @@ export function Guide({ onBack }: GuideProps) {
             <p>
               The deck at the bottom of the board is the patch cockpit. It holds
               the patch <strong>name and author</strong>, a patch{' '}
-              <strong>VOL</strong> slider, a <strong>PAN / TEMPO</strong> popover,
-              live treadle readouts (volume, wah, and whammy positions moving in
-              real time), and audio meters. Four buttons open the deck drawers
-              below. When a device is connected, a <strong>SAVE TO [slot]</strong>{' '}
-              button writes the current patch to the active slot.
+              <strong>VOL</strong> slider, <strong>PAN</strong> and{' '}
+              <strong>TEMPO</strong> popovers, live treadle readouts (volume, wah
+              and whammy positions moving in real time), and audio meters. Its two
+              buttons open the <strong>FX LOOP</strong> and{' '}
+              <strong>SETTINGS</strong> drawers. When a device is connected, a{' '}
+              <strong>SAVE TO [slot]</strong> button writes the current patch to
+              the active slot.
+            </p>
+            <p>
+              The sticky bar at the top of the screen is the session: connection
+              status, the current slot and firmware, a patch stepper, the stage
+              lights switch, and the buttons for <strong>LOOP</strong>,{' '}
+              <strong>DRUMS</strong>, <strong>TUNER</strong>,{' '}
+              <strong>REMOTE</strong> and <strong>PATCHES</strong>, plus LOAD /
+              SAVE AS / CONNECT and this guide.
             </p>
           </Section>
 
-          <Section id="drawers" title="Deck drawers">
+          <Section id="drawers" title="Patch settings">
+            <p>
+              Everything that belongs to <em>this patch</em> but isn't a pedal
+              lives in two deck drawers: <strong>FX LOOP</strong>, and{' '}
+              <strong>SETTINGS</strong> , which is tabbed into{' '}
+              <strong>Expression</strong>, <strong>Footswitches</strong> and{' '}
+              <strong>Bulk Apply</strong>. On a phone they are the FX Loop and
+              Patch Settings sheets on the DEVICE tab.
+            </p>
             <h3 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-5">
               FX Loop
             </h3>
@@ -307,7 +348,7 @@ export function Guide({ onBack }: GuideProps) {
             />
 
             <h3 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-6">
-              EXP: expression pedals
+              Expression pedals
             </h3>
             <p>
               Assign the expression pedals across three pages (EXP1 Mode A, EXP1
@@ -322,13 +363,15 @@ export function Guide({ onBack }: GuideProps) {
             />
 
             <h3 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-6">
-              CTRL: footswitches
+              Footswitches (CTRL 1–8)
             </h3>
             <p>
               Assign the eight CTRL footswitches. Pick a footswitch, then tap the
               effect blocks it should toggle; one switch can stomp several pedals
               at once. Colored dots show what each switch controls; Clear resets a
-              switch.
+              switch. With a device connected the assignment is written live, and
+              it is stored with the patch, so it survives an export and a save to
+              the unit.
             </p>
             <Shot
               src="/guide/07-deck-ctrl.png"
@@ -336,31 +379,171 @@ export function Guide({ onBack }: GuideProps) {
               caption="CTRL drawer: bind each footswitch to a set of effect blocks."
             />
 
+          </Section>
+
+          <Section id="bulk" title="Bulk apply: one patch's settings across many">
+            <p>
+              Setting up footswitches once per patch, 256 times, is exactly the
+              chore the pedal's own screen makes you do.{' '}
+              <strong>Bulk Apply</strong> (the third tab of the SETTINGS drawer)
+              copies the current patch's setup into a whole range of patches in
+              one pass.
+            </p>
+            <h3 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-5">
+              What it can write
+            </h3>
+            <ul className="list-disc pl-5 space-y-1.5">
+              <li>
+                <strong>CTRL footswitch assignments</strong> , the eight
+                footswitch → effect-block mappings from the Footswitches tab.
+                Build your live footswitch layout once and stamp it onto every
+                patch you gig with. (Available once the current patch actually has
+                assignments to copy.)
+              </li>
+              <li>
+                <strong>Patch volume</strong> , one level, written into every
+                patch in range. The fastest way to even out a set where some
+                patches jump out louder than others.
+              </li>
+            </ul>
             <h3 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-6">
-              LOOP: loop station
+              Choosing the range
             </h3>
             <p>
-              A multi-layer loop station that records the GP-200's USB audio
-              (you'll be asked to enable audio capture first) , a capability the
-              pedal doesn't ship with. Your first recording sets the master loop
-              length; every record pass after that adds a new layer, quantized
-              and phase-locked to the first, with no limit on the number of
-              layers. Each track has Play / Mute / level / delete, with a master
-              progress bar and Clear All.
+              Pick <strong>all 256 patches</strong>, or a <strong>bank range</strong>{' '}
+              (for example banks 1–8, which is 32 patches). A progress readout
+              counts through the slots as it goes and there's a{' '}
+              <strong>Cancel</strong> button; cancelling stops before the next
+              slot rather than half-writing one.
+            </p>
+            <Card className="p-4 mt-4 max-w-4xl">
+              <p className="font-mono-display text-micro font-bold tracking-widest uppercase text-text-muted mb-1.5">
+                How it works, and why it takes a moment
+              </p>
+              <p className="font-mono-display text-caption tracking-wide text-text-secondary m-0">
+                There is no "write to many patches" message in the GP-200's
+                protocol. For each slot the app switches the unit to it, writes
+                the values, and commits the save , the same three steps you'd do
+                by hand, just automatically and in order. So it needs a connected
+                device, it takes a few seconds per dozen patches, and{' '}
+                <strong>it overwrites the target patches' existing settings</strong>.
+                Back up first with the patch manager's bulk ZIP export if you
+                aren't sure.
+              </p>
+            </Card>
+          </Section>
+
+          <Section id="looper" title="The loop station">
+            <p>
+              A <strong>multi-layer loop station</strong> that records the
+              GP-200's USB audio right in the browser , a capability the pedal
+              doesn't ship with (its built-in looper is a single loop). Open it
+              with <strong>LOOP</strong> in the top bar; you'll be asked to enable
+              audio capture the first time, and you pick the GP-200 as the input.
+            </p>
+            <h3 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-5">
+              Stacking layers
+            </h3>
+            <p>
+              Your first recording sets the master loop length. Every record pass
+              after that adds a new layer, quantized and phase-locked to the
+              first, with no limit on the number of layers , so the tenth
+              overdub is still exactly in time with the first. Each track has its
+              own <strong>Play / Mute / level / delete</strong>, and there's a
+              master progress bar, a master level, and <strong>Clear All</strong>.
+              You can also import an audio file as a layer to jam over.
+            </p>
+            <h3 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-6">
+              Hands-free from the pedal
+            </h3>
+            <p>
+              Playing guitar and clicking a mouse don't mix, so the looper can be
+              driven from the GP-200's own footswitches. Use{' '}
+              <strong>MIDI-learn</strong>: arm an action (Record, Play, next/previous
+              track…), stomp the switch you want, and it's bound. A{' '}
+              <strong>takeover</strong> mode makes a learned stomp control the
+              looper instead of its normal patch function while the loop station
+              is open, so you don't change your sound every time you punch in.
+              Bindings are remembered between sessions. Mapping the expression
+              pedal to loop levels is experimental (its wire format is still being
+              captured).
             </p>
             <p>
-              You can drive it hands-free from the pedal itself: use MIDI-learn
-              to bind the GP-200's physical footswitches to Record, Play, and
-              track selection, with an optional takeover mode so a stomp
-              controls the looper instead of its normal patch function while the
-              drawer is open. Mapping the expression pedal to loop levels is
-              experimental (its wire format is still being captured).
+              The pedal's own single-track looper and its transport are in the
+              same drawer, folded under the loop station, so the two never compete
+              for the same button.
             </p>
             <Shot
               src="/guide/08-deck-loop.png"
               alt="The loop station drawer with multi-track controls"
-              caption="LOOP drawer: a multi-track looper over the GP-200's USB audio."
+              caption="LOOP: a multi-track looper over the GP-200's USB audio, with footswitch MIDI-learn."
             />
+          </Section>
+
+          <Section id="drums" title="Drums">
+            <p>
+              The <strong>DRUMS</strong> button in the top bar opens two drum
+              machines stacked in one drawer: a practice kit that plays in your
+              browser, and a remote for the GP-200's own drums.
+            </p>
+            <h3 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-5">
+              Practice drum machine (browser audio)
+            </h3>
+            <p>
+              A step-sequenced kit that runs entirely in the browser , no GP-200
+              needed, so it works offline and while you're editing on the train.
+              Pick a <strong>kit</strong> and a <strong>groove</strong>, set{' '}
+              <strong>BPM</strong>, <strong>swing</strong> and volume, and toggle
+              individual steps on the grid to make it yours. Accent a hit by
+              toggling it again, and mute a lane to drop the hats or the kick.
+            </p>
+            <ul className="list-disc pl-5 space-y-1.5">
+              <li>
+                <strong>Time signatures</strong>: 4/4, 3/4, 2/4 and 6/8 , the
+                grid, the bar length and the backbeat move with the signature.
+              </li>
+              <li>
+                <strong>Swing</strong>: MPC-style, from straight to heavily
+                shuffled.
+              </li>
+              <li>
+                <strong>RANDOM</strong>: rolls a new pattern in the chosen style
+                that still fits the signature , a fast way out of writer's block.
+              </li>
+              <li>
+                <strong>It keeps playing</strong> when you close the drawer, so
+                you can dial in a tone over the beat; the DRUMS button glows while
+                it runs.
+              </li>
+            </ul>
+            <h3 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-6">
+              GP-200 hardware drums (MIDI remote)
+            </h3>
+            <p>
+              Below it, the same drawer remote-controls the pedal's built-in drum
+              machine over MIDI: start/stop, rhythm selection and drum volume,
+              plus the <strong>TUNER</strong> and a tap-tempo. These need a
+              connected GP-200, and the MIDI channel must match the unit's global
+              channel (default 1) , there's a selector right there if you've
+              changed it.
+            </p>
+          </Section>
+
+          <Section id="remote" title="MIDI remote & device state">
+            <p>
+              <strong>REMOTE</strong> in the top bar is a virtual copy of the
+              pedal's front panel over plain MIDI CC: tap the CTRL footswitches,
+              step banks and patches, set the tempo directly, and reach the
+              quick-access knobs , useful when the unit is on the floor and you
+              are not.
+            </p>
+            <p>
+              Underneath it, a read-only <strong>device state</strong> panel shows
+              what the unit reported when it connected: tuner reference (A4),
+              global EQ values and the drum kit names. It's a readout, not an
+              editor , writing global settings back is still being reverse
+              engineered.
+            </p>
           </Section>
 
           <Section id="patches" title="Managing patches">
@@ -380,9 +563,14 @@ export function Guide({ onBack }: GuideProps) {
             </ul>
             <p>
               You can also bulk-export the selected bank, or all 256 patches, to a
-              single <code>.zip</code>. The top bar's <strong>LOAD</strong> and{' '}
-              <strong>SAVE AS</strong> use a slot picker to pull a patch into the
-              editor or write the current patch to a chosen slot.
+              single <code>.zip</code> , a full backup of your pedal in one
+              file, and the thing to do before running{' '}
+              <a href="#bulk" className="underline text-text-secondary hover:text-accent-amber">
+                Bulk Apply
+              </a>
+              . The top bar's <strong>LOAD</strong> and <strong>SAVE AS</strong>{' '}
+              use a slot picker to pull a patch into the editor or write the
+              current patch to a chosen slot.
             </p>
             <p className="text-text-muted text-caption">
               Slot management is a device-connected feature, so it isn't pictured

@@ -18,14 +18,14 @@ interface Plug {
 interface Segment {
   d: string;
   plugs: Plug[];
-  label?: { text: string; x: number; y: number; anchor: 'start' | 'end' };
+  label?: { text: string; x: number; y: number; anchor: 'start' | 'end' | 'middle' };
 }
 
 /**
- * Patch cables between consecutive pedals, drawn over the stage. Same-row
- * neighbours get a drooping bezier; row breaks get short labeled stubs
- * (a full cable across rows would cross the pedals). Port of the mockup's
- * drawCables().
+ * Patch cables between consecutive pedals, drawn over the stage. Neighbours on
+ * the same wrapped line get a drooping bezier; a line break gets two short
+ * labeled stubs (a full cable back across the board would cross the pedals).
+ * Port of the mockup's drawCables().
  */
 export function CableLayer({ modules, orderKey, hidden }: CableLayerProps) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -51,15 +51,38 @@ export function CableLayer({ modules, orderKey, hidden }: CableLayerProps) {
         return { x: r.left + r.width / 2 - sr.left, y: r.top + r.height / 2 - sr.top };
       };
 
+      // Which wrapped line a pedal ended up on, measured rather than declared:
+      // the chain is one flex row that wraps, so how many pedals share a line
+      // depends on the window width and the current fit scale. The bay (the
+      // pedal's parent) stretches to its line's height, so bays on one line
+      // share a top edge; the pedals themselves are bottom-aligned in bays of
+      // differing height, so their own tops don't line up.
+      const lineOf = (el: HTMLElement) => {
+        const box = el.parentElement ?? el;
+        return Math.round(box.getBoundingClientRect().top);
+      };
+
       const segs: Segment[] = [];
+      // A stub points off the end of its line, so the room it needs is at the
+      // board's edge , exactly where there is least of it. Cable and label are
+      // budgeted separately: the tail is 30px, the label another ~44 beyond it.
+      // The row reserves side padding for the tail (board.css); when the label
+      // won't also fit it goes under the plug rather than across the pedal.
+      const TAIL = 34;
+      const TAIL_AND_LABEL = 80;
       const stub = (p: Plug, dir: 1 | -1, text: string) => {
         let dx = dir;
-        if (dx < 0 && p.x - 80 < 0) dx = 1; // no room to the left
-        if (dx > 0 && p.x + 80 > sr.width) dx = -1; // no room to the right
+        if (dx < 0 && p.x - TAIL < 0) dx = 1; // no room to the left
+        if (dx > 0 && p.x + TAIL > sr.width) dx = -1; // no room to the right
+        const labelFits = dx > 0 ? p.x + TAIL_AND_LABEL <= sr.width : p.x - TAIL_AND_LABEL >= 0;
+        let label: Segment['label'] = { text, x: p.x, y: p.y + 32, anchor: 'middle' };
+        if (labelFits) {
+          label = { text, x: p.x + 36 * dx, y: p.y + 19, anchor: dx > 0 ? 'start' : 'end' };
+        }
         segs.push({
           d: `M ${p.x} ${p.y} c ${8 * dx} 12, ${20 * dx} 16, ${30 * dx} 16`,
           plugs: [p],
-          label: { text, x: p.x + 36 * dx, y: p.y + 19, anchor: dx > 0 ? 'start' : 'end' },
+          label,
         });
       };
 
@@ -69,7 +92,7 @@ export function CableLayer({ modules, orderKey, hidden }: CableLayerProps) {
         const p0 = jackPos(a, '[data-jack="out"]');
         const p1 = jackPos(b, '[data-jack="in"]');
         if (!p0 || !p1) continue;
-        if (a.dataset.row === b.dataset.row) {
+        if (Math.abs(lineOf(a) - lineOf(b)) <= 2) {
           const droop = 24 + Math.min(56, Math.hypot(p1.x - p0.x, p1.y - p0.y) * 0.12);
           segs.push({
             d: `M ${p0.x} ${p0.y} C ${p0.x} ${p0.y + droop}, ${p1.x} ${p1.y + droop}, ${p1.x} ${p1.y}`,

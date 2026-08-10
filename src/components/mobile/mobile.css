@@ -712,7 +712,7 @@
 .mobile-view .m-btn.primary {
   background: var(--stub-ink, #3c3a35);
   border-color: var(--stub-ink, #3c3a35);
-  color: #f6f5f0;
+  color: var(--stub-ink-on);
 }
 
 .mobile-view .m-btn.ghost {
@@ -723,7 +723,7 @@
 .mobile-view .m-btn.active {
   background: var(--stub-ink, #3c3a35);
   border-color: var(--stub-ink, #3c3a35);
-  color: #f6f5f0;
+  color: var(--stub-ink-on);
 }
 
 .mobile-view .m-btn.tuner-active {

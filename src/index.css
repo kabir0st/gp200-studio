@@ -53,13 +53,82 @@
      come from the artwork manifest, not from these tokens. */
   --case: #d8d5ce;
   --board: #c9c5bd;
+  /* chassis skin: the board's own plywood/edge/bezel, themed so the dark stage
+     doesn't need a second copy of the .board-deck rule */
+  --board-top: #d4d1c9;
+  --board-edge: #a9a59c;
+  --board-bezel: #b5b1a8;
+  --board-bezel-hi: #e6e3dc;
   --chrome-bg: #edebe5;
+  /* face of a chrome control sitting ON --chrome-bg (buttons, inputs, selects) */
+  --chrome-face: #ffffff;
   --chrome-border: #bdb9b0;
   --chrome-text: #232220;
   --chrome-muted: #5f5c55;
   --strip-bg: #f2f0ea;
   --stub-ink: #3c3a35;
+  /* readable ink ON a --stub-ink fill (mobile primary buttons, chain pills) */
+  --stub-ink-on: #f6f5f0;
+  --dot-off: #b0aca3;
   --pedal-shadow: 0 10px 20px rgba(0, 0, 0, 0.28);
+  /* the mains surge the power switch fires across the whole stage: a blown
+     highlight and a blackout, cut against each other (board.css/stage-surge) */
+  --stage-flash: rgba(255, 251, 235, 0.62);
+  --stage-dim: rgba(8, 8, 10, 0.5);
+}
+
+/* ── DARK stage ─────────────────────────────────────────────────────────
+   Selected by data-theme on <html> (src/hooks/useTheme.ts + the pre-paint
+   script in index.html), toggled from the board's red power switch. Only
+   the tokens change: every component reads them through Tailwind
+   (tailwind.config.ts) or through board.css/mobile.css, so there is no
+   second set of component rules to keep in sync.
+
+   Pedal bodies are deliberately untouched. They come from the artwork
+   manifest (physical objects don't repaint when the house lights drop);
+   what dims is the room around them: case, chassis, chrome and dialogs. */
+:root[data-theme='dark'] {
+  --bg-primary: #17181a;
+  --bg-surface: #1e2023;
+  --bg-surface-raised: #24262a;
+  --bg-elevated: #2a2d31;
+  --bg-card: #1e2023;
+  --bg-input: #101113;
+  --bg-deep: #0e0f11;
+  --bg-hover: #2c2f34;
+  --text-primary: #eceae5;
+  --text-secondary: #c5c1b9;
+  --text-muted: #98938a;
+  --border-subtle: #33363b;
+  --border-active: #4d515a;
+  --accent-amber: #e0a949;
+  --accent-amber-dim: #b8873a;
+  --accent-red: #e2685c;
+  --accent-green: #4fbd7d;
+  --glow-amber: rgba(224, 169, 73, 0.3);
+  --glow-red: rgba(226, 104, 92, 0.28);
+  --glow-green: rgba(79, 189, 125, 0.26);
+  --knob-track: #3a3d42;
+  --knob-fill: #e0a949;
+
+  --case: #141517;
+  --board: #1c1e21;
+  --board-top: #26282c;
+  --board-edge: #0b0c0d;
+  --board-bezel: #2f3237;
+  --board-bezel-hi: #3d4046;
+  --chrome-bg: #202225;
+  --chrome-face: #2b2e33;
+  --chrome-border: #35383d;
+  --chrome-text: #eceae5;
+  --chrome-muted: #98938a;
+  --strip-bg: #1a1b1e;
+  --stub-ink: #cbc6bb;
+  --stub-ink-on: #17181a;
+  --dot-off: #4d515a;
+  --pedal-shadow: 0 12px 26px rgba(0, 0, 0, 0.62);
+  --stage-flash: rgba(255, 232, 190, 0.34);
+  --stage-dim: rgba(0, 0, 0, 0.66);
 }
 
 html,

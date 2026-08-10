@@ -34,14 +34,18 @@ GP200 Studio fixes that:
 - 🗂️ **Real patch management** — browse, search, rename, import, export and back up all 256 device slots. Bulk-export your entire pedal to a single ZIP.
 - 🎛️ **A UI that looks like the gear it edits** — your patch is a pedalboard, not a parameter spreadsheet. Every effect is a colorful pedal with knobs you can actually see and turn. See your signal chain at a glance instead of decoding menus.
 - 🔁 **A loop station the pedal doesn't ship with** — a multi-layer looper that records the GP-200's USB audio right in the browser, with MIDI footswitch learn so you can drive it hands-free from the pedal itself.
+- ⏩ **Set up once, apply to 256 patches** — copy a footswitch layout or a patch volume across your whole pedal in one pass instead of repeating yourself on a 4" screen.
 
 ## Features
 
-- 🎸 **Pedalboard editor** — the whole patch as a stage-styled board: per-effect pedal bodies, drag-to-reorder, FX-loop routing, knob/fader parameter editing, and real-world "based on" info for all 305 effects
+- 🎸 **Pedalboard editor** — the whole patch as a stage-styled board: per-effect pedal bodies, drag-to-reorder, FX-loop routing, knob/fader parameter editing, and real-world "based on" info for all 305 effects. The chain wraps and stacks downward instead of scrolling off-screen, the board scales itself to fit your window, and there's a light/dark stage (flip the red rocker in the top bar)
 - ⚡ **Live device push** — edits stream to a connected GP-200 over USB-MIDI SysEx as you make them; hardware-side changes sync back into the editor
 - 🗄️ **Patch manager** — full 256-slot list with names & search, activate/open/rename, per-slot `.prst` export/import, one-click bulk ZIP backup
 - 🦶 **Controller assignment** — per-patch EXP pedal and CTRL 1–8 footswitch mappings
+- ⏩ **Bulk apply** — write the current patch's footswitch assignments and/or a patch volume into every patch, or a range of banks, in one run
 - 🔁 **Loop station** — stack unlimited phase-locked layers over the GP-200's USB audio, with MIDI-learn to bind transport controls to the pedal's footswitches
+- 🥁 **Drums** — a browser practice drum machine (kits, grooves, swing, 4/4 · 3/4 · 2/4 · 6/8, step editing, randomizer) that works offline, plus a MIDI remote for the pedal's own drums, looper and tuner
+- 📱 **Phone-ready** — a purpose-built touch UI below 640px, not a squashed desktop board
 
 <div align="center">
 <img src="public/guide/03-effect-picker.png" alt="Effect picker" width="49%" /> <img src="public/guide/08-deck-loop.png" alt="Loop station" width="49%" />
@@ -54,9 +58,26 @@ The GP-200's built-in looper records a single loop. GP200 Studio turns the pedal
 - 🎚️ **Unlimited layers** — your first recording sets the master loop; every record pass after that adds a new track, quantized and phase-locked to it, so everything stays locked in time no matter how many layers you stack
 - 🎛️ **Per-layer control** — each track has its own play/pause, mute, volume, and delete, plus a master progress bar and one-click Clear All
 - 🦶 **Hands-free from the pedal** — MIDI-learn binds the GP-200's physical footswitches to Record, Play, and track selection, and a takeover mode stops those stomps from firing their normal patch functions while you loop
-- 🥁 **Backing rhythm** — the drums drawer remote-controls the pedal's built-in drum machine (and its stock single-track looper and tuner) over MIDI, so you can loop against a beat
+- 🎧 **Bring in a backing track** — import an audio file as a layer and loop over it
 
 No audio interface, no DAW, no extra pedal — just the GP-200, a USB cable, and a browser.
+
+## Drums to play against
+
+Two drum machines, stacked in one drawer:
+
+- 🥁 **Practice kit in the browser** — kits, a groove library, per-step editing, MPC-style swing, and 4/4 · 3/4 · 2/4 · 6/8 time signatures (the grid, bar length and backbeat follow the signature). Hit **RANDOM** for a fresh pattern in the style you picked. It needs no GP-200 at all, so it works offline — and it keeps playing while you close the drawer and dial in a tone
+- 🎛️ **Remote for the pedal's own drums** — start/stop, rhythm and drum volume over MIDI CC, alongside the GP-200's stock single-track looper, tuner and tap tempo
+
+## Bulk apply: stop repeating yourself
+
+The pedal has 256 patches and no way to say "use this footswitch layout everywhere". The **Bulk Apply** tab (in the board's SETTINGS drawer) does it for you:
+
+- 🦶 **CTRL footswitch assignments** — build your live footswitch layout on one patch, then stamp it onto every patch you gig with
+- 🔊 **Patch volume** — level a whole set so no patch jumps out
+- 🎯 **Scope it** — all 256 patches, or a range of banks, with a live progress readout and a Cancel button
+
+Under the hood there is no bulk message in the protocol: the app walks the slots one at a time — select, write, save — exactly as you would by hand. It needs a connected GP-200, takes a few seconds per dozen patches, and **overwrites the target patches' existing settings**, so take a bulk ZIP backup first.
 
 <details>
 <summary><b>📸 More screenshots</b></summary>

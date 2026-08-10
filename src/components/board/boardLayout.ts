@@ -1,4 +1,3 @@
-import type { EffectSlot } from '@/core/types';
 import { getEffectParams } from '@/core/effectParams';
 import { getEffectsByModule, getSlotModule } from '@/core/effectNames';
 
@@ -23,10 +22,10 @@ export function isWidePedal(effectId: number): boolean {
 // never a neighbour's position.
 //
 // A module's bay is wide if any of its effects is wide. This keeps the tall,
-// knob-heavy effects (compressors, amps, delays) laid out in 2 rows instead of
-// squeezing them into 3 rows of a compact body, so bays stay shorter and both
-// rows + the deck fit a 1080p viewport. The board fills its width and scrolls
-// horizontally, so the extra wide bays never overflow the two-row layout.
+// knob-heavy effects (compressors, amps, delays) laid out in 2 rows of knobs
+// instead of squeezing them into 3, so bays stay shorter. The board wraps its
+// single row and scales to fit (useBoardFit), so a wide bay costs horizontal
+// room on a line, never an overflow.
 const wideModuleCache = new Map<string, boolean>();
 function isWideModule(module: string): boolean {
   const cached = wideModuleCache.get(module);
@@ -50,30 +49,4 @@ export function isWideSlot(slotIndex: number): boolean {
  */
 export function pedalIsWide(slotIndex: number, effectId: number): boolean {
   return isWideSlot(slotIndex) && isWidePedal(effectId);
-}
-
-/**
- * Split the chain into the two visual rows, balancing by rendered width
- * (wide pedal = 2 units, compact = 1) instead of a fixed 6/5 count, a
- * double-width AMP would otherwise push the front row past the stage edge.
- * Chain order is preserved; only the break point moves. Width is slot-derived,
- * so the split is stable when an effect is swapped (only reorder moves it).
- */
-export function splitRows(effects: EffectSlot[]): { front: EffectSlot[]; back: EffectSlot[] } {
-  const unit = (slot: EffectSlot) => (isWideSlot(slot.slotIndex) ? 2 : 1);
-  const total = effects.reduce((sum, slot) => sum + unit(slot), 0);
-  const half = Math.ceil(total / 2);
-
-  const front: EffectSlot[] = [];
-  const back: EffectSlot[] = [];
-  let frontUnits = 0;
-  for (const slot of effects) {
-    if (back.length === 0 && (front.length === 0 || frontUnits + unit(slot) <= half)) {
-      front.push(slot);
-      frontUnits += unit(slot);
-    } else {
-      back.push(slot);
-    }
-  }
-  return { front, back };
 }
