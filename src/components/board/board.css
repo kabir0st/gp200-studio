@@ -344,7 +344,9 @@
   background:
     linear-gradient(90deg, transparent 45%, rgba(255, 255, 255, 0.16) 50%, transparent 55%),
     linear-gradient(270deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 22%),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0) 30%);
+    /* lighter than the unlit side's: the bulb is behind the whole paddle, so
+       the sunk half still glows — only the very edge tucks into shadow */
+    linear-gradient(90deg, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0) 22%);
 }
 /* Pressing pushes the whole assembly into the chassis before it flips, so the
    switch answers the finger on mousedown rather than only on release. */
