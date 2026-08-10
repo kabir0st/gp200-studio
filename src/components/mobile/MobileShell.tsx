@@ -9,6 +9,7 @@ import { DrumMachinePanel } from '@/components/board/DrumMachinePanel';
 import { FxLoopArrows } from '@/components/FxLoopArrows';
 import { ControllerPanel } from '@/components/ControllerPanel';
 import { FootswitchPanel } from '@/components/FootswitchPanel';
+import { Tabs } from '@/components/ui/Tabs';
 import { MobileHeader } from './MobileHeader';
 import { MobileTabBar, type MobileTab } from './MobileTabBar';
 import { MobileSheet } from './MobileSheet';
@@ -19,6 +20,14 @@ import { track } from '@/core/analytics';
 import './mobile.css';
 
 type Sheet = 'fxloop' | 'patch' | 'meta' | null;
+
+type PatchSettingsTab = 'exp' | 'ctrl' | 'bulk';
+
+const PATCH_SETTINGS_TABS = [
+  { id: 'exp', label: 'Expression' },
+  { id: 'ctrl', label: 'Footswitches' },
+  { id: 'bulk', label: 'Bulk Apply' },
+];
 
 /**
  * Root of the phone tree, rendered below 640px in place of PedalBoard.
@@ -95,6 +104,13 @@ export default function MobileShell({
 }: PedalBoardProps) {
   const [tab, setTab] = useState<MobileTab>('chain');
   const [sheet, setSheet] = useState<Sheet>(null);
+  const [patchTab, setPatchTab] = useState<PatchSettingsTab>('exp');
+
+  function selectPatchTab(id: string) {
+    if (id === 'exp' || id === 'ctrl' || id === 'bulk') {
+      setPatchTab(id);
+    }
+  }
   /** array position of the block being edited, or null for the chain list */
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const artIndex = usePedalManifest();
@@ -284,33 +300,44 @@ export default function MobileShell({
         />
       </MobileSheet>
 
-      {/* One consolidated per-patch settings sheet, mirroring the desktop
-          PATCH SETTINGS drawer: EXP assignment (+ live test row), CTRL
-          footswitch masks, bulk apply. */}
+      {/* One per-patch settings sheet, mirroring the desktop PATCH SETTINGS
+          drawer's tabs: EXP assignment (+ live test row), CTRL footswitch
+          masks, bulk apply. */}
       <MobileSheet open={sheet === 'patch'} onClose={() => setSheet(null)} title="Patch Settings">
-        <h3 className="m-section-title">EXPRESSION PEDALS</h3>
-        <ControllerPanel
-          preset={preset}
-          connected={connected}
-          onParamSelect={onExpParamSelect}
-          onMinMax={onExpMinMax}
-          sendCC={sendCC}
+        <Tabs
+          tabs={PATCH_SETTINGS_TABS}
+          active={patchTab}
+          ariaLabel="Patch settings sections"
+          onSelect={selectPatchTab}
         />
-        <h3 className="m-section-title mt-6">CTRL FOOTSWITCHES</h3>
-        <FootswitchPanel
-          preset={preset}
-          connected={connected}
-          onCtrlBlockToggle={onCtrlBlockToggle}
-          onCtrlClear={onCtrlClear}
-        />
-        <h3 className="m-section-title mt-6">BULK APPLY</h3>
-        <BulkApplySection
-          connected={connected}
-          canCopyCtrl={canCopyCtrl}
-          progress={bulkApplyProgress}
-          onApply={onBulkApply}
-          onCancel={onCancelBulkApply}
-        />
+        <div role="tabpanel" className="pt-4">
+          {patchTab === 'exp' && (
+            <ControllerPanel
+              preset={preset}
+              connected={connected}
+              onParamSelect={onExpParamSelect}
+              onMinMax={onExpMinMax}
+              sendCC={sendCC}
+            />
+          )}
+          {patchTab === 'ctrl' && (
+            <FootswitchPanel
+              preset={preset}
+              connected={connected}
+              onCtrlBlockToggle={onCtrlBlockToggle}
+              onCtrlClear={onCtrlClear}
+            />
+          )}
+          {patchTab === 'bulk' && (
+            <BulkApplySection
+              connected={connected}
+              canCopyCtrl={canCopyCtrl}
+              progress={bulkApplyProgress}
+              onApply={onBulkApply}
+              onCancel={onCancelBulkApply}
+            />
+          )}
+        </div>
       </MobileSheet>
     </div>
   );

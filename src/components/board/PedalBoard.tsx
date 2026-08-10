@@ -34,9 +34,18 @@ import { SwitcherUnit } from './SwitcherUnit';
 import { BoardTopBar } from './BoardTopBar';
 import { DeckDrawer } from './DeckDrawer';
 import { Dialog } from '@/components/ui/Dialog';
+import { Tabs } from '@/components/ui/Tabs';
 import { useCoarsePointer, useSingleRowBoard } from '@/hooks/useMediaQuery';
 import { prefersReducedMotion } from '@/lib/motion';
 import './board.css';
+
+type PatchSettingsTab = 'exp' | 'ctrl' | 'bulk';
+
+const PATCH_SETTINGS_TABS = [
+  { id: 'exp', label: 'Expression' },
+  { id: 'ctrl', label: 'Footswitches' },
+  { id: 'bulk', label: 'Bulk Apply' },
+];
 
 export interface PedalBoardProps {
   preset: GP200Preset;
@@ -197,6 +206,13 @@ export function PedalBoard({
   const [openDrawer, setOpenDrawer] =
     useState<'fxloop' | 'patch' | 'looper' | 'drums' | 'remote' | null>(null);
   const [pickerSlot, setPickerSlot] = useState<number | null>(null);
+  const [patchTab, setPatchTab] = useState<PatchSettingsTab>('exp');
+
+  function selectPatchTab(id: string) {
+    if (id === 'exp' || id === 'ctrl' || id === 'bulk') {
+      setPatchTab(id);
+    }
+  }
 
   // Report the looper drawer's open state up to App: the MIDI dispatcher tap
   // hijacks learned footswitch stomps only while the drawer is open.
@@ -406,56 +422,48 @@ export function PedalBoard({
         </p>
       </DeckDrawer>
 
-      {/* One consolidated per-patch settings surface: EXP assignment (with
-          the live position/A-B row, moved here from the REMOTE panel), CTRL
-          footswitch masks, and the bulk-apply tool that copies them across
-          patches. */}
+      {/* One per-patch settings surface, split into tabs: EXP assignment
+          (with the live position/A-B row, moved here from the REMOTE panel),
+          CTRL footswitch masks, and the bulk-apply tool that copies them
+          across patches. */}
       <DeckDrawer
         open={openDrawer === 'patch'}
         onClose={() => setOpenDrawer(null)}
         title="Patch Settings"
       >
-        <p
-          className="font-mono-display text-label text-text-muted uppercase
-            tracking-widest mb-2"
-        >
-          Expression pedals
-        </p>
-        <ControllerPanel
-          preset={preset}
-          connected={connected}
-          onParamSelect={onExpParamSelect}
-          onMinMax={onExpMinMax}
-          sendCC={sendCC}
+        <Tabs
+          tabs={PATCH_SETTINGS_TABS}
+          active={patchTab}
+          ariaLabel="Patch settings sections"
+          onSelect={selectPatchTab}
         />
-        <div className="mt-4 pt-4 border-t border-border-active">
-          <p
-            className="font-mono-display text-label text-text-muted uppercase
-              tracking-widest mb-2"
-          >
-            CTRL footswitches
-          </p>
-          <FootswitchPanel
-            preset={preset}
-            connected={connected}
-            onCtrlBlockToggle={onCtrlBlockToggle}
-            onCtrlClear={onCtrlClear}
-          />
-        </div>
-        <div className="mt-4 pt-4 border-t border-border-active">
-          <p
-            className="font-mono-display text-label text-text-muted uppercase
-              tracking-widest mb-2"
-          >
-            Bulk apply · many patches
-          </p>
-          <BulkApplySection
-            connected={connected}
-            canCopyCtrl={canCopyCtrl}
-            progress={bulkApplyProgress}
-            onApply={onBulkApply}
-            onCancel={onCancelBulkApply}
-          />
+        <div role="tabpanel" className="pt-4">
+          {patchTab === 'exp' && (
+            <ControllerPanel
+              preset={preset}
+              connected={connected}
+              onParamSelect={onExpParamSelect}
+              onMinMax={onExpMinMax}
+              sendCC={sendCC}
+            />
+          )}
+          {patchTab === 'ctrl' && (
+            <FootswitchPanel
+              preset={preset}
+              connected={connected}
+              onCtrlBlockToggle={onCtrlBlockToggle}
+              onCtrlClear={onCtrlClear}
+            />
+          )}
+          {patchTab === 'bulk' && (
+            <BulkApplySection
+              connected={connected}
+              canCopyCtrl={canCopyCtrl}
+              progress={bulkApplyProgress}
+              onApply={onBulkApply}
+              onCancel={onCancelBulkApply}
+            />
+          )}
         </div>
       </DeckDrawer>
 
