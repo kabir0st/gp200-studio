@@ -5,7 +5,7 @@
 // Tracks are dynamic (every record→stop creates one), so actions carry no
 // track number: the four transport controls are record, play/stop, and
 // selection next/prev. play/stop and the EXP pedal both act on the SELECTED
-// track — the ◀ ▶ switches pick the target, so a stomp never disturbs the
+// track , the ◀ ▶ switches pick the target, so a stomp never disturbs the
 // other tracks (the panel's own PLAY button is still the play-ALL control).
 // Per-track operations (mute, clear, gain) stay on-screen.
 

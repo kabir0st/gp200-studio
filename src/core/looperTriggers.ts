@@ -86,8 +86,8 @@ function isFootswitchAck0c(data: Uint8Array): boolean {
  * or null for frames that must always flow through normal handling (real slot
  * changes, knob turns, effect swaps, short frames).
  *
- * The sysex08 signature covers data[10..24] — the payload prefix the
- * dispatcher already logs — EXCLUDING the slot nibbles at [25],[26] so a
+ * The sysex08 signature covers data[10..24] , the payload prefix the
+ * dispatcher already logs , EXCLUDING the slot nibbles at [25],[26] so a
  * learned CTRL trigger survives slot changes, and [27]. This slice is a
  * hypothesis pending the USB capture; if it proves wrong, fix it here and
  * bump STORE_VERSION so stale learned triggers are discarded.

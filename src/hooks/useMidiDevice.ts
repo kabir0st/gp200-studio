@@ -1,11 +1,16 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { SysExCodec } from '@/core/SysExCodec';
+import { SysExCodec, type DeviceStateDump } from '@/core/SysExCodec';
 import { decodeControlChange } from '@/core/midiControlMap';
-import { isMidiMonitorEnabled } from '@/core/debugFlags';
+import {
+  isAssignmentDumpEnabled,
+  isMidiMonitorEnabled,
+  isNameWriteEnabled,
+} from '@/core/debugFlags';
 import { hexOfBytes } from '@/core/looperTriggers';
 import type { GP200Preset } from '@/core/types';
 import type { CCCommand } from '@/core/ccControl';
 import { presetNameCacheKey, loadCachedNames, saveCachedNames } from '@/core/presetNameCache';
+import type { BulkApplyOptions, BulkApplyProgress } from '@/core/bulkApply';
 import { track } from '@/core/analytics';
 import { PRSTEncoder } from '@/core/PRSTEncoder';
 import { useMidiSend } from './useMidiSend';
@@ -43,10 +48,15 @@ export interface UseMidiDeviceReturn {
   namesSyncing: boolean;
   deviceInfo: { deviceType: number; firmwareValues: number[]; versionAccepted: boolean } | null;
   currentPreset: GP200Preset | null;
-  /** Controller/EXP assignment readback collected during the handshake
-   *  (0x11/0x1C query → 0x12/0x1C response). Raw substrate for decoding
-   *  device-truth CTRL/EXP assignments. */
-  assignmentInfo: { section: number; page: number; block: number; name: string; rawData: Uint8Array }[];
+  /** User-IR slot names enumerated during the handshake (0x11/0x1C query →
+   *  0x12/0x1C response; re-identified 2026-08-08 as User-IR enumeration, see
+   *  docs/protocol-capture.md §3). 30 entries in device slot order; empty
+   *  array until the sweep runs (or when the device didn't answer). */
+  userIrNames: string[];
+  /** Typed view of the connect-time 0x4E state dump (tuner A4, global-EQ
+   *  floats, drum style-group names, raw TLV records). Null until the
+   *  handshake completes; see DeviceStateDump for per-field caveats. */
+  deviceState: DeviceStateDump | null;
 
   connect: () => Promise<void>;
   disconnect: () => void;
@@ -64,6 +74,15 @@ export interface UseMidiDeviceReturn {
    *  device to the target slot (required to load the editing buffer), then
    *  save-commits under the new name and restores the previous slot. */
   renameSlot: (slot: number, name: string) => Promise<void>;
+  /** Write the same CTRL assignments and/or patch volume into every listed
+   *  slot (preset-change → live writes → save-commit per slot). Progress in
+   *  bulkApplyProgress; cancel with cancelBulkApply (finishes current slot). */
+  bulkApply: (
+    slots: number[],
+    options: BulkApplyOptions,
+  ) => Promise<{ done: number; cancelled: boolean }>;
+  bulkApplyProgress: BulkApplyProgress | null;
+  cancelBulkApply: () => void;
   sendToggle: (blockIndex: number, enabled: boolean) => void;
   sendParamChange: (blockIndex: number, paramIndex: number, effectId: number, value: number) => void;
   sendReorder: (order: number[], send: number, ret: number) => void;
@@ -79,6 +98,8 @@ export interface UseMidiDeviceReturn {
   sendRawChunks: (chunks: Uint8Array[], delayMs: number, onProgress?: (i: number, total: number) => void) => Promise<void>;
   sendExpParamSelect: (page: number, item: number, blockIndex: number, paramIdx: number) => void;
   sendExpMinMax: (page: number, item: number, min: number, max: number) => void;
+  /** Per-patch CTRL footswitch → effect-block mask (whole mask, not per-bit). */
+  sendCtrlAssignment: (ctrlIndex: number, blockMask: number, state?: number) => void;
   // Device-global settings (0x12/0x08 settings-write family, docs §0.2)
   sendFsMode: (mode: number) => void;
   sendFsTarget: (fs: number, kind: 'tap' | 'hold', actionId: number) => void;
@@ -188,7 +209,8 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   const wasConnectedRef = useRef(false);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef(0);
-  const [assignmentInfo, setAssignments] = useState<UseMidiDeviceReturn['assignmentInfo']>([]);
+  const [userIrNames, setUserIrNames] = useState<string[]>([]);
+  const [deviceState, setDeviceState] = useState<DeviceStateDump | null>(null);
 
   const outputRef          = useRef<GP200Output | null>(null);
   const inputRef           = useRef<GP200Input | null>(null);
@@ -242,7 +264,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     const data = getBytes(event.data);
     // Looper MIDI-learn/hijack tap runs before EVERY branch below: a consumed
     // frame (learn capture, hijacked stomp, debounced sibling) must never
-    // reach the normal handlers — that's what keeps a hijacked toggle from
+    // reach the normal handlers , that's what keeps a hijacked toggle from
     // being mirrored into preset state. The tap passes anything it doesn't
     // own, so real slot changes, knob turns, and effect swaps fall through
     // untouched. See src/hooks/useLooperTriggers.ts.
@@ -317,7 +339,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // the 38-byte footswitch-ack variant (CTRL 4-8 report a stomp as 0x0C where
     // CTRL 1-3 use 0x08) they land in an all-zero tail, which is precisely the
     // effectId===0 case dropped below. That ack carries block@22 and state@24,
-    // the same offsets the 0x08 FX-state frame uses — see isFootswitchAck0c in
+    // the same offsets the 0x08 FX-state frame uses , see isFootswitchAck0c in
     // src/core/looperTriggers.ts, which must stay in step with this check.
     if (isSysEx(data, 0x12, 0x0C) && data.length >= 38) {
       handled = true;
@@ -368,7 +390,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
       }
     }
     // Opt-in monitor (src/core/debugFlags.ts): hex-dump any frame no branch
-    // above recognized — exactly what the pending USB-capture work needs.
+    // above recognized , exactly what the pending USB-capture work needs.
     if (!handled && isMidiMonitorEnabled()) {
       console.debug(`[GP-200] rx unhandled: ${hexOfBytes(data)}`);
     }
@@ -448,7 +470,9 @@ export function useMidiDevice(): UseMidiDeviceReturn {
         setHandshakeStep('State Dump…');
         output.send(SysExCodec.buildStateDumpRequest());
         const dumpChunks = await collectChunks(input, 0x12, 0x4E, 5, READ_TIMEOUT_MS, onMidiMessage);
-        const { slot } = SysExCodec.parseStateDump(dumpChunks);
+        const stateDump = SysExCodec.parseStateDump(dumpChunks);
+        const slot = stateDump.slot;
+        setDeviceState(stateDump);
         setCurrentSlot(slot); currentSlotRef.current = slot;
 
         // Step 7-8: Version check
@@ -460,10 +484,17 @@ export function useMidiDevice(): UseMidiDeviceReturn {
         const { accepted } = SysExCodec.parseVersionResponse(versionMsg);
         setDeviceInfo({ ...identity, versionAccepted: accepted });
 
-        // Step 9: Assignment polling (non-critical, short timeout, bail on first failure)
-        setHandshakeStep('Controller…');
+        // Step 9: User-IR slot enumeration (non-critical, short timeout, bail
+        // on first failure). The 0x11/0x1C sweep was long believed to be a
+        // controller-assignment readback; decoded 2026-08-08 as the device's
+        // 30 User-IR slot names (docs/protocol-capture.md §3). The query plan
+        // below mirrors the official editor's own connect sweep verbatim; the
+        // flat response order is the IR slot order 0..29.
+        setHandshakeStep('User IRs…');
         const ASSIGN_TIMEOUT = 300;
-        const assignmentEntries: UseMidiDeviceReturn['assignmentInfo'] = [];
+        const assignmentEntries: {
+          section: number; page: number; block: number; name: string; rawData: Uint8Array;
+        }[] = [];
         const assignmentPlan = [
           { section: 0, pages: [[0, 16], [1, 4]] },
           { section: 1, pages: [[0, 10]] },
@@ -486,7 +517,22 @@ export function useMidiDevice(): UseMidiDeviceReturn {
             }
           }
         }
-        setAssignments(assignmentEntries);
+        setUserIrNames(assignmentEntries.map((entry) => entry.name));
+
+        // Opt-in raw dump (src/core/debugFlags.ts): hex of each 0x12/0x1C
+        // response, for eyeballing the record layout beyond the name field.
+        if (isAssignmentDumpEnabled()) {
+          console.log(`[GP-200] User-IR sweep: ${assignmentEntries.length} responses`);
+          for (const entry of assignmentEntries) {
+            const hex = [...entry.rawData]
+              .map((byte) => byte.toString(16).padStart(2, '0'))
+              .join(' ');
+            console.log(
+              `  s${entry.section} p${entry.page} b${entry.block} ` +
+              `name="${entry.name}" raw=${hex}`,
+            );
+          }
+        }
 
         // Step 10: Pull current bank (4 slots)
         const bankBase = Math.floor(slot / 4) * 4;
@@ -552,7 +598,8 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     setErrorMessage(null);
     setDeviceInfo(null);
     setCurrentPreset(null);
-    setAssignments([]);
+    setUserIrNames([]);
+    setDeviceState(null);
     fastNameReadRef.current = null;
   }, []);
 
@@ -626,7 +673,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // Flash upload, mirroring the official editor byte-for-byte
     // (dumps/patch-upload.pcapng): encode to .prst bytes, derive the upload
     // image, send it as 0x12/0x20 chunks addressed to the target slot. The
-    // device commits to flash directly — no save-commit follows (verified:
+    // device commits to flash directly , no save-commit follows (verified:
     // the uploaded patch survives a power-cycle). Because the image carries
     // the full file content, CTRL/EXP assignments travel with it.
     const fileBytes = new Uint8Array(new PRSTEncoder().encode(preset));
@@ -643,7 +690,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // Writing to the active slot looked like a no-op in hardware testing:
     // the edit buffer keeps serving the pre-push patch and a preset-change
     // to the current slot doesn't reload it. So park on the adjacent
-    // sub-slot first, write, then return — the return is a real slot change
+    // sub-slot first, write, then return , the return is a real slot change
     // that loads the freshly written flash copy.
     const wasActive = currentSlotRef.current === slot;
     if (wasActive) {
@@ -662,19 +709,19 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // Let the flash write settle, then switch the device to the slot so the
     // pushed patch is live (the editor leaves this to the user; we select
     // it). Hardware testing showed the device goes deaf for a while after
-    // the chunk burst — a preset-change 200ms later was silently dropped —
+    // the chunk burst , a preset-change 200ms later was silently dropped —
     // so give it a generous window.
     await new Promise(r => setTimeout(r, 800));
 
     // Experiment toggle: the upload capture stops 30ms after the last chunk,
     // so a deferred finalize frame from the official editor would be
     // invisible in it. Hardware runs show the device answering reads but
-    // discarding the upload + refusing slot changes after the burst — the
+    // discarding the upload + refusing slot changes after the burst , the
     // signature of staged data awaiting a commit. Opt in to sending the
     // known save-commit opcode as that finalize via
     // localStorage.setItem('gp200.pushCommit', '1'). CAUTION: if the device
     // treats it as a plain edit-buffer save instead, the target slot gets
-    // overwritten with the currently active patch — use a scratch slot.
+    // overwritten with the currently active patch , use a scratch slot.
     let commitRequested = false;
     try {
       commitRequested = window.localStorage.getItem('gp200.pushCommit') === '1';
@@ -710,7 +757,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
         console.log('[GP-200] push verify: OK (readback matches pushed name + CTRL masks)');
       } else {
         console.warn(
-          `[GP-200] push verify: MISMATCH — name "${readback.patchName}" vs pushed ` +
+          `[GP-200] push verify: MISMATCH , name "${readback.patchName}" vs pushed ` +
           `"${preset.patchName}", ctrlMasks [${gotMasks}] vs pushed [${wantMasks}]. ` +
           'The device likely discarded the flash write.',
         );
@@ -957,6 +1004,14 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // is untouched because nothing else was edited in between.
     output.send(SysExCodec.buildPresetChange(slot));
     await new Promise(r => setTimeout(r, 200));
+    // Gap C experiment (docs §2b): the device ignores the name inside
+    // save-commit, so renames don't persist. Behind the debug flag, try the
+    // hypothesized single-field name write first; the save-commit then
+    // persists the edit buffer it (hopefully) just changed.
+    if (isNameWriteEnabled()) {
+      output.send(SysExCodec.buildPatchName(name));
+      await new Promise(r => setTimeout(r, 150));
+    }
     output.send(SysExCodec.buildSaveCommit(name, slot));
     await new Promise(r => setTimeout(r, 300));
     presetNamesRef.current[slot] = name;
@@ -969,6 +1024,72 @@ export function useMidiDevice(): UseMidiDeviceReturn {
       setCurrentSlot(previousSlot); currentSlotRef.current = previousSlot;
     }
   }, [pauseNameLoading, persistNames]);
+
+  // Bulk apply: write the same CTRL assignments and/or patch volume into many
+  // saved patches. Per slot this replays the proven renameSlot sequence —
+  // preset-change loads the slot into the edit buffer, live writes mutate it,
+  // save-commit persists it , so it inherits that path's hardware guarantees
+  // (and its caveats: CTRL mask bit 7/MOD does not apply live, docs §3).
+  const bulkApplyAbortRef = useRef(false);
+  const [bulkApplyProgress, setBulkApplyProgress] = useState<BulkApplyProgress | null>(null);
+
+  const cancelBulkApply = useCallback(() => {
+    bulkApplyAbortRef.current = true;
+  }, []);
+
+  const bulkApply = useCallback(async (
+    slots: number[],
+    options: BulkApplyOptions,
+  ): Promise<{ done: number; cancelled: boolean }> => {
+    await pauseNameLoading();
+    if (!outputRef.current) throw new Error('Not connected');
+    const output = outputRef.current;
+    const previousSlot = currentSlotRef.current;
+    bulkApplyAbortRef.current = false;
+    let done = 0;
+
+    try {
+      for (const slot of slots) {
+        if (bulkApplyAbortRef.current) break;
+        setBulkApplyProgress({ done, total: slots.length, slot });
+        // Long enough to cover every frame this iteration sends, so the FX
+        // dispatcher can't mistake device echoes for hardware-initiated edits.
+        suppressFxFor(1200);
+        output.send(SysExCodec.buildPresetChange(slot));
+        await new Promise(r => setTimeout(r, 200));
+
+        if (options.volume !== undefined) {
+          output.send(SysExCodec.buildPatchSetting(0x00, options.volume));
+          await new Promise(r => setTimeout(r, 30));
+        }
+        if (options.ctrlAssignments) {
+          for (const assignment of options.ctrlAssignments) {
+            output.send(SysExCodec.buildCtrlAssignment(
+              assignment.ctrlIndex,
+              assignment.blockMask,
+              assignment.state,
+            ));
+            await new Promise(r => setTimeout(r, 30));
+          }
+        }
+
+        // The device ignores the name field in save-commit (docs §2b), so a
+        // cached name is cosmetic; the buffer's own name is what persists.
+        output.send(SysExCodec.buildSaveCommit(presetNamesRef.current[slot] ?? '', slot));
+        await new Promise(r => setTimeout(r, 300));
+        done++;
+        setBulkApplyProgress({ done, total: slots.length, slot });
+      }
+    } finally {
+      setBulkApplyProgress(null);
+      if (previousSlot !== null) {
+        output.send(SysExCodec.buildPresetChange(previousSlot));
+        await new Promise(r => setTimeout(r, 200));
+        setCurrentSlot(previousSlot); currentSlotRef.current = previousSlot;
+      }
+    }
+    return { done, cancelled: bulkApplyAbortRef.current };
+  }, [pauseNameLoading, suppressFxFor]);
 
   // All send* helpers + device-callback setters come from useMidiSend (see
   // the top of the hook where `send` is instantiated). The return value at
@@ -999,9 +1120,10 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   return {
     status, handshakeStep, errorMessage, deviceName, currentSlot, presetNames, namesLoadProgress,
     namesSyncing,
-    deviceInfo, currentPreset, assignmentInfo,
+    deviceInfo, currentPreset, userIrNames, deviceState,
     connect, disconnect, loadPresetNames, syncPresetNames, refreshNames,
     pullPreset, pushPreset, writePresetToSlot, saveToSlot, renameSlot,
+    bulkApply, bulkApplyProgress, cancelBulkApply,
     // Send operations + device-callback registration are owned by useMidiSend.
     sendEffectChange: send.sendEffectChange,
     sendToggle: send.sendToggle,
@@ -1017,6 +1139,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     sendPatchTempo: send.sendPatchTempo,
     sendExpParamSelect: send.sendExpParamSelect,
     sendExpMinMax: send.sendExpMinMax,
+    sendCtrlAssignment: send.sendCtrlAssignment,
     sendFsMode: send.sendFsMode,
     sendFsTarget: send.sendFsTarget,
     sendFsCombo: send.sendFsCombo,

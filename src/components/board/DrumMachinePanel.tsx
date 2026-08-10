@@ -26,7 +26,7 @@ function stepIndices(count: number): number[] {
 }
 
 function patternOptionLabel(drumPattern: DrumPattern): string {
-  const base = `${drumPattern.name} — ${drumPattern.bpm} BPM`;
+  const base = `${drumPattern.name} , ${drumPattern.bpm} BPM`;
   if (drumPattern.signature === '4/4') return base;
   return `${base} · ${drumPattern.signature}`;
 }
@@ -93,7 +93,7 @@ function DrumSlider({ label, min, max, step, value, display, onChange }: DrumSli
 /**
  * Browser practice drum machine: plays the CC0 sample kits in public/drums/
  * through Web Audio (useDrumMachine), fully offline and independent of the
- * GP-200 — this is the backing-track metronome you jam over, not the
+ * GP-200 , this is the backing-track metronome you jam over, not the
  * hardware drums remote (DrumsPanel). The hook lives in App, so playback
  * keeps running when this panel's drawer closes.
  */
@@ -101,7 +101,7 @@ export function DrumMachinePanel({ drums }: DrumMachinePanelProps) {
   const [randomStyle, setRandomStyle] = useState<RandomStyle>('Rock');
   // Playhead polled inside rAF (getCurrentStep is a ref-read, like the audio
   // meters): only THIS component re-renders per step, and only when the step
-  // actually changes — the drawer and the selects above never churn.
+  // actually changes , the drawer and the selects above never churn.
   const { playing, getCurrentStep } = drums;
   const [displayStep, setDisplayStep] = useState(-1);
   useEffect(() => {
@@ -294,7 +294,7 @@ export function DrumMachinePanel({ drums }: DrumMachinePanelProps) {
         </div>
       </div>
       <p className="font-mono-display text-caption text-text-muted">
-        Plays in the browser — no GP-200 needed. Pick a groove, roll the dice, and jam over it.
+        Plays in the browser , no GP-200 needed. Pick a groove, roll the dice, and jam over it.
       </p>
     </div>
   );

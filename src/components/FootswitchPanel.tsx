@@ -12,10 +12,28 @@ interface FootswitchPanelProps {
 }
 
 const CTRL_COUNT = 8;
-const BLOCK_COUNT = 11;
+// The 11 chain effect blocks (bits 0-10) plus the FX LOOP insert (bit 11), which
+// a CTRL footswitch can toggle like any block. FX LOOP is a routing element, not
+// an effect module, so it has no SLOT_MODULES / getSlotModule entry of its own.
+const FX_LOOP_BLOCK = 11;
+const FX_LOOP_LABEL = 'FX LOOP';
+const BLOCK_COUNT = 12;
 
 const CTRL_INDICES = Array.from({ length: CTRL_COUNT }, (_, ctrlIndex) => ctrlIndex);
 const BLOCK_INDICES = Array.from({ length: BLOCK_COUNT }, (_, blockIndex) => blockIndex);
+
+// Blocks 0-10 map to a real effect module; block 11 is the FX loop insert. Its
+// color lives in MODULE_COLORS under FX_LOOP_LABEL (the sanctioned data-driven
+// color source), so no hex is hardcoded here.
+function blockLabel(blockIndex: number): string {
+  if (blockIndex === FX_LOOP_BLOCK) return FX_LOOP_LABEL;
+  return getSlotModule(blockIndex);
+}
+
+function blockEffectName(blockIndex: number, effectName: string | undefined): string {
+  if (blockIndex === FX_LOOP_BLOCK) return 'Effects loop send/return';
+  return effectName ?? '';
+}
 
 function assignmentsOf(preset: GP200Preset): CtrlAssignment[] {
   return preset.ctrlAssignments ?? defaultCtrlAssignments();
@@ -28,7 +46,7 @@ function blockBit(blockIndex: number): number {
 function assignedModules(mask: number): string[] {
   return BLOCK_INDICES
     .filter((blockIndex) => (mask & blockBit(blockIndex)) !== 0)
-    .map((blockIndex) => getSlotModule(blockIndex));
+    .map((blockIndex) => blockLabel(blockIndex));
 }
 
 interface FootswitchButtonProps {
@@ -122,7 +140,7 @@ function PedalCard({
   ctrlIndex,
   onToggle,
 }: PedalCardProps) {
-  const moduleName = getSlotModule(blockIndex);
+  const moduleName = blockLabel(blockIndex);
   const colors = MODULE_COLORS[moduleName];
   // Data-driven per-module tint via inline style: the sanctioned second
   // color source (see docs/design-system.md).
@@ -182,8 +200,9 @@ function PedalCard({
 
 /**
  * Per-patch CTRL footswitch assignment: each of the GP-200's 8 assignable
- * CTRL footswitches toggles any subset of the 11 effect blocks. Stored in
- * the preset's controls tail (controlRecords.ts) and saved with the patch.
+ * CTRL footswitches toggles any subset of the 11 effect blocks plus the FX
+ * loop insert (bit 11). Stored in the preset's controls tail
+ * (controlRecords.ts) and saved with the patch.
  *
  * UX model mirrors the hardware: pick a footswitch from the bank on top,
  * then tap the pedals below that the switch should stomp on/off together.
@@ -222,14 +241,9 @@ export function FootswitchPanel({
       `${selectedModules.join(', ')}.`;
   }
 
-  // Honest status: no working device write exists for CTRL masks (no live
-  // opcode; the flash upload is rejected by real hardware — see
-  // docs/protocol-capture.md), so don't promise SAVE TO will carry them.
   let deviceHint = '';
   if (connected) {
-    deviceHint =
-      ' Syncing them to the connected GP-200 is not possible yet — SAVE TO ' +
-      'does not carry them (the write protocol still needs a capture).';
+    deviceHint = ' Changes are sent to the connected GP-200 straight away.';
   }
 
   return (
@@ -284,7 +298,7 @@ export function FootswitchPanel({
             <PedalCard
               key={blockIndex}
               blockIndex={blockIndex}
-              effectName={slotInfo?.effectName ?? ''}
+              effectName={blockEffectName(blockIndex, slotInfo?.effectName)}
               bypassed={slotInfo?.bypassed ?? false}
               active={(selectedMask & blockBit(blockIndex)) !== 0}
               ctrlIndex={selectedCtrl}

@@ -30,11 +30,22 @@ describe.skipIf(!HAS_FIXTURES)('parseControlRecords', () => {
     expect(parsed!.ctrl.map((assignment) => assignment.ctrlIndex))
       .toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
     // PRE, EQ, DST, MOD, DLY, RVB, none, bit-11 (unmodeled, kept verbatim).
-    // Regression: the old parser read the mask at payload+1 — the state byte
-    // plus a garbage byte — so CTRL 2 (true mask 0x040 = EQ only) rendered
+    // Regression: the old parser read the mask at payload+1 , the state byte
+    // plus a garbage byte , so CTRL 2 (true mask 0x040 = EQ only) rendered
     // as phantom PRE/DLY/RVB/VOL.
     expect(parsed!.ctrl.map((assignment) => assignment.blockMask))
       .toEqual([0x001, 0x040, 0x004, 0x080, 0x100, 0x200, 0x000, 0x800]);
+  });
+
+  it('decodes the saved toggle state of each CTRL switch', () => {
+    // payload+1. Modeled (not just preserved in-place) because the live write
+    // frame carries it , see SysExCodec.buildCtrlAssignment , so sending a
+    // wrong value would flip the switch's stored position on the device.
+    const statesOf = (name: string) =>
+      parseControlRecords(loadFixture(name), CONTROL_RECORDS_FILE_OFFSET)!
+        .ctrl.map((assignment) => assignment.state);
+    expect(statesOf('01-A Start Pedal.prst')).toEqual([1, 1, 0, 0, 0, 0, 0, 0]);
+    expect(statesOf('07-D Scotland Kiss.prst')).toEqual([1, 0, 0, 0, 0, 0, 0, 0]);
   });
 
   it('decodes identical masks from a garbage-laden and a clean save', () => {

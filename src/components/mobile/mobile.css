@@ -1,11 +1,11 @@
 /*
  * Phone UI styles. Every selector is prefixed `.mobile-view` so nothing here
- * can reach the desktop board — the two trees never render at the same time,
+ * can reach the desktop board , the two trees never render at the same time,
  * but the scoping is what makes that guarantee structural rather than a
  * convention. Do not add bare element selectors or :root variables here.
  *
  * Sizing rules: 44px minimum on anything tappable, safe-area insets on both
- * fixed edges, and no fixed pixel widths — everything flexes to the viewport.
+ * fixed edges, and no fixed pixel widths , everything flexes to the viewport.
  */
 
 .mobile-view {
@@ -193,11 +193,11 @@
   border: 1px solid var(--chrome-border);
   border-radius: 12px;
   overflow: hidden;
-  /* opacity only — transform belongs to the GSAP drag tweens */
+  /* opacity only , transform belongs to the GSAP drag tweens */
   transition: opacity 120ms ease;
 }
 
-/* Bypass dims the row but never disables it — the design system forbids
+/* Bypass dims the row but never disables it , the design system forbids
    greying a block out, and every control stays live while bypassed. */
 .mobile-view .m-row.bypassed {
   opacity: 0.55;
@@ -216,7 +216,7 @@
   border: 0;
 }
 
-/* module identity as a color band — what the enclosure body did on desktop */
+/* module identity as a color band , what the enclosure body did on desktop */
 .mobile-view .m-row-band {
   flex: none;
   width: 6px;
@@ -368,7 +368,7 @@
 }
 
 /* The lift (scale, shadow, travel) and the stack shift are BOTH driven by GSAP
-   in useDragReorder — see docs/design-system.md "Motion" for the CSS-vs-GSAP
+   in useDragReorder , see docs/design-system.md "Motion" for the CSS-vs-GSAP
    rule: this is a multi-element timeline over a live gesture, which is the
    GSAP case. Do not add `transform`, `box-shadow` or a `transition` for these
    here; CSS would fight the tweens for the same properties. */
@@ -712,7 +712,7 @@
 .mobile-view .m-btn.primary {
   background: var(--stub-ink, #3c3a35);
   border-color: var(--stub-ink, #3c3a35);
-  color: #f6f5f0;
+  color: var(--stub-ink-on);
 }
 
 .mobile-view .m-btn.ghost {
@@ -723,7 +723,7 @@
 .mobile-view .m-btn.active {
   background: var(--stub-ink, #3c3a35);
   border-color: var(--stub-ink, #3c3a35);
-  color: #f6f5f0;
+  color: var(--stub-ink-on);
 }
 
 .mobile-view .m-btn.tuner-active {
@@ -889,7 +889,7 @@
 /* EffectPicker, reused verbatim from the board. Its rail is a fixed 172px
    column; here it becomes a horizontal chip scroller above a single-column
    list. Selectors carry `.effect-picker` so they out-specify board.css's own
-   `.effect-picker .ep-*` rules rather than relying on stylesheet order — this
+   `.effect-picker .ep-*` rules rather than relying on stylesheet order , this
    file is lazy-loaded and its position is not something to depend on. */
 .mobile-view .effect-picker .ep-body {
   grid-template-columns: 1fr;
@@ -914,7 +914,7 @@
   min-height: 56px;
 }
 
-/* The per-row type badge is redundant on a narrow screen — rows are already
+/* The per-row type badge is redundant on a narrow screen , rows are already
    grouped under a heading of that exact type, and the badge was squeezing the
    name into a two-line wrap and truncating "based on" to three characters. */
 .mobile-view .effect-picker .ep-type-badge {
@@ -933,7 +933,7 @@
 
 /* Desktop lays the head out as title · close · search on one row. At 390px the
    search needs the full width, so it drops to its own line and the close
-   button goes where a close button belongs — the top right corner. */
+   button goes where a close button belongs , the top right corner. */
 .mobile-view .effect-picker .ep-head {
   flex-wrap: wrap;
   gap: 8px;
@@ -963,6 +963,6 @@
   }
 
   /* The drag's lift/shift/settle are GSAP-driven and therefore invisible to
-     this block — useDragReorder collapses those tweens itself via
+     this block , useDragReorder collapses those tweens itself via
      prefersReducedMotion(), the same gate useFlipReorder uses. */
 }

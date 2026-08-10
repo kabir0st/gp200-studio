@@ -411,4 +411,8 @@ export const MODULE_COLORS: Record<string, { accent: string; accentDim: string; 
   DLY:     { accent: '#7070d8', accentDim: '#4848a0', glow: 'rgba(112,112,216,0.12)' },
   RVB:     { accent: '#9060c8', accentDim: '#604080', glow: 'rgba(144,96,200,0.12)' },
   VOL:     { accent: '#909090', accentDim: '#606060', glow: 'rgba(144,144,144,0.10)' },
+  // FX LOOP is the chain's routing insert (a CTRL footswitch target, block 11),
+  // not an effect module; tinted here so the footswitch panel can style it like
+  // any block instead of hardcoding a color in the component.
+  'FX LOOP': { accent: '#5f8f9a', accentDim: '#3c5a62', glow: 'rgba(95,143,154,0.12)' },
 };

@@ -28,7 +28,7 @@ const DELETE_ARM_MS = 3000;
 
 /**
  * Remote control for the GP-200's OWN single-track looper over plain MIDI CC
- * (src/core/ccControl.ts) — a different machine from the browser-audio loop
+ * (src/core/ccControl.ts) , a different machine from the browser-audio loop
  * station it sits under in the LOOP drawer. Collapsed by default so the loop
  * station stays the headline of that drawer.
  *
@@ -81,7 +81,7 @@ export function DeviceLooperPanel({ connected, sendCC }: DeviceLooperPanelProps)
         <span className="hidden group-open:inline">▾ GP-200 built-in looper</span>
       </summary>
       <p className="font-mono-display text-caption text-text-muted mt-2 mb-3">
-        The pedal&apos;s own single loop, driven over MIDI CC — separate from the
+        The pedal&apos;s own single loop, driven over MIDI CC , separate from the
         multi-track loop station above.
       </p>
       <div className="flex flex-col gap-2">

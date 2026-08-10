@@ -30,14 +30,24 @@ export const ExpAssignmentSchema = z.object({
 
 /**
  * One CTRL footswitch assignment record (.prst tail, TLV type 0x000F).
- * Each of the 8 CTRL footswitches stores an 11-bit mask: bit n toggles the
- * fixed effect block n (0=PRE..10=VOL). Saved with the patch.
+ * Each of the 8 CTRL footswitches stores a 12-bit mask: bit n toggles the
+ * fixed effect block n (0=PRE..10=VOL), bit 11 the FX loop. Saved with the
+ * patch.
  */
 export const CtrlAssignmentSchema = z.object({
   ctrlIndex: z.number().int().min(0).max(7),
-  /** Full u16 mask kept verbatim so unknown high bits round-trip; only bits
-   *  0..10 (PRE..VOL) map to a pedal in the footswitch panel. */
+  /** Full u16 mask kept verbatim so unknown high bits round-trip; bits 0..10
+   *  (PRE..VOL) and bit 11 (FX LOOP) map to cards in the footswitch panel. */
   blockMask: z.number().int().min(0).max(0xFFFF),
+  /**
+   * The switch's saved toggle position (record payload+1). Not editable in the
+   * app , but the live-write frame (`SysExCodec.buildCtrlAssignment`) carries
+   * it, so it has to be modeled: sending the wrong value would flip the
+   * switch's stored on/off position on the device. Optional so presets built
+   * before this field (and `defaultCtrlAssignments()`) stay valid; treat
+   * absent as 0.
+   */
+  state: z.number().int().min(0).max(1).optional(),
 });
 
 export const GP200PresetSchema = z.object({

@@ -12,7 +12,7 @@ interface MobileSheetProps {
  * Full-height sheet for the panels the phone borrows from the desktop tree
  * (EXP, CTRL, FX loop, patch metadata).
  *
- * Dialog locks page scroll while open, so never stack two of these — one sheet
+ * Dialog locks page scroll while open, so never stack two of these , one sheet
  * depth maximum, or the restore double-fires.
  */
 export function MobileSheet({ open, onClose, title, children }: MobileSheetProps) {

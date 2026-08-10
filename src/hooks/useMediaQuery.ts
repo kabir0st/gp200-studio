@@ -2,7 +2,7 @@ import { useCallback, useSyncExternalStore } from 'react';
 
 /**
  * Subscribe to a CSS media query from React. Used where a layout change is
- * structural (different markup), not just different styling — CSS handles the
+ * structural (different markup), not just different styling , CSS handles the
  * rest. Kept in sync with the board.css breakpoints (640px chrome, 720px board).
  */
 export function useMediaQuery(query: string): boolean {

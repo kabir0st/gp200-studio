@@ -1,6 +1,6 @@
 // Pure waveform reduction for the looper timeline: turn a recorded/decoded PCM
 // buffer into a small fixed-width array of peak magnitudes the canvas can draw
-// directly. No Web Audio, no DOM — just the array math, so it is unit-testable.
+// directly. No Web Audio, no DOM , just the array math, so it is unit-testable.
 //
 // Computed ONCE per track when its buffer is finalised, never per frame. A
 // 4-minute stereo import is ~20M samples; rescanning that inside a rAF loop
@@ -21,7 +21,7 @@ export const PEAKS_PER_BAR = 240;
 /**
  * Reduce `samples` to `buckets` abs-peak values.
  *
- * Peak (not RMS or average) because the point is *legibility of attacks* — a
+ * Peak (not RMS or average) because the point is *legibility of attacks* , a
  * pick hit has to show up as a spike at lane height, and averaging flattens
  * exactly that. Every sample is visited, so a transient can never fall between
  * buckets the way naive stride-sampling loses it.

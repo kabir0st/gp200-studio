@@ -130,7 +130,8 @@ export function usePreset(): PresetActions {
   }, []);
 
   const setCtrlBlock = useCallback((ctrlIndex: number, blockIndex: number, on: boolean) => {
-    if (ctrlIndex < 0 || ctrlIndex > 7 || blockIndex < 0 || blockIndex > 10) return;
+    // 0-11: blocks 0-10 are the fixed chain, 11 is the FX loop target.
+    if (ctrlIndex < 0 || ctrlIndex > 7 || blockIndex < 0 || blockIndex > 11) return;
     setPreset((prev) => {
       if (!prev) return null;
       // Materialize a default all-zero assignment set on first edit; presets
@@ -150,7 +151,10 @@ export function usePreset(): PresetActions {
 
   const setCtrlMask = useCallback((ctrlIndex: number, blockMask: number) => {
     if (ctrlIndex < 0 || ctrlIndex > 7) return;
-    const nextMask = blockMask & 0x7FF;
+    // 12 bits: bits 0-10 are the fixed chain blocks, bit 11 is the FX loop
+    // (see docs/windows-exe-reversing.md); parseControlRecords keeps all 12
+    // (& 0x0FFF) and applyControlRecords writes them back.
+    const nextMask = blockMask & 0x0FFF;
     setPreset((prev) => {
       if (!prev) return null;
       const ctrlAssignments = (prev.ctrlAssignments ?? defaultCtrlAssignments()).map(

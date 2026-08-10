@@ -2,7 +2,7 @@
  * Colour-coded line-art marks for the board's chrome actions (top bar + deck),
  * the Tier-1 counterpart to ModuleGlyph for buttons rather than effect blocks.
  *
- * Each action owns one hue so the button row is scannable at a glance — this
+ * Each action owns one hue so the button row is scannable at a glance , this
  * matters most on phones, where the row wraps and labels shrink. Colours are
  * darkened variants chosen to clear WCAG AA on the white `.deck-btn` face; on
  * an inverted `.deck-btn.primary` the icon drops back to `currentColor` (see
@@ -86,6 +86,21 @@ const ACTIONS: Record<string, ActionSpec> = {
   exp: {
     d: '<path d="M2.6 12.4 13.4 4v5.2l-10.8 4z" /><path d="M2.6 12.4v1.2" />',
     color: '#2f6fa8',
+  },
+  // MIDI remote: a handheld remote control
+  remote: {
+    d: '<rect x="5" y="2.4" width="6" height="11.2" rx="1.6" /><circle cx="8" cy="5.2" r="0.9" /><path d="M6.6 8.2h2.8M6.6 10.6h2.8" />',
+    color: '#8a2f6f',
+  },
+  // chassis sound on: speaker cone with radiating waves
+  sound: {
+    d: '<path d="M8.2 2.9 4.9 5.7H2.5v4.6h2.4l3.3 2.8z" /><path d="M10.9 6.1a2.7 2.7 0 0 1 0 3.8" /><path d="M12.9 4.1a5.5 5.5 0 0 1 0 7.8" />',
+    color: '#5f5c55',
+  },
+  // chassis sound muted: the same cone, struck out
+  'sound-off': {
+    d: '<path d="M8.2 2.9 4.9 5.7H2.5v4.6h2.4l3.3 2.8z" /><path d="m11 6.2 3.4 3.6M14.4 6.2 11 9.8" />',
+    color: '#5f5c55',
   },
   // ctrl footswitches: a bank of stomps
   ctrl: {

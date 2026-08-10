@@ -305,6 +305,29 @@ describe('PRSTEncoder: controller/EXP assignment records', () => {
     expect(modeB!.paramIndex).toBe(3);
   });
 
+  it('treats a short rawSource (factory 1176-byte file) as synthetic', () => {
+    // Regression: the rawSource COPY was guarded by `byteLength >= 1224` but
+    // every later branch keyed off `Boolean(preset.rawSource)`. A 1176-byte
+    // factory file therefore got no base bytes copied, yet still skipped header
+    // seeding and block padding and took the patch-in-place controls-tail
+    // branch , which walked an all-zero buffer and bailed. The export came out
+    // with no TSRP magic, a zero MRAP pointer and an all-zero tail.
+    const shortRaw = new Uint8Array(1176);
+    const ctrl = Array.from({ length: 8 }, (_, ctrlIndex) => ({ ctrlIndex, blockMask: 0 }));
+    ctrl[2] = { ctrlIndex: 2, blockMask: 0x145 };
+    const encoded = new Uint8Array(
+      new PRSTEncoder().encode({ ...samplePreset, rawSource: shortRaw, ctrlAssignments: ctrl }),
+    );
+
+    expect(String.fromCharCode(...encoded.subarray(0, 4))).toBe(PRST_MAGIC);
+    const view = new DataView(encoded.buffer, encoded.byteOffset, encoded.byteLength);
+    expect(view.getUint32(0x20, true)).toBe(0x28);
+
+    const reDecoded = new PRSTDecoder(encoded).decode();
+    expect(reDecoded.ctrlAssignments).toBeDefined();
+    expect(reDecoded.ctrlAssignments![2].blockMask).toBe(0x145);
+  });
+
   it('synthetic preset honors explicit ctrlAssignments', () => {
     const ctrl = Array.from({ length: 8 }, (_, ctrlIndex) => ({ ctrlIndex, blockMask: 0 }));
     ctrl[5] = { ctrlIndex: 5, blockMask: 0x201 };

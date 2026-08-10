@@ -54,7 +54,7 @@ function fmtLength(sec: number | null): string {
   return `${sec.toFixed(2)}s`;
 }
 
-/** "4 BARS · 8.00s (2.00s/bar)" — the whole length model in one line. */
+/** "4 BARS · 8.00s (2.00s/bar)" , the whole length model in one line. */
 function fmtCycle(bars: number, cycleSec: number | null, baseSec: number | null): string {
   if (cycleSec === null || baseSec === null) return 'no loop yet';
   const plural = bars === 1 ? '' : 'S';
@@ -75,7 +75,7 @@ function learnVariant(armed: boolean): 'danger' | 'secondary' {
 function learnTitle(armed: boolean, learned: boolean, learnEnabled: boolean): string {
   if (!learnEnabled) return 'Connect the GP-200 to assign a stomp';
   if (armed) return 'Stomp any footswitch now (click to cancel)';
-  if (learned) return 'Assigned — click to assign a different switch';
+  if (learned) return 'Assigned , click to assign a different switch';
   return 'Click, then stomp any footswitch to assign it';
 }
 
@@ -154,7 +154,7 @@ export function LooperPanel({
   const { active: audioActive, getLevels } = useAudioEngine();
 
   // Live input level while actively recording, so silence doesn't go
-  // unnoticed — same rAF-driven read AudioMeters uses, gated to the
+  // unnoticed , same rAF-driven read AudioMeters uses, gated to the
   // recording pass only.
   useEffect(() => {
     if (!isRecording || !audioActive) return;
@@ -186,7 +186,7 @@ export function LooperPanel({
     const error = await looper.importAudioFile(file);
     setImportError(error);
     // Safe to instrument at the call site (unlike record): import has no
-    // footswitch binding, so this is the only path in. Extension only — the
+    // footswitch binding, so this is the only path in. Extension only , the
     // filename itself is user data and never leaves the browser.
     track('looper_import_audio', { ok: error === null, ext: fileExt(file.name) });
   };
@@ -232,12 +232,12 @@ export function LooperPanel({
             flex flex-col gap-1 list-disc"
         >
           <li>
-            Records the GP-200's USB audio here in the browser — separate from
+            Records the GP-200's USB audio here in the browser , separate from
             the pedal's built-in looper, which is the collapsed section at the
             bottom of this drawer.
           </li>
           <li>
-            IMPORT loads a backing track and its length becomes one BAR — the
+            IMPORT loads a backing track and its length becomes one BAR , the
             unit everything else is measured in. Record before importing and
             your first take sets the bar instead.
           </li>
@@ -248,17 +248,17 @@ export function LooperPanel({
           </li>
           <li>
             The loop is as long as the LONGEST take. Play past the end and it
-            grows another bar; shorter tracks simply repeat underneath — you can
+            grows another bar; shorter tracks simply repeat underneath , you can
             see the repeats ghosted in the timeline.
           </li>
           <li>
             ▶ PLAY stops or restarts all tracks together. ◀ / ▶ move the
-            selected track (highlighted row) — that's the track the EXP pedal's
+            selected track (highlighted row) , that's the track the EXP pedal's
             "Selected track level" controls.
           </li>
           <li>
             Stomp assignments below: click ASSIGN STOMP on an action, then step
-            on any footswitch — that switch is remembered on this machine. Give
+            on any footswitch , that switch is remembered on this machine. Give
             the looper switches that do nothing else on the pedal (CTRL / TAP set
             to None); see the warning below for why.
           </li>
@@ -451,7 +451,7 @@ export function LooperPanel({
       </div>
 
       {/* Stomp assignments: one row per transport action. The user never picks
-          a footswitch NUMBER — they arm an action and stomp whatever switch
+          a footswitch NUMBER , they arm an action and stomp whatever switch
           they like, and the frame's fingerprint is cached for that action. */}
       <div className="pt-2 border-t border-border-active">
         <p className="font-mono-display text-label text-text-muted uppercase tracking-widest mb-1">
@@ -459,18 +459,18 @@ export function LooperPanel({
         </p>
         <p className="font-mono-display text-caption text-text-secondary mb-3">
           Click ASSIGN STOMP, then step on any footswitch. While this dialog is
-          open a learned stomp drives the looper instead of your patch — the app
+          open a learned stomp drives the looper instead of your patch , the app
           undoes the pedal&apos;s own reaction to it.
         </p>
         {/* Two constraints, both hard: (1) only CTRL 1-8 stomps produce a frame
-            this can fingerprint — a PATCH/BANK switch sends a slot change the
+            this can fingerprint , a PATCH/BANK switch sends a slot change the
             dispatcher must keep, and TAP/TUNER emit nothing learnable
             (looperTriggers.ts, docs/protocol-capture.md §4); (2) the undo is a
             single toggle-back (revertFor), so it can only cancel a switch that
-            flips ONE effect block — a CTRL assignment carrying a blockMask of
+            flips ONE effect block , a CTRL assignment carrying a blockMask of
             many blocks would leave the extras flipped. The app cannot read the
             pedal's footswitch config, so this has to be a warning rather than a
-            check — and rewriting that config was tried twice and reverted,
+            check , and rewriting that config was tried twice and reverted,
             because it is write-only and clobbers the user's real setup (see the
             note in App.tsx). */}
         <div
@@ -482,7 +482,7 @@ export function LooperPanel({
           </p>
           <p className="font-mono-display text-caption text-text-secondary">
             On the GP-200, the switches you want the looper to own must be set
-            to a <strong>CTRL 1–8</strong> assignment — not PATCH, BANK, TAP or
+            to a <strong>CTRL 1–8</strong> assignment , not PATCH, BANK, TAP or
             TUNER. Only a CTRL stomp sends something this app can recognise; a
             patch or bank switch changes the pedal&apos;s slot instead, and the
             looper will never hear it.

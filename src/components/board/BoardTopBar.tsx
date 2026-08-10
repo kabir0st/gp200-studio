@@ -3,6 +3,7 @@ import type { PushProgress } from '@/core/devicePush';
 import { SysExCodec } from '@/core/SysExCodec';
 import { tunerShow, type CCCommand } from '@/core/ccControl';
 import { ActionIcon } from './ActionIcon';
+import { PowerSwitch, SoundToggle } from './PowerSwitch';
 import { DeckPop } from './DeckPop';
 
 interface BoardTopBarProps {
@@ -24,11 +25,19 @@ interface BoardTopBarProps {
   /* feature drawers + device tuner remote (moved up from the deck) */
   onOpenLooper: () => void;
   onOpenDrums: () => void;
+  onOpenRemote: () => void;
   /** browser drum machine is sounding (it survives the drawer closing) */
   drumsPlaying: boolean;
   sendCC: (command: CCCommand | CCCommand[]) => void;
   /** Step to another device slot: switches the pedal and pulls the patch. */
   onActivateSlot: (slot: number) => void;
+  /* stage lights: the red rocker that switches light/dark (hooks/useTheme.ts) */
+  lightsOn: boolean;
+  lightsFlickering: boolean;
+  onToggleLights: () => void;
+  /* mute for the rocker's clack (src/lib/uiSound.ts) */
+  soundOn: boolean;
+  onToggleSound: () => void;
 }
 
 /** Device slots are 0..255, and the Patch −/+ steppers wrap across both ends. */
@@ -83,9 +92,15 @@ export function BoardTopBar({
   onOpenGuide,
   onOpenLooper,
   onOpenDrums,
+  onOpenRemote,
   drumsPlaying,
   sendCC,
   onActivateSlot,
+  lightsOn,
+  lightsFlickering,
+  onToggleLights,
+  soundOn,
+  onToggleSound,
 }: BoardTopBarProps) {
   // Device tuner toggle (CC58). Local best-effort state: the pedal doesn't
   // report tuner visibility, so a front-panel close can drift this until the
@@ -162,6 +177,24 @@ export function BoardTopBar({
           <ActionIcon name="tuner" />
           <span className="db-label">TUNER</span>
         </button>
+        <button
+          type="button"
+          className="deck-btn"
+          title="MIDI remote: virtual CTRL taps, bank/patch stepping, tempo, EXP1, quick knobs"
+          onClick={onOpenRemote}
+        >
+          <ActionIcon name="remote" />
+          <span className="db-label">REMOTE</span>
+        </button>
+        {/* Stage lights: lit = light theme, dark = dark theme. It sits with the
+            other environment controls in the bar rather than on the board, so
+            the pedals own the board. */}
+        <PowerSwitch
+          on={lightsOn}
+          flickering={lightsFlickering}
+          onToggle={onToggleLights}
+        />
+        <SoundToggle on={soundOn} onToggle={onToggleSound} />
       </div>
 
       <div className="board-topbar-status">

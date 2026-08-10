@@ -56,7 +56,7 @@ export function AudioMeters() {
   } else {
     outRowClass += ' muted';
     outRowTitle =
-      "Output muted — press MONITOR to hear the GP-200 through this computer's speakers";
+      "Output muted , press MONITOR to hear the GP-200 through this computer's speakers";
   }
 
   return (
@@ -75,7 +75,7 @@ export function AudioMeters() {
           value={meter.outputDeviceId}
           onChange={handleOutputChange}
           aria-label="Audio output device"
-          title="Playback device for MONITOR and the loop station — pick the GP-200 to avoid the OS default output's latency"
+          title="Playback device for MONITOR and the loop station , pick the GP-200 to avoid the OS default output's latency"
         >
           <option value="">SYSTEM OUT</option>
           {meter.outputDevices.map((device) => (

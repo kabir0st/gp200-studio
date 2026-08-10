@@ -6,7 +6,7 @@ import type { LooperApi, LooperTrack } from '@/hooks/useLooper';
 //
 // Two rendering surfaces, deliberately split by update rate:
 //   CANVAS  the waveform lanes. Redrawn only when the tracks or the cycle width
-//           actually change — never per frame.
+//           actually change , never per frame.
 //   DOM     the playhead, the live record bar and the live readout. Updated
 //           inside one rAF via style/textContent writes, so a 60 Hz sweep never
 //           touches React state or re-renders the tree (same approach as
@@ -189,13 +189,13 @@ export function LooperTimeline({ looper }: LooperTimelineProps) {
   useEffect(() => { redraw(); }, [redraw]);
 
   // `looper` is a fresh object every render, so the rAF loop reads it through a
-  // ref instead of closing over it — otherwise the animation would be torn down
+  // ref instead of closing over it , otherwise the animation would be torn down
   // and rebuilt on every unrelated state change in the panel.
   const looperRef = useRef(looper);
   looperRef.current = looper;
 
   // The only per-frame work: sweep the playhead, grow the live record bar and
-  // update the readout. All direct DOM writes — no state, no re-render.
+  // update the readout. All direct DOM writes , no state, no re-render.
   useEffect(() => {
     if (!ready) return;
     let raf = 0;
@@ -312,7 +312,7 @@ export function LooperTimeline({ looper }: LooperTimelineProps) {
                   font-mono-display text-micro text-accent-red tabular-nums"
               >
                 {recordingTrack?.state === 'armed' ? (
-                  <span>◌ ARMED — starts on the downbeat</span>
+                  <span>◌ ARMED , starts on the downbeat</span>
                 ) : (
                   <>
                     <span>● REC</span>

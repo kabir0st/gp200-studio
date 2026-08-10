@@ -4,10 +4,12 @@ import { usePedalManifest } from '@/components/board/pedalManifest';
 import { LooperPanel } from '@/components/board/LooperPanel';
 import { DrumsPanel } from '@/components/board/DrumsPanel';
 import { DeviceLooperPanel } from '@/components/board/DeviceLooperPanel';
+import { BulkApplySection } from '@/components/BulkApplySection';
 import { DrumMachinePanel } from '@/components/board/DrumMachinePanel';
 import { FxLoopArrows } from '@/components/FxLoopArrows';
 import { ControllerPanel } from '@/components/ControllerPanel';
 import { FootswitchPanel } from '@/components/FootswitchPanel';
+import { Tabs } from '@/components/ui/Tabs';
 import { MobileHeader } from './MobileHeader';
 import { MobileTabBar, type MobileTab } from './MobileTabBar';
 import { MobileSheet } from './MobileSheet';
@@ -17,7 +19,15 @@ import { DeviceScreen } from './DeviceScreen';
 import { track } from '@/core/analytics';
 import './mobile.css';
 
-type Sheet = 'fxloop' | 'exp' | 'ctrl' | 'meta' | null;
+type Sheet = 'fxloop' | 'patch' | 'meta' | null;
+
+type PatchSettingsTab = 'exp' | 'ctrl' | 'bulk';
+
+const PATCH_SETTINGS_TABS = [
+  { id: 'exp', label: 'Expression' },
+  { id: 'ctrl', label: 'Footswitches' },
+  { id: 'bulk', label: 'Bulk Apply' },
+];
 
 /**
  * Root of the phone tree, rendered below 640px in place of PedalBoard.
@@ -79,8 +89,17 @@ export default function MobileShell({
   looperLearnNotice,
   drumMachine,
   sendCC,
+  deviceState,
+  canCopyCtrl,
+  onBulkApply,
+  bulkApplyProgress,
+  onCancelBulkApply,
   ccChannel,
   onCcChannelChange,
+  theme,
+  onToggleTheme,
+  soundOn,
+  onToggleSound,
   onConnectRequest,
   onDisconnect,
   onPushRequest,
@@ -89,6 +108,13 @@ export default function MobileShell({
 }: PedalBoardProps) {
   const [tab, setTab] = useState<MobileTab>('chain');
   const [sheet, setSheet] = useState<Sheet>(null);
+  const [patchTab, setPatchTab] = useState<PatchSettingsTab>('exp');
+
+  function selectPatchTab(id: string) {
+    if (id === 'exp' || id === 'ctrl' || id === 'bulk') {
+      setPatchTab(id);
+    }
+  }
   /** array position of the block being edited, or null for the chain list */
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const artIndex = usePedalManifest();
@@ -114,14 +140,18 @@ export default function MobileShell({
   const openSheet = useCallback(
     (next: Exclude<Sheet, null>) => {
       setSheet(next);
-      onPanelOpen(next === 'meta' ? 'patch_meta' : next);
+      if (next === 'meta') {
+        onPanelOpen('patch_meta');
+        return;
+      }
+      onPanelOpen(next);
     },
     [onPanelOpen],
   );
 
   // Tab changes are the phone's entire navigation model. LOOP and DRUMS are the
   // same features the desktop hides behind drawers, so they also report
-  // panel_open — that is what keeps "did anyone find the looper?" a single
+  // panel_open , that is what keeps "did anyone find the looper?" a single
   // number across both trees instead of two that can't be added together.
   const tabSettled = useRef(false);
   useEffect(() => {
@@ -215,28 +245,59 @@ export default function MobileShell({
         )}
 
         {tab === 'device' && (
-          <DeviceScreen
-            connected={connected}
-            firmware={firmware}
-            currentSlot={currentSlot}
-            patchVolume={patchVolume}
-            patchPan={patchPan}
-            patchTempo={patchTempo}
-            onVolumeChange={onVolumeChange}
-            onPanChange={onPanChange}
-            onTempoChange={onTempoChange}
-            onConnectRequest={onConnectRequest}
-            onDisconnect={onDisconnect}
-            onLoadRequest={onLoadRequest}
-            onPushRequest={onPushRequest}
-            onSaveToActiveSlot={onSaveToActiveSlot}
-            onOpenFxLoop={() => openSheet('fxloop')}
-            onOpenExp={() => openSheet('exp')}
-            onOpenCtrl={() => openSheet('ctrl')}
-            onOpenGuide={onOpenGuide}
-            onCloseRequest={onCloseRequest}
-            sendCC={sendCC}
-          />
+          <>
+            {/* The desktop board wears the red rocker on its chassis rail; the
+                phone has no chassis, so the same theme toggle lives in the
+                DEVICE tab as a plain mobile button (the rocker's skin is
+                .board-view-scoped, and the phone tree does not restyle
+                borrowed chrome — it borrows whole components or nothing). */}
+            <div className="m-screen pb-0">
+              <h2 className="m-screen-title">STAGE LIGHTS</h2>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={theme === 'light'}
+                className={`m-btn wide${theme === 'light' ? ' active' : ''}`}
+                onClick={onToggleTheme}
+              >
+                {theme === 'light' ? '☀ LIGHTS ON' : '☾ DARK STAGE'}
+              </button>
+              {/* The clack the toggle above makes (src/lib/uiSound.ts). The
+                  desktop hides this behind an icon next to the rocker; here it
+                  reads as a second labelled row, which is all the phone has. */}
+              <button
+                type="button"
+                role="switch"
+                aria-checked={soundOn}
+                className={`m-btn wide${soundOn ? ' active' : ''}`}
+                onClick={onToggleSound}
+              >
+                {soundOn ? '♪ SWITCH SOUND ON' : '✕ SWITCH SOUND MUTED'}
+              </button>
+            </div>
+            <DeviceScreen
+              connected={connected}
+              firmware={firmware}
+              currentSlot={currentSlot}
+              patchVolume={patchVolume}
+              patchPan={patchPan}
+              patchTempo={patchTempo}
+              onVolumeChange={onVolumeChange}
+              onPanChange={onPanChange}
+              onTempoChange={onTempoChange}
+              onConnectRequest={onConnectRequest}
+              onDisconnect={onDisconnect}
+              onLoadRequest={onLoadRequest}
+              onPushRequest={onPushRequest}
+              onSaveToActiveSlot={onSaveToActiveSlot}
+              onOpenFxLoop={() => openSheet('fxloop')}
+              onOpenPatchSettings={() => openSheet('patch')}
+              onOpenGuide={onOpenGuide}
+              onCloseRequest={onCloseRequest}
+              sendCC={sendCC}
+              deviceState={deviceState}
+            />
+          </>
         )}
       </main>
 
@@ -274,22 +335,44 @@ export default function MobileShell({
         />
       </MobileSheet>
 
-      <MobileSheet open={sheet === 'exp'} onClose={() => setSheet(null)} title="Expression Pedal">
-        <ControllerPanel
-          preset={preset}
-          connected={connected}
-          onParamSelect={onExpParamSelect}
-          onMinMax={onExpMinMax}
+      {/* One per-patch settings sheet, mirroring the desktop PATCH SETTINGS
+          drawer's tabs: EXP assignment (+ live test row), CTRL footswitch
+          masks, bulk apply. */}
+      <MobileSheet open={sheet === 'patch'} onClose={() => setSheet(null)} title="Patch Settings">
+        <Tabs
+          tabs={PATCH_SETTINGS_TABS}
+          active={patchTab}
+          ariaLabel="Patch settings sections"
+          onSelect={selectPatchTab}
         />
-      </MobileSheet>
-
-      <MobileSheet open={sheet === 'ctrl'} onClose={() => setSheet(null)} title="CTRL Footswitches">
-        <FootswitchPanel
-          preset={preset}
-          connected={connected}
-          onCtrlBlockToggle={onCtrlBlockToggle}
-          onCtrlClear={onCtrlClear}
-        />
+        <div role="tabpanel" className="pt-4">
+          {patchTab === 'exp' && (
+            <ControllerPanel
+              preset={preset}
+              connected={connected}
+              onParamSelect={onExpParamSelect}
+              onMinMax={onExpMinMax}
+              sendCC={sendCC}
+            />
+          )}
+          {patchTab === 'ctrl' && (
+            <FootswitchPanel
+              preset={preset}
+              connected={connected}
+              onCtrlBlockToggle={onCtrlBlockToggle}
+              onCtrlClear={onCtrlClear}
+            />
+          )}
+          {patchTab === 'bulk' && (
+            <BulkApplySection
+              connected={connected}
+              canCopyCtrl={canCopyCtrl}
+              progress={bulkApplyProgress}
+              onApply={onBulkApply}
+              onCancel={onCancelBulkApply}
+            />
+          )}
+        </div>
       </MobileSheet>
     </div>
   );

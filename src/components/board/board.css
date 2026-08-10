@@ -46,7 +46,7 @@
   gap: 4px;
   flex: 1;
 }
-/* Each chip is a button that scrolls its pedal into view — the board's nav on
+/* Each chip is a button that scrolls its pedal into view , the board's nav on
    narrow screens, where only a couple of pedals fit at a time. */
 .board-view .chain-node {
   appearance: none;
@@ -227,11 +227,11 @@
   background:
     repeating-linear-gradient(0deg, transparent 0 118px, rgba(0, 0, 0, 0.14) 118px 122px, rgba(255, 255, 255, 0.3) 122px 124px),
     repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.015) 0 2px, transparent 2px 6px),
-    linear-gradient(180deg, #d4d1c9, var(--board));
-  border: 1px solid #a9a59c;
+    linear-gradient(180deg, var(--board-top), var(--board));
+  border: 1px solid var(--board-edge);
   box-shadow:
-    inset 0 0 0 3px #b5b1a8,
-    inset 0 0 0 4px #e6e3dc,
+    inset 0 0 0 3px var(--board-bezel),
+    inset 0 0 0 4px var(--board-bezel-hi),
     0 24px 48px rgba(0, 0, 0, 0.25);
 }
 /* horizontal scroll wrapper: keeps the two rows intact on narrow screens
@@ -245,29 +245,286 @@
   padding: 6px 2px 10px;
   margin: -6px -2px -10px;
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   Stage lights: the illuminated rocker in the top bar. Lit = lights on =
+   light theme; dark = dark theme (src/hooks/useTheme.ts). Toggling fires an
+   electric flicker through the lamp and a mains surge across the whole stage
+   (.stage-flicker below); both are plain CSS animations, so the global
+   prefers-reduced-motion block collapses them.
+   ════════════════════════════════════════════════════════════════════════ */
+.board-view .power-switch {
+  appearance: none;
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  line-height: 0;
+}
+/* The black moulded housing the rocker sits in. It owns the `perspective`
+   rather than each transform carrying its own perspective() — one projection
+   for the whole assembly, so the paddle and the marks printed on it recede
+   together instead of each being flattened separately. */
+.board-view .power-switch .ps-bezel {
+  position: relative;
+  display: block;
+  width: 52px;
+  height: 28px;
+  border-radius: 4px;
+  padding: 3px;
+  perspective: 105px;
+  perspective-origin: 50% 50%;
+  background: linear-gradient(180deg, #35373b, #17181a 45%, #0d0e10);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.85),
+    0 2px 4px rgba(0, 0, 0, 0.4);
+  transition: transform 90ms ease;
+}
+/* The bezel lip, painted over the paddle so the sunk half is genuinely
+   occluded by the housing rather than just being a darker colour. Last in tree
+   order, so it stacks above .ps-rocker without needing a z-index. */
+.board-view .power-switch .ps-bezel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.9),
+    inset 0 2px 3px rgba(0, 0, 0, 0.5),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.4);
+}
+/* The paddle: one plane pivoting on its centre line. O side sunk when off, I
+   side sunk when on. The overshoot in the easing is the over-centre spring —
+   a real rocker resists, goes past the detent, then settles. */
+.board-view .power-switch .ps-rocker {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  transform-style: preserve-3d;
+  transform-origin: 50% 50%;
+  transform: rotateY(26deg);
+  background: linear-gradient(90deg, #38100f, #521614 60%, #5e1b17);
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.75);
+  transition:
+    transform 150ms cubic-bezier(0.3, 1.65, 0.5, 1),
+    background 200ms ease,
+    filter 90ms ease;
+}
+.board-view .power-switch.on .ps-rocker {
+  transform: rotateY(-26deg);
+  background: linear-gradient(90deg, #f0504a, #cf2f26 60%, #a5241e);
+}
+/* The tilt shading, painted over the lamp AND the marks (last child) so it
+   dims whatever sits on the sunk half. One continuous gradient across the
+   whole paddle, not a fill per half: two shaded halves read as two flat
+   panels with a seam, whereas a single ramp reads as one plane turning away.
+   It must stay weaker than the lamp, or the raised half looks lit and the
+   switch reports the opposite of its own state. */
+.board-view .power-switch .ps-rocker::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  pointer-events: none;
+  background:
+    /* the moulded crown along the pivot line */
+    linear-gradient(90deg, transparent 45%, rgba(255, 255, 255, 0.13) 50%, transparent 55%),
+    /* light skimming the raised edge */
+    linear-gradient(90deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 22%),
+    /* the housing tucking over the sunk edge */
+    linear-gradient(270deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0) 34%);
+  transition: background 160ms ease;
+}
+.board-view .power-switch.on .ps-rocker::after {
+  background:
+    linear-gradient(90deg, transparent 45%, rgba(255, 255, 255, 0.16) 50%, transparent 55%),
+    linear-gradient(270deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 22%),
+    /* lighter than the unlit side's: the bulb is behind the whole paddle, so
+       the sunk half still glows — only the very edge tucks into shadow */
+    linear-gradient(90deg, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0) 22%);
+}
+/* Pressing pushes the whole assembly into the chassis before it flips, so the
+   switch answers the finger on mousedown rather than only on release. */
+.board-view .power-switch:active .ps-bezel {
+  transform: translateY(1px);
+}
+.board-view .power-switch:active .ps-rocker {
+  filter: brightness(0.86);
+}
+/* the bulb behind the translucent paddle */
+.board-view .power-switch .ps-lamp {
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  opacity: 0;
+  background:
+    radial-gradient(circle at 38% 50%, rgba(255, 235, 225, 0.95), rgba(255, 90, 70, 0.55) 45%, rgba(150, 20, 15, 0.2) 80%),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0 2px, transparent 2px 4px);
+  transition: opacity 180ms ease;
+}
+.board-view .power-switch.on .ps-lamp {
+  opacity: 1;
+}
+.board-view .power-switch.on .ps-bezel {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.85),
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 0 11px 1px rgba(226, 66, 52, 0.5);
+}
+/* The moulded I / O marks, one per half of the paddle. Both are printed the
+   same: they carry no state of their own, because ::after above already dims
+   whichever one has turned away from you. */
+.board-view .power-switch .ps-face {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.75);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.65);
+}
+.board-view .power-switch .ps-face-i { left: 0; }
+.board-view .power-switch .ps-face-o { right: 0; }
+
+/* mains flicker: the lamp sputters while the stage surges */
+@keyframes ps-lamp-flicker {
+  0% { opacity: 0.1; }
+  6% { opacity: 1; }
+  11% { opacity: 0.12; }
+  17% { opacity: 0.9; }
+  23% { opacity: 0.2; }
+  31% { opacity: 1; }
+  39% { opacity: 0.35; }
+  47% { opacity: 1; }
+  61% { opacity: 0.55; }
+  73% { opacity: 1; }
+  86% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+.board-view .power-switch.flickering .ps-lamp {
+  animation: ps-lamp-flicker 700ms steps(1, end);
+  transition: none;
+}
+
+/* Mute for the rocker's clack (src/lib/uiSound.ts). Icon-only and quiet: it
+   belongs to the switch beside it, not to the labelled action row. */
+.board-view .ps-mute {
+  appearance: none;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-left: -2px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  opacity: 0.45;
+  transition:
+    opacity 150ms ease,
+    border-color 150ms ease,
+    background 150ms ease;
+}
+.board-view .ps-mute .act-icon {
+  width: 14px;
+  height: 14px;
+}
+.board-view .ps-mute.on {
+  opacity: 0.9;
+}
+.board-view .ps-mute:hover,
+.board-view .ps-mute:focus-visible {
+  opacity: 1;
+  border-color: var(--chrome-border);
+  background: var(--chrome-face);
+}
+
+/* The surge covers the whole stage, not just the switch: mains flickering one
+   button would read as a bug in that button. Fixed to the viewport so the top
+   bar, chain strip, board and deck all catch it at once, and painted above
+   everything (dialogs included) , it is pointer-events: none and lasts 700ms,
+   so it can never swallow a click. `background`, not `filter`: a filter on an
+   ancestor would make it the containing block for every fixed-position
+   descendant (deck popovers, dialogs) and reposition them mid-flicker. */
+.board-view .stage-flicker {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  pointer-events: none;
+  background: transparent;
+}
+/* steps(1, end): hard cuts between states. Interpolated, a surge reads as a
+   gentle pulse; the whole point is that it stutters. */
+@keyframes stage-surge {
+  0% { background: var(--stage-dim); }
+  6% { background: var(--stage-flash); }
+  10% { background: transparent; }
+  15% { background: var(--stage-dim); }
+  21% { background: var(--stage-flash); }
+  26% { background: transparent; }
+  34% { background: var(--stage-dim); }
+  40% { background: transparent; }
+  52% { background: var(--stage-flash); }
+  58% { background: transparent; }
+  70% { background: var(--stage-dim); }
+  76% { background: transparent; }
+  88% { background: var(--stage-flash); }
+  93% { background: transparent; }
+  100% { background: transparent; }
+}
+.board-view.flickering .stage-flicker {
+  animation: stage-surge 700ms steps(1, end);
+}
+
 .board-view .board-rows {
   position: relative;
-  /* fill the available width so pedals spread edge-to-edge (no wasted side
-     space), but grow past it when the chain is wider than the screen so the
-     wrapper can scroll horizontally and the cables still span every pedal */
-  width: max-content;
-  min-width: 100%;
+  /* Bounded by the stage, NOT max-content: the chain is one wrapping row, so it
+     has to have a width to wrap inside. Overflow stacks downward (and the stage
+     scrolls vertically) instead of running off the right edge. */
+  width: 100%;
 }
 .board-view .board-row {
   display: flex;
-  gap: 18px;
-  /* Bays stretch to the row's height (the pedal itself still sits bottom-centre,
-     via the bay's own align-items). A bay IS the drop target, so a bay that only
-     hugged its pedal gave short effects a short, unpredictable hit area and left
-     the space above them belonging to no slot at all. */
+  /* row-gap matches the column gap plus the cable droop, so the stubs between
+     two lines have room to read */
+  gap: 30px 18px;
+  /* Bays stretch to their line's height (the pedal itself still sits
+     bottom-centre, via the bay's own align-items). A bay IS the drop target, so
+     a bay that only hugged its pedal gave short effects a short, unpredictable
+     hit area and left the space above them belonging to no slot at all.
+     It also makes every bay on a line share a top edge, which is how CableLayer
+     tells "same line" from "line break". */
   align-items: stretch;
-  justify-content: space-evenly;
-  flex-wrap: nowrap;
+  justify-content: center;
+  flex-wrap: wrap;
+  /* Side gutters so a full line never packs flush to the chassis edge: a line
+     break draws a short cable stub off each end, and with no gutter it (and
+     its label) would be clipped by the board , see CableLayer's stub(). */
+  padding: 0 40px;
 }
-.board-view .board-row + .board-row {
-  /* matches the row's own horizontal `gap`, so spacing between pedals reads the
-     same in both axes */
-  margin-top: 28px;
+/* The ≤720px board keeps the old single swiped line: wrapping a phone-width
+   viewport would bury the chain under five short lines. */
+.board-view .board-rows.single {
+  width: max-content;
+  min-width: 100%;
+}
+.board-view .board-rows.single .board-row {
+  flex-wrap: nowrap;
+  /* one swiped line never wraps, so it needs no stub gutters */
+  padding: 0;
 }
 
 /* ── pedal bay ──
@@ -472,7 +729,7 @@
 }
 /* ── touch chain reorder ──
    Drag-and-drop is HTML5 DnD, which never fires on touch, and the keyboard grip
-   needs arrow keys — so touch devices get explicit ‹ › arrows (rendered only
+   needs arrow keys , so touch devices get explicit ‹ › arrows (rendered only
    when the pointer is coarse, see PedalBoard). Absolutely positioned over the
    brand strip so they cost no layout height and the bays keep their size. */
 .board-view .pedal-move {
@@ -930,7 +1187,7 @@
 }
 /* Middle grid track: dot · [− name slot +] · connection+sync. Nested as another
    1fr-auto-1fr grid so the dot and the (much wider) connection badge occupy
-   equal side tracks — otherwise they flank the stepper asymmetrically and the
+   equal side tracks , otherwise they flank the stepper asymmetrically and the
    cluster reads ~25px left of centre. */
 .board-view .board-topbar-status {
   position: relative;
@@ -967,7 +1224,7 @@
   flex: none;
 }
 /* Fixed width so a long patch name truncates rather than pushing the arrows
-   outward — the cluster must not resize as you step through patches. */
+   outward , the cluster must not resize as you step through patches. */
 .board-view .deck-patch-well {
   display: flex;
   align-items: baseline;
@@ -1016,7 +1273,7 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #b0aca3;
+  background: var(--dot-off);
   flex: none;
 }
 .board-view .deck-dot.on {
@@ -1141,7 +1398,7 @@
   letter-spacing: normal;
   text-transform: none;
   color: var(--chrome-text);
-  background: #fff;
+  background: var(--chrome-face);
   border: 1px solid var(--chrome-border);
   border-radius: 6px;
   padding: 6px 8px;
@@ -1178,7 +1435,7 @@
   padding: 5px 9px;
   border-radius: 6px;
   border: 1px solid var(--chrome-border);
-  background: #fff;
+  background: var(--chrome-face);
   color: var(--chrome-text);
   cursor: pointer;
 }
@@ -1187,7 +1444,7 @@
   cursor: default;
 }
 .board-view .dp-btn:not(:disabled):hover {
-  background: color-mix(in srgb, var(--chrome-text) 8%, #fff);
+  background: color-mix(in srgb, var(--chrome-text) 8%, var(--chrome-face));
 }
 .board-view .dp-scale {
   display: flex;
@@ -1203,7 +1460,7 @@
   text-transform: none;
   text-align: center;
   color: var(--chrome-text);
-  background: #fff;
+  background: var(--chrome-face);
   border: 1px solid var(--chrome-border);
   border-radius: 6px;
   padding: 5px 6px;
@@ -1290,7 +1547,7 @@
   letter-spacing: 0.1em;
   padding: 7px 12px;
   border-radius: 6px;
-  background: #fff;
+  background: var(--chrome-face);
   border: 1px solid var(--chrome-border);
   color: var(--chrome-text);
   cursor: pointer;
@@ -1331,7 +1588,7 @@
   border-color: var(--accent-red);
   color: #fff;
 }
-/* on the solid red fill the icon's own hue would clash — inherit ink instead,
+/* on the solid red fill the icon's own hue would clash , inherit ink instead,
    same treatment as .deck-btn.primary .act-icon above */
 .board-view .deck-btn.tuner-active .act-icon {
   color: currentColor;
@@ -1459,7 +1716,7 @@
   max-width: 150px;
   padding: 6px 4px;
   border-radius: 6px;
-  background: #fff;
+  background: var(--chrome-face);
   border: 1px solid var(--chrome-border);
   color: var(--chrome-text);
   cursor: pointer;
@@ -1549,7 +1806,7 @@
   letter-spacing: 0.12em;
   padding: 16px 18px;
   border-radius: 10px;
-  background: #fff;
+  background: var(--chrome-face);
   border: 1px solid var(--chrome-border);
   color: var(--chrome-text);
   cursor: pointer;
@@ -1606,7 +1863,7 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #b0aca3;
+  background: var(--dot-off);
 }
 .landing-led.on {
   background: #2f9e5f;
@@ -2182,7 +2439,7 @@
 
 /* ════════════════════════════════════════════════════════════════════════
    Board layout ≤720px: the two pedal rows fold into ONE swipeable row (see
-   useSingleRowBoard — PedalBoard renders the markup, this styles it). Two
+   useSingleRowBoard , PedalBoard renders the markup, this styles it). Two
    340px+ rows plus the chain strip, info bar and deck don't fit a phone
    viewport, and one row keeps the whole chain in a single left-to-right
    swipe with no cross-row cable stubs to read.
@@ -2190,6 +2447,11 @@
 @media (max-width: 720px) {
   .board-view .board-deck {
     padding: 10px 10px 8px;
+  }
+  /* the switch keeps a 44px-tall tap target on touch (see the pointer:coarse
+     block) but sheds width where the bar is tight */
+  .board-view .power-switch .ps-bezel {
+    width: 44px;
   }
   .board-view .board-rows.single .board-row {
     gap: 12px;
@@ -2199,7 +2461,7 @@
   }
   /* Drop the reserved bay height. It buys a stable layout when you swap an
      effect (nothing above shifts), but it costs the height of the tallest
-     effect in the module — 200-300px of empty board above a short pedal, on
+     effect in the module , 200-300px of empty board above a short pedal, on
      the one screen where vertical space is scarcest. Bays collapse to their
      pedal instead; the row still bottom-aligns, so the chain stays level. */
   .board-view .board-rows.single .pedal-bay {
@@ -2237,7 +2499,7 @@
   }
 
   /* info bar: hover doesn't exist on touch, so the "hover a pedal" hint is
-     dead weight — the bar only earns its height once a pedal's ⓘ is pinned */
+     dead weight , the bar only earns its height once a pedal's ⓘ is pinned */
   .board-view .info-bar {
     padding: 0 10px;
   }
@@ -2292,7 +2554,7 @@
   .board-view .deck-live {
     display: none;
   }
-  /* Drop the IN/OUT level bars — they're a passive readout, and they're the
+  /* Drop the IN/OUT level bars , they're a passive readout, and they're the
      widest thing in the deck. The audio *controls* (AUDIO IN, MONITOR, output
      device, stop) stay: nothing else in the board exposes them. */
   .board-view .audio-meters {
@@ -2351,6 +2613,10 @@
 /* Touch ergonomics for the board chrome buttons (see index.css for the
    shared .ui-btn rule): deck/topbar buttons get real touch targets. */
 @media (pointer: coarse) {
+  /* WCAG 2.5.5: the rocker is 28px of skin, so the button pads out to 44 */
+  .board-view .power-switch {
+    padding: 8px 0;
+  }
   .board-view .deck-btn {
     min-height: 44px;
     padding: 10px 12px;

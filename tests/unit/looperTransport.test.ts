@@ -73,7 +73,7 @@ describe('cycleBars', () => {
   });
 
   it('shrinks back when the widest track is removed', () => {
-    // Derived, not a running max — deleting the 4-bar take narrows the loop.
+    // Derived, not a running max , deleting the 4-bar take narrows the loop.
     expect(cycleBars([1, 2])).toBe(2);
   });
 

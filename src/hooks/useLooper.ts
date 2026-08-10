@@ -32,15 +32,15 @@ const recorderWorkletUrl = new URL('../audio/looper-recorder.worklet.js', import
 // ── The length model (the part worth reading) ────────────────────────────────
 //
 //   BASE   one "bar". Set ONCE by the first thing that lands: an imported file
-//          takes its own length as the base, or — if you record before
-//          importing — the first free-running take does. Never changes after.
+//          takes its own length as the base, or , if you record before
+//          importing , the first free-running take does. Never changes after.
 //   CYCLE  the loop you hear and see: base x cycleBars, where cycleBars is the
 //          LARGEST bar count across all tracks. Recording a take longer than the
 //          current cycle GROWS it; deleting the take that was holding it wide
 //          shrinks it back.
 //
 // Every track is TILED to exactly one cycle and looped, so all sources share an
-// identical loop length and cannot drift apart — a 1-bar take under a 4-bar
+// identical loop length and cannot drift apart , a 1-bar take under a 4-bar
 // cycle is stored as that bar repeated four times. Growth re-tiles and relaunches
 // everything on a boundary; the copy is a memcpy of already-decoded PCM and only
 // happens when the cycle actually changes, which is rare.
@@ -59,7 +59,7 @@ export type TrackKind = 'record' | 'import';
 
 export interface LooperTrack {
   id: number;
-  /** where the audio came from — drives the lane's colour and label */
+  /** where the audio came from , drives the lane's colour and label */
   kind: TrackKind;
   /** "TAKE 1" for recordings, the file's name for imports */
   label: string;
@@ -125,7 +125,7 @@ interface TrackNodes {
   gainValue: number;
   /** the track's own audio, exactly `bars` long */
   content: AudioBuffer | null;
-  /** `content` tiled/truncated to exactly one cycle — what actually plays */
+  /** `content` tiled/truncated to exactly one cycle , what actually plays */
   tiled: AudioBuffer | null;
   source: AudioBufferSourceNode | null;
   bars: number;
@@ -278,7 +278,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
    * Launch a track's tiled buffer looping, entered at the CURRENT cycle phase
    * rather than waiting for the next downbeat. Because every tiled buffer is
    * exactly one cycle long, starting at phase p with offset p*cycle lands the
-   * track perfectly in sync immediately — so un-muting or re-playing a track
+   * track perfectly in sync immediately , so un-muting or re-playing a track
    * mid-loop is instant instead of stalling for up to a full cycle.
    */
   const startTrackPlayback = useCallback((id: number) => {
@@ -421,7 +421,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
       return;
     }
 
-    // Round to whole bars against the base — or, with no base yet, become it.
+    // Round to whole bars against the base , or, with no base yet, become it.
     const { bars, samples } = quantizeToBase(trimmed.length, baseSamplesRef.current ?? 0);
     if (baseSamplesRef.current === null) {
       baseSamplesRef.current = samples;
@@ -499,7 +499,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     else {
       // Instrumented here rather than in LooperPanel: useLooperTriggers drives
       // the same call for MIDI-learned footswitches, and a panel-level event
-      // would miss every hands-free loop — arguably the main way this gets used.
+      // would miss every hands-free loop , arguably the main way this gets used.
       track('looper_record', { tracks: tracksRef.current.length });
       startRecordNewTrack();
     }
@@ -508,7 +508,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
   /**
    * Decode an audio file and add it as a track. The FIRST import sets the base
    * bar; later ones are rounded to whole bars like any take. Stereo is preserved
-   * — only the recorder's own capture is mono.
+   * , only the recorder's own capture is mono.
    */
   const importAudioFile = useCallback(async (file: File): Promise<string | null> => {
     setImporting(true);
@@ -521,7 +521,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
       try {
         decoded = await ctx.decodeAudioData(await file.arrayBuffer());
       } catch {
-        return `Could not decode "${file.name}" — try WAV, MP3, OGG or FLAC.`;
+        return `Could not decode "${file.name}" , try WAV, MP3, OGG or FLAC.`;
       }
       if (decoded.length === 0) return `"${file.name}" contains no audio.`;
       // The context can close while a long file decodes.
@@ -591,7 +591,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
   }, [patchTrack, startTrackPlayback, stopTrack]);
 
   /**
-   * Play/stop ONLY the selected track — what the bound footswitch drives.
+   * Play/stop ONLY the selected track , what the bound footswitch drives.
    * Deliberately not togglePlayAll: a stomp acts on the track the ◀ ▶ switches
    * have selected, leaving the rest of the loop playing underneath. Reads the
    * ref, not state, because the MIDI tap holds a stable looper ref.
@@ -649,7 +649,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     patchTrack(id, { muted });
   }, [patchTrack]);
 
-  /** Mute/unmute ONLY the selected track — the footswitch counterpart of the
+  /** Mute/unmute ONLY the selected track , the footswitch counterpart of the
    *  per-row MUTE button, same selected-track scope as togglePlaySelected.
    *  Declared after setMute so the dep array isn't a TDZ reference. */
   const toggleMuteSelected = useCallback(() => {

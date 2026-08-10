@@ -25,7 +25,7 @@ interface ChainScreenProps {
  * removes the conflict rather than tuning it, and puts the whole chain in one
  * reading order.
  *
- * Reorder is always available from each row's grip — there is no edit mode,
+ * Reorder is always available from each row's grip , there is no edit mode,
  * because a mode would put a tap between the user and the most physical
  * operation in the app.
  */
@@ -57,7 +57,7 @@ export function ChainScreen({
 
       {/* Rows render in plain chain order at all times. During a drag, GSAP
           moves them by transform and the real reorder is committed once, on
-          drop — so layout stays frozen and the animation geometry stays exact
+          drop , so layout stays frozen and the animation geometry stays exact
           (see useDragReorder). */}
       <ul className={`m-list${drag.from !== null ? ' dragging' : ''}`} ref={listRef}>
         <li className="m-marker">
@@ -83,7 +83,7 @@ export function ChainScreen({
                 between rows exactly where they sit in the signal path. They
                 stay mounted during a drag: a marker belongs to a position, not
                 to a block, so it correctly holds still while blocks move past
-                it — and keeping it in the flow is what makes the measured slot
+                it , and keeping it in the flow is what makes the measured slot
                 geometry valid for the whole gesture. */}
             {preset.fxLoopSend === position + 1 && (
               <button type="button" className="m-marker fx" onClick={onOpenFxLoop}>

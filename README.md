@@ -4,19 +4,17 @@
 
 # GP200 Studio
 
-**A browser-based editor, patch manager & multi-layer loop station for the Valeton GP-200.**
-No install. No account. No backend. Just plug in and play.
-Free & open source (GPL-3.0).
+### Your Valeton GP-200, on a big screen.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](tsconfig.app.json)
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](package.json)
-[![Vite](https://img.shields.io/badge/Vite-⚡-646CFF?logo=vite&logoColor=white)](vite.config.ts)
-[![Web MIDI](https://img.shields.io/badge/Web%20MIDI-SysEx-5df08a)](src/core/SysExCodec.ts)
-[![Backend](https://img.shields.io/badge/backend-none-success)](#how-it-works)
-[![Browser](https://img.shields.io/badge/browser-Chrome%20%7C%20Edge-orange?logo=googlechrome&logoColor=white)](#browser-support)
-[![License](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
+Build patches on a pedalboard you can actually see, manage all 256 of them,
+and stack loops over your own playing. It runs in the browser, so there is
+nothing to install and nothing to sign up for.
 
-**[▶ Open the live app](https://kabirtamari.com/gp200studio/)** · **[☕ Buy me a coffee](https://buymeacoffee.com/kabir0st)**
+**[▶ Open the app](https://kabirtamari.com/gp200studio/)** · **[☕ Buy me a coffee](https://buymeacoffee.com/kabir0st)**
+
+[![Chrome or Edge](https://img.shields.io/badge/works%20in-Chrome%20%7C%20Edge-orange?logo=googlechrome&logoColor=white)](#how-to-start)
+[![Windows, macOS, Linux, Android](https://img.shields.io/badge/on-Windows%20·%20macOS%20·%20Linux%20·%20Android-5df08a)](#how-to-start)
+[![Free and open source](https://img.shields.io/badge/free%20%26%20open%20source-GPL--3.0-blue)](LICENSE)
 
 <img src="public/guide/02-editor-board.png" alt="The GP200 Studio pedalboard editor" width="100%" />
 
@@ -24,80 +22,158 @@ Free & open source (GPL-3.0).
 
 ---
 
-## Why?
+## Why bother
 
-The Valeton GP-200 is a great multi-effects pedal with a not-so-great support for linux as the official editor runs on **Windows and macOS only**, and organizing 256 patches through a 4" screen and two footswitches is nobody's idea of fun.
+The GP-200 sounds great. Setting it up does not. The official editor skips Linux
+entirely, and building a patch on a 4" screen with two footswitches takes longer
+than it should.
 
-GP200 Studio fixes that:
-
-- 🐧 **Runs anywhere Chrome runs** — including Linux. Web MIDI + Web Audio, straight from the browser to the pedal over USB. Nothing to install.
-- 🗂️ **Real patch management** — browse, search, rename, import, export and back up all 256 device slots. Bulk-export your entire pedal to a single ZIP.
-- 🎛️ **A UI that looks like the gear it edits** — your patch is a pedalboard, not a parameter spreadsheet. Every effect is a colorful pedal with knobs you can actually see and turn. See your signal chain at a glance instead of decoding menus.
-- 🔁 **A loop station the pedal doesn't ship with** — a multi-layer looper that records the GP-200's USB audio right in the browser, with MIDI footswitch learn so you can drive it hands-free from the pedal itself.
-
-## Features
-
-- 🎸 **Pedalboard editor** — the whole patch as a stage-styled board: per-effect pedal bodies, drag-to-reorder, FX-loop routing, knob/fader parameter editing, and real-world "based on" info for all 305 effects
-- ⚡ **Live device push** — edits stream to a connected GP-200 over USB-MIDI SysEx as you make them; hardware-side changes sync back into the editor
-- 🗄️ **Patch manager** — full 256-slot list with names & search, activate/open/rename, per-slot `.prst` export/import, one-click bulk ZIP backup
-- 🦶 **Controller assignment** — per-patch EXP pedal and CTRL 1–8 footswitch mappings
-- 🔁 **Loop station** — stack unlimited phase-locked layers over the GP-200's USB audio, with MIDI-learn to bind transport controls to the pedal's footswitches
+Plug the pedal into a laptop, a tablet or an Android phone with the USB cable you
+already own, open a browser tab, and everything is in front of you at once.
 
 <div align="center">
-<img src="public/guide/03-effect-picker.png" alt="Effect picker" width="49%" /> <img src="public/guide/08-deck-loop.png" alt="Loop station" width="49%" />
+<img src="public/photos/gp200-hardware.jpg" alt="A Valeton GP-200 fresh out of its box" width="300" />
+<br/>
+<sub>The pedal this was built for.</sub>
 </div>
 
-## The loop station
-
-The GP-200's built-in looper records a single loop. GP200 Studio turns the pedal into a **legit multi-layer loop station**: connect a laptop, an Android phone, or anything else that runs Chrome over the same USB cable you already use, and the app records the pedal's USB audio right in the browser.
-
-- 🎚️ **Unlimited layers** — your first recording sets the master loop; every record pass after that adds a new track, quantized and phase-locked to it, so everything stays locked in time no matter how many layers you stack
-- 🎛️ **Per-layer control** — each track has its own play/pause, mute, volume, and delete, plus a master progress bar and one-click Clear All
-- 🦶 **Hands-free from the pedal** — MIDI-learn binds the GP-200's physical footswitches to Record, Play, and track selection, and a takeover mode stops those stomps from firing their normal patch functions while you loop
-- 🥁 **Backing rhythm** — the drums drawer remote-controls the pedal's built-in drum machine (and its stock single-track looper and tuner) over MIDI, so you can loop against a beat
-
-No audio interface, no DAW, no extra pedal — just the GP-200, a USB cable, and a browser.
-
-<details>
-<summary><b>📸 More screenshots</b></summary>
 <br/>
+
+## Every block is a pedal
+
+Your whole chain, laid out like a board. Turn a knob and you hear it on the pedal
+straight away. Drag a pedal to move it, stomp its switch to bypass it, and the
+cables follow along. That board up there is a real patch, not a mock-up.
+
+Hover any pedal and the top strip tells you what it actually is. All 305 effects
+are matched to the real amps and stompboxes they model, so "MESS4 LD 3" reads as
+a Mesa/Boogie Mark IV instead of a code you have to look up.
+
+<img src="public/guide/04-info-bar-chain.png" alt="The signal chain strip and the effect info line" width="100%" />
+
+Swapping an effect is a search box and a picture, not a menu tree. Browse by
+category or type the name of the pedal you are after.
+
+<img src="public/guide/03-effect-picker.png" alt="The effect picker, browsing hi-gain amps" width="100%" />
+
+<br/>
+
+## A loop station the pedal doesn't have
+
+The GP-200 records one loop. This records as many as you like. Your first take
+sets the length, every take after it locks to that timing, and each one lands on
+its own track with its own volume, mute and delete. Drop in an audio file and
+play over a backing track.
+
+Best part: teach it your footswitches once and you never touch the laptop again
+while you play.
+
+<img src="public/guide/08-deck-loop.png" alt="The loop station with two recorded takes" width="100%" />
+
+<br/>
+
+## Something to play against
+
+A drum machine that lives in the browser, so it works with the pedal unplugged.
+Pick a kit, pick a groove, nudge the swing, or hit RANDOM and see what you get.
+Works in 4/4, 3/4, 2/4 and 6/8, and it keeps playing while you close the panel
+and dial in a tone. The pedal's own drums, looper and tuner sit right below it.
+
+<img src="public/guide/11-drums.png" alt="The practice drum machine and the pedal's drum remote" width="100%" />
+
+<br/>
+
+## Set up your footswitches once
+
+<div align="center">
+<img src="https://shop.valeton.net/cdn/shop/products/GP-200_Top_Hi_V01_210923_1500x.png?v=1669282627" alt="Top view of the Valeton GP-200 showing its footswitches and expression pedal" width="88%" />
+<br/>
+<sub>The switches you are assigning. Photo: <a href="https://shop.valeton.net/products/gp-200">Valeton</a></sub>
+</div>
+
+<br/>
+
+Tap a switch, tap the pedals it should turn on and off. One stomp can flip a
+whole group at once. Expression pedals work the same way: pick a knob, set where
+it lands heel down and toe down.
+
 <table>
   <tr>
-    <td><img src="public/guide/01-landing.png" alt="Landing screen" /></td>
-    <td><img src="public/guide/05-deck-fxloop.png" alt="FX loop routing" /></td>
+    <td><img src="public/guide/07-deck-ctrl.png" alt="Assigning CTRL footswitches to effect blocks" /></td>
+    <td><img src="public/guide/06-deck-exp.png" alt="Assigning an expression pedal to a knob" /></td>
   </tr>
   <tr>
-    <td align="center"><sub>Landing</sub></td>
-    <td align="center"><sub>FX-loop routing</sub></td>
-  </tr>
-  <tr>
-    <td><img src="public/guide/06-deck-exp.png" alt="EXP pedal assignment" /></td>
-    <td><img src="public/guide/07-deck-ctrl.png" alt="CTRL footswitch assignment" /></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>EXP pedal assignment</sub></td>
-    <td align="center"><sub>CTRL footswitch assignment</sub></td>
-  </tr>
-  <tr>
-    <td><img src="public/guide/04-info-bar-chain.png" alt="Signal chain info bar" /></td>
-    <td><img src="public/guide/09-export-dialog.png" alt="Export dialog" /></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>Signal chain & effect info</sub></td>
-    <td align="center"><sub>Export</sub></td>
+    <td align="center"><sub>Footswitches</sub></td>
+    <td align="center"><sub>Expression pedals</sub></td>
   </tr>
 </table>
-</details>
 
-## Getting started
+Got it how you like it? **Bulk Apply** copies that footswitch layout, and a patch
+volume if you want, into every patch on the pedal or a stretch of banks. It is
+the fix for the "I set this up 40 times by hand" problem. It does overwrite the
+patches it touches, so back up first (one button, next section).
 
-### Just use it
+Your external pedals go anywhere in the chain too. Drag the send and return
+arrows to wherever the loop belongs.
 
-1. Open **[GP200studio](https://kabirtamari.com/gp200studio/)** in Chrome or Edge
-2. Plug your GP-200 into USB and hit **CONNECT GP-200** — or hit **Open editor** to work on `.prst` files offline
-3. That's it. Everything runs client-side; your presets never leave your machine.
+<img src="public/guide/05-deck-fxloop.png" alt="Dragging the FX loop send and return through the chain" width="100%" />
 
-### Run it locally
+<br/>
+
+## All 256 patches, in one list
+
+Search them, rename them, jump to one, open it, and back the whole pedal up to a
+single zip file before you change anything. Individual patches import and export
+as normal `.prst` files, the same ones the official editor uses, so nothing is
+locked in here.
+
+<table>
+  <tr>
+    <td><img src="public/guide/10-patch-manager.png" alt="The patch manager listing every slot" /></td>
+    <td><img src="public/guide/09-export-dialog.png" alt="Exporting a patch to a .prst file" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Every slot, searchable</sub></td>
+    <td align="center"><sub>Save a patch to a file</sub></td>
+  </tr>
+</table>
+
+<br/>
+
+## Also on the board
+
+There is a remote panel for the things that have no other home: tap CTRL
+switches from the screen, step through banks and patches, set the tempo by
+number, and read back what the pedal says about itself (tuner reference, global
+EQ, drum kits).
+
+And if the venue is dark, so is the app. Flip the red rocker in the corner.
+
+<img src="public/guide/12-board-dark.png" alt="The same pedalboard with the stage lights off" width="100%" />
+
+<br/>
+
+## How to start
+<br/>
+
+<img src="public/guide/01-landing.png" alt="The GP200 Studio landing screen" width="100%" />
+
+1. Open **[GP200 Studio](https://kabirtamari.com/gp200studio/)** in Chrome or Edge. Firefox and Safari cannot talk to USB MIDI yet, so they will not work.
+2. Plug the GP-200 in over USB, turn it on, and hit **CONNECT GP-200**.
+3. No pedal handy? Open the editor anyway and work on saved `.prst` files.
+
+On a phone you get a layout built for thumbs rather than a shrunken board.
+
+**Your presets stay with you.** No account, no upload, no server. Everything
+happens inside your browser tab.
+
+<br/>
+
+## For the curious
+
+<details>
+<summary>Running it yourself</summary>
+<br/>
 
 ```bash
 git clone https://github.com/kabir0st/gp200-studio.git
@@ -106,33 +182,52 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-Other useful commands: `npm run build`, `npm run typecheck`, `npm run lint`, `npm run test`.
+Also available: `npm run build`, `npm run typecheck`, `npm run lint`, `npm run test`.
+</details>
 
-## How it works
+<details>
+<summary>How it works, briefly</summary>
+<br/>
 
-Everything is client-side TypeScript. A pure protocol layer in [`src/core/`](src/core/) decodes/encodes the GP-200's binary `.prst` preset format (byte-exact round-trips via raw-source passthrough) and speaks the pedal's **reverse-engineered USB-MIDI SysEx protocol** — parameter changes, effect swaps, toggles, reorders, preset pulls and saves — over the browser's Web MIDI API. React hooks layer connection/session handling on top, and the pedalboard UI sits on that. No server is involved at any point.
+All of it is client-side TypeScript. [`src/core/`](src/core/) reads and writes the
+GP-200's `.prst` files byte for byte, and speaks the pedal's USB-MIDI SysEx
+protocol (worked out from USB captures) for knob changes, effect swaps, bypasses,
+reordering, and pulling or saving whole patches. React hooks handle the
+connection on top of that, and the pedalboard sits on the hooks. There is no
+server anywhere in the picture.
+</details>
 
-## Privacy
+<details>
+<summary>About analytics</summary>
+<br/>
 
-Your presets stay on your machine. There is no account, no upload and no server-side storage — the "no backend" claim above is about your data, and it holds.
+The hosted site loads Google Analytics to answer questions like "does anyone use
+the looper?". Patch names, author fields, file names, MIDI port names and preset
+contents are never sent. Every tracked value is a fixed keyword or a rough
+bucket, and the whole list of about a dozen events is in
+[`src/core/analyticsEvents.ts`](src/core/analyticsEvents.ts). Ad personalization
+is off, Global Privacy Control switches analytics off completely, and tracking
+only runs on the hosted site, so dev servers, tests and forks are silent
+([`src/core/analytics.ts`](src/core/analytics.ts)). The measurement ID in
+`.env.production` is committed on purpose: GA4 IDs ship inside the JavaScript of
+every site that uses them, so hiding it would buy nothing.
+</details>
 
-The hosted site does load Google Analytics to answer questions like "does anyone use the looper?" and "do people connect real hardware or just open the editor blank?". What that means concretely:
+<br/>
 
-- **Never sent:** patch names, author fields, file names, MIDI port names, preset contents, or anything else you type. Every tracked value is either a fixed keyword or a coarse bucket — see [`src/core/analyticsEvents.ts`](src/core/analyticsEvents.ts) for the complete list of ~12 events.
-- **Off by default:** Google Signals and ad personalisation are disabled, and the browser's [Global Privacy Control](https://globalprivacycontrol.org/) signal disables analytics entirely.
-- **Only on the hosted site:** analytics is gated on a production build *and* a hostname allowlist ([`src/core/analytics.ts`](src/core/analytics.ts)), so `npm run dev`, `vite preview`, the test suite and any fork are all silent.
+## Thanks and license
 
-The measurement ID in `.env.production` is committed on purpose. A GA4 measurement ID is a public identifier — it ships inlined in the JS bundle of every site that uses GA and is readable via View Source — so keeping it secret would buy nothing. If you fork this and want your own analytics, set `VITE_GA_MEASUREMENT_ID` and add your hostname to `PROD_HOSTS`.
+Bug reports, protocol captures from your own pedal and pull requests are all
+welcome on [GitHub](https://github.com/kabir0st/gp200-studio). If this saved you
+from the 4" screen, [buy me a coffee](https://buymeacoffee.com/kabir0st). ☕
 
-## Contributing
+Everything else you see above is a screenshot of the app. GP-200
+and Valeton are their trademarks; this project is not affiliated with or endorsed
+by them.
 
-GP200 Studio is open source and contributions are welcome — bug reports, protocol captures from your hardware, and pull requests alike. Open an issue or PR on [GitHub](https://github.com/kabir0st/gp200-studio). If the app saves you from the 4" screen, you can also [buy me a coffee](https://buymeacoffee.com/kabir0st). ☕
+Thanks for the initial reverse-engineering groundwork to
+**[phash/gp200editor](https://github.com/phash/gp200editor)**: the `.prst` file
+format and the SysEx protocol.
 
-## Credits
-
-- Built on the reverse-engineering groundwork of **[phash/gp200editor](https://github.com/phash/gp200editor)** — the `.prst` binary format, SysEx MIDI protocol, and 305-effect mapping
-- Built by [Kabir Tamari](https://kabirtamari.com)
-
-## License
-
-[GPL-3.0](LICENSE) — free to use, study, share, and improve; derivatives must stay open source.
+Made by [Kabir Tamari](https://kabirtamari.com). Free and open source under
+[GPL-3.0](LICENSE), so it stays that way.

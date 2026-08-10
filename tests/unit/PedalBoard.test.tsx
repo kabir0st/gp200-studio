@@ -5,7 +5,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { PRSTDecoder } from '@/core/PRSTDecoder';
 import { getEffectName } from '@/core/effectNames';
 import { PedalBoard } from '@/components/board/PedalBoard';
-import { isWidePedal, isWideSlot, splitRows } from '@/components/board/boardLayout';
+import { isWideSlot } from '@/components/board/boardLayout';
 import { AudioEngineProvider } from '@/components/AudioEngineProvider';
 import { defaultLooperBindings } from '@/core/looperBindings';
 import { getPattern } from '@/core/drumMachine';
@@ -137,6 +137,10 @@ function renderBoard(overrides: Partial<Parameters<typeof PedalBoard>[0]> = {}) 
     onCcChannelChange: vi.fn(),
     onEnableAudio: vi.fn(),
     audioStarting: false,
+    theme: 'light' as const,
+    onToggleTheme: vi.fn(),
+    soundOn: true,
+    onToggleSound: vi.fn(),
     onConnectRequest: vi.fn(),
     onDisconnect: vi.fn(),
     onPushRequest: vi.fn(),
@@ -157,29 +161,15 @@ describe.skipIf(!HAS_FIXTURES)('PedalBoard (render smoke test)', () => {
     vi.stubGlobal('ResizeObserver', ResizeObserverStub);
   });
 
-  it('renders all 11 slots as pedals split across two width-balanced rows', () => {
-    const { container, preset } = renderBoard();
+  it('renders all 11 slots as pedals in one wrapping row, in chain order', () => {
+    const { container } = renderBoard();
     const pedals = container.querySelectorAll('article.pedal');
     expect(pedals).toHaveLength(11);
-    const { front, back } = splitRows(preset.effects);
-    expect(container.querySelectorAll('[data-row="front"]')).toHaveLength(front.length);
-    expect(container.querySelectorAll('[data-row="back"]')).toHaveLength(back.length);
-    // chain order is stamped for the cable layer
-    const chains = [...pedals].map((p) => Number(p.getAttribute('data-chain'))).sort((a, b) => a - b);
+    // One row that wraps: where the lines break is a layout outcome (and what
+    // CableLayer measures), never a JS split, so the DOM order IS chain order.
+    expect(container.querySelectorAll('.board-row')).toHaveLength(1);
+    const chains = [...pedals].map((p) => Number(p.getAttribute('data-chain')));
     expect(chains).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-  });
-
-  it('splitRows balances by visual width and preserves chain order', () => {
-    const preset = loadFixture();
-    const { front, back } = splitRows(preset.effects);
-    expect([...front, ...back]).toEqual(preset.effects);
-    const units = (slots: typeof preset.effects) =>
-      slots.reduce((sum, s) => sum + (isWidePedal(s.effectId) ? 2 : 1), 0);
-    // front row never exceeds half the total width (the wide-AMP overflow bug)
-    const total = units(preset.effects);
-    expect(units(front)).toBeLessThanOrEqual(Math.ceil(total / 2));
-    expect(front.length).toBeGreaterThan(0);
-    expect(back.length).toBeGreaterThan(0);
   });
 
   it('every slot renders its fixed hardware module; CAB is always on the board', () => {
@@ -275,14 +265,38 @@ describe.skipIf(!HAS_FIXTURES)('PedalBoard (render smoke test)', () => {
     expect(isWideSlot(10)).toBe(false);
   });
 
-  it('chain reads top-left to bottom-right with IN/OUT marked', () => {
-    const { container, preset } = renderBoard();
-    const rows = container.querySelectorAll('.board-row');
-    const { front } = splitRows(preset.effects);
-    const firstRowNums = [...rows[0].querySelectorAll('[data-chain]')].map((p) => Number(p.getAttribute('data-chain')));
-    expect(firstRowNums).toEqual(front.map((_, i) => i));
-    expect(rows[0].querySelector('.flow-badge')?.textContent).toContain('IN');
-    expect(rows[1].querySelector('.flow-badge')?.textContent).toContain('OUT');
+  it('chain reads left to right, top to bottom, with IN/OUT marked', () => {
+    const { container } = renderBoard();
+    const row = container.querySelector('.board-row');
+    const badges = [...(row?.querySelectorAll('.flow-badge') ?? [])].map((b) => b.textContent);
+    // IN opens the row and OUT closes it, so they bracket the chain wherever
+    // the lines happen to break.
+    expect(badges[0]).toContain('IN');
+    expect(badges[badges.length - 1]).toContain('OUT');
     expect(container.querySelectorAll('.chain-end')).toHaveLength(2);
+  });
+
+  it('the stage lights switch reports its state and toggles the theme', () => {
+    const { props } = renderBoard();
+    const lights = screen.getByRole('switch', { name: /stage lights/i });
+    expect(lights).toHaveAttribute('aria-checked', 'true');
+    fireEvent.click(lights);
+    expect(props.onToggleTheme).toHaveBeenCalledTimes(1);
+  });
+
+  it('the rocker shows both moulded faces so a tilt reads as a switch', () => {
+    const { container } = renderBoard();
+    const marks = [...container.querySelectorAll('.power-switch .ps-face')].map(
+      (f) => f.textContent,
+    );
+    expect(marks).toEqual(['I', 'O']);
+  });
+
+  it('the switch sound has a mute beside the rocker', () => {
+    const { props } = renderBoard();
+    const mute = screen.getByRole('switch', { name: /switch sound/i });
+    expect(mute).toHaveAttribute('aria-checked', 'true');
+    fireEvent.click(mute);
+    expect(props.onToggleSound).toHaveBeenCalledTimes(1);
   });
 });

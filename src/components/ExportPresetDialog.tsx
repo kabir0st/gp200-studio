@@ -102,7 +102,7 @@ export function ExportPresetDialog({ open, onClose, initialName, initialAuthor, 
           />
         </div>
 
-        {/* Target slot — written to the .prst so the Valeton editor lands the
+        {/* Target slot , written to the .prst so the Valeton editor lands the
             patch on this slot when syncing to the device (byte 0x34). */}
         <div>
           <label

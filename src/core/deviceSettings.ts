@@ -3,7 +3,7 @@
 //
 // Wire format: the 0x12/0x08 settings-write family (SysExCodec.buildFsMode /
 // buildFsTarget / buildFsCombo / buildAutoCabMatch), decoded 2026-07-18 from
-// the dumps/ capture set — docs/protocol-capture.md §0.2/§0.3. The protocol
+// the dumps/ capture set , docs/protocol-capture.md §0.2/§0.3. The protocol
 // is WRITE-ONLY so far: the app cannot read the pedal's current values, so
 // this model tracks "what the app last set" and persists it locally.
 //
@@ -98,7 +98,7 @@ export const HOLD_MENU: readonly number[] = TAP_MENU.filter((actionId) => {
   return !isCtrl;
 });
 
-/** The CTRL action for footswitch n — used by the looper takeover, which
+/** The CTRL action for footswitch n , used by the looper takeover, which
  *  points each hijacked switch at its same-numbered CTRL. */
 export function ctrlActionForFs(fs: number): number {
   if (fs <= 4) return FS_ACTION.CTRL1 + (fs - 1);

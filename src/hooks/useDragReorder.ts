@@ -46,14 +46,14 @@ export function displayPosition(index: number, from: number | null, target: numb
  * GSAP drag-to-reorder for the chain list: the picked-up row lifts and tracks
  * the finger while the rest of the stack slides open to make room.
  *
- * The DOM order is deliberately NOT touched during the drag — every row is
+ * The DOM order is deliberately NOT touched during the drag , every row is
  * moved by a GSAP transform and the real reorder is committed once, on drop.
  * That keeps layout frozen for the whole gesture, which is what makes the
  * geometry exact (see below) and avoids React re-rendering the list on every
  * pointermove.
  *
  * Geometry: row centres are measured once at pickup. Reordering blocks never
- * changes where the *slots* are — an FX-loop marker sits at a chain position,
+ * changes where the *slots* are , an FX-loop marker sits at a chain position,
  * not on a block, so it stays put while blocks move past it. That invariance
  * is what lets a row's travel be the exact delta between adjacent measured
  * centres rather than an assumed uniform row height, so variable-height rows
@@ -221,7 +221,7 @@ export function useDragReorder({
   useLayoutEffect(() => {
     if (from !== null || !clearPendingRef.current) return;
     clearPendingRef.current = false;
-    // Only the properties these tweens write — never 'all'. The same inline
+    // Only the properties these tweens write , never 'all'. The same inline
     // style carries React-owned CSS custom properties (each row's --body/--ink/
     // --led palette); 'all' strips those too and React never puts them back,
     // because its virtual model still believes it set them. Symptom was every

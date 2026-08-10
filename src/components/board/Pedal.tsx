@@ -15,8 +15,6 @@ export interface PedalProps {
   slot: EffectSlot;
   /** array position in the chain (0-based) */
   index: number;
-  /** which visual row this pedal sits on (CableLayer reads data-row) */
-  row: 'front' | 'back';
   art?: PedalArtEntry;
   onToggle: () => void;
   /** open the effect browser for this slot */
@@ -44,7 +42,6 @@ export interface PedalProps {
 export function Pedal({
   slot,
   index,
-  row,
   art,
   onToggle,
   onOpenPicker,
@@ -102,17 +99,16 @@ export function Pedal({
   );
 
   // data-flip-id: Flip matches captured state to live elements by identity unless
-  // given an id. A cross-row move remounts this pedal as a *different* DOM node
-  // (the two rows are separate parents), so without an id Flip can't reconcile it
-  // and — animating with absolute:true — strands it at an absolute position, out
-  // of flow: the board collapses and pedals overlap at stale coordinates.
-  // slotIndex is the immutable block identity, so it survives reordering.
+  // given an id. Without one it can't reconcile a pedal React has re-keyed or
+  // remounted, and , animating with absolute:true , strands it at an absolute
+  // position, out of flow: the board collapses and pedals overlap at stale
+  // coordinates. slotIndex is the immutable block identity, so it survives
+  // reordering.
   return (
     <article
       className={classes.join(' ')}
       style={bodyVars}
       data-chain={index}
-      data-row={row}
       data-flip-id={`pedal-${slot.slotIndex}`}
       draggable
       onDragStart={(e) => {

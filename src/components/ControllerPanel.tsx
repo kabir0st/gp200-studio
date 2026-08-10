@@ -1,4 +1,7 @@
 import { useState, type CSSProperties } from 'react';
+import { exp1Position, exp1Select, type CCCommand } from '@/core/ccControl';
+import { Button } from '@/components/ui/Button';
+import { toggleVariant } from '@/components/board/ccUi';
 import type { ExpAssignment, GP200Preset } from '@/core/types';
 import { getSlotModule, getEffectName, MODULE_COLORS } from '@/core/effectNames';
 import { getEffectParams } from '@/core/effectParams';
@@ -52,6 +55,10 @@ interface ControllerPanelProps {
     paramIdx: number,
   ) => void;
   onMinMax: (page: number, item: number, min: number, max: number) => void;
+  /** When provided, shows the live EXP 1 test row (position sweep + A/B
+   *  switch over plain CC). Lives here , next to the assignments it
+   *  exercises , rather than in the MIDI remote. */
+  sendCC?: (command: CCCommand | CCCommand[]) => void;
 }
 
 const FIELD_STYLE: CSSProperties = {
@@ -245,8 +252,12 @@ export function ControllerPanel({
   connected,
   onParamSelect,
   onMinMax,
+  sendCC,
 }: ControllerPanelProps) {
   const [selectedPage, setSelectedPage] = useState<number>(0);
+  // Live EXP 1 test controls (optimistic: the device sends no feedback)
+  const [livePosition, setLivePosition] = useState(0);
+  const [liveSide, setLiveSide] = useState<'A' | 'B'>('A');
 
   if (!preset) return null;
 
@@ -319,6 +330,63 @@ export function ControllerPanel({
           />
         ))}
       </div>
+
+      {sendCC && (
+        <div
+          className="mt-3 pt-3 flex flex-wrap items-center gap-2"
+          style={{ borderTop: '1px solid rgba(0,0,0,0.12)' }}
+        >
+          <span
+            className="font-mono-display text-label text-text-muted uppercase tracking-widest"
+          >
+            EXP 1 · live test
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={livePosition}
+            disabled={!connected}
+            onChange={(event) => {
+              const position = Number(event.target.value);
+              setLivePosition(position);
+              sendCC(exp1Position(position));
+            }}
+            className="flex-1 min-w-24 accent-accent-amber disabled:opacity-40"
+            aria-label="EXP 1 position"
+          />
+          <b
+            className="font-mono-display text-caption text-text-secondary w-8
+              text-right tabular-nums"
+          >
+            {livePosition}
+          </b>
+          <Button
+            variant={toggleVariant(liveSide === 'A')}
+            size="sm"
+            disabled={!connected}
+            title="Switch EXP 1 to assignment A"
+            onClick={() => {
+              setLiveSide('A');
+              sendCC(exp1Select('A'));
+            }}
+          >
+            A
+          </Button>
+          <Button
+            variant={toggleVariant(liveSide === 'B')}
+            size="sm"
+            disabled={!connected}
+            title="Switch EXP 1 to assignment B"
+            onClick={() => {
+              setLiveSide('B');
+              sendCC(exp1Select('B'));
+            }}
+          >
+            B
+          </Button>
+        </div>
+      )}
 
       <p className="text-xs mt-3" style={{ color: 'var(--text-secondary)' }}>
         {liveHint}
