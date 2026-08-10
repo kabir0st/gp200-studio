@@ -31,12 +31,6 @@ than it should.
 Plug the pedal into a laptop, a tablet or an Android phone with the USB cable you
 already own, open a browser tab, and everything is in front of you at once.
 
-<div align="center">
-<img src="https://res.valeton.net/Uploads/wp/2025/05/%E4%BA%A7%E5%93%819-13.jpg" alt="A guitarist playing with a GP-200 connected to a laptop" width="82%" />
-<br/>
-<sub>One USB cable is the whole setup. Photo: <a href="https://www.valeton.net/product/gp-200/">Valeton</a></sub>
-</div>
-
 <br/>
 
 ## Every block is a pedal
@@ -154,13 +148,6 @@ And if the venue is dark, so is the app. Flip the red rocker in the corner.
 <br/>
 
 ## How to start
-
-<div align="center">
-<img src="https://shop.valeton.net/cdn/shop/products/GP-200_Perspective_WithScreen_Hi_V02_211129_1500x.png?v=1669282627" alt="The Valeton GP-200 multi-effects processor" width="70%" />
-<br/>
-<sub>Photo: <a href="https://shop.valeton.net/products/gp-200">Valeton</a></sub>
-</div>
-
 <br/>
 
 <img src="public/guide/01-landing.png" alt="The GP200 Studio landing screen" width="100%" />
@@ -224,18 +211,17 @@ every site that uses them, so hiding it would buy nothing.
 
 ## Thanks and license
 
-Built on the reverse-engineering groundwork of
-**[phash/gp200editor](https://github.com/phash/gp200editor)**: the `.prst` file
-format, the SysEx protocol and the 305-effect mapping.
-
 Bug reports, protocol captures from your own pedal and pull requests are all
 welcome on [GitHub](https://github.com/kabir0st/gp200-studio). If this saved you
 from the 4" screen, [buy me a coffee](https://buymeacoffee.com/kabir0st). ☕
 
-Photos of the pedal itself belong to Valeton and are linked from their site, not
-bundled here. Everything else you see above is a screenshot of the app. GP-200
+Everything else you see above is a screenshot of the app. GP-200
 and Valeton are their trademarks; this project is not affiliated with or endorsed
 by them.
+
+Thanks for the initial reverse-engineering groundwork to
+**[phash/gp200editor](https://github.com/phash/gp200editor)**: the `.prst` file
+format and the SysEx protocol.
 
 Made by [Kabir Tamari](https://kabirtamari.com). Free and open source under
 [GPL-3.0](LICENSE), so it stays that way.
