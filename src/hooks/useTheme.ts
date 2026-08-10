@@ -6,7 +6,7 @@ const STORAGE_KEY = 'gp200:theme';
 
 /** Browser chrome color per theme (matches --bg-primary in src/index.css). */
 const THEME_COLOR: Record<ThemeName, string> = {
-  light: '#d8d5ce',
+  light: '#e8e9eb',
   dark: '#17181a',
 };
 

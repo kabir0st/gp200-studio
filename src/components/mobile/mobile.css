@@ -100,7 +100,7 @@
 .mobile-view .m-header-sync-fill {
   display: block;
   height: 100%;
-  background: var(--accent-amber, #8a6320);
+  background: var(--accent-amber);
   transition: width 120ms linear;
 }
 
@@ -298,7 +298,7 @@
   margin-right: 10px;
   border-radius: 999px;
   border: 1px solid var(--chrome-border);
-  background: var(--bg-deep, #ccc9c1);
+  background: var(--bg-deep);
   position: relative;
   transition: background 140ms ease;
 }
@@ -345,7 +345,7 @@
 
 .mobile-view .m-grip:active {
   cursor: grabbing;
-  background: var(--bg-hover, #e2dfd8);
+  background: var(--bg-hover);
 }
 
 /* Two columns of dots, drawn rather than typed so the texture is even and
@@ -373,11 +373,11 @@
    GSAP case. Do not add `transform`, `box-shadow` or a `transition` for these
    here; CSS would fight the tweens for the same properties. */
 .mobile-view .m-row.dragging {
-  border-color: var(--border-active, #aaa69d);
+  border-color: var(--border-active);
 }
 
 .mobile-view .m-row.dragging .m-grip {
-  background: var(--bg-hover, #e2dfd8);
+  background: var(--bg-hover);
   cursor: grabbing;
 }
 
@@ -418,7 +418,7 @@
 
 .mobile-view .m-marker-edit {
   font-size: 10px;
-  color: var(--accent-amber, #8a6320);
+  color: var(--accent-amber);
 }
 
 /* ----------------------------------------------------------- pedal editor */
@@ -594,13 +594,13 @@
 .mobile-view .m-slider::-webkit-slider-runnable-track {
   height: 8px;
   border-radius: 4px;
-  background: var(--knob-track, #ccc9c1);
+  background: var(--knob-track);
 }
 
 .mobile-view .m-slider::-moz-range-track {
   height: 8px;
   border-radius: 4px;
-  background: var(--knob-track, #ccc9c1);
+  background: var(--knob-track);
 }
 
 .mobile-view .m-slider::-webkit-slider-thumb {
@@ -633,7 +633,7 @@
   padding: 0 10px;
   border: 1px solid var(--chrome-border);
   border-radius: 8px;
-  background: var(--bg-input, #fff);
+  background: var(--bg-input);
   color: var(--chrome-text);
   font-size: 14px;
 }
@@ -710,8 +710,8 @@
 }
 
 .mobile-view .m-btn.primary {
-  background: var(--stub-ink, #3c3a35);
-  border-color: var(--stub-ink, #3c3a35);
+  background: var(--stub-ink);
+  border-color: var(--stub-ink);
   color: var(--stub-ink-on);
 }
 
@@ -721,8 +721,8 @@
 }
 
 .mobile-view .m-btn.active {
-  background: var(--stub-ink, #3c3a35);
-  border-color: var(--stub-ink, #3c3a35);
+  background: var(--stub-ink);
+  border-color: var(--stub-ink);
   color: var(--stub-ink-on);
 }
 
@@ -734,6 +734,15 @@
 
 .mobile-view .m-btn.wide {
   grid-column: 1 / -1;
+}
+
+/* links wearing the button face (the support link) need the centring a
+   <button> gets for free */
+.mobile-view a.m-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
 }
 
 .mobile-view .m-btn:disabled {
@@ -878,7 +887,7 @@
   padding: 0 12px;
   border: 1px solid var(--chrome-border);
   border-radius: 8px;
-  background: var(--bg-input, #fff);
+  background: var(--bg-input);
   color: var(--chrome-text);
   font-size: 16px; /* 16px keeps iOS from zooming the viewport on focus */
   font-family: inherit;

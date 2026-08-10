@@ -628,7 +628,7 @@ export function Guide({ onBack }: GuideProps) {
             <Button variant="ghost" size="sm" onClick={onBack}>
               ← Back to the app
             </Button>
-            <Credits className="font-mono-display text-label text-text-muted tracking-wide flex flex-col gap-1 [&_.credits-links]:flex [&_.credits-links]:flex-wrap [&_.credits-links]:gap-4 [&_.credits-links]:mt-1 [&_a]:text-text-secondary [&_a]:underline [&_a:hover]:text-accent-amber" />
+            <Credits className="font-mono-display text-label text-text-muted tracking-wide flex flex-col items-start gap-1 [&_.credits-links]:flex [&_.credits-links]:flex-wrap [&_.credits-links]:gap-4 [&_.credits-links]:mt-1 [&_a]:text-text-secondary [&_a]:underline [&_a:hover]:text-accent-amber [&_.credits-coffee]:order-first [&_.credits-coffee]:mb-3 [&_.credits-coffee]:rounded-full [&_.credits-coffee]:border [&_.credits-coffee]:border-accent-amber [&_.credits-coffee]:px-4 [&_.credits-coffee]:py-2 [&_.credits-coffee]:text-[12px] [&_.credits-coffee]:font-bold [&_.credits-coffee]:!text-accent-amber [&_.credits-coffee]:!no-underline" />
           </footer>
         </main>
       </div>

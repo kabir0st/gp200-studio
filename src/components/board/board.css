@@ -570,8 +570,8 @@
 }
 .board-view .pedal-bay.drop-target::before {
   border-style: solid;
-  border-color: var(--accent-amber, #c98a2b);
-  background: color-mix(in srgb, var(--accent-amber, #c98a2b) 12%, transparent);
+  border-color: var(--accent-amber);
+  background: color-mix(in srgb, var(--accent-amber) 12%, transparent);
   opacity: 1;
 }
 /* the pedal being carried: quieten its own slot so it reads as "lifted out" */
@@ -1313,7 +1313,7 @@
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.1em;
-  color: #8a6320; /* readable amber on chrome, matches landing busy LED family */
+  color: var(--accent-amber); /* readable amber on chrome, per theme */
   white-space: nowrap;
 }
 .board-view .deck-sync.done {
@@ -1551,6 +1551,7 @@
   border: 1px solid var(--chrome-border);
   color: var(--chrome-text);
   cursor: pointer;
+  text-decoration: none;
   transition: background 0.1s ease, border-color 0.1s ease;
 }
 /* Colour-coded action mark (ActionIcon.tsx). The hue is set inline per action;
@@ -1916,7 +1917,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--accent-amber, #8a6320);
+  background: var(--accent-amber);
 }
 .landing-guide-link {
   margin-top: 18px;
@@ -1932,7 +1933,7 @@
   text-underline-offset: 3px;
 }
 .landing-guide-link:hover {
-  color: var(--accent-amber, #8a6320);
+  color: var(--accent-amber);
 }
 .landing-credits {
   margin-top: 24px;
@@ -1953,14 +1954,34 @@
   justify-content: center;
   gap: 8px 16px;
 }
-.landing-credits a {
+.landing-credits .credits-links a {
   color: var(--chrome-text);
   text-decoration: none;
 }
-.landing-credits a:hover {
-  color: var(--accent-amber, #8a6320);
+.landing-credits .credits-links a:hover {
+  color: var(--accent-amber);
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+/* the support link is promoted out of the 10px credits row into its own pill;
+   `order: -1` lifts it above the byline in the column without reordering the
+   markup (the Guide footer wants it last). */
+.landing-credits .credits-coffee {
+  order: -1;
+  margin-bottom: 6px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--accent-amber);
+  border-radius: 999px;
+  background: none;
+  color: var(--accent-amber);
+  text-decoration: none;
+  transition: background 0.1s ease;
+}
+.landing-credits .credits-coffee:hover {
+  background: color-mix(in srgb, var(--accent-amber) 12%, transparent);
 }
 
 /* ══ effect picker: Guitar Rig style browser (EffectPicker.tsx) ══ */

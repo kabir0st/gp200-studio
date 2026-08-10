@@ -4,11 +4,14 @@ interface CreditsProps {
   className?: string;
 }
 
+/** One home for the support link: the credits block promotes it to its own
+ *  element, and the board chrome links to it directly. */
+export const COFFEE_URL = 'https://buymeacoffee.com/kabir0st';
+
 const LINKS: { href: string; label: string }[] = [
   { href: 'https://kabirtamari.com', label: 'kabirtamari.com' },
   { href: 'https://github.com/kabir0st/gp200-studio', label: 'GitHub' },
   { href: 'https://www.linkedin.com/in/kabirtamari/', label: 'LinkedIn' },
-  { href: 'https://buymeacoffee.com/kabir0st', label: '☕ Buy me a coffee' },
 ];
 
 /** Author credit block: one source shared by Landing and Guide so the byline
@@ -24,6 +27,14 @@ export function Credits({ className = '' }: CreditsProps) {
           </a>
         ))}
       </span>
+      <a
+        className="credits-coffee"
+        href={COFFEE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        ☕ Buy me a coffee
+      </a>
     </div>
   );
 }

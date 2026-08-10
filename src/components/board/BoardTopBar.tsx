@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { PushProgress } from '@/core/devicePush';
 import { SysExCodec } from '@/core/SysExCodec';
 import { tunerShow, type CCCommand } from '@/core/ccControl';
+import { COFFEE_URL } from '../Credits';
 import { ActionIcon } from './ActionIcon';
 import { PowerSwitch, SoundToggle } from './PowerSwitch';
 import { DeckPop } from './DeckPop';
@@ -317,6 +318,16 @@ export function BoardTopBar({
             <span className="db-label">CONNECT GP-200</span>
           </button>
         )}
+        <a
+          className="deck-btn quiet"
+          href={COFFEE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Support this project"
+          aria-label="Buy me a coffee"
+        >
+          <ActionIcon name="coffee" />
+        </a>
         <button
           type="button"
           className="deck-btn quiet"

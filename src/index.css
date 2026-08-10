@@ -18,24 +18,26 @@
   --font-dm-sans: 'DM Sans';
   --font-jetbrains-mono: 'JetBrains Mono';
 
-  /* ── App chrome: LIGHT stage theme (the dark "matrix" theme is gone;
-     dialogs, banners, and browsers share the board's light environment). ── */
-  --bg-primary: #d8d5ce;
-  --bg-surface: #edebe5;
-  --bg-surface-raised: #f2f0ea;
-  --bg-elevated: #f6f5f0;
-  --bg-card: #edebe5;
+  /* ── App chrome: LIGHT stage theme, a cool paper-white environment (the dark
+     "matrix" theme is gone; dialogs, banners, and browsers share the board's
+     light environment). The accents stay warm — amber against paper is the
+     contrast the chrome is built on. ── */
+  --bg-primary: #e8e9eb;
+  --bg-surface: #f4f5f6;
+  --bg-surface-raised: #f8f9fa;
+  --bg-elevated: #fbfbfc;
+  --bg-card: #f4f5f6;
   --bg-input: #ffffff;
-  --bg-deep: #ccc9c1;
-  --bg-hover: #e2dfd8;
-  --text-primary: #232220;
+  --bg-deep: #dcdee1;
+  --bg-hover: #eceef0;
+  --text-primary: #1e2022;
   /* Secondary sits a notch above muted so the two are visually distinct and
      secondary clears WCAG AA on --bg-surface with headroom; muted stays at
      the AA threshold for genuinely de-emphasised / large uppercase labels. */
-  --text-secondary: #45423c;
-  --text-muted: #5f5c55;
-  --border-subtle: #cbc7be;
-  --border-active: #aaa69d;
+  --text-secondary: #43464a;
+  --text-muted: #5c6066;
+  --border-subtle: #d9dbdf;
+  --border-active: #adb1b7;
   --accent-amber: #8a6320;
   --accent-amber-dim: #6b4e19;
   --accent-red: #b4423a;
@@ -43,7 +45,7 @@
   --glow-amber: rgba(138, 99, 32, 0.18);
   --glow-red: rgba(180, 66, 58, 0.15);
   --glow-green: rgba(47, 126, 79, 0.15);
-  --knob-track: #cbc7be;
+  --knob-track: #d9dbdf;
   --knob-fill: #8a6320;
 
   /* ── Board view environment (docs/board-design-system.md, LIGHT values) ──
@@ -51,29 +53,29 @@
      only the environment tokens are declared here (one token home). The
      board is light-mode for stage readability; the colorful pedal bodies
      come from the artwork manifest, not from these tokens. */
-  --case: #d8d5ce;
-  --board: #c9c5bd;
+  --case: #e8e9eb;
+  --board: #dcdee1;
   /* chassis skin: the board's own plywood/edge/bezel, themed so the dark stage
      doesn't need a second copy of the .board-deck rule */
-  --board-top: #d4d1c9;
-  --board-edge: #a9a59c;
-  --board-bezel: #b5b1a8;
-  --board-bezel-hi: #e6e3dc;
-  --chrome-bg: #edebe5;
+  --board-top: #e6e7ea;
+  --board-edge: #b0b3b8;
+  --board-bezel: #c3c6ca;
+  --board-bezel-hi: #f2f3f5;
+  --chrome-bg: #f4f5f6;
   /* face of a chrome control sitting ON --chrome-bg (buttons, inputs, selects) */
   --chrome-face: #ffffff;
-  --chrome-border: #bdb9b0;
-  --chrome-text: #232220;
-  --chrome-muted: #5f5c55;
-  --strip-bg: #f2f0ea;
-  --stub-ink: #3c3a35;
+  --chrome-border: #cdd0d4;
+  --chrome-text: #1e2022;
+  --chrome-muted: #5c6066;
+  --strip-bg: #f8f9fa;
+  --stub-ink: #35383c;
   /* readable ink ON a --stub-ink fill (mobile primary buttons, chain pills) */
-  --stub-ink-on: #f6f5f0;
-  --dot-off: #b0aca3;
+  --stub-ink-on: #fbfbfc;
+  --dot-off: #bcbfc4;
   --pedal-shadow: 0 10px 20px rgba(0, 0, 0, 0.28);
   /* the mains surge the power switch fires across the whole stage: a blown
      highlight and a blackout, cut against each other (board.css/stage-surge) */
-  --stage-flash: rgba(255, 251, 235, 0.62);
+  --stage-flash: rgba(248, 250, 255, 0.62);
   --stage-dim: rgba(8, 8, 10, 0.5);
 }
 

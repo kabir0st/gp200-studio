@@ -70,12 +70,17 @@ const ACTIONS: Record<string, ActionSpec> = {
   // guide
   guide: {
     d: '<circle cx="8" cy="8" r="5.8" /><path d="M6.3 6.2a1.8 1.8 0 1 1 2.3 2.2c-.4.2-.6.5-.6.9v.3" /><path d="M8 12.1h.01" />',
-    color: '#5f5c55',
+    color: '#5c6066',
+  },
+  // support the project: a cup with steam
+  coffee: {
+    d: '<path d="M2.8 6.2h8.4v3.4a3.4 3.4 0 0 1-3.4 3.4H6.2a3.4 3.4 0 0 1-3.4-3.4z" /><path d="M11.2 7.2h1.2a1.6 1.6 0 0 1 0 3.2h-1.2" /><path d="M5.6 2.2v1.8M8.4 2.2v1.8" />',
+    color: '#8a6320',
   },
   // close the preset: step out through a door
   close: {
     d: '<path d="M9.4 2.6H4.2a1.4 1.4 0 0 0-1.4 1.4v8a1.4 1.4 0 0 0 1.4 1.4h5.2" /><path d="m10.8 5.4 2.6 2.6-2.6 2.6" /><path d="M13.4 8H6.6" />',
-    color: '#5f5c55',
+    color: '#5c6066',
   },
   // fx loop: send out, return in
   fxloop: {
@@ -95,12 +100,12 @@ const ACTIONS: Record<string, ActionSpec> = {
   // chassis sound on: speaker cone with radiating waves
   sound: {
     d: '<path d="M8.2 2.9 4.9 5.7H2.5v4.6h2.4l3.3 2.8z" /><path d="M10.9 6.1a2.7 2.7 0 0 1 0 3.8" /><path d="M12.9 4.1a5.5 5.5 0 0 1 0 7.8" />',
-    color: '#5f5c55',
+    color: '#5c6066',
   },
   // chassis sound muted: the same cone, struck out
   'sound-off': {
     d: '<path d="M8.2 2.9 4.9 5.7H2.5v4.6h2.4l3.3 2.8z" /><path d="m11 6.2 3.4 3.6M14.4 6.2 11 9.8" />',
-    color: '#5f5c55',
+    color: '#5c6066',
   },
   // ctrl footswitches: a bank of stomps
   ctrl: {
