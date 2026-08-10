@@ -4,16 +4,15 @@
 
 # GP200 Studio
 
-**A browser-based editor, patch manager & multi-layer loop station for the Valeton GP-200.**
-No install. No account. No backend. Just plug in and play.
-Free & open source (GPL-3.0).
+**A browser-based editor, patch manager and multi-layer loop station for the Valeton GP-200.**
+No install, no account, no backend. Free and open source (GPL-3.0).
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](tsconfig.app.json)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](package.json)
 [![Vite](https://img.shields.io/badge/Vite-⚡-646CFF?logo=vite&logoColor=white)](vite.config.ts)
 [![Web MIDI](https://img.shields.io/badge/Web%20MIDI-SysEx-5df08a)](src/core/SysExCodec.ts)
 [![Backend](https://img.shields.io/badge/backend-none-success)](#how-it-works)
-[![Browser](https://img.shields.io/badge/browser-Chrome%20%7C%20Edge-orange?logo=googlechrome&logoColor=white)](#browser-support)
+[![Browser](https://img.shields.io/badge/browser-Chrome%20%7C%20Edge-orange?logo=googlechrome&logoColor=white)](#getting-started)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
 
 **[▶ Open the live app](https://kabirtamari.com/gp200studio/)** · **[☕ Buy me a coffee](https://buymeacoffee.com/kabir0st)**
@@ -22,103 +21,66 @@ Free & open source (GPL-3.0).
 
 </div>
 
----
+## Why
 
-## Why?
+The GP-200 is a great multi-effects pedal, but the official editor only runs on Windows and macOS, and organizing 256 patches through a 4" screen and two footswitches is slow going. This is the editor I wanted instead:
 
-The Valeton GP-200 is a great multi-effects pedal with a not-so-great support for linux as the official editor runs on **Windows and macOS only**, and organizing 256 patches through a 4" screen and two footswitches is nobody's idea of fun.
-
-GP200 Studio fixes that:
-
-- 🐧 **Runs anywhere Chrome runs** — including Linux. Web MIDI + Web Audio, straight from the browser to the pedal over USB. Nothing to install.
-- 🗂️ **Real patch management** — browse, search, rename, import, export and back up all 256 device slots. Bulk-export your entire pedal to a single ZIP.
-- 🎛️ **A UI that looks like the gear it edits** — your patch is a pedalboard, not a parameter spreadsheet. Every effect is a colorful pedal with knobs you can actually see and turn. See your signal chain at a glance instead of decoding menus.
-- 🔁 **A loop station the pedal doesn't ship with** — a multi-layer looper that records the GP-200's USB audio right in the browser, with MIDI footswitch learn so you can drive it hands-free from the pedal itself.
-- ⏩ **Set up once, apply to 256 patches** — copy a footswitch layout or a patch volume across your whole pedal in one pass instead of repeating yourself on a 4" screen.
+- **Runs anywhere Chrome runs**, Linux included. Web MIDI and Web Audio talk to the pedal over the USB cable you already have. Nothing to install.
+- **Your patch looks like the gear it edits.** Every block is a pedal with knobs you can see and turn, so you read the signal chain at a glance instead of decoding menus.
+- **Real patch management.** Browse, search, rename, import, export and back up all 256 slots, or dump the whole pedal to one ZIP.
+- **A loop station the pedal doesn't ship with**, recording the GP-200's USB audio right in the browser.
 
 ## Features
 
-- 🎸 **Pedalboard editor** — the whole patch as a stage-styled board: per-effect pedal bodies, drag-to-reorder, FX-loop routing, knob/fader parameter editing, and real-world "based on" info for all 305 effects. The chain wraps and stacks downward instead of scrolling off-screen, the board scales itself to fit your window, and there's a light/dark stage (flip the red rocker in the top bar)
-- ⚡ **Live device push** — edits stream to a connected GP-200 over USB-MIDI SysEx as you make them; hardware-side changes sync back into the editor
-- 🗄️ **Patch manager** — full 256-slot list with names & search, activate/open/rename, per-slot `.prst` export/import, one-click bulk ZIP backup
-- 🦶 **Controller assignment** — per-patch EXP pedal and CTRL 1–8 footswitch mappings
-- ⏩ **Bulk apply** — write the current patch's footswitch assignments and/or a patch volume into every patch, or a range of banks, in one run
-- 🔁 **Loop station** — stack unlimited phase-locked layers over the GP-200's USB audio, with MIDI-learn to bind transport controls to the pedal's footswitches
-- 🥁 **Drums** — a browser practice drum machine (kits, grooves, swing, 4/4 · 3/4 · 2/4 · 6/8, step editing, randomizer) that works offline, plus a MIDI remote for the pedal's own drums, looper and tuner
-- 📱 **Phone-ready** — a purpose-built touch UI below 640px, not a squashed desktop board
-
-<div align="center">
-<img src="public/guide/03-effect-picker.png" alt="Effect picker" width="49%" /> <img src="public/guide/08-deck-loop.png" alt="Loop station" width="49%" />
-</div>
-
-## The loop station
-
-The GP-200's built-in looper records a single loop. GP200 Studio turns the pedal into a **legit multi-layer loop station**: connect a laptop, an Android phone, or anything else that runs Chrome over the same USB cable you already use, and the app records the pedal's USB audio right in the browser.
-
-- 🎚️ **Unlimited layers** — your first recording sets the master loop; every record pass after that adds a new track, quantized and phase-locked to it, so everything stays locked in time no matter how many layers you stack
-- 🎛️ **Per-layer control** — each track has its own play/pause, mute, volume, and delete, plus a master progress bar and one-click Clear All
-- 🦶 **Hands-free from the pedal** — MIDI-learn binds the GP-200's physical footswitches to Record, Play, and track selection, and a takeover mode stops those stomps from firing their normal patch functions while you loop
-- 🎧 **Bring in a backing track** — import an audio file as a layer and loop over it
-
-No audio interface, no DAW, no extra pedal — just the GP-200, a USB cable, and a browser.
-
-## Drums to play against
-
-Two drum machines, stacked in one drawer:
-
-- 🥁 **Practice kit in the browser** — kits, a groove library, per-step editing, MPC-style swing, and 4/4 · 3/4 · 2/4 · 6/8 time signatures (the grid, bar length and backbeat follow the signature). Hit **RANDOM** for a fresh pattern in the style you picked. It needs no GP-200 at all, so it works offline — and it keeps playing while you close the drawer and dial in a tone
-- 🎛️ **Remote for the pedal's own drums** — start/stop, rhythm and drum volume over MIDI CC, alongside the GP-200's stock single-track looper, tuner and tap tempo
-
-## Bulk apply: stop repeating yourself
-
-The pedal has 256 patches and no way to say "use this footswitch layout everywhere". The **Bulk Apply** tab (in the board's SETTINGS drawer) does it for you:
-
-- 🦶 **CTRL footswitch assignments** — build your live footswitch layout on one patch, then stamp it onto every patch you gig with
-- 🔊 **Patch volume** — level a whole set so no patch jumps out
-- 🎯 **Scope it** — all 256 patches, or a range of banks, with a live progress readout and a Cancel button
-
-Under the hood there is no bulk message in the protocol: the app walks the slots one at a time — select, write, save — exactly as you would by hand. It needs a connected GP-200, takes a few seconds per dozen patches, and **overwrites the target patches' existing settings**, so take a bulk ZIP backup first.
+- **Pedalboard editor.** Per-effect pedal bodies, drag to reorder, FX-loop routing, knobs and faders, and the real-world gear each of the 305 effects is based on. The chain wraps and stacks downward instead of running off-screen, the board scales itself to fit your window, and there are two stages: flip the red rocker in the top bar for lights-out.
+- **Live device push.** Edits stream to a connected GP-200 over USB-MIDI SysEx as you make them, and changes made on the hardware sync back into the editor.
+- **Patch manager.** All 256 slots with names and search, activate/open/rename, per-slot `.prst` import and export, one-click ZIP backup, plus a read-only list of the 30 user IR slots.
+- **Patch settings in one drawer,** tabbed into Expression, Footswitches and Bulk Apply.
+- **Controller assignment.** EXP1 mode A/B and EXP2 with heel/toe sweeps, a live EXP1 test slider, and CTRL 1 to 8 footswitch masks covering every block including the FX loop. Assignments travel with the patch, so they survive an export and a save to the unit.
+- **Bulk apply.** Stamp the current patch's footswitch layout and/or a patch volume onto every patch or a range of banks. There is no bulk message in the protocol, so it walks the slots one at a time with a connected pedal, and it overwrites the targets. Take a ZIP backup first.
+- **Loop station.** Your first take sets the master loop and every take after it becomes a new track, quantized and phase-locked to it. Per-track play, mute, volume and delete, audio-file import for backing tracks, and MIDI learn so the pedal's own footswitches drive record and play.
+- **Drums.** A practice drum machine in the browser (kits, grooves, per-step editing, MPC-style swing, 4/4, 3/4, 2/4 and 6/8, and a style randomizer) that needs no GP-200 and keeps playing while you close the drawer. Below it sits a MIDI remote for the pedal's own drums, looper, tuner and tap tempo.
+- **Remote and device readout.** Virtual CTRL taps, bank and patch stepping, direct tempo and the three Quick Access knobs over plain CC, plus a read-only view of the tuner reference, global EQ and drum kit names read during the connect handshake.
+- **Works offline and on a phone.** Editing `.prst` files needs no device at all, and below 640px you get a purpose-built touch UI rather than a squashed board.
 
 <details>
 <summary><b>📸 More screenshots</b></summary>
 <br/>
 <table>
   <tr>
-    <td><img src="public/guide/01-landing.png" alt="Landing screen" /></td>
-    <td><img src="public/guide/05-deck-fxloop.png" alt="FX loop routing" /></td>
+    <td><img src="public/guide/10-patch-manager.png" alt="Patch manager" /></td>
+    <td><img src="public/guide/03-effect-picker.png" alt="Effect picker" /></td>
   </tr>
   <tr>
-    <td align="center"><sub>Landing</sub></td>
-    <td align="center"><sub>FX-loop routing</sub></td>
+    <td align="center"><sub>Patch manager: 256 slots, search, file I/O</sub></td>
+    <td align="center"><sub>Effect picker with the gear each effect models</sub></td>
   </tr>
   <tr>
-    <td><img src="public/guide/06-deck-exp.png" alt="EXP pedal assignment" /></td>
+    <td><img src="public/guide/08-deck-loop.png" alt="Loop station" /></td>
+    <td><img src="public/guide/11-drums.png" alt="Practice drum machine" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Loop station stacking takes over USB audio</sub></td>
+    <td align="center"><sub>Practice drums, browser side and pedal side</sub></td>
+  </tr>
+  <tr>
     <td><img src="public/guide/07-deck-ctrl.png" alt="CTRL footswitch assignment" /></td>
+    <td><img src="public/guide/12-board-dark.png" alt="The board with the stage lights off" /></td>
   </tr>
   <tr>
-    <td align="center"><sub>EXP pedal assignment</sub></td>
     <td align="center"><sub>CTRL footswitch assignment</sub></td>
-  </tr>
-  <tr>
-    <td><img src="public/guide/04-info-bar-chain.png" alt="Signal chain info bar" /></td>
-    <td><img src="public/guide/09-export-dialog.png" alt="Export dialog" /></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>Signal chain & effect info</sub></td>
-    <td align="center"><sub>Export</sub></td>
+    <td align="center"><sub>Same board, lights out</sub></td>
   </tr>
 </table>
 </details>
 
 ## Getting started
 
-### Just use it
+1. Open **[GP200 Studio](https://kabirtamari.com/gp200studio/)** in Chrome or Edge (Web MIDI has no Firefox or Safari support).
+2. Plug the GP-200 into USB and hit **CONNECT GP-200**, or open the editor without connecting to work on `.prst` files.
+3. That's it. Everything runs client-side and your presets never leave your machine.
 
-1. Open **[GP200studio](https://kabirtamari.com/gp200studio/)** in Chrome or Edge
-2. Plug your GP-200 into USB and hit **CONNECT GP-200** — or hit **Open editor** to work on `.prst` files offline
-3. That's it. Everything runs client-side; your presets never leave your machine.
-
-### Run it locally
+Running it locally:
 
 ```bash
 git clone https://github.com/kabir0st/gp200-studio.git
@@ -127,33 +89,26 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-Other useful commands: `npm run build`, `npm run typecheck`, `npm run lint`, `npm run test`.
+Also available: `npm run build`, `npm run typecheck`, `npm run lint`, `npm run test`.
 
 ## How it works
 
-Everything is client-side TypeScript. A pure protocol layer in [`src/core/`](src/core/) decodes/encodes the GP-200's binary `.prst` preset format (byte-exact round-trips via raw-source passthrough) and speaks the pedal's **reverse-engineered USB-MIDI SysEx protocol** — parameter changes, effect swaps, toggles, reorders, preset pulls and saves — over the browser's Web MIDI API. React hooks layer connection/session handling on top, and the pedalboard UI sits on that. No server is involved at any point.
+Everything is client-side TypeScript. A pure protocol layer in [`src/core/`](src/core/) decodes and encodes the GP-200's binary `.prst` format (byte-exact round-trips, unmodeled bytes passed through untouched) and speaks the pedal's reverse-engineered USB-MIDI SysEx protocol for parameter changes, effect swaps, toggles, reorders, preset pulls and saves. React hooks handle the connection and session on top of that, and the pedalboard UI sits on the hooks. No server is involved at any point.
 
 ## Privacy
 
-Your presets stay on your machine. There is no account, no upload and no server-side storage — the "no backend" claim above is about your data, and it holds.
+Your presets stay on your machine. No account, no upload, no server-side storage.
 
-The hosted site does load Google Analytics to answer questions like "does anyone use the looper?" and "do people connect real hardware or just open the editor blank?". What that means concretely:
-
-- **Never sent:** patch names, author fields, file names, MIDI port names, preset contents, or anything else you type. Every tracked value is either a fixed keyword or a coarse bucket — see [`src/core/analyticsEvents.ts`](src/core/analyticsEvents.ts) for the complete list of ~12 events.
-- **Off by default:** Google Signals and ad personalisation are disabled, and the browser's [Global Privacy Control](https://globalprivacycontrol.org/) signal disables analytics entirely.
-- **Only on the hosted site:** analytics is gated on a production build *and* a hostname allowlist ([`src/core/analytics.ts`](src/core/analytics.ts)), so `npm run dev`, `vite preview`, the test suite and any fork are all silent.
-
-The measurement ID in `.env.production` is committed on purpose. A GA4 measurement ID is a public identifier — it ships inlined in the JS bundle of every site that uses GA and is readable via View Source — so keeping it secret would buy nothing. If you fork this and want your own analytics, set `VITE_GA_MEASUREMENT_ID` and add your hostname to `PROD_HOSTS`.
+The hosted site loads Google Analytics to answer questions like "does anyone use the looper?". Patch names, author fields, file names, MIDI port names and preset contents are never sent: every tracked value is a fixed keyword or a coarse bucket, and the full list of roughly a dozen events is in [`src/core/analyticsEvents.ts`](src/core/analyticsEvents.ts). Ad personalization is off, Global Privacy Control disables analytics entirely, and tracking is gated on a production build plus a hostname allowlist ([`src/core/analytics.ts`](src/core/analytics.ts)), so dev servers, tests and forks are silent. The measurement ID in `.env.production` is committed on purpose: GA4 IDs ship in the JS bundle of every site that uses them, so hiding it would buy nothing.
 
 ## Contributing
 
-GP200 Studio is open source and contributions are welcome — bug reports, protocol captures from your hardware, and pull requests alike. Open an issue or PR on [GitHub](https://github.com/kabir0st/gp200-studio). If the app saves you from the 4" screen, you can also [buy me a coffee](https://buymeacoffee.com/kabir0st). ☕
+Bug reports, protocol captures from your hardware and pull requests are all welcome. Open an issue or PR on [GitHub](https://github.com/kabir0st/gp200-studio). If the app saves you from the 4" screen, you can also [buy me a coffee](https://buymeacoffee.com/kabir0st). ☕
 
 ## Credits
 
-- Built on the reverse-engineering groundwork of **[phash/gp200editor](https://github.com/phash/gp200editor)** — the `.prst` binary format, SysEx MIDI protocol, and 305-effect mapping
-- Built by [Kabir Tamari](https://kabirtamari.com)
+Built on the reverse-engineering groundwork of **[phash/gp200editor](https://github.com/phash/gp200editor)** (the `.prst` binary format, the SysEx protocol and the 305-effect mapping), by [Kabir Tamari](https://kabirtamari.com).
 
 ## License
 
-[GPL-3.0](LICENSE) — free to use, study, share, and improve; derivatives must stay open source.
+[GPL-3.0](LICENSE). Free to use, study, share and improve; derivatives must stay open source.
