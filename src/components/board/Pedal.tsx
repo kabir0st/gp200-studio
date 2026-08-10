@@ -104,7 +104,7 @@ export function Pedal({
   // data-flip-id: Flip matches captured state to live elements by identity unless
   // given an id. A cross-row move remounts this pedal as a *different* DOM node
   // (the two rows are separate parents), so without an id Flip can't reconcile it
-  // and — animating with absolute:true — strands it at an absolute position, out
+  // and , animating with absolute:true , strands it at an absolute position, out
   // of flow: the board collapses and pedals overlap at stale coordinates.
   // slotIndex is the immutable block identity, so it survives reordering.
   return (

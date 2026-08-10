@@ -6,7 +6,7 @@ import {
   PEAKS_PER_BAR,
 } from '@/core/waveformPeaks';
 
-/** A ramp 0..1 across `n` samples — predictable per-bucket maxima. */
+/** A ramp 0..1 across `n` samples , predictable per-bucket maxima. */
 function ramp(n: number): Float32Array {
   const out = new Float32Array(n);
   for (let i = 0; i < n; i++) out[i] = i / (n - 1);

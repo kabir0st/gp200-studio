@@ -15,7 +15,7 @@
  *
  * Message shape (see src/core/SysExCodec.ts): byte[8] = CMD (0x11 host
  * request, 0x12 set/notify), byte[9] = sub-command. Some subs carry a
- * nibble-encoded payload (two 0x0N bytes per real byte) — pass --nibble to
+ * nibble-encoded payload (two 0x0N bytes per real byte) , pass --nibble to
  * also print the decoded form.
  *
  * Usage:
@@ -28,7 +28,7 @@
  *                     differ within each (cmd, sub, length) group
  *   --summary         only print the (cmd, sub, length) histogram
  *
- * Example — isolate the CTRL assignment write from its capture:
+ * Example , isolate the CTRL assignment write from its capture:
  *   node scripts/decode-sysex-capture.mjs dumps/ctrl-assignment/ctrl-assignment.pcapng \
  *     --cmd 12 --diff
  */
@@ -122,7 +122,7 @@ if (opts.sub !== null) messages = messages.filter((msg) => msg[9] === opts.sub);
 
 console.log(`${opts.file}: ${total} GP-200 SysEx messages, ${messages.length} after filtering\n`);
 
-// (cmd, sub, length) histogram — the first thing to look at: it tells you how
+// (cmd, sub, length) histogram , the first thing to look at: it tells you how
 // many distinct frame kinds the capture holds and how often each fired.
 const groups = new Map();
 for (const msg of messages) {

@@ -310,7 +310,7 @@ describe('PRSTEncoder: controller/EXP assignment records', () => {
     // every later branch keyed off `Boolean(preset.rawSource)`. A 1176-byte
     // factory file therefore got no base bytes copied, yet still skipped header
     // seeding and block padding and took the patch-in-place controls-tail
-    // branch — which walked an all-zero buffer and bailed. The export came out
+    // branch , which walked an all-zero buffer and bailed. The export came out
     // with no TSRP magic, a zero MRAP pointer and an all-zero tail.
     const shortRaw = new Uint8Array(1176);
     const ctrl = Array.from({ length: 8 }, (_, ctrlIndex) => ({ ctrlIndex, blockMask: 0 }));

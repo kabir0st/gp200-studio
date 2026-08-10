@@ -45,7 +45,7 @@ export interface UseLooperTriggersReturn {
  * React glue for the looper's MIDI-learn/hijack path: owns the learned-trigger
  * map and the armed-row state, registers the raw-frame tap on the MIDI
  * dispatcher, and applies the side effects the pure decision engine
- * (src/core/looperTriggers.ts) returns — dispatching looper actions, sending
+ * (src/core/looperTriggers.ts) returns , dispatching looper actions, sending
  * the revert toggle, and console logging.
  */
 export function useLooperTriggers(opts: UseLooperTriggersOpts): UseLooperTriggersReturn {

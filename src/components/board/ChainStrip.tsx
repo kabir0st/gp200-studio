@@ -5,7 +5,7 @@ import { getBodySpec } from './boardPalette';
 
 interface ChainStripProps {
   effects: EffectSlot[];
-  /** scroll the board to that chain position — the strip doubles as board nav */
+  /** scroll the board to that chain position , the strip doubles as board nav */
   onJump: (index: number) => void;
 }
 

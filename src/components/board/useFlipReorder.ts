@@ -27,7 +27,7 @@ export function useFlipReorder<T extends HTMLElement = HTMLDivElement>(
   /**
    * `absolute: true` takes the pedals out of flow for the duration of the tween.
    * If a tween is interrupted (a second reorder lands mid-flight) the elements can
-   * keep that absolute positioning forever — the board collapses and the pedals
+   * keep that absolute positioning forever , the board collapses and the pedals
    * pile up at stale coordinates. So every path out of an animation ends here.
    */
   const release = useCallback(() => {
@@ -47,7 +47,7 @@ export function useFlipReorder<T extends HTMLElement = HTMLDivElement>(
    * `absolute: true` takes every pedal out of flow, and a bay reserves no height
    * of its own (that reservation was removed because it left ~140px of dead air
    * above short pedals). So the moment the pedals go absolute, the bays collapse
-   * to zero and the whole board implodes — measured live at 672px → 72px, with
+   * to zero and the whole board implodes , measured live at 672px → 72px, with
    * pedals piled up at stale coordinates. Pinning the height is what the old
    * per-bay min-height was accidentally doing, minus the dead air at rest.
    */

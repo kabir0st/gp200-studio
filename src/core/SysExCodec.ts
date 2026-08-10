@@ -10,17 +10,17 @@ import { CONTROL_RECORDS_DUMP_OFFSET, parseControlRecords } from './controlRecor
  *   0x1007 len=72  general block; current slot at payload[4:6] LE
  *   0x1002 len=8   unknown (u16s 61, 110, 53, …)
  *   0x1010 len=4   tuner: payload[0:2] LE = A4 reference Hz (observed 440;
- *                  manual range 430–450) — field mapping unverified on
+ *                  manual range 430–450) , field mapping unverified on
  *                  hardware, do not build UI on it yet
  *   0x1000 len=6   unknown
  *   0x1004 len=124 global EQ: 31 float32 LE (master enable + 6 filters:
- *                  low cut, 4 bands, high cut — per-field mapping pending a
+ *                  low cut, 4 bands, high cut , per-field mapping pending a
  *                  hardware diff pass; exposed raw)
  *   0x000a len=20  drum style-group name: u16 index, name ASCII @ payload[4],
  *                  zero-terminated (indexes 1..11 factory genres, 12..19
  *                  "User1".."User8"; trailing bytes are stale device RAM)
  *   0x100e len=40  footswitch-mode template: u16 index (0..2), then 8
- *                  action-id pairs — raw until the FS template decode lands
+ *                  action-id pairs , raw until the FS template decode lands
  */
 export interface DeviceStateDump {
   /** Currently active preset slot 0..255. */
@@ -275,7 +275,7 @@ export const SysExCodec = {
    *           `01 00 04 00 FF 00 FF 00` (a write preamble the file lacks)
    *   [16:]   the file content from 0x30 (the `02 00 58 00` metadata TLV)
    *           up to but excluding the trailing 8 bytes (the `C0 04 ...`
-   *           footer + BE16 checksum) — verified byte-for-byte against the
+   *           footer + BE16 checksum) , verified byte-for-byte against the
    *           capture, whose image tail equals the file's last CTRL record.
    *   [20]    the in-file slot-mirror byte is blanked to 0xFF: the capture
    *           shows the editor sends FF here even when writing to slot 9;
@@ -300,7 +300,7 @@ export const SysExCodec = {
    * Frame an upload image as 0x12/0x20 flash-write chunks for `slot`.
    * Per the same capture: 183 raw bytes per chunk (366 nibbles), target slot
    * at byte[10], and the RAW-image offset 7-bit-split at [11] (low) / [12]
-   * (high) — offset = b12*128 + b11. A 1184-byte image yields 7 chunks
+   * (high) , offset = b12*128 + b11. A 1184-byte image yields 7 chunks
    * (6×380B + 1×186B frames). The device commits to flash directly; no
    * save-commit follows (hardware-verified: survives power-cycle).
    */
@@ -752,7 +752,7 @@ export const SysExCodec = {
    * dumps/re-output/ir-handlers.txt): F0, 7-byte header, CMD, then the
    * decoded payload length and chunk offset as 7-bit splits, then the
    * payload as nibbles (high first), F7. What the protocol notes long
-   * called the "sub-opcode" (wire[9]) is decodedLen & 0x7F — message
+   * called the "sub-opcode" (wire[9]) is decodedLen & 0x7F , message
    * semantics live in the payload's leading TLV record id instead
    * (docs/protocol-capture.md §4). Reproduces every existing hand-built
    * frame byte-for-byte for payloads under 128 bytes.
@@ -798,10 +798,10 @@ export const SysExCodec = {
   },
 
   /**
-   * EXPERIMENTAL patch-name single-field write — hypothesis, NOT observed
+   * EXPERIMENTAL patch-name single-field write , hypothesis, NOT observed
    * on the wire and NOT found in the editor binary. Shape: the confirmed
    * author frame (type 0x09 @ field address 0x0B70) with the address moved
-   * to 0x0B60 — name precedes author by 0x10 both in the editor's preset
+   * to 0x0B60 , name precedes author by 0x10 both in the editor's preset
    * model (+0x88/+0x98) and in the .prst file (28/44). The editor's own
    * rename dialog instead persists names via a full preset write; this
    * frame exists purely for the guarded hardware experiment in renameSlot
@@ -823,9 +823,9 @@ export const SysExCodec = {
   },
 
   /**
-   * EXPERIMENTAL User-IR slot rename — hypothesis. The read side is
+   * EXPERIMENTAL User-IR slot rename , hypothesis. The read side is
    * confirmed (query TLV {0x1009, len 0x18, {u16 slot, u16 1, 16-byte
-   * name, 4 spare}}, CMD 0x11 — `FUN_005b4170`); this is the same record
+   * name, 4 spare}}, CMD 0x11 , `FUN_005b4170`); this is the same record
    * with the name filled and CMD 0x12. The editor's actual IR-rename
    * builder was not found in any dump, so treat as unverified until a
    * hardware trial on a scratch IR slot.
@@ -907,13 +907,13 @@ export const SysExCodec = {
   },
 
   /**
-   * Per-patch CTRL footswitch assignment write — the live sibling of
+   * Per-patch CTRL footswitch assignment write , the live sibling of
    * buildExpAssignment (same CMD/sub/length, different record type).
    *
    * Ground truth: dumps/ctrl-assignment/ (2026-08-08, fw 1.8.0), six frames
    * across four captures, cross-validated against the patch the editor then
    * exported (`01-A strat.prst`, whose tail decodes to CTRL 1 state=1
-   * mask=0x004 and CTRL 8 state=0 mask=0x400 — the last frame of each
+   * mask=0x004 and CTRL 8 state=0 mask=0x400 , the last frame of each
    * session, state byte included), plus `fs-1-mod-assign-unassign.pcapng`
    * (2026-08-09), the MOD-bit capture that settled the mask encoding.
    *
@@ -923,7 +923,7 @@ export const SysExCodec = {
    *   [38-39] ctrlIndex    (ctl-1-* → 00, ctl-8-* → 07)
    *   [40]    state        saved toggle position (ctl-1 sessions → 01,
    *                        ctl-8 → 00, matching the exported tail)
-   *   [41-44] payload+2..3 nibble pairs — the "uninitialized" window; the
+   *   [41-44] payload+2..3 nibble pairs , the "uninitialized" window; the
    *                        editor carries the patch's stored garbage through
    *                        (5c 53 in the MOD capture), we write zeros
    *   [45-48] blockMask    two nibbleEncode pairs, one per mask byte:
@@ -935,7 +935,7 @@ export const SysExCodec = {
    * captures never exercised a high nibble (every observed byte was ≤ 0x0F),
    * which is what let three models fit them; the MOD capture disambiguated:
    * assigning MOD flipped [45] 08→00 (mask 0x880→0x800, FX LOOP already on
-   * that switch). This also explains both hardware rounds — the firmware
+   * that switch). This also explains both hardware rounds , the firmware
    * evidently decodes byte = wire[2i]<<4 | wire[2i+1] without masking the low
    * slot to 4 bits, so our old 7+1 frames worked for bits 0-6 and 8-11 (whole
    * byte in the low-nibble slot, e.g. [46]=0x40 for EQ) while MOD's carry at
@@ -944,7 +944,7 @@ export const SysExCodec = {
    * This is a WHOLE-MASK write, not a per-bit toggle: assigning VOL on CTRL 8
    * sent 0x400 alone and the export shows the previously-set DST bit gone. No
    * navigation frame precedes it (unlike the EXP path, which needs
-   * buildExpNavigation) — each captured action is exactly one frame. The MOD
+   * buildExpNavigation) , each captured action is exactly one frame. The MOD
    * capture also showed [26]=03 where earlier captures had 00; meaning
    * unknown, but frames with [26]=00 are hardware-confirmed accepted.
    */
@@ -963,10 +963,10 @@ export const SysExCodec = {
     msg[39] = 0;
     msg[40] = state & 0x7F;             // observed 0/1; low slot takes a whole byte
     // [41-44] stay zero (uninitialized payload window).
-    msg[45] = (blockMask >> 4) & 0x0F;  // mask low byte, high nibble — MOD (bit 7)
+    msg[45] = (blockMask >> 4) & 0x0F;  // mask low byte, high nibble , MOD (bit 7)
     msg[46] = blockMask & 0x0F;         // mask low byte, low nibble
     msg[47] = (blockMask >> 12) & 0x0F; // mask high byte, high nibble (always 0)
-    msg[48] = (blockMask >> 8) & 0x0F;  // mask high byte, low nibble — VOL/FX LOOP
+    msg[48] = (blockMask >> 8) & 0x0F;  // mask high byte, low nibble , VOL/FX LOOP
     // [49-52] stay zero (uninitialized payload window).
     msg[53] = 0xF7;                                      // [53]    end
     return msg;

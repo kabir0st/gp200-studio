@@ -10,7 +10,7 @@ interface ChainRowProps {
   slot: EffectSlot;
   /** array position in the chain (0-based); drives handlers */
   index: number;
-  /** position to *show* — differs from `index` mid-drag, while the committed
+  /** position to *show* , differs from `index` mid-drag, while the committed
    *  order still stands under the animation */
   displayIndex: number;
   chainLength: number;
@@ -24,7 +24,7 @@ interface ChainRowProps {
   dragging: boolean;
 }
 
-/** The first two knob params, as "Drive 62 · Tone 40" — a glance-level summary. */
+/** The first two knob params, as "Drive 62 · Tone 40" , a glance-level summary. */
 function summarize(defs: EffectParam[], params: number[]): string {
   return defs
     .filter((def): def is Extract<EffectParam, { type: 'knob' }> => def.type === 'knob')
@@ -36,7 +36,7 @@ function summarize(defs: EffectParam[], params: number[]): string {
 /**
  * One chain block as a list row.
  *
- * The phone drops the pedal enclosure entirely — a 172/310px body cannot tile
+ * The phone drops the pedal enclosure entirely , a 172/310px body cannot tile
  * on a 390px viewport without a horizontal scroller. What the enclosure
  * communicated survives: module color as a left edge band, the LED as the
  * bypass switch state, and the effect name at reading size.

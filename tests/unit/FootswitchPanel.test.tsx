@@ -143,7 +143,7 @@ describe.skipIf(!HAS_FIXTURES)('FootswitchPanel', () => {
     expect(getByText(/sent to the connected GP-200 straight away/)).toBeTruthy();
     // No SAVE TO caveat anymore: MOD's live encoding (mask nibble [45]) was
     // captured from the official editor on 2026-08-09, so every block —
-    // including MOD — syncs live like the rest.
+    // including MOD , syncs live like the rest.
     expect(queryByText(/except MOD/)).toBeNull();
   });
 

@@ -264,7 +264,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     const data = getBytes(event.data);
     // Looper MIDI-learn/hijack tap runs before EVERY branch below: a consumed
     // frame (learn capture, hijacked stomp, debounced sibling) must never
-    // reach the normal handlers — that's what keeps a hijacked toggle from
+    // reach the normal handlers , that's what keeps a hijacked toggle from
     // being mirrored into preset state. The tap passes anything it doesn't
     // own, so real slot changes, knob turns, and effect swaps fall through
     // untouched. See src/hooks/useLooperTriggers.ts.
@@ -339,7 +339,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // the 38-byte footswitch-ack variant (CTRL 4-8 report a stomp as 0x0C where
     // CTRL 1-3 use 0x08) they land in an all-zero tail, which is precisely the
     // effectId===0 case dropped below. That ack carries block@22 and state@24,
-    // the same offsets the 0x08 FX-state frame uses — see isFootswitchAck0c in
+    // the same offsets the 0x08 FX-state frame uses , see isFootswitchAck0c in
     // src/core/looperTriggers.ts, which must stay in step with this check.
     if (isSysEx(data, 0x12, 0x0C) && data.length >= 38) {
       handled = true;
@@ -390,7 +390,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
       }
     }
     // Opt-in monitor (src/core/debugFlags.ts): hex-dump any frame no branch
-    // above recognized — exactly what the pending USB-capture work needs.
+    // above recognized , exactly what the pending USB-capture work needs.
     if (!handled && isMidiMonitorEnabled()) {
       console.debug(`[GP-200] rx unhandled: ${hexOfBytes(data)}`);
     }
@@ -673,7 +673,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // Flash upload, mirroring the official editor byte-for-byte
     // (dumps/patch-upload.pcapng): encode to .prst bytes, derive the upload
     // image, send it as 0x12/0x20 chunks addressed to the target slot. The
-    // device commits to flash directly — no save-commit follows (verified:
+    // device commits to flash directly , no save-commit follows (verified:
     // the uploaded patch survives a power-cycle). Because the image carries
     // the full file content, CTRL/EXP assignments travel with it.
     const fileBytes = new Uint8Array(new PRSTEncoder().encode(preset));
@@ -690,7 +690,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // Writing to the active slot looked like a no-op in hardware testing:
     // the edit buffer keeps serving the pre-push patch and a preset-change
     // to the current slot doesn't reload it. So park on the adjacent
-    // sub-slot first, write, then return — the return is a real slot change
+    // sub-slot first, write, then return , the return is a real slot change
     // that loads the freshly written flash copy.
     const wasActive = currentSlotRef.current === slot;
     if (wasActive) {
@@ -709,19 +709,19 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     // Let the flash write settle, then switch the device to the slot so the
     // pushed patch is live (the editor leaves this to the user; we select
     // it). Hardware testing showed the device goes deaf for a while after
-    // the chunk burst — a preset-change 200ms later was silently dropped —
+    // the chunk burst , a preset-change 200ms later was silently dropped —
     // so give it a generous window.
     await new Promise(r => setTimeout(r, 800));
 
     // Experiment toggle: the upload capture stops 30ms after the last chunk,
     // so a deferred finalize frame from the official editor would be
     // invisible in it. Hardware runs show the device answering reads but
-    // discarding the upload + refusing slot changes after the burst — the
+    // discarding the upload + refusing slot changes after the burst , the
     // signature of staged data awaiting a commit. Opt in to sending the
     // known save-commit opcode as that finalize via
     // localStorage.setItem('gp200.pushCommit', '1'). CAUTION: if the device
     // treats it as a plain edit-buffer save instead, the target slot gets
-    // overwritten with the currently active patch — use a scratch slot.
+    // overwritten with the currently active patch , use a scratch slot.
     let commitRequested = false;
     try {
       commitRequested = window.localStorage.getItem('gp200.pushCommit') === '1';
@@ -757,7 +757,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
         console.log('[GP-200] push verify: OK (readback matches pushed name + CTRL masks)');
       } else {
         console.warn(
-          `[GP-200] push verify: MISMATCH — name "${readback.patchName}" vs pushed ` +
+          `[GP-200] push verify: MISMATCH , name "${readback.patchName}" vs pushed ` +
           `"${preset.patchName}", ctrlMasks [${gotMasks}] vs pushed [${wantMasks}]. ` +
           'The device likely discarded the flash write.',
         );
@@ -1028,7 +1028,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   // Bulk apply: write the same CTRL assignments and/or patch volume into many
   // saved patches. Per slot this replays the proven renameSlot sequence —
   // preset-change loads the slot into the edit buffer, live writes mutate it,
-  // save-commit persists it — so it inherits that path's hardware guarantees
+  // save-commit persists it , so it inherits that path's hardware guarantees
   // (and its caveats: CTRL mask bit 7/MOD does not apply live, docs §3).
   const bulkApplyAbortRef = useRef(false);
   const [bulkApplyProgress, setBulkApplyProgress] = useState<BulkApplyProgress | null>(null);

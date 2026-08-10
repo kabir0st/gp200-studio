@@ -220,7 +220,7 @@ export function Guide({ onBack }: GuideProps) {
             <Shot
               src="/guide/01-landing.png"
               alt="GP200 Studio landing screen with the connect button and the open-without-connecting link"
-              caption="The landing screen: plug in your GP-200 and click the big button — or open without connecting to try the editor on a blank preset."
+              caption="The landing screen: plug in your GP-200 and click the big button , or open without connecting to try the editor on a blank preset."
             />
           </Section>
 
@@ -341,7 +341,7 @@ export function Guide({ onBack }: GuideProps) {
             </h3>
             <p>
               A multi-layer loop station that records the GP-200's USB audio
-              (you'll be asked to enable audio capture first) — a capability the
+              (you'll be asked to enable audio capture first) , a capability the
               pedal doesn't ship with. Your first recording sets the master loop
               length; every record pass after that adds a new layer, quantized
               and phase-locked to the first, with no limit on the number of
@@ -427,7 +427,7 @@ export function Guide({ onBack }: GuideProps) {
               <li>Live device features need a GP-200 over USB in Chrome or Edge (Web MIDI).</li>
               <li>Offline, you can edit patches and import/export files, but not sync or save to the unit.</li>
               <li>
-                Your patches never leave your machine — there is no account and no server storing
+                Your patches never leave your machine , there is no account and no server storing
                 them. The site does record anonymous usage analytics (Google Analytics) to see which
                 features get used: no patch names, file names or device details are ever sent, ad
                 personalisation and Google Signals are switched off, and the browser&rsquo;s Global

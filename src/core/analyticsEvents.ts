@@ -30,7 +30,7 @@ export type PanelId =
 
 export type UiMode = 'desktop' | 'phone';
 
-/** How the editor was entered — the headline question this whole module exists
+/** How the editor was entered , the headline question this whole module exists
  *  to answer: do people arrive with a real GP-200 attached, or open it blank? */
 export type EditorEntry = 'device' | 'blank' | 'import' | 'slot';
 
@@ -66,10 +66,10 @@ export interface AnalyticsParams {
   /** A take was started. `tracks` is the layer count at that moment, so the
    *  distribution answers "do people stack loops or record one and stop?". */
   looper_record: { tracks: number };
-  /** First take that actually landed, once per session — the activation metric.
+  /** First take that actually landed, once per session , the activation metric.
    *  The gap between looper_record and this is the real-world failure rate. */
   looper_first_loop: { ui_mode: UiMode };
-  /** Backing track imported. `ext` is the file extension only — never the name. */
+  /** Backing track imported. `ext` is the file extension only , never the name. */
   looper_import_audio: { ok: boolean; ext: string };
   /** A footswitch was successfully bound to a looper action (MIDI learn). */
   looper_learn_bound: { action: string };
@@ -90,7 +90,7 @@ export interface AnalyticsParams {
     connected: boolean;
     panels: number;
     /** Reached the point of recording a loop / starting the drums, not merely
-     *  opening the panel — lets you cohort ("do people who connect also loop?")
+     *  opening the panel , lets you cohort ("do people who connect also loop?")
      *  without joining across events. */
     looper_used: boolean;
     drums_used: boolean;

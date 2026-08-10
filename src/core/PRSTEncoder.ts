@@ -60,7 +60,7 @@ export class PRSTEncoder {
     // A rawSource SHORTER than a full file (factory 1176-byte .prst files) is
     // not usable as a base: it has no controls tail to patch and no header to
     // preserve. Every later branch keys off this one flag rather than
-    // `preset.rawSource` truthiness — when they disagreed, a short rawSource
+    // `preset.rawSource` truthiness , when they disagreed, a short rawSource
     // skipped header seeding AND block padding while still taking the
     // patch-in-place tail branch, so the export lost its TSRP magic, its MRAP
     // pointer and its whole EXP/CTRL tail.

@@ -18,7 +18,7 @@ interface MobileTabBarProps {
 /**
  * Fixed bottom navigation. Sits in the thumb zone and is padded past the home
  * indicator, so the primary way to move around the app is always reachable
- * one-handed — the desktop equivalents are spread between the top bar and the
+ * one-handed , the desktop equivalents are spread between the top bar and the
  * floating deck, neither of which survives a phone viewport.
  */
 export function MobileTabBar({ active, onChange }: MobileTabBarProps) {

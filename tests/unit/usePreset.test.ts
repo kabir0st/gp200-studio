@@ -4,7 +4,7 @@ import { usePreset } from '@/hooks/usePreset';
 import { createDefaultPreset } from '@/core/defaultPreset';
 import type { GP200Preset } from '@/core/types';
 
-/** A preset whose CTRL 1 mask carries bit 11 — the device-written, unmodeled
+/** A preset whose CTRL 1 mask carries bit 11 , the device-written, unmodeled
  *  bit that no pedal maps to but that the codec round-trips verbatim. */
 function presetWithMask(ctrlIndex: number, blockMask: number): GP200Preset {
   const base = createDefaultPreset();
@@ -40,7 +40,7 @@ describe('usePreset CTRL mask mutators', () => {
 
   it('setCtrlMask keeps bit 11 instead of clamping it away', () => {
     // Regression: the clamp was `& 0x7FF`, which dropped bit 11 on any
-    // whole-mask write — while parseControlRecords keeps it (& 0x0FFF) and
+    // whole-mask write , while parseControlRecords keeps it (& 0x0FFF) and
     // applyControlRecords writes it back, so the editor and the file disagreed.
     const { result } = renderHook(() => usePreset());
     act(() => result.current.loadPreset(presetWithMask(1, 0)));

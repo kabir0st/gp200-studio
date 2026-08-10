@@ -221,7 +221,7 @@ export function PedalBoard({
   }, [openDrawer, onLooperDrawerOpenChange]);
 
   // Every drawer *opens* through here so the analytics call can't be forgotten
-  // on a new drawer. Closing (setOpenDrawer(null)) stays direct — only the open
+  // on a new drawer. Closing (setOpenDrawer(null)) stays direct , only the open
   // is a discovery signal.
   const openPanel = useCallback(
     (panel: 'fxloop' | 'patch' | 'looper' | 'drums' | 'remote') => {
@@ -520,7 +520,7 @@ export function PedalBoard({
       >
         {/* Browser practice drums first (works offline); the hardware remote
             below needs a connected GP-200. Playback survives closing this
-            drawer — the hook lives in App. */}
+            drawer , the hook lives in App. */}
         <p
           className="font-mono-display text-label text-text-muted uppercase
             tracking-widest mb-2"

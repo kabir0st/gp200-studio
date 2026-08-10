@@ -26,7 +26,7 @@ export interface EngagementTracking {
   /** Record *why* the editor is about to open. Called by the handler that
    *  causes it; read by the effect that observes `hasPreset` flip. */
   markEditorEntry: (entry: EditorEntry) => void;
-  /** Deduped per panel per session — the useful signal for a drawer is whether
+  /** Deduped per panel per session , the useful signal for a drawer is whether
    *  anyone ever found it, not how many times one person reopened it. */
   trackPanelOpen: (panel: PanelId) => void;
 }
@@ -37,7 +37,7 @@ interface Args {
   errorMessage: UseMidiDeviceReturn['errorMessage'];
   hasPreset: boolean;
   isPhone: boolean;
-  /** Microphone capture state — the hard gate on the whole loop station. */
+  /** Microphone capture state , the hard gate on the whole loop station. */
   audioActive: boolean;
   audioError: string | null;
   /** Loop station depth; 0 → ≥1 is the activation moment. */
@@ -109,7 +109,7 @@ export function useEngagementTracking({
       connectStartedAt.current = null;
       track('connect_success', {
         // firmwareValues is a small numeric tuple from the device identity
-        // response — a bounded set, safe as a dimension.
+        // response , a bounded set, safe as a dimension.
         firmware: deviceInfo?.firmwareValues.join('.') ?? 'unknown',
         firmware_ok: deviceInfo?.versionAccepted ?? false,
         ms_bucket: started === null ? 'unknown' : msBucket(Date.now() - started),
@@ -120,7 +120,7 @@ export function useEngagementTracking({
       connectStartedAt.current = null;
       track('connect_error', {
         // `from` distinguishes "never reached the device" from "reached it but
-        // the handshake failed" — the two halves of the funnel leak.
+        // the handshake failed" , the two halves of the funnel leak.
         stage: from === 'handshaking' ? 'handshake' : 'connect',
         reason: errorCode(errorMessage ?? ''),
       });

@@ -46,7 +46,7 @@
   gap: 4px;
   flex: 1;
 }
-/* Each chip is a button that scrolls its pedal into view — the board's nav on
+/* Each chip is a button that scrolls its pedal into view , the board's nav on
    narrow screens, where only a couple of pedals fit at a time. */
 .board-view .chain-node {
   appearance: none;
@@ -472,7 +472,7 @@
 }
 /* ── touch chain reorder ──
    Drag-and-drop is HTML5 DnD, which never fires on touch, and the keyboard grip
-   needs arrow keys — so touch devices get explicit ‹ › arrows (rendered only
+   needs arrow keys , so touch devices get explicit ‹ › arrows (rendered only
    when the pointer is coarse, see PedalBoard). Absolutely positioned over the
    brand strip so they cost no layout height and the bays keep their size. */
 .board-view .pedal-move {
@@ -930,7 +930,7 @@
 }
 /* Middle grid track: dot · [− name slot +] · connection+sync. Nested as another
    1fr-auto-1fr grid so the dot and the (much wider) connection badge occupy
-   equal side tracks — otherwise they flank the stepper asymmetrically and the
+   equal side tracks , otherwise they flank the stepper asymmetrically and the
    cluster reads ~25px left of centre. */
 .board-view .board-topbar-status {
   position: relative;
@@ -967,7 +967,7 @@
   flex: none;
 }
 /* Fixed width so a long patch name truncates rather than pushing the arrows
-   outward — the cluster must not resize as you step through patches. */
+   outward , the cluster must not resize as you step through patches. */
 .board-view .deck-patch-well {
   display: flex;
   align-items: baseline;
@@ -1331,7 +1331,7 @@
   border-color: var(--accent-red);
   color: #fff;
 }
-/* on the solid red fill the icon's own hue would clash — inherit ink instead,
+/* on the solid red fill the icon's own hue would clash , inherit ink instead,
    same treatment as .deck-btn.primary .act-icon above */
 .board-view .deck-btn.tuner-active .act-icon {
   color: currentColor;
@@ -2182,7 +2182,7 @@
 
 /* ════════════════════════════════════════════════════════════════════════
    Board layout ≤720px: the two pedal rows fold into ONE swipeable row (see
-   useSingleRowBoard — PedalBoard renders the markup, this styles it). Two
+   useSingleRowBoard , PedalBoard renders the markup, this styles it). Two
    340px+ rows plus the chain strip, info bar and deck don't fit a phone
    viewport, and one row keeps the whole chain in a single left-to-right
    swipe with no cross-row cable stubs to read.
@@ -2199,7 +2199,7 @@
   }
   /* Drop the reserved bay height. It buys a stable layout when you swap an
      effect (nothing above shifts), but it costs the height of the tallest
-     effect in the module — 200-300px of empty board above a short pedal, on
+     effect in the module , 200-300px of empty board above a short pedal, on
      the one screen where vertical space is scarcest. Bays collapse to their
      pedal instead; the row still bottom-aligns, so the chain stays level. */
   .board-view .board-rows.single .pedal-bay {
@@ -2237,7 +2237,7 @@
   }
 
   /* info bar: hover doesn't exist on touch, so the "hover a pedal" hint is
-     dead weight — the bar only earns its height once a pedal's ⓘ is pinned */
+     dead weight , the bar only earns its height once a pedal's ⓘ is pinned */
   .board-view .info-bar {
     padding: 0 10px;
   }
@@ -2292,7 +2292,7 @@
   .board-view .deck-live {
     display: none;
   }
-  /* Drop the IN/OUT level bars — they're a passive readout, and they're the
+  /* Drop the IN/OUT level bars , they're a passive readout, and they're the
      widest thing in the deck. The audio *controls* (AUDIO IN, MONITOR, output
      device, stop) stay: nothing else in the board exposes them. */
   .board-view .audio-meters {

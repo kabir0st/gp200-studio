@@ -8,10 +8,10 @@ interface DeviceStatePanelProps {
 
 /**
  * Read-only view of the 0x4E state dump pulled at connect (global EQ floats,
- * tuner A4 reference, drum style-group names — decoded 2026-08-09, see
+ * tuner A4 reference, drum style-group names , decoded 2026-08-09, see
  * docs/protocol-capture.md §4). Read-only on purpose: the global-EQ WRITE
  * frame was not found in the editor binary, and the 31 EQ floats are not yet
- * mapped to named bands — both need one hardware session (diff-map the dump
+ * mapped to named bands , both need one hardware session (diff-map the dump
  * while changing one setting at a time). Until then this panel shows
  * device truth without pretending to edit it.
  */

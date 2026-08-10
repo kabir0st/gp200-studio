@@ -201,7 +201,7 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
     if (!outputRef.current) return;
     // The device echoes a same-slot 0x08 change frame back; suppress so the
     // echo can't match a learned looper sysex08 fingerprint and fire an
-    // action. (FX-state frames are also muted for the window — harmless, the
+    // action. (FX-state frames are also muted for the window , harmless, the
     // app re-pulls the preset after slot changes anyway.)
     suppressFxBriefly();
     // sub=0x08 with slot at byte[26], confirmed via capture 222343
@@ -272,7 +272,7 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
 
   /**
    * Write one CTRL footswitch's whole block mask to the device (per-patch).
-   * Whole-mask, not per-bit — callers pass the resulting mask, not the bit
+   * Whole-mask, not per-bit , callers pass the resulting mask, not the bit
    * they toggled. `state` is the switch's saved toggle position, carried
    * verbatim from the preset so the write doesn't flip it.
    */
@@ -336,7 +336,7 @@ export function useMidiSend(opts: UseMidiSendOpts): UseMidiSendReturn {
   // Deliberately NOT routed through suppressFxBriefly(): that window exists
   // for SysEx echoes, and muting it here would also mute legitimate hardware
   // stomps' frames (looperTriggers keeps cc-kind frames live on the
-  // assumption CC frames are never self-emitted — Web MIDI does not loop
+  // assumption CC frames are never self-emitted , Web MIDI does not loop
   // outbound messages back to inputs).
   const [ccChannel, setCcChannelState] = useState(loadCcChannel);
   const ccChannelRef = useRef(ccChannel);

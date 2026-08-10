@@ -8,7 +8,7 @@ import {
 } from '@/core/analytics';
 import { msBucket, bpmBucket, fileExt, errorCode } from '@/core/analyticsEvents';
 
-/** dataLayer holds `arguments` objects, not arrays — spread each to inspect. */
+/** dataLayer holds `arguments` objects, not arrays , spread each to inspect. */
 function calls(): unknown[][] {
   return [...(window.dataLayer ?? [])].map((a) => [...(a as IArguments)]);
 }

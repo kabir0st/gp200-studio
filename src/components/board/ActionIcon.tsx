@@ -2,7 +2,7 @@
  * Colour-coded line-art marks for the board's chrome actions (top bar + deck),
  * the Tier-1 counterpart to ModuleGlyph for buttons rather than effect blocks.
  *
- * Each action owns one hue so the button row is scannable at a glance — this
+ * Each action owns one hue so the button row is scannable at a glance , this
  * matters most on phones, where the row wraps and labels shrink. Colours are
  * darkened variants chosen to clear WCAG AA on the white `.deck-btn` face; on
  * an inverted `.deck-btn.primary` the icon drops back to `currentColor` (see

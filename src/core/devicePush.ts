@@ -162,7 +162,7 @@ export async function pushPresetToDevice(
   sender.sendPatchTempo(decoded.patchTempo);
   await sleep(paramGap);
   // CTRL footswitch masks are per-patch too. Without this the device keeps the
-  // PREVIOUS patch's assignments while the UI shows the new patch's — the two
+  // PREVIOUS patch's assignments while the UI shows the new patch's , the two
   // silently disagree until the next save. Every switch is written, including
   // the cleared ones, so stale bits from the old patch can't survive.
   if (decoded.ctrlAssignments) {

@@ -2,14 +2,14 @@
 // event, so a visitor who bounces off the landing page never pays for it.
 //
 // Analytics is OFF unless every one of these holds:
-//   • import.meta.env.PROD          — dev and Vitest are dead code paths
-//   • a well-formed G-XXXXXXXXXX id — see .env.production
-//   • a hostname in PROD_HOSTS      — keeps forks, localhost and `vite preview` out
-//   • no Global Privacy Control     — honours the browser-level opt-out
+//   • import.meta.env.PROD          , dev and Vitest are dead code paths
+//   • a well-formed G-XXXXXXXXXX id , see .env.production
+//   • a hostname in PROD_HOSTS      , keeps forks, localhost and `vite preview` out
+//   • no Global Privacy Control     , honours the browser-level opt-out
 //
 // On the measurement id: it is NOT a secret. It ships inlined in the bundle and
 // is readable from the deployed page by anyone, which is why the hostname gate
-// below — not secrecy — is what protects the property from stray reporting.
+// below , not secrecy , is what protects the property from stray reporting.
 //
 // Nothing in this module may ever throw into a caller. An editor that drops a
 // knob turn because a metric failed is strictly worse than a missing metric, so
@@ -28,7 +28,7 @@ export const ANALYTICS_DEBUG_FLAG = 'gp200:debug:analytics';
 // this never binds in practice; it exists so that a future instrumentation bug
 // (an effect firing in a render loop) costs a bounded amount of memory and
 // bandwidth instead of growing without limit. Deliberately not a "detect the ad
-// blocker" heuristic — gtag.js does not drain dataLayer, and a blocker serving
+// blocker" heuristic , gtag.js does not drain dataLayer, and a blocker serving
 // an empty 200 still fires onload, so queue length proves nothing either way.
 const MAX_EVENTS_PER_SESSION = 200;
 
@@ -64,7 +64,7 @@ function debugMode(): boolean {
   }
 }
 
-/** Global Privacy Control — a browser/extension-level "do not sell or share"
+/** Global Privacy Control , a browser/extension-level "do not sell or share"
  *  signal. Not in the DOM lib yet, hence the cast. */
 function privacyControlOn(): boolean {
   const nav = globalThis.navigator as (Navigator & { globalPrivacyControl?: boolean }) | undefined;
@@ -81,7 +81,7 @@ export function isAnalyticsEnabled(): boolean {
   return enabled;
 }
 
-// gtag.js reads the pushed `arguments` OBJECT off dataLayer — a plain array is
+// gtag.js reads the pushed `arguments` OBJECT off dataLayer , a plain array is
 // not equivalent for all downstream tag behaviour, so keep the canonical form.
 function gtag() {
   // oxlint-disable-next-line prefer-rest-params

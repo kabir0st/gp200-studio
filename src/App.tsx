@@ -100,7 +100,7 @@ function App() {
   // NOTE: the Loop Station does NOT rewrite the GP-200's global FootSwitch
   // settings. Two attempts at that "takeover" have now been reverted (c380497,
   // then again 2026-07-18): the settings protocol is write-only, so whatever
-  // the app writes on open cannot be read back and restored on close — it
+  // the app writes on open cannot be read back and restored on close , it
   // clobbers the user's real FS Mode and TAP targets for good. The second
   // attempt broke a user's working Stomp configuration.
   //
@@ -108,7 +108,7 @@ function App() {
   // effect-toggle frame the MIDI-learn tap recognizes, and the hijack path
   // sends a toggle-back to undo it (see useLooperTriggers / revertFor). That
   // undo covers ONE effect block, so it is correct only for a switch that
-  // toggles one block — hence the warning in LooperPanel telling the user to
+  // toggles one block , hence the warning in LooperPanel telling the user to
   // clear extra CTRL assignments from a switch before binding it.
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -539,8 +539,8 @@ function App() {
   async function handleSaveToActiveSlot() {
     if (!preset || midiDevice.currentSlot === null) return;
     // Save-commit persists the device's edit buffer, which every live edit
-    // (toggle, param, reorder, VOL/PAN/TEMPO, EXP and — since the 0x12/0x14
-    // capture — CTRL footswitch masks) already reached. The flash-upload
+    // (toggle, param, reorder, VOL/PAN/TEMPO, EXP and , since the 0x12/0x14
+    // capture , CTRL footswitch masks) already reached. The flash-upload
     // alternative is still rejected by real hardware (docs §0.1), so this
     // stays the save path.
     await midiDevice.saveToSlot(preset.patchName, midiDevice.currentSlot);
@@ -599,7 +599,7 @@ function App() {
   // Safety net for the drag state. The React onDragEnd on the board wrapper only
   // fires if the event can bubble from the source pedal, and a cross-row move
   // unmounts that pedal (the rows are separate parents). A window listener has no
-  // such dependency, so drag state can never stay stuck — which matters because a
+  // such dependency, so drag state can never stay stuck , which matters because a
   // stuck dragIndex hides every cable on the board until reload.
   useEffect(() => {
     const clear = () => {
@@ -809,7 +809,7 @@ function App() {
       )}
 
       {/* THE view. Below 640px the pedalboard is replaced wholesale by the
-          phone shell — the board is built around fixed-width enclosures in a
+          phone shell , the board is built around fixed-width enclosures in a
           horizontal stage and does not fold to a phone. The two trees never
           coexist; all state lives out here and survives the swap. */}
       {isPhone ? (

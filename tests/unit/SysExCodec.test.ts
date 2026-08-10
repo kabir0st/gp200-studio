@@ -695,32 +695,32 @@ describe('SysExCodec: buildCtrlAssignment', () => {
     label: string; ctrlIndex: number; blockMask: number; state: number; expected: string;
   }[] = [
     {
-      label: 'ctl-1-unassingn-assign-pre #1 — CTRL 1 cleared',
+      label: 'ctl-1-unassingn-assign-pre #1 , CTRL 1 cleared',
       ctrlIndex: 0, blockMask: 0x000, state: 1,
       expected: 'f0 21 25 7e 47 50 2d 32 12 14 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 0f 00 00 00 08 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 00 f7',
     },
     {
-      label: 'ctl-1-unassingn-assign-pre #2 — CTRL 1 → PRE (bit 0)',
+      label: 'ctl-1-unassingn-assign-pre #2 , CTRL 1 → PRE (bit 0)',
       ctrlIndex: 0, blockMask: 0x001, state: 1,
       expected: 'f0 21 25 7e 47 50 2d 32 12 14 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 0f 00 00 00 08 00 00 00 00 00 01 00 00 00 00 00 01 00 00 00 00 00 00 f7',
     },
     {
-      label: 'ctl-1-assign-dist — CTRL 1 → DST (bit 2)',
+      label: 'ctl-1-assign-dist , CTRL 1 → DST (bit 2)',
       ctrlIndex: 0, blockMask: 0x004, state: 1,
       expected: 'f0 21 25 7e 47 50 2d 32 12 14 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 0f 00 00 00 08 00 00 00 00 00 01 00 00 00 00 00 04 00 00 00 00 00 00 f7',
     },
     {
-      label: 'ctl-8-dist-unassign-assign #1 — CTRL 8 cleared',
+      label: 'ctl-8-dist-unassign-assign #1 , CTRL 8 cleared',
       ctrlIndex: 7, blockMask: 0x000, state: 0,
       expected: 'f0 21 25 7e 47 50 2d 32 12 14 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 0f 00 00 00 08 00 00 00 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 f7',
     },
     {
-      label: 'ctl-8-dist-unassign-assign #2 — CTRL 8 → DST (bit 2)',
+      label: 'ctl-8-dist-unassign-assign #2 , CTRL 8 → DST (bit 2)',
       ctrlIndex: 7, blockMask: 0x004, state: 0,
       expected: 'f0 21 25 7e 47 50 2d 32 12 14 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 0f 00 00 00 08 00 00 00 07 00 00 00 00 00 00 00 04 00 00 00 00 00 00 f7',
     },
     {
-      label: 'ctl-8-assign-vol — CTRL 8 → VOL (bit 10)',
+      label: 'ctl-8-assign-vol , CTRL 8 → VOL (bit 10)',
       ctrlIndex: 7, blockMask: 0x400, state: 0,
       expected: 'f0 21 25 7e 47 50 2d 32 12 14 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 0f 00 00 00 08 00 00 00 07 00 00 00 00 00 00 00 00 00 04 00 00 00 00 f7',
     },
@@ -740,13 +740,13 @@ describe('SysExCodec: buildCtrlAssignment', () => {
     expect(msg.length).toBe(54);
     expect(msg[8]).toBe(0x12);
     expect(msg[9]).toBe(0x14);
-    expect(msg[30]).toBe(0x0F); // TYPE_CTRL — the EXP writer sends 0x0E here
+    expect(msg[30]).toBe(0x0F); // TYPE_CTRL , the EXP writer sends 0x0E here
     expect(msg[34]).toBe(0x08); // CTRL payload size
     expect(msg[53]).toBe(0xF7);
   });
 
   it('nibble-encodes each mask byte high-first across [45..48]', () => {
-    // Each mask byte travels as (b >> 4, b & 0xF) — the encoding the official
+    // Each mask byte travels as (b >> 4, b & 0xF) , the encoding the official
     // editor uses (fs-1-mod-assign-unassign.pcapng, 2026-08-09). 0xABC
     // exercises every nibble slot: low byte 0xBC -> [45]=0xB, [46]=0xC;
     // high byte 0x0A -> [47]=0x0, [48]=0xA.

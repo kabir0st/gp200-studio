@@ -32,7 +32,7 @@ const QUICK_KNOB_NUMBERS = [1, 2, 3];
  * Fire-and-forget like the drums/looper panels: the device sends no
  * feedback, so slider state is what was last sent, and the CTRL taps are
  * momentary commands with no state at all. Module on/off CCs (48–57) exist
- * in ccControl.ts but get no buttons here — the pedalboard's own switches
+ * in ccControl.ts but get no buttons here , the pedalboard's own switches
  * already toggle modules over SysEx with real state tracking.
  */
 export function RemotePanel({ connected, sendCC }: RemotePanelProps) {

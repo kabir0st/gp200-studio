@@ -153,8 +153,8 @@ export function parseControlRecords(
       const ctrlIndex = bytes[p];
       if (ctrlIndex > 7) return undefined; // structural: stream misaligned
       // Mask lives at payload+4 (payload+1 is the saved toggle state, +2..3
-      // uninitialized memory). Strip the high nibble — it carries garbage in
-      // real exports — but keep bit 11, which the device does write.
+      // uninitialized memory). Strip the high nibble , it carries garbage in
+      // real exports , but keep bit 11, which the device does write.
       const blockMask = readU16LE(bytes, p + 4) & 0x0FFF;
       // The state byte is kept (not just preserved in-place) because the live
       // CTRL write frame transmits it; see SysExCodec.buildCtrlAssignment.

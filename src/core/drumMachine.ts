@@ -5,7 +5,7 @@
  * step-timing math the scheduler in useDrumMachine.ts uses, and a
  * style-aware pattern randomizer.
  *
- * This is browser-audio only — completely separate from the GP-200's built-in
+ * This is browser-audio only , completely separate from the GP-200's built-in
  * drum machine remote (ccControl.ts / drumRhythms.ts), which is MIDI CC and
  * makes no sound in the browser.
  */
@@ -63,7 +63,7 @@ export type SignatureId = '4/4' | '3/4' | '2/4' | '6/8';
 /**
  * A bar is a grid of 16th-note steps; the signature sets how many and how
  * they group. Step duration is signature-independent (secondsPerStep), so
- * 3/4 and 6/8 share a bar length and differ in grouping/accents — which is
+ * 3/4 and 6/8 share a bar length and differ in grouping/accents , which is
  * exactly how they differ on a drum kit.
  */
 export interface DrumSignature {
@@ -270,7 +270,7 @@ export const RANDOM_STYLES: readonly RandomStyle[] = [
 /*
  * The randomizer builds a bar from per-style probabilities anchored to the
  * signature's anatomy: kick on the downbeat and snare on the backbeats are
- * certainties, everything else is seasoning — so every roll is playable in
+ * certainties, everything else is seasoning , so every roll is playable in
  * any signature rather than white noise.
  */
 interface StyleParams {

@@ -1,7 +1,7 @@
 // Pure timing math for the multi-track looper. Framework-agnostic: no Web Audio,
 // no React, just the sample/second arithmetic that keeps tracks phase-locked.
 //
-// Model — two distinct lengths, do not conflate them:
+// Model , two distinct lengths, do not conflate them:
 //
 //   BASE   one "bar": the unit every track is measured in. Set once, by the
 //          first thing that lands (an imported file's own length, or the first
@@ -50,7 +50,7 @@ export function barsForCapture(capturedSamples: number, baseSamples: number): nu
  * integer multiple of the base and stays sample-aligned indefinitely.
  *
  * With no base yet (`baseSamples <= 0`) the capture passes through unquantized
- * and becomes the base itself — that is the first-thing-in case.
+ * and becomes the base itself , that is the first-thing-in case.
  */
 export function quantizeToBase(
   capturedSamples: number,
@@ -64,7 +64,7 @@ export function quantizeToBase(
 /**
  * The cycle's width in bars: the widest track present, minimum 1. Recomputed
  * from scratch after every add/delete so the cycle grows when a long take lands
- * AND shrinks back when that take is removed — deriving it beats mutating a
+ * AND shrinks back when that take is removed , deriving it beats mutating a
  * running max, which can only ever grow.
  */
 export function cycleBars(trackBars: readonly number[]): number {

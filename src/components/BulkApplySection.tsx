@@ -150,14 +150,14 @@ export function BulkApplySection({
           disabled={!canCopyCtrl}
           onChange={(event) => setApplyCtrl(event.target.checked)}
         />
-        <span>CTRL footswitches — copy the current patch’s assignments</span>
+        <span>CTRL footswitches , copy the current patch’s assignments</span>
       </label>
       {!canCopyCtrl && (
         <p
           className="font-mono-display text-caption"
           style={{ color: 'var(--text-muted)' }}
         >
-          The current patch has no CTRL assignments to copy — set them up in
+          The current patch has no CTRL assignments to copy , set them up in
           the CTRL section above first.
         </p>
       )}

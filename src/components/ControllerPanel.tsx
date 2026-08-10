@@ -56,8 +56,8 @@ interface ControllerPanelProps {
   ) => void;
   onMinMax: (page: number, item: number, min: number, max: number) => void;
   /** When provided, shows the live EXP 1 test row (position sweep + A/B
-   *  switch over plain CC). Lives here — next to the assignments it
-   *  exercises — rather than in the MIDI remote. */
+   *  switch over plain CC). Lives here , next to the assignments it
+   *  exercises , rather than in the MIDI remote. */
   sendCC?: (command: CCCommand | CCCommand[]) => void;
 }
 

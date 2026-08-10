@@ -147,7 +147,7 @@ export default function MobileShell({
 
   // Tab changes are the phone's entire navigation model. LOOP and DRUMS are the
   // same features the desktop hides behind drawers, so they also report
-  // panel_open — that is what keeps "did anyone find the looper?" a single
+  // panel_open , that is what keeps "did anyone find the looper?" a single
   // number across both trees instead of two that can't be added together.
   const tabSettled = useRef(false);
   useEffect(() => {

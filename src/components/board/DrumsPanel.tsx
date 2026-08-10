@@ -98,7 +98,7 @@ export function DrumsPanel({
               <optgroup key={group.label} label={group.label}>
                 {group.rhythms.map((groupRhythm) => (
                   <option key={groupRhythm.index} value={groupRhythm.index}>
-                    {groupRhythm.name} — {groupRhythm.signature}
+                    {groupRhythm.name} , {groupRhythm.signature}
                   </option>
                 ))}
               </optgroup>

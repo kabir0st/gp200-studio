@@ -5,12 +5,12 @@
 // CC map from Valeton's official "MIDI Control Information List" (Manual EN
 // fw 1.8.0, pp. 74–76), cross-checked against the gp2-controller.xyz bundle
 // (decompiled chunk-CAUTDAHB.js, 2026-07). Unlike everything in
-// SysExCodec.ts, these are ordinary 3-byte control changes — no SysEx
-// involved — sent on the device's global MIDI channel (GP-200 factory
+// SysExCodec.ts, these are ordinary 3-byte control changes , no SysEx
+// involved , sent on the device's global MIDI channel (GP-200 factory
 // default: channel 1, i.e. index 0). See docs/protocol-capture.md §5/§6.
 //
 // Deliberately NOT modeled: absolute patch select via CC0 (bank MSB) +
-// Program Change — the app already selects slots over SysEx
+// Program Change , the app already selects slots over SysEx
 // (buildPresetChange), and PC would be the only non-CC message here.
 //
 // This module is pure: byte building, typed command descriptors, and the
@@ -201,7 +201,7 @@ export function ctrlTap(ctrlNumber: number): CCCommand {
 /**
  * Module on/off CC per effect-block index (SLOT_MODULES order: 0 PRE, 1 WAH,
  * 2 DST, 3 AMP, 4 NR, 5 CAB, 6 EQ, 7 MOD, 8 DLY, 9 RVB). The chart has no
- * CC for VOL (block 10) or FX LOOP (block 11) — those return null.
+ * CC for VOL (block 10) or FX LOOP (block 11) , those return null.
  */
 const MODULE_CCS = [
   CC.MODULE_PRE,

@@ -43,7 +43,7 @@ describe('dispatchLooperAction', () => {
   it('routes each transport action to its method', () => {
     const cases: Array<[LooperAction, keyof LooperControls]> = [
       [{ kind: 'recordToggle' }, 'toggleRecord'],
-      // Selected track only — a stomp must not disturb the other tracks.
+      // Selected track only , a stomp must not disturb the other tracks.
       [{ kind: 'playToggle' }, 'togglePlaySelected'],
       [{ kind: 'muteToggle' }, 'toggleMuteSelected'],
       [{ kind: 'trackNext' }, 'selectNextTrack'],

@@ -225,7 +225,7 @@ describe('pushPresetToDevice', () => {
     await pushPresetToDevice(preset, sender, { sleep });
 
     const ctrlSends = events.filter((e) => e.startsWith('ctrl:'));
-    // Cleared switches are written too — otherwise the previous patch's bits
+    // Cleared switches are written too , otherwise the previous patch's bits
     // would linger on the device while the UI shows none.
     expect(ctrlSends).toEqual(['ctrl:0:0x4:1', 'ctrl:1:0x0:0', 'ctrl:2:0x400:0']);
 
