@@ -31,6 +31,12 @@ than it should.
 Plug the pedal into a laptop, a tablet or an Android phone with the USB cable you
 already own, open a browser tab, and everything is in front of you at once.
 
+<div align="center">
+<img src="public/photos/gp200-hardware.jpg" alt="A Valeton GP-200 fresh out of its box" width="300" />
+<br/>
+<sub>The pedal this was built for.</sub>
+</div>
+
 <br/>
 
 ## Every block is a pedal

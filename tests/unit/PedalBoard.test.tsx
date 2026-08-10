@@ -139,6 +139,8 @@ function renderBoard(overrides: Partial<Parameters<typeof PedalBoard>[0]> = {}) 
     audioStarting: false,
     theme: 'light' as const,
     onToggleTheme: vi.fn(),
+    soundOn: true,
+    onToggleSound: vi.fn(),
     onConnectRequest: vi.fn(),
     onDisconnect: vi.fn(),
     onPushRequest: vi.fn(),
@@ -280,5 +282,21 @@ describe.skipIf(!HAS_FIXTURES)('PedalBoard (render smoke test)', () => {
     expect(lights).toHaveAttribute('aria-checked', 'true');
     fireEvent.click(lights);
     expect(props.onToggleTheme).toHaveBeenCalledTimes(1);
+  });
+
+  it('the rocker shows both moulded faces so a tilt reads as a switch', () => {
+    const { container } = renderBoard();
+    const marks = [...container.querySelectorAll('.power-switch .ps-face')].map(
+      (f) => f.textContent,
+    );
+    expect(marks).toEqual(['I', 'O']);
+  });
+
+  it('the switch sound has a mute beside the rocker', () => {
+    const { props } = renderBoard();
+    const mute = screen.getByRole('switch', { name: /switch sound/i });
+    expect(mute).toHaveAttribute('aria-checked', 'true');
+    fireEvent.click(mute);
+    expect(props.onToggleSound).toHaveBeenCalledTimes(1);
   });
 });

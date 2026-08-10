@@ -122,6 +122,9 @@ export interface PedalBoardProps {
   /* stage theme: the board's power switch drives it (see hooks/useTheme.ts) */
   theme: ThemeName;
   onToggleTheme: () => void;
+  /* the rocker's clack, and its mute (hooks/useUiSound.ts) */
+  soundOn: boolean;
+  onToggleSound: () => void;
   /* device session controls (deck-hosted; there is no separate status bar) */
   onConnectRequest: () => void;
   onDisconnect: () => void;
@@ -195,6 +198,8 @@ export function PedalBoard({
   onCcChannelChange,
   theme,
   onToggleTheme,
+  soundOn,
+  onToggleSound,
   onConnectRequest,
   onDisconnect,
   onPushRequest,
@@ -365,6 +370,8 @@ export function PedalBoard({
         lightsOn={theme === 'light'}
         lightsFlickering={flickering}
         onToggleLights={handleToggleTheme}
+        soundOn={soundOn}
+        onToggleSound={onToggleSound}
         drumsPlaying={drumMachine.playing}
         sendCC={sendCC}
       />

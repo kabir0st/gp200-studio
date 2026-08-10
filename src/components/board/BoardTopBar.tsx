@@ -3,7 +3,7 @@ import type { PushProgress } from '@/core/devicePush';
 import { SysExCodec } from '@/core/SysExCodec';
 import { tunerShow, type CCCommand } from '@/core/ccControl';
 import { ActionIcon } from './ActionIcon';
-import { PowerSwitch } from './PowerSwitch';
+import { PowerSwitch, SoundToggle } from './PowerSwitch';
 import { DeckPop } from './DeckPop';
 
 interface BoardTopBarProps {
@@ -35,6 +35,9 @@ interface BoardTopBarProps {
   lightsOn: boolean;
   lightsFlickering: boolean;
   onToggleLights: () => void;
+  /* mute for the rocker's clack (src/lib/uiSound.ts) */
+  soundOn: boolean;
+  onToggleSound: () => void;
 }
 
 /** Device slots are 0..255, and the Patch −/+ steppers wrap across both ends. */
@@ -96,6 +99,8 @@ export function BoardTopBar({
   lightsOn,
   lightsFlickering,
   onToggleLights,
+  soundOn,
+  onToggleSound,
 }: BoardTopBarProps) {
   // Device tuner toggle (CC58). Local best-effort state: the pedal doesn't
   // report tuner visibility, so a front-panel close can drift this until the
@@ -189,6 +194,7 @@ export function BoardTopBar({
           flickering={lightsFlickering}
           onToggle={onToggleLights}
         />
+        <SoundToggle on={soundOn} onToggle={onToggleSound} />
       </div>
 
       <div className="board-topbar-status">

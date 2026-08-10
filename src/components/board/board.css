@@ -262,7 +262,10 @@
   cursor: pointer;
   line-height: 0;
 }
-/* the black moulded housing the rocker sits in */
+/* The black moulded housing the rocker sits in. It owns the `perspective`
+   rather than each transform carrying its own perspective() — one projection
+   for the whole assembly, so the paddle and the marks printed on it recede
+   together instead of each being flattened separately. */
 .board-view .power-switch .ps-bezel {
   position: relative;
   display: block;
@@ -270,31 +273,88 @@
   height: 28px;
   border-radius: 4px;
   padding: 3px;
+  perspective: 105px;
+  perspective-origin: 50% 50%;
   background: linear-gradient(180deg, #35373b, #17181a 45%, #0d0e10);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
     inset 0 0 0 1px rgba(0, 0, 0, 0.85),
     0 2px 4px rgba(0, 0, 0, 0.4);
+  transition: transform 90ms ease;
 }
-/* the rocker itself: pressed on the O side when off, the I side when on */
+/* The bezel lip, painted over the paddle so the sunk half is genuinely
+   occluded by the housing rather than just being a darker colour. Last in tree
+   order, so it stacks above .ps-rocker without needing a z-index. */
+.board-view .power-switch .ps-bezel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.9),
+    inset 0 2px 3px rgba(0, 0, 0, 0.5),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.4);
+}
+/* The paddle: one plane pivoting on its centre line. O side sunk when off, I
+   side sunk when on. The overshoot in the easing is the over-centre spring —
+   a real rocker resists, goes past the detent, then settles. */
 .board-view .power-switch .ps-rocker {
   position: relative;
   display: block;
   width: 100%;
   height: 100%;
   border-radius: 2px;
-  background: linear-gradient(90deg, #4a1210, #7c1f1c 60%, #8d2a25);
+  transform-style: preserve-3d;
+  transform-origin: 50% 50%;
+  transform: rotateY(26deg);
+  background: linear-gradient(90deg, #38100f, #521614 60%, #5e1b17);
   box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.75);
-  transform: perspective(80px) rotateY(7deg);
   transition:
-    transform 140ms ease,
-    background 200ms ease;
+    transform 150ms cubic-bezier(0.3, 1.65, 0.5, 1),
+    background 200ms ease,
+    filter 90ms ease;
 }
 .board-view .power-switch.on .ps-rocker {
-  transform: perspective(80px) rotateY(-7deg);
+  transform: rotateY(-26deg);
   background: linear-gradient(90deg, #f0504a, #cf2f26 60%, #a5241e);
 }
-/* the bulb behind the translucent rocker */
+/* The tilt shading, painted over the lamp AND the marks (last child) so it
+   dims whatever sits on the sunk half. One continuous gradient across the
+   whole paddle, not a fill per half: two shaded halves read as two flat
+   panels with a seam, whereas a single ramp reads as one plane turning away.
+   It must stay weaker than the lamp, or the raised half looks lit and the
+   switch reports the opposite of its own state. */
+.board-view .power-switch .ps-rocker::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  pointer-events: none;
+  background:
+    /* the moulded crown along the pivot line */
+    linear-gradient(90deg, transparent 45%, rgba(255, 255, 255, 0.13) 50%, transparent 55%),
+    /* light skimming the raised edge */
+    linear-gradient(90deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 22%),
+    /* the housing tucking over the sunk edge */
+    linear-gradient(270deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0) 34%);
+  transition: background 160ms ease;
+}
+.board-view .power-switch.on .ps-rocker::after {
+  background:
+    linear-gradient(90deg, transparent 45%, rgba(255, 255, 255, 0.16) 50%, transparent 55%),
+    linear-gradient(270deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 22%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0) 30%);
+}
+/* Pressing pushes the whole assembly into the chassis before it flips, so the
+   switch answers the finger on mousedown rather than only on release. */
+.board-view .power-switch:active .ps-bezel {
+  transform: translateY(1px);
+}
+.board-view .power-switch:active .ps-rocker {
+  filter: brightness(0.86);
+}
+/* the bulb behind the translucent paddle */
 .board-view .power-switch .ps-lamp {
   position: absolute;
   inset: 0;
@@ -313,24 +373,27 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
     inset 0 0 0 1px rgba(0, 0, 0, 0.85),
     0 2px 4px rgba(0, 0, 0, 0.4),
-    0 0 14px 2px rgba(226, 66, 52, 0.55);
+    0 0 11px 1px rgba(226, 66, 52, 0.5);
 }
-/* moulded I / O marks on the two halves of the rocker */
-.board-view .power-switch .ps-mark {
+/* The moulded I / O marks, one per half of the paddle. Both are printed the
+   same: they carry no state of their own, because ::after above already dims
+   whichever one has turned away from you. */
+.board-view .power-switch .ps-face {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  display: grid;
+  place-items: center;
   font-family: var(--font-jetbrains-mono), monospace;
   font-size: 9px;
   font-weight: 700;
   line-height: 1;
-  color: rgba(255, 255, 255, 0.5);
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+  color: rgba(255, 255, 255, 0.75);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.65);
 }
-.board-view .power-switch .ps-mark-i { left: 8px; }
-.board-view .power-switch .ps-mark-o { right: 8px; }
-.board-view .power-switch.on .ps-mark-i { color: rgba(255, 255, 255, 0.9); }
-.board-view .power-switch:not(.on) .ps-mark-o { color: rgba(255, 255, 255, 0.7); }
+.board-view .power-switch .ps-face-i { left: 0; }
+.board-view .power-switch .ps-face-o { right: 0; }
 
 /* mains flicker: the lamp sputters while the stage surges */
 @keyframes ps-lamp-flicker {
@@ -350,6 +413,41 @@
 .board-view .power-switch.flickering .ps-lamp {
   animation: ps-lamp-flicker 700ms steps(1, end);
   transition: none;
+}
+
+/* Mute for the rocker's clack (src/lib/uiSound.ts). Icon-only and quiet: it
+   belongs to the switch beside it, not to the labelled action row. */
+.board-view .ps-mute {
+  appearance: none;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-left: -2px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  opacity: 0.45;
+  transition:
+    opacity 150ms ease,
+    border-color 150ms ease,
+    background 150ms ease;
+}
+.board-view .ps-mute .act-icon {
+  width: 14px;
+  height: 14px;
+}
+.board-view .ps-mute.on {
+  opacity: 0.9;
+}
+.board-view .ps-mute:hover,
+.board-view .ps-mute:focus-visible {
+  opacity: 1;
+  border-color: var(--chrome-border);
+  background: var(--chrome-face);
 }
 
 /* The surge covers the whole stage, not just the switch: mains flickering one

@@ -22,6 +22,8 @@ import { Guide } from '@/components/Guide';
 import { PedalBoard, type PedalBoardProps } from '@/components/board/PedalBoard';
 import { useIsPhone } from '@/hooks/useMediaQuery';
 import { useTheme } from '@/hooks/useTheme';
+import { useUiSound } from '@/hooks/useUiSound';
+import { playSwitchClick } from '@/lib/uiSound';
 
 // Lazy so the phone tree and its stylesheet stay out of the desktop bundle.
 const MobileShell = lazy(() => import('@/components/mobile/MobileShell'));
@@ -70,6 +72,14 @@ function App() {
   // trees switch the same document attribute; the board's power switch and the
   // phone's DEVICE tab are two views of this one state.
   const { theme, toggleTheme } = useTheme();
+  // The rocker's clack. Wrapped here rather than in the board so the phone's
+  // DEVICE-tab toggle makes the same noise — both trees flip the same switch.
+  const { soundOn, toggleSound } = useUiSound();
+  const handleToggleTheme = useCallback(() => {
+    // the position we're moving TO: lights on = light theme
+    playSwitchClick(theme !== 'light');
+    toggleTheme();
+  }, [theme, toggleTheme]);
   const audioEngine = useAudioEngine();
   const looper = useLooper(audioEngine);
   // Practice drum machine: lives here (not in a drawer) so the beat keeps
@@ -798,7 +808,9 @@ function App() {
     onEnableAudio: () => void audioEngine.enable(),
     audioStarting: audioEngine.starting,
     theme: theme,
-    onToggleTheme: toggleTheme,
+    onToggleTheme: handleToggleTheme,
+    soundOn: soundOn,
+    onToggleSound: toggleSound,
     onConnectRequest: () => void midiDevice.connect(),
     onDisconnect: midiDevice.disconnect,
     onPushRequest: () => handleOpenBrowser('push'),

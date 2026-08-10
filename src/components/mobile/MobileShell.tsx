@@ -98,6 +98,8 @@ export default function MobileShell({
   onCcChannelChange,
   theme,
   onToggleTheme,
+  soundOn,
+  onToggleSound,
   onConnectRequest,
   onDisconnect,
   onPushRequest,
@@ -259,6 +261,18 @@ export default function MobileShell({
                 onClick={onToggleTheme}
               >
                 {theme === 'light' ? '☀ LIGHTS ON' : '☾ DARK STAGE'}
+              </button>
+              {/* The clack the toggle above makes (src/lib/uiSound.ts). The
+                  desktop hides this behind an icon next to the rocker; here it
+                  reads as a second labelled row, which is all the phone has. */}
+              <button
+                type="button"
+                role="switch"
+                aria-checked={soundOn}
+                className={`m-btn wide${soundOn ? ' active' : ''}`}
+                onClick={onToggleSound}
+              >
+                {soundOn ? '♪ SWITCH SOUND ON' : '✕ SWITCH SOUND MUTED'}
               </button>
             </div>
             <DeviceScreen
