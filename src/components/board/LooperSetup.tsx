@@ -185,7 +185,7 @@ export function LooperSetup({ looper, tempo }: LooperSetupProps) {
               onClick={() => looper.lockBaseSeconds(tempo.barSeconds)}
               title="Use one drum-machine bar as the looper's bar"
             >
-              ⟳ LOCK BAR TO DRUMS
+              ↻ LOCK BAR TO DRUMS
             </Button>
             <span className="font-mono-display text-caption text-text-secondary tabular-nums">
               {tempo.label} · {tempo.barSeconds.toFixed(3)} s

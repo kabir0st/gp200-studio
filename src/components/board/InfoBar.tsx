@@ -19,7 +19,7 @@ export function InfoBar({ slot, art, pinned, onUnpin }: InfoBarProps) {
     return (
       <div className="info-bar" role="status" aria-live="polite">
         <span className="i-glyph" aria-hidden="true">i</span>
-        <span className="i-empty">Hover a pedal, or click its ⓘ, to see what it's based on.</span>
+        <span className="i-empty">Hover a pedal, or click its info dot, to see what it's based on.</span>
       </div>
     );
   }

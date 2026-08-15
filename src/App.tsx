@@ -672,6 +672,7 @@ function App() {
   if (view === 'guide') {
     return (
       <Guide
+        theme={theme}
         onBack={() => {
           setView('landing');
           track('view_change', { view: preset ? 'board' : 'landing' });

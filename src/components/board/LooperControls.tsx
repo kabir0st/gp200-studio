@@ -85,7 +85,7 @@ export function LooperImportButton({ looper, onError, className = '' }: LooperIm
     trackEvent('looper_import_audio', { ok: error === null, ext: fileExt(file.name) });
   };
 
-  let label = '⭳ IMPORT';
+  let label = '↓ IMPORT';
   if (looper.importing) label = 'DECODING…';
 
   return (

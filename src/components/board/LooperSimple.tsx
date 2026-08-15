@@ -51,8 +51,8 @@ function syncVariant(locked: boolean): 'primary' | 'secondary' {
 }
 
 function syncLabel(locked: boolean, tempo: LooperTempo): string {
-  if (locked) return `⟳ SYNCED · ${tempo.label}`;
-  return '⟳ SYNC TO DRUMS';
+  if (locked) return `↻ SYNCED · ${tempo.label}`;
+  return '↻ SYNC TO DRUMS';
 }
 
 function syncTitle(locked: boolean): string {

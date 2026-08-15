@@ -16,7 +16,10 @@ nothing to install and nothing to sign up for.
 [![Windows, macOS, Linux, Android](https://img.shields.io/badge/on-Windows%20·%20macOS%20·%20Linux%20·%20Android-5df08a)](#how-to-start)
 [![Free and open source](https://img.shields.io/badge/free%20%26%20open%20source-GPL--3.0-blue)](LICENSE)
 
-<img src="public/guide/02-editor-board.png" alt="The GP200 Studio pedalboard editor" width="100%" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="public/guide/02-editor-board-dark.png" />
+  <img src="public/guide/02-editor-board.png" alt="The GP200 Studio pedalboard editor" width="100%" />
+</picture>
 
 </div>
 
@@ -49,12 +52,18 @@ Hover any pedal and the top strip tells you what it actually is. All 305 effects
 are matched to the real amps and stompboxes they model, so "MESS4 LD 3" reads as
 a Mesa/Boogie Mark IV instead of a code you have to look up.
 
-<img src="public/guide/04-info-bar-chain.png" alt="The signal chain strip and the effect info line" width="100%" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="public/guide/04-info-bar-chain-dark.png" />
+  <img src="public/guide/04-info-bar-chain.png" alt="The signal chain strip and the effect info line" width="100%" />
+</picture>
 
 Swapping an effect is a search box and a picture, not a menu tree. Browse by
 category or type the name of the pedal you are after.
 
-<img src="public/guide/03-effect-picker.png" alt="The effect picker, browsing hi-gain amps" width="100%" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="public/guide/03-effect-picker-dark.png" />
+  <img src="public/guide/03-effect-picker.png" alt="The effect picker, browsing hi-gain amps" width="100%" />
+</picture>
 
 <br/>
 
@@ -65,10 +74,32 @@ sets the length, every take after it locks to that timing, and each one lands on
 its own track with its own volume, mute and delete. Drop in an audio file and
 play over a backing track.
 
+One button does the recording, and it always tells you what pressing it will do
+next: RECORD, then LISTENING while it waits for your first note, ARMED while it
+waits for the downbeat, STOP while it runs, ADD A TAKE once a loop is going.
+That gap between pressing record and hearing anything is the confusing part of
+every looper, so this one just says what it is doing.
+
 Best part: teach it your footswitches once and you never touch the laptop again
 while you play.
 
-<img src="public/guide/08-deck-loop.png" alt="The loop station with two recorded takes" width="100%" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="public/guide/08-deck-loop-dark.png" />
+  <img src="public/guide/08-deck-loop.png" alt="The loop station with two recorded takes" width="100%" />
+</picture>
+
+<br/>
+
+Flip it to **Advanced** when you want the rest: lock the bar to the drum machine
+so there is no reaction time in your loop length, record a fixed number of bars
+so the recorder stops itself, start on your first note instead of on the button,
+set how much of the last chord rings across the loop point, and trim the timing
+if your interface under-reports its latency.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="public/guide/12-loop-advanced-dark.png" />
+  <img src="public/guide/12-loop-advanced.png" alt="The loop station's advanced face with capture settings" width="100%" />
+</picture>
 
 <br/>
 
@@ -79,7 +110,10 @@ Pick a kit, pick a groove, nudge the swing, or hit RANDOM and see what you get.
 Works in 4/4, 3/4, 2/4 and 6/8, and it keeps playing while you close the panel
 and dial in a tone. The pedal's own drums, looper and tuner sit right below it.
 
-<img src="public/guide/11-drums.png" alt="The practice drum machine and the pedal's drum remote" width="100%" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="public/guide/11-drums-dark.png" />
+  <img src="public/guide/11-drums.png" alt="The practice drum machine and the pedal's drum remote" width="100%" />
+</picture>
 
 <br/>
 
@@ -99,8 +133,14 @@ it lands heel down and toe down.
 
 <table>
   <tr>
-    <td><img src="public/guide/07-deck-ctrl.png" alt="Assigning CTRL footswitches to effect blocks" /></td>
-    <td><img src="public/guide/06-deck-exp.png" alt="Assigning an expression pedal to a knob" /></td>
+    <td><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="public/guide/07-deck-ctrl-dark.png" />
+  <img src="public/guide/07-deck-ctrl.png" alt="Assigning CTRL footswitches to effect blocks"  />
+</picture></td>
+    <td><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="public/guide/06-deck-exp-dark.png" />
+  <img src="public/guide/06-deck-exp.png" alt="Assigning an expression pedal to a knob"  />
+</picture></td>
   </tr>
   <tr>
     <td align="center"><sub>Footswitches</sub></td>
@@ -116,7 +156,10 @@ patches it touches, so back up first (one button, next section).
 Your external pedals go anywhere in the chain too. Drag the send and return
 arrows to wherever the loop belongs.
 
-<img src="public/guide/05-deck-fxloop.png" alt="Dragging the FX loop send and return through the chain" width="100%" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="public/guide/05-deck-fxloop-dark.png" />
+  <img src="public/guide/05-deck-fxloop.png" alt="Dragging the FX loop send and return through the chain" width="100%" />
+</picture>
 
 <br/>
 
@@ -129,8 +172,14 @@ locked in here.
 
 <table>
   <tr>
-    <td><img src="public/guide/10-patch-manager.png" alt="The patch manager listing every slot" /></td>
-    <td><img src="public/guide/09-export-dialog.png" alt="Exporting a patch to a .prst file" /></td>
+    <td><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="public/guide/10-patch-manager-dark.png" />
+  <img src="public/guide/10-patch-manager.png" alt="The patch manager listing every slot"  />
+</picture></td>
+    <td><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="public/guide/09-export-dialog-dark.png" />
+  <img src="public/guide/09-export-dialog.png" alt="Exporting a patch to a .prst file"  />
+</picture></td>
   </tr>
   <tr>
     <td align="center"><sub>Every slot, searchable</sub></td>
@@ -149,14 +198,17 @@ EQ, drum kits).
 
 And if the venue is dark, so is the app. Flip the red rocker in the corner.
 
-<img src="public/guide/12-board-dark.png" alt="The same pedalboard with the stage lights off" width="100%" />
+<img src="public/guide/02-editor-board-dark.png" alt="The same pedalboard with the stage lights off" width="100%" />
 
 <br/>
 
 ## How to start
 <br/>
 
-<img src="public/guide/01-landing.png" alt="The GP200 Studio landing screen" width="100%" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="public/guide/01-landing-dark.png" />
+  <img src="public/guide/01-landing.png" alt="The GP200 Studio landing screen" width="100%" />
+</picture>
 
 1. Open **[GP200 Studio](https://kabirtamari.com/gp200studio/)** in Chrome or Edge. Firefox and Safari cannot talk to USB MIDI yet, so they will not work.
 2. Plug the GP-200 in over USB, turn it on, and hit **CONNECT GP-200**.
