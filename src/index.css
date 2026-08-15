@@ -45,6 +45,11 @@
   --glow-amber: rgba(138, 99, 32, 0.18);
   --glow-red: rgba(180, 66, 58, 0.15);
   --glow-green: rgba(47, 126, 79, 0.15);
+  /* neon halo on a hovered/dragged pedal knob: the cue that the knob has
+     claimed the mouse wheel. Cyan on purpose -- amber/red/green are status
+     colours here, and this is an interaction state, not a status. */
+  --knob-glow: rgba(0, 178, 204, 0.62);
+  --knob-glow-soft: rgba(0, 178, 204, 0.3);
   --knob-track: #d9dbdf;
   --knob-fill: #8a6320;
 
@@ -110,6 +115,8 @@
   --glow-amber: rgba(224, 169, 73, 0.3);
   --glow-red: rgba(226, 104, 92, 0.28);
   --glow-green: rgba(79, 189, 125, 0.26);
+  --knob-glow: rgba(96, 235, 255, 0.68);
+  --knob-glow-soft: rgba(96, 235, 255, 0.32);
   --knob-track: #3a3d42;
   --knob-fill: #e0a949;
 
