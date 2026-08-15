@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, type RefObject } from 'react';
 import type { LooperApi, LooperTrack } from '@/hooks/useLooper';
 
 // The loop station's visual: one waveform lane per track, laid out across the
@@ -129,6 +129,26 @@ function drawLanes(
   });
 }
 
+interface RecordStatusProps {
+  armed: boolean | undefined;
+  listening: boolean;
+  readoutRef: RefObject<HTMLSpanElement | null>;
+}
+
+/** What the red overlay says while a take is live. Three states, because
+ *  "nothing is happening yet" and "we are waiting for YOU" are different
+ *  things and the player has to be able to tell them apart at a glance. */
+function RecordStatus({ armed, listening, readoutRef }: RecordStatusProps) {
+  if (listening) return <span>◌ LISTENING , starts on your first note</span>;
+  if (armed) return <span>◌ ARMED , starts on the downbeat</span>;
+  return (
+    <>
+      <span>● REC</span>
+      <span ref={readoutRef} />
+    </>
+  );
+}
+
 export function LooperTimeline({ looper }: LooperTimelineProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -208,19 +228,29 @@ export function LooperTimeline({ looper }: LooperTimelineProps) {
       }
 
       const elapsed = api.getRecordElapsedSec();
+      const base = api.baseDurationSec;
+      const target = api.settings.recordBars;
       const fill = recFillRef.current;
       if (fill) {
-        const cycle = api.cycleDurationSec;
-        // Past one cycle the bar wraps and keeps filling: the loop is about to
-        // grow, and the readout beside it names the bar count it is heading for.
-        const fraction = cycle && cycle > 0 ? (elapsed % cycle) / cycle : 0;
+        // A fixed-length take fills against the length it will stop at; a free
+        // one fills against the cycle and wraps, because passing the end means
+        // the loop is about to grow by a bar.
+        let fraction = 0;
+        if (target !== null && base !== null && base > 0) {
+          fraction = Math.min(1, elapsed / (base * target));
+        } else if (api.cycleDurationSec !== null && api.cycleDurationSec > 0) {
+          fraction = (elapsed % api.cycleDurationSec) / api.cycleDurationSec;
+        }
         fill.style.width = `${(fraction * 100).toFixed(1)}%`;
       }
       const readout = readoutRef.current;
       if (readout) {
-        const base = api.baseDurationSec;
-        const bars = base && base > 0 ? Math.max(1, Math.round(elapsed / base)) : 1;
-        readout.textContent = `${elapsed.toFixed(1)}s · ${bars} bar${bars === 1 ? '' : 's'}`;
+        let bars = 1;
+        if (base !== null && base > 0) bars = Math.max(1, Math.round(elapsed / base));
+        let suffix = ` · ${bars} bar`;
+        if (bars !== 1) suffix += 's';
+        if (target !== null) suffix = ` · bar ${Math.min(bars, target)} of ${target}`;
+        readout.textContent = `${elapsed.toFixed(1)}s${suffix}`;
       }
       raf = requestAnimationFrame(tick);
     };
@@ -311,14 +341,11 @@ export function LooperTimeline({ looper }: LooperTimelineProps) {
                 className="absolute inset-y-0 left-2 flex items-center gap-2
                   font-mono-display text-micro text-accent-red tabular-nums"
               >
-                {recordingTrack?.state === 'armed' ? (
-                  <span>◌ ARMED , starts on the downbeat</span>
-                ) : (
-                  <>
-                    <span>● REC</span>
-                    <span ref={readoutRef} />
-                  </>
-                )}
+                <RecordStatus
+                  armed={recordingTrack?.state === 'armed'}
+                  listening={looper.isListening}
+                  readoutRef={readoutRef}
+                />
               </span>
             </div>
           )}

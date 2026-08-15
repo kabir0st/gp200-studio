@@ -11,6 +11,9 @@ import {
 } from '@/core/looperBindings';
 import { loadLooperStore, saveLooperStore } from '@/core/looperTriggers';
 import { useLooperTriggers } from '@/hooks/useLooperTriggers';
+import { useLooperHotkeys } from '@/hooks/useLooperHotkeys';
+import { barSecondsFromTempo } from '@/core/looperTransport';
+import { SIGNATURES } from '@/core/drumMachine';
 import { PRSTDecoder } from '@/core/PRSTDecoder';
 import { PRSTEncoder } from '@/core/PRSTEncoder';
 import { pushPresetToDevice, type PushProgress } from '@/core/devicePush';
@@ -85,6 +88,16 @@ function App() {
   // Practice drum machine: lives here (not in a drawer) so the beat keeps
   // playing while the drawer is closed and across the phone/desktop swap.
   const drumMachine = useDrumMachine(audioEngine);
+  // Keyboard transport for the loop station. Bound at the window rather than in
+  // the drawer: the loop plays on with the drawer closed, so the keys must too.
+  useLooperHotkeys(looper, looper.ready);
+  // One drum-machine bar, offered to the looper as a grid to lock its own bar
+  // to , the only way to get a loop length with no human reaction time in it.
+  // Steps are 16ths in every signature, so a bar is steps/4 quarter-note beats.
+  const drumBarSeconds = barSecondsFromTempo(
+    drumMachine.bpm,
+    SIGNATURES[drumMachine.signature].steps / 4,
+  );
 
   // Loop-station hardware bindings. State drives the LooperPanel UI; the ref
   // mirror is what the once-per-connection MIDI callbacks read (so they see the
@@ -782,6 +795,11 @@ function App() {
     onOpenGuide: openGuide,
     onPanelOpen: trackPanelOpen,
     looper: looper,
+    looperTempo: {
+      bpm: drumMachine.bpm,
+      barSeconds: drumBarSeconds,
+      label: `${drumMachine.bpm} BPM · ${drumMachine.signature}`,
+    },
     looperBindings: looperBindings,
     onLooperBindingsChange: setLooperBindings,
     onLooperDrawerOpenChange: (open) => {

@@ -103,3 +103,27 @@ export function playhead(now: number, transportStart: number, loopDuration: numb
   const phase = (elapsed % loopDuration) / loopDuration;
   return phase < 0 ? 0 : phase;
 }
+
+/**
+ * Seconds in one bar at `bpm` with `beatsPerBar` quarter-note beats.
+ *
+ * Used to LOCK the looper's bar to the practice drum machine's tempo, which is
+ * the only way to get an exactly-in-time loop: a free-running first take ends
+ * when a human presses stop, and that press carries their reaction time (a
+ * tenth of a second or so) straight into the master tempo, where every later
+ * take inherits it. Returns 0 for a non-positive tempo or bar length.
+ */
+export function barSecondsFromTempo(bpm: number, beatsPerBar: number): number {
+  if (bpm <= 0 || beatsPerBar <= 0) return 0;
+  return (60 / bpm) * beatsPerBar;
+}
+
+/**
+ * Context frame a scheduled time lands on, for handing a boundary to the
+ * recorder worklet. The worklet compares against `currentFrame`, whose clock is
+ * exactly `currentTime * sampleRate`, so this is the only conversion needed to
+ * make an edge sample-accurate instead of setTimeout-accurate.
+ */
+export function frameAtTime(time: number, sampleRate: number): number {
+  return Math.max(0, Math.round(time * sampleRate));
+}

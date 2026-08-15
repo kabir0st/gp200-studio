@@ -445,13 +445,77 @@ export function Guide({ onBack }: GuideProps) {
               Stacking layers
             </h3>
             <p>
-              Your first recording sets the master loop length. Every record pass
-              after that adds a new layer, quantized and phase-locked to the
-              first, with no limit on the number of layers , so the tenth
+              Every record pass adds a new layer, quantized and phase-locked to
+              the loop, with no limit on the number of layers , so the tenth
               overdub is still exactly in time with the first. Each track has its
               own <strong>Play / Mute / level / delete</strong>, and there's a
               master progress bar, a master level, and <strong>Clear All</strong>.
               You can also import an audio file as a layer to jam over.
+            </p>
+            <h3 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-6">
+              Starting and stopping in time
+            </h3>
+            <p>
+              Everything that decides where a take begins and ends lives under{' '}
+              <strong>RECORD SETUP</strong>, and it is worth two minutes before
+              your first loop:
+            </p>
+            <ul>
+              <li>
+                <strong>Loop grid.</strong> Hit <strong>LOCK BAR TO DRUMS</strong>{' '}
+                and the looper's bar becomes one bar of the practice drum
+                machine's tempo , an exact length, rather than one measured
+                between two of your own button presses.
+              </li>
+              <li>
+                <strong>Take length.</strong> Pick a bar count and recording{' '}
+                <em>stops itself</em> at exactly that length. Nothing to press in
+                time, so no reaction time ends up in the loop. Leave it on FREE to
+                stop by hand.
+              </li>
+              <li>
+                <strong>Start on first note.</strong> With this on, your first
+                take doesn't begin when you press REC , it begins when you{' '}
+                <em>play</em>. The recorder keeps a rolling pre-roll, so the pick
+                attack that triggered it is still there rather than clipped off,
+                and the loop starts at a zero crossing. Set the trigger level
+                against the meter beside it: above your rig's hiss, below your
+                quietest intended note. Once a loop is running, later takes drop
+                in on the downbeat instead, which is always the better reference.
+              </li>
+              <li>
+                <strong>Timing trim.</strong> The app already compensates for the
+                round trip your interface reports (shown in ms). If takes still
+                land consistently late, raise the trim; if they land early, lower
+                it. It is remembered per browser.
+              </li>
+            </ul>
+            <h3 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-6">
+              How the loop point is joined
+            </h3>
+            <p>
+              The downbeat is usually the loudest thing in a take, so fading it in
+              , which is what a plain crossfade does , is exactly what makes a
+              loop sound like it is breathing. This looper never touches the head.
+              Instead it keeps recording <em>past</em> the end of the loop and
+              mixes that ring-out back over the downbeat, so the last chord
+              carries across the wrap the way it would if you had kept playing.{' '}
+              <strong>LOOP JOIN</strong> sets how much: raise it if the wrap sounds
+              cut off, lower it if the last chord smears over the top of the loop.
+            </p>
+            <h3 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-6">
+              Keyboard
+            </h3>
+            <p>
+              <strong>R</strong> records and stops, <strong>SPACE</strong> plays and
+              stops everything, <strong>Ctrl/⌘ Z</strong> undoes , and mid-take it
+              throws away the pass in progress, which is the one thing you always
+              want in a hurry. <strong>Ctrl/⌘ ⇧ Z</strong> redoes,{' '}
+              <strong>M</strong> mutes the selected track,{' '}
+              <strong>[</strong> and <strong>]</strong> step through tracks, and{' '}
+              <strong>DEL</strong> deletes the selected one (undoable). They work
+              anywhere in the app while capture is on, even with the drawer closed,
+              and stand down while you're typing in a field.
             </p>
             <h3 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-6">
               Hands-free from the pedal
