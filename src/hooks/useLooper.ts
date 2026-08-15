@@ -19,6 +19,7 @@ import {
   clampRecordSettings,
   loadRecordSettings,
   saveRecordSettings,
+  softClipCurve,
   SILENCE_FLOOR,
   type LoopRecordSettings,
 } from '@/core/loopCapture';
@@ -407,9 +408,16 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     recorder.connect(silent);
     silent.connect(ctx.destination);
 
+    // mix bus → safety clipper → speakers. The level is a persisted setting,
+    // so the freshly built node starts at whatever the user last left it on
+    // rather than at unity (see the masterLevel effect below for later moves).
     const master = ctx.createGain();
-    master.gain.value = 1;
-    master.connect(ctx.destination);
+    master.gain.value = settingsRef.current.masterLevel;
+    const clipper = ctx.createWaveShaper();
+    clipper.curve = softClipCurve();
+    clipper.oversample = 'none';
+    master.connect(clipper);
+    clipper.connect(ctx.destination);
 
     // What the browser knows about the INPUT leg. This one is a property of the
     // opened stream and does not move, so it is read once with the graph.
@@ -1169,11 +1177,26 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     if (!muted) nodes.gain.gain.setTargetAtTime(gain, ctx.currentTime, 0.01);
   }, []);
 
+  /**
+   * Live master level, deliberately NOT persisted , this is the EXP pedal's
+   * path. A pedal sweep is a performance gesture, and writing every frame of
+   * it back to localStorage would leave the slider wherever the foot stopped.
+   * The UI slider goes through updateSettings({ masterLevel }) instead.
+   */
   const setMasterGain = useCallback((gain: number) => {
     const master = masterGainRef.current;
     const ctx = graphCtxRef.current;
     if (master && ctx) master.gain.setTargetAtTime(gain, ctx.currentTime, 0.01);
   }, []);
+
+  // Apply the stored output level whenever the user moves it. A graph built
+  // after this point picks the same value up from settingsRef in ensureGraph.
+  useEffect(() => {
+    const master = masterGainRef.current;
+    const ctx = graphCtxRef.current;
+    if (!master || !ctx) return;
+    master.gain.setTargetAtTime(settings.masterLevel, ctx.currentTime, 0.02);
+  }, [settings.masterLevel]);
 
   const updateSettings = useCallback((patch: Partial<LoopRecordSettings>) => {
     setSettings((prev) => {

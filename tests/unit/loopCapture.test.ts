@@ -7,7 +7,9 @@ import {
   dbToGain,
   gainToDb,
   clampRecordSettings,
+  softClipCurve,
   DEFAULT_RECORD_SETTINGS,
+  SOFT_CLIP_KNEE,
   SILENCE_FLOOR,
 } from '@/core/loopCapture';
 
@@ -152,5 +154,70 @@ describe('clampRecordSettings', () => {
     expect(next.latencyTrimMs).toBe(DEFAULT_RECORD_SETTINGS.latencyTrimMs);
     expect(next.triggerDb).toBe(DEFAULT_RECORD_SETTINGS.triggerDb);
     expect(next.autoStart).toBe(false);
+  });
+});
+
+describe('masterLevel', () => {
+  it('defaults below unity, because stacked takes sum', () => {
+    expect(DEFAULT_RECORD_SETTINGS.masterLevel).toBeGreaterThan(0);
+    expect(DEFAULT_RECORD_SETTINGS.masterLevel).toBeLessThan(1);
+  });
+
+  it('clamps into 0..1 and survives a settings blob written before it existed', () => {
+    const loud = clampRecordSettings(DEFAULT_RECORD_SETTINGS, { masterLevel: 4 });
+    expect(loud.masterLevel).toBe(1);
+    const silent = clampRecordSettings(DEFAULT_RECORD_SETTINGS, { masterLevel: -2 });
+    expect(silent.masterLevel).toBe(0);
+    // An older persisted blob has no masterLevel at all; the merge must not
+    // leave the master gain node holding undefined.
+    const legacy = clampRecordSettings(DEFAULT_RECORD_SETTINGS, {
+      masterLevel: undefined as unknown as number,
+    });
+    expect(legacy.masterLevel).toBe(DEFAULT_RECORD_SETTINGS.masterLevel);
+  });
+
+  it('keeps a level the user actually picked', () => {
+    expect(clampRecordSettings(DEFAULT_RECORD_SETTINGS, { masterLevel: 0.42 }).masterLevel)
+      .toBeCloseTo(0.42, 6);
+  });
+});
+
+describe('softClipCurve', () => {
+  /** Read the curve at a given input level, the way a WaveShaper would. */
+  const at = (curve: Float32Array, input: number): number => {
+    const index = Math.round(((input + 1) / 2) * (curve.length - 1));
+    return curve[Math.max(0, Math.min(curve.length - 1, index))];
+  };
+
+  it('is bit-transparent below the knee', () => {
+    const curve = softClipCurve();
+    for (const level of [0, 0.1, 0.3, SOFT_CLIP_KNEE - 0.05]) {
+      expect(at(curve, level)).toBeCloseTo(level, 3);
+      expect(at(curve, -level)).toBeCloseTo(-level, 3);
+    }
+  });
+
+  it('never lets the mix exceed full scale', () => {
+    const curve = softClipCurve();
+    for (const sample of curve) expect(Math.abs(sample)).toBeLessThanOrEqual(1);
+    // The endpoint is the ceiling for any input at all: a WaveShaper clamps
+    // out-of-range input to it, which is what stops four stacked takes from
+    // hard-clipping on the way to the speakers.
+    expect(at(curve, 1)).toBeLessThan(1);
+    expect(at(curve, 1)).toBeGreaterThan(SOFT_CLIP_KNEE);
+  });
+
+  it('rises monotonically, so the bend cannot fold the waveform back on itself', () => {
+    const curve = softClipCurve();
+    for (let index = 1; index < curve.length; index++) {
+      expect(curve[index]).toBeGreaterThanOrEqual(curve[index - 1]);
+    }
+  });
+
+  it('is odd-symmetric, so it adds no even-order harmonics or DC', () => {
+    const curve = softClipCurve();
+    for (const level of [0.2, 0.7, 0.95]) {
+      expect(at(curve, level)).toBeCloseTo(-at(curve, -level), 6);
+    }
   });
 });

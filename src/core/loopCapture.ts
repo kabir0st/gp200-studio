@@ -157,6 +157,48 @@ export function roundTripSamples(inputs: LatencyInputs): number {
   return Math.max(0, Math.round(seconds * inputs.sampleRate));
 }
 
+// ── Output stage ────────────────────────────────────────────────────────────
+
+/** Level below which the safety clipper is bit-transparent (≈ −4.4 dBFS). */
+export const SOFT_CLIP_KNEE = 0.6;
+
+/**
+ * Lookup curve for a zero-latency soft clipper on the loop station's output.
+ *
+ * Tracks SUM. Four takes at unity peak at four times full scale, and the hard
+ * clip the browser applies on the way to the speakers is what turns a loud
+ * loop into a nasty one. This bends everything above the knee towards a
+ * ceiling instead, so stacking stays loud but never turns to fizz.
+ *
+ * Deliberately a WaveShaper and not a DynamicsCompressor: Chromium's
+ * compressor carries a lookahead pre-delay, and the entire capture design here
+ * rests on the output leg costing exactly what `ctx.outputLatency` reports
+ * (see roundTripSamples). A per-sample lookup adds nothing to that.
+ *
+ * Below the knee y = x exactly, and the first derivative is 1 on both sides of
+ * it, so the transition into the bend cannot be heard. A WaveShaper clamps
+ * out-of-range input to the curve's endpoints, which makes the value at x = 1
+ * a hard ceiling for any level at all.
+ */
+// The explicit ArrayBuffer arg matters: WaveShaperNode.curve rejects the
+// default Float32Array<ArrayBufferLike>, which could be shared memory.
+export function softClipCurve(length = 2048): Float32Array<ArrayBuffer> {
+  const curve = new Float32Array(length);
+  const range = 1 - SOFT_CLIP_KNEE;
+  for (let index = 0; index < length; index++) {
+    // The curve is sampled across the shaper's own −1..1 input span.
+    const input = (index / (length - 1)) * 2 - 1;
+    const magnitude = Math.abs(input);
+    if (magnitude <= SOFT_CLIP_KNEE) {
+      curve[index] = input;
+      continue;
+    }
+    const excess = (magnitude - SOFT_CLIP_KNEE) / range;
+    curve[index] = Math.sign(input) * (SOFT_CLIP_KNEE + range * Math.tanh(excess));
+  }
+  return curve;
+}
+
 // ── Record settings ─────────────────────────────────────────────────────────
 
 export interface LoopRecordSettings {
@@ -170,6 +212,17 @@ export interface LoopRecordSettings {
   triggerDb: number;
   /** fixed take length in bars, or null to record until stopped */
   recordBars: number | null;
+  /**
+   * Loop-station output level, 0..1, applied to the master gain node.
+   *
+   * The one field here that is not a capture edge. It lives with the record
+   * settings because this is the looper's persisted per-machine preference
+   * bag, and an output level has to survive a reload like the rest of them.
+   * The default sits below unity because tracks SUM: every take stacks its
+   * full level on the last, and a rig whose USB output already runs hot has
+   * no headroom left by the third one.
+   */
+  masterLevel: number;
 }
 
 export const LATENCY_TRIM_MIN_MS = -150;
@@ -188,6 +241,10 @@ export const DEFAULT_RECORD_SETTINGS: LoopRecordSettings = {
   autoStart: true,
   triggerDb: -34,
   recordBars: null,
+  // -6 dB: a starting volume, not a ceiling. Low enough that a first loop is
+  // never a shock next to the amp, and that a second and third take can land
+  // on top before the safety clipper above has to do anything at all.
+  masterLevel: 0.5,
 };
 
 function clampNumber(value: number, min: number, max: number, fallback: number): number {
@@ -230,6 +287,12 @@ export function clampRecordSettings(
       DEFAULT_RECORD_SETTINGS.triggerDb,
     )),
     recordBars: clampBars(merged.recordBars),
+    masterLevel: clampNumber(
+      merged.masterLevel,
+      0,
+      1,
+      DEFAULT_RECORD_SETTINGS.masterLevel,
+    ),
   };
 }
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Card } from './Card';
+import { useDialogAnchor } from './useDialogAnchor';
 
 interface DialogProps {
   open: boolean;
@@ -25,9 +26,12 @@ interface DialogProps {
 
 /* Mobile-first placements: bottom sheets hug the screen edges below sm
  * (native-sheet feel, square bottom corners, safe-area padding for the iOS
- * home indicator); center dialogs cap their height and scroll internally. */
+ * home indicator); center dialogs cap their height and scroll internally.
+ * "center" aligns to the start on purpose: useDialogAnchor writes the
+ * centering offset as a margin so the panel can't re-center itself every time
+ * its content changes height. */
 const OVERLAY_PLACEMENT: Record<'center' | 'bottom' | 'right', string> = {
-  center: 'justify-center items-center p-3 sm:p-4',
+  center: 'justify-center items-start p-3 sm:p-4',
   bottom: 'justify-center items-end p-0 sm:p-4',
   right: 'justify-end items-stretch',
 };
@@ -59,7 +63,10 @@ export function Dialog({
   padding = 'p-4 sm:p-6',
 }: DialogProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
+
+  useDialogAnchor(open, placement, overlayRef, panelRef);
 
   useEffect(() => {
     if (!open) return;
@@ -115,6 +122,7 @@ export function Dialog({
 
   return (
     <div
+      ref={overlayRef}
       className={`fixed inset-0 z-50 bg-black/60 flex ${OVERLAY_PLACEMENT[placement]}`}
       onClick={closeOnOverlayClick ? onClose : undefined}
     >
