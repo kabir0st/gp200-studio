@@ -8,6 +8,8 @@ import {
   nextBoundary,
   loopIndex,
   playhead,
+  barSecondsFromTempo,
+  frameAtTime,
 } from '@/core/looperTransport';
 
 describe('sample/second conversion', () => {
@@ -120,5 +122,31 @@ describe('playhead', () => {
 
   it('resets to ~0 at the next boundary', () => {
     expect(playhead(14, 10, 2)).toBeCloseTo(0, 9);
+  });
+});
+
+describe('barSecondsFromTempo', () => {
+  it('gives one 4/4 bar at 120 BPM as two seconds', () => {
+    expect(barSecondsFromTempo(120, 4)).toBeCloseTo(2, 9);
+  });
+
+  it('follows the signature: 3/4 is three quarter-note beats', () => {
+    expect(barSecondsFromTempo(120, 3)).toBeCloseTo(1.5, 9);
+  });
+
+  it('guards nonsense tempos instead of returning Infinity', () => {
+    expect(barSecondsFromTempo(0, 4)).toBe(0);
+    expect(barSecondsFromTempo(120, 0)).toBe(0);
+  });
+});
+
+describe('frameAtTime', () => {
+  it('converts a scheduled time to the frame the worklet compares against', () => {
+    expect(frameAtTime(1.5, 48000)).toBe(72000);
+  });
+
+  it('rounds to the nearest frame and clamps below zero', () => {
+    expect(frameAtTime(1 + 0.6 / 48000, 48000)).toBe(48001);
+    expect(frameAtTime(-3, 48000)).toBe(0);
   });
 });

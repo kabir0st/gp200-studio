@@ -658,7 +658,9 @@
   transform: translateX(-50%);
   width: 30px;
   height: 11px;
-  z-index: 3;
+  /* above the hovered knob's lift (z-index 3): the lift grows upward and would
+     otherwise paint over the drag affordance and swallow its pointer. */
+  z-index: 4;
   border-radius: 3px;
   /* two staggered rows of dots, tinted with the pedal ink */
   background-image: radial-gradient(
@@ -807,13 +809,62 @@
   gap: 1px;
   width: 48px;
   user-select: none;
+  /* the drag surface is the whole unit now, so it -- not just the cap -- has to
+     claim the gesture before the stage's scroll axis does. */
+  touch-action: none;
+  /* z-index target: lets a lifted knob draw over its neighbours in the row. */
+  position: relative;
+  /* the lift scales the whole unit, so the name and value grow with the cap.
+     Grow upward from the bottom edge: a centred origin pushes the value readout
+     down into the BYPASSED tag (`.p-off-tag`, top: 42%, z-index 6 -- above the
+     knob, which sits under the bypass scrim by design). Anchoring the bottom
+     pins the readout where it already is and sends the growth into the empty
+     space above the cap instead. */
+  transform-origin: 50% 100%;
+  transition: transform 0.15s ease-out;
+  /* on the unit, not the cap: the name and value take the wheel too, so they
+     get the cursor that advertises it. A plain dot, not a glyph -- the pointer
+     sits dead centre on the cap while the knob turns, so anything larger hides
+     what it is editing. `ns-resize` is the fallback where SVG cursors are
+     refused. */
+  cursor: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 16 16%22%3E%3Ccircle cx=%228%22 cy=%228%22 r=%224%22 fill=%22%23fff%22 opacity=%22.95%22/%3E%3Ccircle cx=%228%22 cy=%228%22 r=%222.6%22 fill=%22%2312161a%22/%3E%3C/svg%3E") 8 8, ns-resize;
 }
 .board-view .knob svg {
   width: 44px;
   height: 44px;
-  cursor: ns-resize;
-  touch-action: none;
   display: block;
+  transition: filter 0.15s ease-out;
+}
+/* Hover/focus lift. `transform` only -- `.knob` is a fixed 48px item in a
+   flex-wrap grid sitting under useBoardFit's `zoom`, so animating width/height
+   or font-size would reflow the whole pedal face (and could re-fit the board).
+   Scaling the unit rather than the cap alone is also what keeps the name and
+   value legible: they ride the same transform, so they can never collide with
+   each other the way two independently scaled spans 1px apart would.
+   Guarded by `hover: hover` so a touchscreen laptop (which keeps the desktop
+   tree) can't leave a knob stuck big after a tap. */
+@media (hover: hover) {
+  .board-view .knob:hover {
+    transform: scale(1.2);
+    z-index: 3;
+  }
+  .board-view .knob:hover svg {
+    filter: drop-shadow(0 0 4px var(--knob-glow)) drop-shadow(0 0 11px var(--knob-glow-soft));
+  }
+  /* the resting label is ellipsised to the 48px column ("FEEDBA..."); the lift
+     is only worth anything if it also spells the name out. Safe to overflow
+     because the lifted knob is the one on top. */
+  .board-view .knob:hover .k-label {
+    overflow: visible;
+    max-width: none;
+  }
+}
+.board-view .knob:has(svg:focus-visible) {
+  transform: scale(1.2);
+  z-index: 3;
+}
+.board-view .knob svg:focus-visible {
+  filter: drop-shadow(0 0 4px var(--knob-glow)) drop-shadow(0 0 11px var(--knob-glow-soft));
 }
 .board-view .k-label {
   font-family: var(--font-jetbrains-mono), monospace;
@@ -906,8 +957,18 @@
 .board-view .controls.amp-panel .k-value {
   color: var(--panel-text);
 }
+/* after the hover rule on purpose: same specificity, so dragging wins and the
+   lift/glow/cursor hold even if the pointer leaves the knob mid-drag. */
+.board-view .knob.dragging {
+  transform: scale(1.2);
+  z-index: 3;
+}
+.board-view .knob.dragging {
+  cursor: grabbing;
+}
 .board-view .knob.dragging svg {
-  filter: brightness(1.15);
+  filter: brightness(1.15) drop-shadow(0 0 5px var(--knob-glow))
+    drop-shadow(0 0 13px var(--knob-glow-soft));
 }
 
 /* ── mini switch + combo ── */
@@ -2252,6 +2313,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* the global block in index.css only collapses the duration; drop the size
+     change itself so a hover can't jump the knob for motion-sensitive users. */
+  .board-view .knob:hover,
+  .board-view .knob:has(svg:focus-visible),
+  .board-view .knob.dragging {
+    transform: none;
+  }
   .effect-picker .ep-row,
   .effect-picker .ep-cat,
   .effect-picker .ep-close,

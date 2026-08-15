@@ -15,3 +15,14 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
     dispatchEvent: () => false,
   }) as MediaQueryList;
 }
+
+// jsdom has no ResizeObserver; useDialogAnchor observes the dialog panel to
+// re-measure when its content swaps. Stub it as inert (jsdom reports zero
+// geometry anyway, so there is nothing for it to observe).
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
+}

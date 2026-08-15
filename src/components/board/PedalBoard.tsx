@@ -9,6 +9,7 @@ import { FxLoopArrows } from '@/components/FxLoopArrows';
 import { ControllerPanel } from '@/components/ControllerPanel';
 import { FootswitchPanel } from '@/components/FootswitchPanel';
 import { LooperPanel } from './LooperPanel';
+import type { LooperTempo } from './LooperSetup';
 import { DrumsPanel } from './DrumsPanel';
 import { DeviceLooperPanel } from './DeviceLooperPanel';
 import { RemotePanel } from './RemotePanel';
@@ -94,6 +95,8 @@ export interface PedalBoardProps {
   onPanelOpen: (panel: PanelId) => void;
   /* loop station */
   looper: LooperApi;
+  /** the practice drum machine's bar, so the loop grid can be locked to it */
+  looperTempo: LooperTempo;
   looperBindings: LooperBindings;
   onLooperBindingsChange: (next: LooperBindings) => void;
   onEnableAudio: () => void;
@@ -176,6 +179,7 @@ export function PedalBoard({
   onOpenGuide,
   onPanelOpen,
   looper,
+  looperTempo,
   looperBindings,
   onLooperBindingsChange,
   onEnableAudio,
@@ -517,6 +521,7 @@ export function PedalBoard({
         </div>
         <LooperPanel
           looper={looper}
+          tempo={looperTempo}
           bindings={looperBindings}
           onBindingsChange={onLooperBindingsChange}
           onEnableAudio={onEnableAudio}

@@ -76,6 +76,7 @@ export default function MobileShell({
   onOpenGuide,
   onPanelOpen,
   looper,
+  looperTempo,
   looperBindings,
   onLooperBindingsChange,
   onEnableAudio,
@@ -211,6 +212,7 @@ export default function MobileShell({
             <h2 className="m-screen-title">LOOP STATION</h2>
             <LooperPanel
               looper={looper}
+              tempo={looperTempo}
               bindings={looperBindings}
               onBindingsChange={onLooperBindingsChange}
               onEnableAudio={onEnableAudio}
