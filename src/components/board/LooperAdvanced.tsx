@@ -87,6 +87,9 @@ export function LooperAdvanced({
   const [setupOpen, setSetupOpen] = useState(!looper.hasContent);
   const button = recordButtonState(looper);
   const noTracks = looper.tracks.length === 0;
+  // The bar outlives the last track when it was locked to a tempo, and CLEAR is
+  // the only way back to a blank transport , so it stays live while one exists.
+  const nothingToClear = noTracks && looper.baseDurationSec === null;
 
   const updateExpTarget = (target: ExpTarget) => {
     onBindingsChange({ ...bindings, expTarget: target });
@@ -140,9 +143,12 @@ export function LooperAdvanced({
             last chord smears over the top of the loop.
           </li>
           <li>
-            If takes land consistently late or early, nudge TIMING TRIM. The app
-            already compensates for the round trip your interface reports; the
-            trim covers whatever that number misses.
+            If overdubs land consistently late or early, nudge TIMING TRIM. The
+            app already compensates for the round trip your interface reports;
+            the trim covers whatever that number misses. It only moves where the
+            loop starts inside audio that was captured either way, so nudging it
+            never costs you the front of a take , and it does nothing to a take
+            recorded with nothing playing, which has no round trip to correct.
           </li>
           <li>
             The loop is as long as the LONGEST take. Play past the end and it
@@ -260,7 +266,7 @@ export function LooperAdvanced({
             >
               ↷
             </Button>
-            <Button variant="danger" size="sm" disabled={noTracks} onClick={looper.clearAll}>
+            <Button variant="danger" size="sm" disabled={nothingToClear} onClick={looper.clearAll}>
               Clear All
             </Button>
           </div>

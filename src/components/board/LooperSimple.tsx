@@ -76,6 +76,9 @@ export function LooperSimple({
   const [importError, setImportError] = useState<string | null>(null);
   const button = recordButtonState(looper);
   const noTracks = looper.tracks.length === 0;
+  // The bar outlives the last track when it was locked to a tempo, and CLEAR is
+  // the only way back to a blank transport , so it stays live while one exists.
+  const nothingToClear = noTracks && looper.baseDurationSec === null;
 
   const handleSync = () => {
     if (looper.baseLocked) {
@@ -143,7 +146,7 @@ export function LooperSimple({
         <Button
           variant="danger"
           size="sm"
-          disabled={noTracks}
+          disabled={nothingToClear}
           onClick={looper.clearAll}
           title="Delete every track and start over"
         >

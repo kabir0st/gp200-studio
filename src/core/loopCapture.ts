@@ -19,13 +19,35 @@
 //
 // A sample reaching the recorder at context frame X was played by the guitarist
 // at X − inputLatency, and the click/loop they played along to was heard
-// outputLatency after it was scheduled. Capture therefore has to begin
-// roundTripSamples() AFTER the musical downbeat, and the sample that lands there
-// is the downbeat. Compensating at the start (rather than trimming the head
-// afterwards) keeps the take's length exactly what was played.
+// outputLatency after it was scheduled. The sample carrying the downbeat
+// therefore lands roundTripSamples() AFTER the downbeat was scheduled, and that
+// is where the loop's first sample has to come from.
+//
+// ── Why capture starts EARLIER than that, and the head is sliced ────────────
+//
+// The obvious implementation arms the recorder at the loop point. It works
+// right up until the compensation is wrong, and it is a device-reported number
+// so it often is , which is what the user's latency trim is for. Sliding the
+// arm point with the trim slides the whole capture WINDOW, so a positive trim
+// throws the first few tens of milliseconds of the take away before the main
+// thread ever sees them, and a negative trim has nowhere to go because capture
+// cannot begin before the recorder was armed.
+//
+// So planCapture() arms a GUARD pre-roll early and reports where the loop point
+// sits inside what was captured. The trim then only moves a slice offset over
+// audio that already exists: it never destroys anything, it works in both
+// directions, and the take's length stays exactly the gap between the presses
+// because the stop edge moves by the same offset the head did.
 
 /** Peak magnitude below which the input counts as silence for onset tracing. */
 export const SILENCE_FLOOR = 0.0025;
+
+/** Pre-roll kept while level-armed, so the attack that fires it is recorded. */
+export const PREROLL_SEC = 0.08;
+/** Zero-crossing search radius when placing a level-armed take's first sample. */
+export const ONSET_SNAP_SEC = 0.002;
+/** Floor on how long the recorder keeps running past the loop end. */
+export const MIN_TAIL_SEC = 0.06;
 
 export function dbToGain(db: number): number {
   return Math.pow(10, db / 20);
@@ -140,21 +162,149 @@ export interface LatencyInputs {
   outputLatencySec: number;
   /** the capture track's reported latency in seconds */
   inputLatencySec: number;
-  /** user trim, positive means "the take is landing early, capture later" */
-  trimMs: number;
   sampleRate: number;
 }
 
 /**
- * Frames between a scheduled musical instant and the sample that carries it.
- *
- * Never negative: capture cannot begin before the recorder was armed, so a
- * trim that would push the start earlier than the downbeat clamps to zero.
+ * Frames between a scheduled musical instant and the sample that carries it,
+ * as the DEVICE reports the round trip. The user trim is deliberately not part
+ * of this: see planCapture, which decides separately whether the trim applies
+ * at all and never lets it move the arm point.
  */
 export function roundTripSamples(inputs: LatencyInputs): number {
-  const seconds =
-    inputs.outputLatencySec + inputs.inputLatencySec + inputs.trimMs / 1000;
+  const seconds = inputs.outputLatencySec + inputs.inputLatencySec;
   return Math.max(0, Math.round(seconds * inputs.sampleRate));
+}
+
+/**
+ * Frames of audio captured AHEAD of a grid take's loop point, so the trim can
+ * move the loop point without ever throwing recorded audio away.
+ *
+ * Sized to the full trim range, so the head never falls outside the guard.
+ * Capped against the bar, though: a guard the worklet cannot honour in full
+ * shows up as an over-long capture, and quantizeToBase only rounds that back
+ * while the overrun stays under half a bar. A quarter-bar cap keeps that margin
+ * on a fast locked tempo, where a flat 150 ms would round a 1-bar take to 2.
+ */
+export function guardPreRollFrames(sampleRate: number, baseSamples: number | null): number {
+  const wanted = Math.max(0, Math.round((LATENCY_TRIM_MAX_MS / 1000) * sampleRate));
+  if (baseSamples === null || baseSamples <= 0) return wanted;
+  return Math.min(wanted, Math.floor(baseSamples / 4));
+}
+
+/** How the recorder is being armed for a take. */
+export type CaptureMode =
+  /** worklet listens and fires on the attack (nothing is looping yet) */
+  | 'level'
+  /** capture begins on a cycle downbeat, against audio already playing */
+  | 'grid'
+  /** roll immediately: no grid worth waiting for */
+  | 'now';
+
+export interface CapturePlanInputs {
+  mode: CaptureMode;
+  /** the musical instant as a context frame: the grid downbeat, or "now" */
+  startFrame: number;
+  sampleRate: number;
+  inputLatencySec: number;
+  outputLatencySec: number;
+  /** the user's trim in ms; only applied when playing against something */
+  trimMs: number;
+  /**
+   * True when the player is following audio WE scheduled. Only then is the
+   * output leg real (they hear it late) and only then does the trim mean
+   * anything , with nothing audible to follow there is no round trip to correct
+   * and charging one would just rotate the take against its own grid.
+   */
+  againstPlayback: boolean;
+  /** one bar in samples, or null when nothing defines one yet */
+  baseSamples: number | null;
+  /** fixed take length in bars, or null to run until stopped */
+  recordBars: number | null;
+  tailBlendMs: number;
+}
+
+export interface CapturePlan {
+  /** frame the worklet is told to begin capturing on */
+  armFrame: number;
+  /** frame the loop's first sample sits on */
+  loopHeadFrame: number;
+  /** body length to ask the worklet for; 0 means "run until stopped" */
+  bodyFrames: number;
+  /** how much ring-out to keep past the body, for the loop join */
+  tailFrames: number;
+  /** how far the edges moved; the STOP edge must use the same */
+  offsetFrames: number;
+  /** audio captured ahead of the loop point (0 outside grid mode) */
+  guardFrames: number;
+}
+
+/**
+ * Where a take's capture window, loop point and stop edge belong.
+ *
+ * The one invariant worth stating: the take's LENGTH never depends on the trim.
+ * The head sits at `startFrame + offsetFrames` and the stop edge is pushed by
+ * the same `offsetFrames`, so a hand-stopped take is exactly the gap between
+ * the two presses and a fixed-length one is exactly `recordBars` bars.
+ */
+export function planCapture(inputs: CapturePlanInputs): CapturePlan {
+  const rate = inputs.sampleRate;
+  let outputLatencySec = 0;
+  let trimMs = 0;
+  if (inputs.againstPlayback) {
+    outputLatencySec = inputs.outputLatencySec;
+    trimMs = inputs.trimMs;
+  }
+  const offsetFrames =
+    roundTripSamples({ outputLatencySec, inputLatencySec: inputs.inputLatencySec, sampleRate: rate })
+    + Math.round((trimMs / 1000) * rate);
+
+  const loopHeadFrame = Math.max(0, inputs.startFrame + offsetFrames);
+  // Only a grid take has a head in the future to reach back from. NOW mode
+  // starts at this instant and level mode keeps its own rolling pre-roll.
+  let guardFrames = 0;
+  if (inputs.mode === 'grid') {
+    guardFrames = Math.min(loopHeadFrame, guardPreRollFrames(rate, inputs.baseSamples));
+  }
+
+  // Everything captured before the loop point still counts toward the body the
+  // worklet was asked for, so a fixed take is exactly `recordBars` bars once
+  // the head has been sliced off it.
+  let bodyFrames = 0;
+  if (inputs.baseSamples !== null && inputs.recordBars !== null) {
+    bodyFrames = guardFrames + inputs.baseSamples * inputs.recordBars;
+  }
+
+  // The head can only move FORWARD from the arm point (a late worklet start, a
+  // level-armed onset), and the loop's last samples then come out of the tail.
+  const headroomSec = Math.max(PREROLL_SEC, guardFrames / rate);
+  const tailSec = Math.max(MIN_TAIL_SEC, inputs.tailBlendMs / 1000) + headroomSec;
+
+  return {
+    armFrame: loopHeadFrame - guardFrames,
+    loopHeadFrame,
+    bodyFrames,
+    tailFrames: Math.round(tailSec * rate),
+    offsetFrames,
+    guardFrames,
+  };
+}
+
+/**
+ * Where the loop's first sample sits inside what the worklet actually posted.
+ *
+ * The worklet cannot start before the quantum it receives the arm message on,
+ * so a guard reaching into the past is only honoured in part. Measuring the
+ * head against the frame it REPORTS starting on absorbs that difference rather
+ * than rotating the take by it.
+ */
+export function resolveHead(loopHeadFrame: number, reportedStartFrame: number): number {
+  return Math.max(0, loopHeadFrame - reportedStartFrame);
+}
+
+/** Loop-length frames available once the head is skipped. */
+export function capturedFrames(bodyFrames: number, flatLength: number, head: number): number {
+  return Math.max(0, Math.min(bodyFrames, flatLength) - head);
 }
 
 // ── Output stage ────────────────────────────────────────────────────────────
@@ -202,7 +352,15 @@ export function softClipCurve(length = 2048): Float32Array<ArrayBuffer> {
 // ── Record settings ─────────────────────────────────────────────────────────
 
 export interface LoopRecordSettings {
-  /** extra round-trip compensation in ms, on top of what the device reports */
+  /**
+   * Where an overdub's loop point sits, in ms either side of what the device
+   * reports the round trip to be. POSITIVE fixes a take that plays back LATE
+   * (the loop point moves further into the capture); negative pulls it earlier
+   * than the device claims. It only slides a slice offset over audio the guard
+   * pre-roll already captured, so neither direction costs anything, and it does
+   * nothing at all to a take recorded with nothing playing , there is no round
+   * trip to correct when there is nothing to play along to.
+   */
   latencyTrimMs: number;
   /** ms of ring-out past the loop point summed back over the downbeat */
   tailBlendMs: number;

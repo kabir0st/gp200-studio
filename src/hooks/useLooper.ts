@@ -7,20 +7,26 @@ import {
   cycleBars as widestBars,
   samplesToSeconds,
   secondsToSamples,
-  nextBoundary,
+  boundaryForPress,
+  cyclePhaseSurvives,
+  anchorFromCapture,
   frameAtTime,
   playhead,
 } from '@/core/looperTransport';
 import {
   blendTail,
   findOnset,
-  roundTripSamples,
+  planCapture,
+  resolveHead,
+  capturedFrames,
   dbToGain,
   clampRecordSettings,
   loadRecordSettings,
   saveRecordSettings,
   softClipCurve,
   SILENCE_FLOOR,
+  PREROLL_SEC,
+  ONSET_SNAP_SEC,
   type LoopRecordSettings,
 } from '@/core/loopCapture';
 import {
@@ -57,9 +63,16 @@ const recorderWorkletUrl = new URL('../audio/looper-recorder.worklet.js', import
 //
 // Every track is TILED to exactly one cycle and looped, so all sources share an
 // identical loop length and cannot drift apart , a 1-bar take under a 4-bar
-// cycle is stored as that bar repeated four times. Growth re-tiles and relaunches
-// everything on a boundary; the copy is a memcpy of already-decoded PCM and only
-// happens when the cycle actually changes, which is rare.
+// cycle is stored as that bar repeated four times. The copy is a memcpy of
+// already-decoded PCM and only happens when the cycle actually changes.
+//
+// Growing the cycle must not break what is already playing, which is the whole
+// reason the transport anchor moves to the new take's own downbeat rather than
+// to "now": that keeps it congruent with the old anchor modulo the old cycle,
+// so every track whose length divides both widths carries on emitting exactly
+// the same samples and its source is left completely alone (cyclePhaseSurvives).
+// Only a track whose tiling was, or becomes, a partial repeat has to be
+// relaunched, and those all splice at one shared future instant.
 //
 // ── Where a take really begins and ends ──────────────────────────────────────
 //
@@ -77,14 +90,15 @@ const recorderWorkletUrl = new URL('../audio/looper-recorder.worklet.js', import
 //          take always lands on the grid.
 //   NOW    no grid worth waiting for: roll immediately.
 //
-// Every one of those start frames is pushed LATER by roundTripSamples(): the
-// sample that carries the downbeat arrives output+input latency after the
-// downbeat was scheduled. Compensating at the START (rather than trimming the
-// head afterwards and padding the end with silence) is what keeps a take's
-// length equal to what was played , and the STOP edge is pushed by the same
-// amount, so a hand-stopped take is exactly the gap between the two presses.
-// The output leg only counts when the player is following audio we scheduled
-// (see captureOffsetFrames); with nothing playing there is nothing to follow.
+// Where those edges land is loopCapture.planCapture()'s job, not this file's.
+// The sample carrying a downbeat arrives output+input latency after that
+// downbeat was scheduled, so the loop's first sample comes from there, and the
+// STOP edge is pushed by the same amount so a hand-stopped take is exactly the
+// gap between the two presses. A GRID take is armed a guard pre-roll earlier
+// still and the head is sliced out on this side, which is what lets the user's
+// latency trim move the loop point in either direction without ever discarding
+// audio. The output leg and the trim only count when the player is following
+// audio we scheduled; with nothing audible there is nothing to follow.
 //
 // The loop point is joined by summing the ring-out CAPTURED PAST the loop end
 // back over the downbeat (loopCapture.blendTail), never by fading the head in:
@@ -190,6 +204,8 @@ interface TrackNodes {
   /** `content` tiled/truncated to exactly one cycle , what actually plays */
   tiled: AudioBuffer | null;
   source: AudioBufferSourceNode | null;
+  /** context time `source` was scheduled to begin; a stop before it is silent */
+  startedAt: number;
   bars: number;
 }
 
@@ -206,6 +222,8 @@ interface LooperSnapshot {
   tracks: TrackSnapshot[];
   baseSamples: number | null;
   baseLocked: boolean;
+  /** derived from the rows, but applyCycle cannot re-derive it with no base */
+  cycleBars: number;
   transportStart: number;
   takeCount: number;
   nextTrackId: number;
@@ -223,17 +241,29 @@ interface PendingTake {
   prerollFrames: number;
   /** latency the start edge was pushed by; the stop edge uses the same */
   offsetFrames: number;
+  /** frame the loop's first sample belongs on (frame mode; 0 when level-armed) */
+  loopHeadFrame: number;
+  /** where the loop's first sample sits inside what the worklet posted */
+  head: number;
+  /** the grid downbeat this take was armed to, or null when it was not on one */
+  gridStart: number | null;
+  /** the transport anchor at arm time, to catch it moving under a live take */
+  anchorAtArm: number;
   started: boolean;
 }
 
 /** How many undo steps to keep. Snapshots are cheap; the audio is shared. */
 const HISTORY_LIMIT = 24;
-/** Pre-roll kept while level-armed, so the attack that fires it is recorded. */
-const PREROLL_SEC = 0.08;
-/** Zero-crossing search radius when placing a level-armed take's first sample. */
-const ONSET_SNAP_SEC = 0.002;
-/** Floor on how long the recorder keeps running past the loop end. */
-const MIN_TAIL_SEC = 0.06;
+/**
+ * How far ahead a source swap is scheduled.
+ *
+ * Both halves of a splice share one instant, so the replacement begins on the
+ * exact sample the old one stopped on. It also fixes a subtler thing on every
+ * ordinary start: `start(ctx.currentTime, offset)` computes the offset for a
+ * time the renderer has already passed, so the audio lands a render block late
+ * by a non-deterministic amount. Scheduling slightly ahead makes it exact.
+ */
+const SPLICE_LEAD = 0.025;
 
 /**
  * Repeat `content` until it fills exactly `cycleSamples`, truncating any partial
@@ -448,6 +478,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
       content: null,
       tiled: null,
       source: null,
+      startedAt: 0,
       bars: 0,
     };
     trackNodesRef.current.set(id, nodes);
@@ -460,13 +491,26 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
    * exactly one cycle long, starting at phase p with offset p*cycle lands the
    * track perfectly in sync immediately , so un-muting or re-playing a track
    * mid-loop is instant instead of stalling for up to a full cycle.
+   *
+   * `when` defaults to a hair ahead of now (see SPLICE_LEAD). Anything already
+   * playing is stopped at exactly that same instant and disconnected only once
+   * it has actually ended, so replacing a source is a splice rather than a gap:
+   * that is what lets the cycle grow under a running loop without a hole in it.
+   * Pass one shared `when` to relaunch several tracks as a single edit.
    */
-  const startTrackPlayback = useCallback((id: number) => {
+  const startTrackPlayback = useCallback((id: number, when?: number) => {
     const ctx = graphCtxRef.current;
     const nodes = trackNodesRef.current.get(id);
     if (!ctx || !nodes?.tiled) return;
-    nodes.source?.stop();
-    nodes.source?.disconnect();
+    // Never behind the outgoing source's own start: stop(t) at or before the
+    // scheduled start of a node makes it emit nothing at all.
+    const at = Math.max(when ?? ctx.currentTime + SPLICE_LEAD, nodes.startedAt);
+
+    const old = nodes.source;
+    if (old) {
+      old.onended = () => old.disconnect();
+      old.stop(at);
+    }
 
     const src = ctx.createBufferSource();
     src.buffer = nodes.tiled;
@@ -476,15 +520,19 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     src.connect(nodes.gain);
 
     const duration = cycleDuration();
-    const phase = playhead(ctx.currentTime, transportStartRef.current, duration);
-    src.start(ctx.currentTime, phase * duration);
+    const phase = playhead(at, transportStartRef.current, duration);
+    src.start(at, phase * duration);
     nodes.source = src;
+    nodes.startedAt = at;
     patchTrack(id, { state: 'playing' });
   }, [cycleDuration, patchTrack]);
 
+  /** Stop a track now. Deliberately immediate: stop and delete want silence at
+   *  once, and a deferred stop would null `source` while it is still audible. */
   const stopTrack = useCallback((id: number) => {
     const nodes = trackNodesRef.current.get(id);
     if (nodes?.source) {
+      nodes.source.onended = null;
       nodes.source.stop();
       nodes.source.disconnect();
       nodes.source = null;
@@ -492,10 +540,21 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
   }, []);
 
   /**
-   * Recompute the cycle from the tracks present, re-tile every track to it and
-   * relaunch whatever was playing. Called after any add or delete: the cycle is
-   * DERIVED from the widest track, so this both grows it for a long new take and
-   * shrinks it again when that take is deleted.
+   * Recompute the cycle from the tracks present and re-tile to it. Called after
+   * any add or delete: the cycle is DERIVED from the widest track, so this both
+   * grows it for a long new take and shrinks it again when that take is deleted.
+   *
+   * Deliberately does NOT touch the transport anchor. Moving the grid is a
+   * musical decision that belongs to whatever caused the change (see the anchor
+   * policy in finalizeTake), and re-anchoring here to `ctx.currentTime` is what
+   * used to make every playing loop jump , at a moment that is not even a
+   * downbeat, since finalize runs a tail's worth of time after the take ended.
+   *
+   * A running source is only rebuilt when its tiling genuinely moves. For a
+   * track whose length divides both the old and the new width the re-tiled
+   * buffer would emit the very same samples at the very same times, so the
+   * cheapest correct thing is to leave it playing and swap `tiled` underneath
+   * for the next start (cyclePhaseSurvives explains why that is exact).
    */
   const applyCycle = useCallback(() => {
     const ctx = graphCtxRef.current;
@@ -506,29 +565,28 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     for (const nodes of trackNodesRef.current.values()) {
       if (nodes.content) bars.push(nodes.bars);
     }
+    const prevBars = cycleBarsRef.current;
     const nextBars = widestBars(bars);
-    const changed = nextBars !== cycleBarsRef.current;
+    const changed = nextBars !== prevBars;
     cycleBarsRef.current = nextBars;
     setCycleBars(nextBars);
 
     const cycleSamples = base * nextBars;
-    const wasPlaying: number[] = [];
+    const relaunch: number[] = [];
     for (const [id, nodes] of trackNodesRef.current) {
       if (!nodes.content) continue;
-      if (changed || !nodes.tiled) {
-        if (nodes.source) wasPlaying.push(id);
-        nodes.tiled = tileToCycle(ctx, nodes.content, cycleSamples);
-      }
+      if (!changed && nodes.tiled) continue;
+      nodes.tiled = tileToCycle(ctx, nodes.content, cycleSamples);
+      if (!nodes.source) continue;
+      if (changed && !cyclePhaseSurvives(nodes.bars, prevBars, nextBars)) relaunch.push(id);
     }
-    if (!changed) return;
+    if (relaunch.length === 0) return;
 
-    // The cycle length moved under the running sources, so they all have to be
-    // rebuilt. Re-anchor to now: the loop restarts from its downbeat, which is
-    // the natural "you just made the loop longer, here it goes from the top".
-    for (const id of wasPlaying) stopTrack(id);
-    transportStartRef.current = ctx.currentTime;
-    for (const id of wasPlaying) startTrackPlayback(id);
-  }, [startTrackPlayback, stopTrack]);
+    // Whatever is left over played a truncated repeat, so its content really
+    // does move. Splice them all at one shared instant to keep them together.
+    const at = ctx.currentTime + SPLICE_LEAD;
+    for (const id of relaunch) startTrackPlayback(id, at);
+  }, [startTrackPlayback]);
 
   /**
    * Install finalised audio on a track: set the base if this is the first thing
@@ -586,6 +644,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
       tracks: snapshots,
       baseSamples: baseSamplesRef.current,
       baseLocked: baseLockedRef.current,
+      cycleBars: cycleBarsRef.current,
       transportStart: transportStartRef.current,
       takeCount: takeCountRef.current,
       nextTrackId: nextTrackIdRef.current,
@@ -606,19 +665,34 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     syncHistoryFlags();
   }, [captureSnapshot, syncHistoryFlags]);
 
-  /** Rebuild the whole track set from a snapshot and relaunch what was playing. */
+  /**
+   * Reconcile the live track set with a snapshot: remove what the snapshot does
+   * not have, recreate what it does, and LEAVE ALONE anything that matches.
+   *
+   * A track matches when its id, its audio (buffers are shared by reference and
+   * never mutated after install) and its bar count are all the same, and a
+   * matching track keeps its running source untouched , that is what makes an
+   * undo of one take out of four inaudible to the other three. Rebuilding
+   * everything, which is what this used to do, restarted every loop on every
+   * undo no matter how little actually changed.
+   */
   const restoreSnapshot = useCallback((snapshot: LooperSnapshot) => {
     const ctx = graphCtxRef.current;
     if (!ctx) return;
+    const wanted = new Map(snapshot.tracks.map((entry) => [entry.row.id, entry]));
+
     for (const [id, nodes] of trackNodesRef.current) {
+      // A take in flight owns its own lane; cancelling it is the caller's job.
+      if (id === recordingTrackRef.current) continue;
+      const entry = wanted.get(id);
+      if (entry && nodes.content === entry.content && nodes.bars === entry.row.bars) continue;
       stopTrack(id);
       nodes.gain.disconnect();
+      trackNodesRef.current.delete(id);
     }
-    trackNodesRef.current = new Map();
 
     baseSamplesRef.current = snapshot.baseSamples;
     baseLockedRef.current = snapshot.baseLocked;
-    transportStartRef.current = snapshot.transportStart;
     takeCountRef.current = snapshot.takeCount;
     nextTrackIdRef.current = snapshot.nextTrackId;
     setBaseLocked(snapshot.baseLocked);
@@ -628,51 +702,72 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     }
     setBaseDurationSec(restoredBaseSec);
 
+    const created: number[] = [];
+    let survivorPlaying = false;
+    const rows: LooperTrack[] = [];
     for (const entry of snapshot.tracks) {
+      const live = trackNodesRef.current.get(entry.row.id);
+      if (live) {
+        if (live.source) survivorPlaying = true;
+        // Undo/redo is a history of takes, not of the mixer. Something the user
+        // is listening to right now must not stop or mute itself because the
+        // snapshot happened to be taken while it was quiet.
+        let state: TrackState = 'stopped';
+        if (live.source) state = 'playing';
+        const muted = tracksRef.current.find((row) => row.id === entry.row.id)?.muted ?? false;
+        rows.push({ ...entry.row, state, muted });
+        continue;
+      }
       const nodes = createTrackNodes(entry.row.id, entry.gainValue);
       if (!nodes) continue;
       nodes.content = entry.content;
       nodes.bars = entry.row.bars;
       if (entry.row.muted) nodes.gain.gain.value = 0;
+      created.push(entry.row.id);
+      rows.push(entry.row);
     }
-    setTracks(snapshot.tracks.map((entry) => entry.row));
+    setTracks(rows);
     setSelectedTrack(snapshot.selectedTrack);
-    cycleBarsRef.current = 0; // force applyCycle to re-tile everything
+
+    // The snapshot's anchor is only safe to adopt when nothing survives to be
+    // knocked out of phase by it , togglePlayAll re-anchors without writing any
+    // history, so a snapshot can easily carry an origin the running sources
+    // were never started against.
+    if (!survivorPlaying) transportStartRef.current = snapshot.transportStart;
+    // applyCycle re-derives the width from the rows, except with no base at all,
+    // where there is nothing to derive it from and no content track can exist.
+    if (snapshot.baseSamples === null) {
+      cycleBarsRef.current = snapshot.cycleBars;
+      setCycleBars(snapshot.cycleBars);
+    }
     applyCycle();
-    // applyCycle re-anchors the transport when the cycle width moves, which is
-    // right for a live edit and wrong for an undo: the restored tracks have to
-    // land back on the phase they were recorded against.
-    transportStartRef.current = snapshot.transportStart;
+
+    const at = ctx.currentTime + SPLICE_LEAD;
     for (const entry of snapshot.tracks) {
-      if (entry.row.state === 'playing') startTrackPlayback(entry.row.id);
+      if (!created.includes(entry.row.id)) continue;
+      if (entry.row.state === 'playing') startTrackPlayback(entry.row.id, at);
     }
   }, [applyCycle, createTrackNodes, startTrackPlayback, stopTrack]);
 
   // ── Recording ──────────────────────────────────────────────────────────────
 
   /**
-   * Frames between an instant and the sample that carries it.
+   * True when something is actually coming out of the speakers for the player
+   * to play along to , which is what decides whether the output leg and the
+   * user's trim apply to a take at all.
    *
-   * `againstPlayback` is what decides whether the output leg counts. Dropping in
-   * on a downbeat, the player is following audio we scheduled, so the full round
-   * trip applies: they hear it one output latency late and their answer arrives
-   * one input latency after that. Starting a take with nothing playing, there is
-   * nothing to follow , only the input leg is real, and charging them for the
-   * output leg would cut the first instant off the take.
+   * Deliberately stricter than "a track holds audio": a stopped or muted track
+   * is nothing to follow, and charging a take for a round trip it never made
+   * would rotate it against its own grid.
    */
-  const captureOffsetFrames = useCallback((againstPlayback: boolean): number => {
-    const ctx = graphCtxRef.current;
-    if (!ctx) return 0;
-    const { inputSec, outputSec } = currentLatency();
-    let outputLatencySec = 0;
-    if (againstPlayback) outputLatencySec = outputSec;
-    return roundTripSamples({
-      outputLatencySec,
-      inputLatencySec: inputSec,
-      trimMs: settingsRef.current.latencyTrimMs,
-      sampleRate: ctx.sampleRate,
-    });
-  }, [currentLatency]);
+  const anyAudibleTrack = useCallback((): boolean => {
+    for (const [id, nodes] of trackNodesRef.current) {
+      if (!nodes.source) continue;
+      if (tracksRef.current.find((row) => row.id === id)?.muted) continue;
+      return true;
+    }
+    return false;
+  }, []);
 
   /** Clear the recording UI state without touching the tracks. */
   const clearRecordState = useCallback(() => {
@@ -693,10 +788,16 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     pending.startFrame = startFrame;
     pending.prerollFrames = prerollFrames;
     pending.started = true;
-    // Elapsed is capture progress, measured from the frame the body began on:
+    // Resolve the head against where the worklet REPORTS starting, not where it
+    // was asked to: a guard pre-roll reaching back past the current quantum is
+    // only honoured in part, and measuring it here absorbs the difference
+    // instead of rotating the take by it. Level takes refine their own head
+    // from the onset once the audio is in.
+    if (!pending.level) pending.head = resolveHead(pending.loopHeadFrame, startFrame);
+    // Elapsed is capture progress, measured from the frame the LOOP began on:
     // that is the number the bar counter and the fixed-length stop agree with,
     // so the readout reaches "bar 4 of 4" exactly as the take ends.
-    recordStartTimeRef.current = samplesToSeconds(startFrame, ctx.sampleRate);
+    recordStartTimeRef.current = samplesToSeconds(startFrame + pending.head, ctx.sampleRate);
     setIsArmed(false);
     setIsListening(false);
     setIsRecording(true);
@@ -720,7 +821,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     if (!ctx || !pending) return;
 
     const flat = flattenChunks(chunks);
-    let head = 0;
+    let head = pending.head;
     if (pending.level) {
       head = findOnset(flat, {
         triggerIndex: pending.prerollFrames,
@@ -729,15 +830,26 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
         snapRadius: Math.round(ONSET_SNAP_SEC * ctx.sampleRate),
       });
     }
-    const captured = Math.max(0, Math.min(bodyFrames, flat.length) - head);
+    const captured = capturedFrames(bodyFrames, flat.length, head);
     if (captured === 0) {
       dropEmptyTrack(pending.trackId);
       return;
     }
 
+    // Snapshot BEFORE anything below is mutated, and before the take number is
+    // spent. An import or a delete may have landed while the take was rolling,
+    // so this has to happen at finalize rather than at arm time , but it has to
+    // precede the base and the anchor, or undoing the very first take puts back
+    // a state that already has this take's bar length in it and the looper is
+    // left with a loop it can never wrap. captureSnapshot skips content-less
+    // rows, so the take's own armed lane is not in it.
+    pushHistory();
+    takeCountRef.current += 1;
+
     // Round to whole bars against the base , or, with no base yet, become it.
     const { bars, samples } = quantizeToBase(captured, baseSamplesRef.current ?? 0);
     const firstContent = !anyTrackHasAudio();
+    const grew = bars > cycleBarsRef.current;
     if (baseSamplesRef.current === null) {
       baseSamplesRef.current = samples;
       setBaseDurationSec(samplesToSeconds(samples, ctx.sampleRate));
@@ -748,8 +860,23 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
       // the round trip makes every later take line up with this one by ear.
       const { inputSec, outputSec } = currentLatency();
       transportStartRef.current =
-        samplesToSeconds(pending.startFrame + head, ctx.sampleRate) - inputSec - outputSec;
+        anchorFromCapture(pending.startFrame + head, ctx.sampleRate, inputSec, outputSec);
+    } else if (grew && pending.gridStart !== null
+      && transportStartRef.current === pending.anchorAtArm) {
+      // This take is about to widen the cycle, so the grid has to be re-laid
+      // around it. Use the downbeat the take was ARMED to, never its captured
+      // head: that boundary is the old anchor plus a whole number of old cycles,
+      // which is exactly the condition under which every track already playing
+      // keeps its phase (see cyclePhaseSurvives) , and it is free of the user's
+      // trim, which would otherwise compound into the grid once per growth.
+      transportStartRef.current = pending.gridStart;
     }
+    // A take that neither starts nor widens the loop leaves the grid alone.
+    // One gap, accepted rather than papered over: an import landing mid-take
+    // makes `firstContent` false for a take that was armed with no grid at all,
+    // so it keeps whatever phase the import established. Rotating that take's
+    // own buffer would be the honest fix; moving the anchor would yank
+    // everything else to suit one take.
 
     const content = ctx.createBuffer(1, samples, ctx.sampleRate);
     const fitted = new Float32Array(samples);
@@ -763,11 +890,6 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     blendTail(fitted, flat.subarray(bodyEnd, tailEnd));
     content.copyToChannel(fitted, 0);
 
-    // Snapshot here rather than at arm time: an import or a delete may have
-    // landed while the take was rolling, and undo has to step back over THIS
-    // take only. captureSnapshot skips content-less rows, so the take's own
-    // armed lane is not in it.
-    pushHistory();
     installTrackAudio(pending.trackId, content, bars, computePeaks(fitted, bucketsForBars(bars)));
   }, [
     clearRecordState,
@@ -800,7 +922,6 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
       if (!ok || !ctx || !recorder || recordingTrackRef.current !== null) return;
       const trackId = nextTrackIdRef.current;
       nextTrackIdRef.current += 1;
-      takeCountRef.current += 1;
       if (!createTrackNodes(trackId)) return;
       recordChunksRef.current = [];
       recordingTrackRef.current = trackId;
@@ -810,7 +931,10 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
         {
           id: trackId,
           kind: 'record',
-          label: `TAKE ${takeCountRef.current}`,
+          // The counter itself is only spent once the take produces audio, so
+          // arming and cancelling never burns a number , this is what that one
+          // will be if it lands.
+          label: `TAKE ${takeCountRef.current + 1}`,
           state: 'armed',
           muted: false,
           hasAudio: false,
@@ -825,27 +949,56 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
       const rate = ctx.sampleRate;
       const base = baseSamplesRef.current;
       const running = anyTrackHasAudio();
-      // A fixed take length needs a bar to count in; without one the take runs
-      // until it is stopped and defines the bar itself.
-      let bodyFrames = 0;
-      if (base !== null && current.recordBars !== null) bodyFrames = base * current.recordBars;
-      // Keep recording past the end for the join, plus one pre-roll's worth: a
-      // level-armed take shifts its head forward by up to that much when the
-      // onset is refined, and the loop's last samples come out of the tail.
-      const tailSec = Math.max(MIN_TAIL_SEC, current.tailBlendMs / 1000) + PREROLL_SEC;
-      const tailFrames = Math.round(tailSec * rate);
       // Wait for the first note only while nothing is looping yet: once audio is
       // running there is a downbeat to drop in on, which is always the better
       // reference than "whenever the player happens to hit a string".
       const level = current.autoStart && !running;
       const onGrid = running && base !== null;
-      const offsetFrames = captureOffsetFrames(onGrid);
+      // Grid-arming and charging for the round trip are separate questions: a
+      // take recorded with everything stopped should still land on the bar, but
+      // there is nothing audible for the player to be late against.
+      const againstPlayback = onGrid && anyAudibleTrack();
+      const { inputSec, outputSec } = currentLatency();
+
+      let mode: 'level' | 'grid' | 'now' = 'now';
+      if (level) mode = 'level';
+      else if (onGrid) mode = 'grid';
+
+      let gridStart: number | null = null;
+      let startTime = ctx.currentTime;
+      if (onGrid) {
+        gridStart = boundaryForPress(
+          ctx.currentTime,
+          outputSec,
+          transportStartRef.current,
+          cycleDuration(),
+        );
+        startTime = gridStart;
+      }
+
+      const plan = planCapture({
+        mode,
+        startFrame: frameAtTime(startTime, rate),
+        sampleRate: rate,
+        inputLatencySec: inputSec,
+        outputLatencySec: outputSec,
+        trimMs: current.latencyTrimMs,
+        againstPlayback,
+        baseSamples: base,
+        recordBars: current.recordBars,
+        tailBlendMs: current.tailBlendMs,
+      });
+
       pendingTakeRef.current = {
         trackId,
         level,
         startFrame: 0,
         prerollFrames: 0,
-        offsetFrames,
+        offsetFrames: plan.offsetFrames,
+        loopHeadFrame: plan.loopHeadFrame,
+        head: 0,
+        gridStart,
+        anchorAtArm: transportStartRef.current,
         started: false,
       };
 
@@ -856,29 +1009,26 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
           threshold: dbToGain(current.triggerDb),
           prerollFrames: Math.round(PREROLL_SEC * rate),
           holdQuanta: 2,
-          bodyFrames,
-          tailFrames,
+          bodyFrames: plan.bodyFrames,
+          tailFrames: plan.tailFrames,
         });
         setIsListening(true);
         return;
       }
 
-      let startTime = ctx.currentTime;
-      if (onGrid) {
-        startTime = nextBoundary(ctx.currentTime, transportStartRef.current, cycleDuration());
-        setIsArmed(true);
-      }
+      if (onGrid) setIsArmed(true);
       recorder.port.postMessage({
         type: 'arm',
         mode: 'frame',
-        startFrame: frameAtTime(startTime, rate) + offsetFrames,
-        bodyFrames,
-        tailFrames,
+        startFrame: plan.armFrame,
+        bodyFrames: plan.bodyFrames,
+        tailFrames: plan.tailFrames,
       });
     })();
   }, [
-    captureOffsetFrames,
+    anyAudibleTrack,
     createTrackNodes,
+    currentLatency,
     cycleDuration,
     ensureGraph,
     anyTrackHasAudio,
@@ -974,6 +1124,11 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
         baseSamplesRef.current = decoded.length;
         setBaseDurationSec(decoded.duration);
       }
+      // Only the FIRST thing in lays the grid. A later import that widens the
+      // cycle drops in at the current phase rather than restarting everything
+      // from the file's head: its tiled buffer is grid-aligned by construction,
+      // so its downbeat still lands on the transport's, and nothing that is
+      // already playing gets interrupted to make room for it.
       if (firstContent) transportStartRef.current = ctx.currentTime;
       const samples = baseSamplesRef.current * bars;
 
@@ -1041,9 +1196,13 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
       return;
     }
     const ctx = graphCtxRef.current;
-    if (ctx) transportStartRef.current = ctx.currentTime; // fresh common anchor
+    if (!ctx) return;
+    // One instant for the whole restart: a fresh common anchor, and every track
+    // scheduled against it rather than each against its own `currentTime`.
+    const at = ctx.currentTime + SPLICE_LEAD;
+    transportStartRef.current = at;
     for (const row of tracksRef.current) {
-      if (row.hasAudio) startTrackPlayback(row.id);
+      if (row.hasAudio) startTrackPlayback(row.id, at);
     }
   }, [patchTrack, startTrackPlayback, stopTrack]);
 
@@ -1124,7 +1283,10 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
   }, [applyCycle, cancelRecord, pushHistory, resetTransportIfEmpty, stopTrack]);
 
   const clearAll = useCallback(() => {
-    if (tracksRef.current.length === 0) return;
+    // An empty board can still hold a bar length , the transport outlives the
+    // last track whenever the bar was locked to a tempo. CLEAR has to be able to
+    // put that back too, or a stale bar has no way out through the UI at all.
+    if (tracksRef.current.length === 0 && baseSamplesRef.current === null) return;
     pushHistory();
     for (const row of tracksRef.current) stopTrack(row.id);
     for (const nodes of trackNodesRef.current.values()) nodes.gain.disconnect();
@@ -1161,12 +1323,18 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
   }, [cancelRecord, captureSnapshot, restoreSnapshot, syncHistoryFlags]);
 
   const redo = useCallback(() => {
+    // Same guard as undo: stepping history while a take is rolling would leave
+    // pendingTakeRef pointing at a lane restoreSnapshot has already removed.
+    if (recordingTrackRef.current !== null) {
+      cancelRecord();
+      return;
+    }
     const next = redoRef.current.pop();
     if (!next) return;
     undoRef.current.push(captureSnapshot());
     restoreSnapshot(next);
     syncHistoryFlags();
-  }, [captureSnapshot, restoreSnapshot, syncHistoryFlags]);
+  }, [cancelRecord, captureSnapshot, restoreSnapshot, syncHistoryFlags]);
 
   const setTrackGain = useCallback((id: number, gain: number) => {
     const nodes = trackNodesRef.current.get(id);
@@ -1266,6 +1434,11 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
 
   // Tear down the graph and reset when the audio engine goes inactive (the
   // context is closed by useAudioMeter.disable, invalidating every node).
+  //
+  // Wiping both history stacks here is load-bearing, not tidiness:
+  // restoreSnapshot decides what to keep by comparing AudioBuffer identity, and
+  // a snapshot that outlived its AudioContext would offer buffers from a dead
+  // one as matches for tracks that no longer exist.
   useEffect(() => {
     if (engine.active) return;
     recorderRef.current = null;

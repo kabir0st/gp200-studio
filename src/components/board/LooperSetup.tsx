@@ -271,7 +271,7 @@ export function LooperSetup({ looper, tempo }: LooperSetupProps) {
       <SetupBlock
         title="Timing trim"
         value={`device ${looper.latencyMs} ms · trim ${signedMs(settings.latencyTrimMs)}`}
-        hint="Your interface reports the first number and the app already compensates for it. If takes still land late, raise the trim; if they land early, lower it. One click ≈ 5 ms."
+        hint="Your interface reports the first number and the app already compensates for it. If overdubs still land late, raise the trim; if they land early, lower it. One click ≈ 5 ms. It only moves where the loop starts inside audio recorded either way, so it never trims the front off a take, and it leaves a take recorded with nothing playing alone."
       >
         <div className="flex flex-wrap items-center gap-2">
           <input
