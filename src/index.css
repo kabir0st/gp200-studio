@@ -1,14 +1,19 @@
 /* Self-hosted via @fontsource (npm-bundled font files, no runtime request to
    fonts.googleapis.com / fonts.gstatic.com: a GDPR choice, matching the old repo's
    next/font/google self-hosting rationale). @import must precede all other
-   rules, including @tailwind. */
-@import '@fontsource/dm-sans/400.css';
-@import '@fontsource/dm-sans/500.css';
-@import '@fontsource/dm-sans/600.css';
-@import '@fontsource/dm-sans/700.css';
-@import '@fontsource/jetbrains-mono/400.css';
-@import '@fontsource/jetbrains-mono/500.css';
-@import '@fontsource/jetbrains-mono/700.css';
+   rules, including @tailwind.
+
+   The `latin` subsets specifically, not the full families: the unsubsetted
+   entrypoints declare one @font-face per unicode range (Cyrillic, Greek, Latin
+   Extended…), and the app is English-only, so those are bytes and requests
+   nobody ever needs. */
+@import '@fontsource/dm-sans/latin-400.css';
+@import '@fontsource/dm-sans/latin-500.css';
+@import '@fontsource/dm-sans/latin-600.css';
+@import '@fontsource/dm-sans/latin-700.css';
+@import '@fontsource/jetbrains-mono/latin-400.css';
+@import '@fontsource/jetbrains-mono/latin-500.css';
+@import '@fontsource/jetbrains-mono/latin-700.css';
 
 @tailwind base;
 @tailwind components;
@@ -153,6 +158,21 @@ body {
   font-family: var(--font-dm-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+/* ── Guide screenshots: theme selection without JavaScript ──
+   Every guide shot ships in both stage themes, and src/guide/Shot.tsx renders
+   both. Which one shows is decided here, off the `data-theme` the pre-paint
+   script in index.html/guide.html has already stamped on <html>. That matters
+   because the guide pages are static prerendered HTML with no React on them,
+   so a JS-driven choice would either flash the wrong theme or never run at
+   all. `prefers-color-scheme` would be wrong too — the stage theme is the
+   app's own setting, not the OS's.
+
+   The hidden variant costs nothing: a display:none <img loading="lazy"> is
+   never fetched. */
+.shot-dark { display: none; }
+:root[data-theme='dark'] .shot-light { display: none; }
+:root[data-theme='dark'] .shot-dark { display: block; }
 
 /* ── Custom scrollbar ── */
 ::-webkit-scrollbar { width: 6px; }

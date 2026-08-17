@@ -185,3 +185,9 @@ for (const theme of ['light', 'dark']) {
 }
 await browser.close();
 console.log(results.join('\n'));
+
+// Derive the AVIF/WebP variants the guide actually serves. Chained here rather
+// than left as a separate manual step, so a re-capture can never leave stale
+// derivatives sitting next to fresh PNGs.
+console.log('\nOptimizing…');
+await import('./optimize-guide-shots.mjs');

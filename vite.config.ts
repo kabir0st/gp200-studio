@@ -3,17 +3,15 @@ import react from '@vitejs/plugin-react'
 import path from 'node:path'
 
 // https://vite.dev/config/
-export default defineConfig(({ command }) => ({
-  // Served from a subfolder of the kabirtamari.com name domain
-  // (kabirtamari.com/gp200studio). Base rewrites asset URLs; outDir nests the build
-  // under the same path so Cloudflare Workers Assets serves it by request path.
-  // A more-specific Worker route (kabirtamari.com/gp200studio*) wins over the
-  // resume worker's custom domain on kabirtamari.com.
+export default defineConfig(() => ({
+  // Served from the root of its own apex domain (gp200studio.com), so base is
+  // '/' in every mode and dev matches production exactly. This used to be
+  // '/gp200studio/' at build time, when the app lived in a subfolder of
+  // kabirtamari.com; worker/index.js now 301s that path here.
   //
-  // Build-only: in dev there is no subfolder to mirror, so serve from the root
-  // and keep the dev URL a plain http://localhost:5173/. Everything that resolves
-  // an asset at runtime goes through import.meta.env.BASE_URL, so both work.
-  base: command === 'build' ? '/gp200studio/' : '/',
+  // Everything that resolves an asset at runtime still goes through
+  // import.meta.env.BASE_URL, so the subfolder case remains a one-line change.
+  base: '/',
   plugins: [react()],
   resolve: {
     alias: {
@@ -27,8 +25,17 @@ export default defineConfig(({ command }) => ({
     host: true,
   },
   build: {
-    outDir: 'dist/gp200studio',
+    outDir: 'dist',
     emptyOutDir: true,
+    // Two entries: the editor SPA, and a near-empty shell for the prerendered
+    // guide pages so they don't have to download the whole editor bundle to
+    // display static prose. scripts/prerender.mjs consumes both.
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        guide: path.resolve(__dirname, 'guide.html'),
+      },
+    },
     // Never inline the AudioWorklet as a data: URL. Chromium's
     // audioWorklet.addModule() rejects data: URLs, so it must stay a real,
     // separately-fetchable asset file (see src/hooks/useLooper.ts).

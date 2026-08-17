@@ -10,7 +10,7 @@ Build patches on a pedalboard you can actually see, manage all 256 of them,
 and stack loops over your own playing. It runs in the browser, so there is
 nothing to install and nothing to sign up for.
 
-**[▶ Open the app](https://kabirtamari.com/gp200studio/)** · **[☕ Buy me a coffee](https://buymeacoffee.com/kabir0st)**
+**[▶ Open the app](https://gp200studio.com/)** · **[☕ Buy me a coffee](https://buymeacoffee.com/kabir0st)**
 
 [![Chrome or Edge](https://img.shields.io/badge/works%20in-Chrome%20%7C%20Edge-orange?logo=googlechrome&logoColor=white)](#how-to-start)
 [![Windows, macOS, Linux, Android](https://img.shields.io/badge/on-Windows%20·%20macOS%20·%20Linux%20·%20Android-5df08a)](#how-to-start)
@@ -210,7 +210,7 @@ And if the venue is dark, so is the app. Flip the red rocker in the corner.
   <img src="public/guide/01-landing.png" alt="The GP200 Studio landing screen" width="100%" />
 </picture>
 
-1. Open **[GP200 Studio](https://kabirtamari.com/gp200studio/)** in Chrome or Edge. Firefox and Safari cannot talk to USB MIDI yet, so they will not work.
+1. Open **[GP200 Studio](https://gp200studio.com/)** in Chrome or Edge. Firefox and Safari cannot talk to USB MIDI yet, so they will not work.
 2. Plug the GP-200 in over USB, turn it on, and hit **CONNECT GP-200**.
 3. No pedal handy? Open the editor anyway and work on saved `.prst` files.
 

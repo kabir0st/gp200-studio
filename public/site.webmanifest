@@ -1,17 +1,36 @@
 {
-  "name": "GP200 Studio",
-  "short_name": "GP200",
-  "description": "Browser-based editor for Valeton GP-200 guitar-effects presets: edit .prst files and push changes live over USB-MIDI.",
-  "start_url": "/gp200studio/",
-  "scope": "/gp200studio/",
+  "id": "/",
+  "name": "GP200 Studio — Valeton GP-200 Editor & Loop Station",
+  "short_name": "GP200 Studio",
+  "description": "Browser editor and multi-layer loop station for the Valeton GP-200: edit .prst presets and push changes live over USB-MIDI.",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#232220",
-  "theme_color": "#232220",
+  "background_color": "#e8e9eb",
+  "theme_color": "#e8e9eb",
   "lang": "en",
-  "categories": ["music", "utilities"],
+  "dir": "ltr",
+  "categories": ["music", "utilities", "productivity"],
   "icons": [
-    { "src": "/gp200studio/favicon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any maskable" },
-    { "src": "/gp200studio/icon-192.png", "type": "image/png", "sizes": "192x192" },
-    { "src": "/gp200studio/icon-512.png", "type": "image/png", "sizes": "512x512" }
+    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" },
+    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    {
+      "src": "/guide/02-editor-board.png",
+      "sizes": "2400x1250",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "The GP200 Studio pedalboard editor"
+    },
+    {
+      "src": "/guide/08-deck-loop.png",
+      "sizes": "2400x1250",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "The multi-layer loop station"
+    }
   ]
 }

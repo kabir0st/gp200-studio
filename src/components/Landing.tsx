@@ -12,8 +12,6 @@ interface LandingProps {
   onOpenBlank: () => void;
   /** open the editor with the connected device's current preset */
   onOpenCurrent: () => void;
-  /** open the full-page guide */
-  onOpenGuide: () => void;
   loadError: string | null;
   onDismissError: () => void;
 }
@@ -30,7 +28,7 @@ const FEATURES: string[] = [
  * Stage-styled landing: two actions only. Connect the GP-200, or open the
  * editor with a blank preset. No file prompt; import lives in the board deck.
  */
-export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, onOpenGuide, loadError, onDismissError }: LandingProps) {
+export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, loadError, onDismissError }: LandingProps) {
   const { status, handshakeStep, errorMessage, currentSlot, connect } = midiDevice;
   const [webMidiSupported, setWebMidiSupported] = useState(true);
 
@@ -103,9 +101,13 @@ export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, onOpenGuide, l
           ))}
         </ul>
 
-        <button type="button" className="landing-guide-link" onClick={onOpenGuide}>
+        {/* A real link, not a button: this is the only crawlable edge from the
+            home page into the guide's fourteen indexable URLs, and the landing
+            markup is prerendered, so a crawler that runs no JavaScript still
+            follows it. */}
+        <a className="landing-guide-link" href="/guide">
           Read the guide →
-        </button>
+        </a>
 
         {status === 'error' && errorMessage && (
           <p className="landing-msg error" role="alert">{errorMessage}</p>

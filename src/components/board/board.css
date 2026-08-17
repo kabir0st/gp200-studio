@@ -1980,7 +1980,11 @@
   border-radius: 50%;
   background: var(--accent-amber);
 }
+/* An <a href="/guide">, not a <button> — the guide is a real page now. The
+   button resets are kept so the rule still applies cleanly if it is ever
+   wrapped in one again. */
 .landing-guide-link {
+  display: inline-block;
   margin-top: 18px;
   font-family: var(--font-jetbrains-mono), monospace;
   font-size: 11px;
