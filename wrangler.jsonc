@@ -22,6 +22,9 @@
   },
   "routes": [
     { "pattern": "gp200studio.com", "custom_domain": true },
+    // www resolves and is 301'd to the apex by the Worker (host mismatch), so
+    // links and typed URLs on the www form don't dead-end on a DNS failure.
+    { "pattern": "www.gp200studio.com", "custom_domain": true },
     // Legacy #1: the old subfolder home. 301s to the apex, path preserved.
     {
       "pattern": "kabirtamari.com/gp200studio*",
