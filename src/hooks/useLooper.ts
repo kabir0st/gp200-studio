@@ -120,6 +120,9 @@ export interface LooperTrack {
   label: string;
   state: TrackState;
   muted: boolean;
+  /** this track's level in the mix, 0..1. Lives in state, not just on the node,
+   *  so the slider still reads right after the drawer is closed and reopened. */
+  gain: number;
   hasAudio: boolean;
   /** whole bars of content this track holds (0 while empty) */
   bars: number;
@@ -144,6 +147,11 @@ export interface LooperApi {
   baseDurationSec: number | null;
   /** the bar length was locked to a tempo instead of taken from a take */
   baseLocked: boolean;
+  /** the tempo the bar was locked to, frozen at lock time; null when unlocked.
+   *  Frozen because the lock copies a bar length once , the drum machine can be
+   *  retuned afterwards, and a label read live would then describe a tempo this
+   *  loop is not running at. */
+  baseLockedLabel: string | null;
   /** how many bars wide the loop currently is (1 when no tracks) */
   cycleBars: number;
   /** the full loop length in seconds; null until the first track lands */
@@ -178,15 +186,19 @@ export interface LooperApi {
   setMute: (trackId: number, muted: boolean) => void;
   clear: (trackId: number) => void;
   clearAll: () => void;
+  /** live level for the EXP pedal: audio only, no state write per frame */
   setTrackGain: (trackId: number, gain: number) => void;
+  /** the slider's path: moves the level and remembers it on the row */
+  updateTrackGain: (trackId: number, gain: number) => void;
   setMasterGain: (gain: number) => void;
   /** capture/timing preferences; persisted across sessions */
   settings: LoopRecordSettings;
   updateSettings: (patch: Partial<LoopRecordSettings>) => void;
   /** round trip the device itself reports, in ms (before the user trim) */
   latencyMs: number;
-  /** fix the bar length to `seconds` before anything is recorded */
-  lockBaseSeconds: (seconds: number) => void;
+  /** fix the bar length to `seconds` before anything is recorded; `label`
+   *  is the tempo it came from, kept for display while the lock holds */
+  lockBaseSeconds: (seconds: number, label?: string) => void;
   /** release a locked bar length so the next take defines it again */
   unlockBase: () => void;
   undo: () => void;
@@ -222,6 +234,7 @@ interface LooperSnapshot {
   tracks: TrackSnapshot[];
   baseSamples: number | null;
   baseLocked: boolean;
+  baseLockedLabel: string | null;
   /** derived from the rows, but applyCycle cannot re-derive it with no base */
   cycleBars: number;
   transportStart: number;
@@ -306,6 +319,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
   const [recordArmedTrack, setRecordArmedTrack] = useState<number | null>(null);
   const [baseDurationSec, setBaseDurationSec] = useState<number | null>(null);
   const [baseLocked, setBaseLocked] = useState(false);
+  const [baseLockedLabel, setBaseLockedLabel] = useState<string | null>(null);
   const [cycleBars, setCycleBars] = useState(1);
   const [selectedTrack, setSelectedTrack] = useState<number | null>(null);
   const [settings, setSettings] = useState<LoopRecordSettings>(loadRecordSettings);
@@ -337,6 +351,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
   // The length model: one bar, and how many bars wide the cycle is.
   const baseSamplesRef = useRef<number | null>(null);
   const baseLockedRef = useRef(false);
+  const baseLockedLabelRef = useRef<string | null>(null);
   const cycleBarsRef = useRef(1);
   const transportStartRef = useRef(0);
   const nextTrackIdRef = useRef(0);
@@ -640,15 +655,26 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
       if (!nodes?.content) continue;
       snapshots.push({ row, content: nodes.content, gainValue: nodes.gainValue });
     }
+    // A snapshot must never point at a row it does not contain. pushHistory
+    // runs mid-finalize, by which time the selection is already the in-flight
+    // take's lane , a lane with no audio yet, so it was just skipped above.
+    // Restoring that id leaves every selected-track control (play, mute, the
+    // EXP pedal) addressing a row that does not exist, where they silently do
+    // nothing. Fall back to the last row the snapshot actually holds.
+    let selected = selectedTrackRef.current;
+    if (selected !== null && !snapshots.some((entry) => entry.row.id === selected)) {
+      selected = snapshots.length > 0 ? snapshots[snapshots.length - 1].row.id : null;
+    }
     return {
       tracks: snapshots,
       baseSamples: baseSamplesRef.current,
       baseLocked: baseLockedRef.current,
+      baseLockedLabel: baseLockedLabelRef.current,
       cycleBars: cycleBarsRef.current,
       transportStart: transportStartRef.current,
       takeCount: takeCountRef.current,
       nextTrackId: nextTrackIdRef.current,
-      selectedTrack: selectedTrackRef.current,
+      selectedTrack: selected,
     };
   }, []);
 
@@ -693,9 +719,11 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
 
     baseSamplesRef.current = snapshot.baseSamples;
     baseLockedRef.current = snapshot.baseLocked;
+    baseLockedLabelRef.current = snapshot.baseLockedLabel;
     takeCountRef.current = snapshot.takeCount;
     nextTrackIdRef.current = snapshot.nextTrackId;
     setBaseLocked(snapshot.baseLocked);
+    setBaseLockedLabel(snapshot.baseLockedLabel);
     let restoredBaseSec: number | null = null;
     if (snapshot.baseSamples !== null) {
       restoredBaseSec = samplesToSeconds(snapshot.baseSamples, ctx.sampleRate);
@@ -714,8 +742,10 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
         // snapshot happened to be taken while it was quiet.
         let state: TrackState = 'stopped';
         if (live.source) state = 'playing';
-        const muted = tracksRef.current.find((row) => row.id === entry.row.id)?.muted ?? false;
-        rows.push({ ...entry.row, state, muted });
+        const liveRow = tracksRef.current.find((row) => row.id === entry.row.id);
+        const muted = liveRow?.muted ?? false;
+        const gain = liveRow?.gain ?? entry.row.gain;
+        rows.push({ ...entry.row, state, muted, gain });
         continue;
       }
       const nodes = createTrackNodes(entry.row.id, entry.gainValue);
@@ -937,6 +967,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
           label: `TAKE ${takeCountRef.current + 1}`,
           state: 'armed',
           muted: false,
+          gain: 1,
           hasAudio: false,
           bars: 0,
           durationSec: 0,
@@ -1106,6 +1137,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
           label: file.name,
           state: 'stopped',
           muted: false,
+          gain: 1,
           hasAudio: false,
           bars: 0,
           durationSec: 0,
@@ -1336,6 +1368,11 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     syncHistoryFlags();
   }, [cancelRecord, captureSnapshot, restoreSnapshot, syncHistoryFlags]);
 
+  /**
+   * Live track level, audio only , this is the EXP pedal's path, same doctrine
+   * as setMasterGain below: a pedal sweep is a performance gesture and must not
+   * write React state per frame. The UI slider calls updateTrackGain instead.
+   */
   const setTrackGain = useCallback((id: number, gain: number) => {
     const nodes = trackNodesRef.current.get(id);
     const ctx = graphCtxRef.current;
@@ -1344,6 +1381,12 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     const muted = tracksRef.current.find((row) => row.id === id)?.muted ?? false;
     if (!muted) nodes.gain.gain.setTargetAtTime(gain, ctx.currentTime, 0.01);
   }, []);
+
+  /** Move a track's level AND remember it on the row , the slider's path. */
+  const updateTrackGain = useCallback((id: number, gain: number) => {
+    setTrackGain(id, gain);
+    patchTrack(id, { gain });
+  }, [patchTrack, setTrackGain]);
 
   /**
    * Live master level, deliberately NOT persisted , this is the EXP pedal's
@@ -1382,7 +1425,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
    * bar to a known tempo removes that error entirely, and combined with a fixed
    * take length the recorder never has to guess where the loop ends.
    */
-  const lockBaseSeconds = useCallback((seconds: number) => {
+  const lockBaseSeconds = useCallback((seconds: number, label?: string) => {
     void (async () => {
       const ok = await ensureGraph();
       const ctx = graphCtxRef.current;
@@ -1392,9 +1435,11 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
       if (samples <= 0) return;
       baseSamplesRef.current = samples;
       baseLockedRef.current = true;
+      baseLockedLabelRef.current = label ?? null;
       transportStartRef.current = ctx.currentTime;
       cycleBarsRef.current = 1;
       setBaseLocked(true);
+      setBaseLockedLabel(label ?? null);
       setCycleBars(1);
       setBaseDurationSec(samplesToSeconds(samples, ctx.sampleRate));
     })();
@@ -1403,9 +1448,11 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
   const unlockBase = useCallback(() => {
     if (anyTrackHasAudio()) return;
     baseLockedRef.current = false;
+    baseLockedLabelRef.current = null;
     baseSamplesRef.current = null;
     transportStartRef.current = 0;
     setBaseLocked(false);
+    setBaseLockedLabel(null);
     setBaseDurationSec(null);
   }, [anyTrackHasAudio]);
 
@@ -1451,6 +1498,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     recordingTrackRef.current = null;
     baseSamplesRef.current = null;
     baseLockedRef.current = false;
+    baseLockedLabelRef.current = null;
     cycleBarsRef.current = 1;
     transportStartRef.current = 0;
     takeCountRef.current = 0;
@@ -1467,6 +1515,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     setRecordArmedTrack(null);
     setBaseDurationSec(null);
     setBaseLocked(false);
+    setBaseLockedLabel(null);
     setCycleBars(1);
     setTracks([]);
     setSelectedTrack(null);
@@ -1484,6 +1533,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     recordArmedTrack,
     baseDurationSec,
     baseLocked,
+    baseLockedLabel,
     cycleBars,
     cycleDurationSec,
     selectedTrack,
@@ -1506,6 +1556,7 @@ export function useLooper(engine: AudioMeterApi): LooperApi {
     clear,
     clearAll,
     setTrackGain,
+    updateTrackGain,
     setMasterGain,
     settings,
     updateSettings,

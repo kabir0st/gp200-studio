@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import type { LooperApi } from '@/hooks/useLooper';
 import type { LooperTempo } from '@/components/board/LooperSetup';
-import { LooperTimeline } from '@/components/board/LooperTimeline';
+import { LooperTrackRack } from '@/components/board/LooperTrackRack';
 import {
   LooperImportButton,
   LooperInputMeter,
   LooperMasterLevel,
-  LooperTrackList,
+  LooperSyncControl,
 } from '@/components/board/LooperControls';
 import { LooperStomps } from '@/components/board/LooperStomps';
 import { fmtCycle, playAllLabel, recordButtonState } from '@/components/board/looperLabels';
@@ -45,23 +45,6 @@ interface LooperSimpleProps {
   learnEnabled: boolean;
 }
 
-function syncVariant(locked: boolean): 'primary' | 'secondary' {
-  if (locked) return 'primary';
-  return 'secondary';
-}
-
-function syncLabel(locked: boolean, tempo: LooperTempo): string {
-  if (locked) return `↻ SYNCED · ${tempo.label}`;
-  return '↻ SYNC TO DRUMS';
-}
-
-function syncTitle(locked: boolean): string {
-  if (locked) {
-    return 'The loop is locked to the drum machine. Click to let your first take set it instead';
-  }
-  return 'Take the bar length from the practice drum machine, so the loop lands exactly in time';
-}
-
 export function LooperSimple({
   looper,
   tempo,
@@ -79,14 +62,6 @@ export function LooperSimple({
   // The bar outlives the last track when it was locked to a tempo, and CLEAR is
   // the only way back to a blank transport , so it stays live while one exists.
   const nothingToClear = noTracks && looper.baseDurationSec === null;
-
-  const handleSync = () => {
-    if (looper.baseLocked) {
-      looper.unlockBase();
-      return;
-    }
-    looper.lockBaseSeconds(tempo.barSeconds);
-  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -170,8 +145,9 @@ export function LooperSimple({
 
       {/* The loop's length, plus the single setup decision worth surfacing here:
           locking the bar to the drum machine is the only way to get a loop with
-          no stop-press reaction time in it, and it costs one tap. It disappears
-          once something is recorded, because by then the bar is fixed. */}
+          no stop-press reaction time in it, and it costs one tap. Once something
+          is recorded the bar is fixed, and the control says so rather than
+          vanishing (see LooperSyncControl). */}
       <div
         className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 rounded-lg
           border border-border-active"
@@ -185,23 +161,16 @@ export function LooperSimple({
         <span className="font-mono-display text-caption text-text-secondary tabular-nums">
           {fmtCycle(looper.cycleBars, looper.cycleDurationSec, looper.baseDurationSec)}
         </span>
-        {!looper.hasContent && (
-          <Button
-            size="sm"
-            variant={syncVariant(looper.baseLocked)}
-            className="ml-auto"
-            onClick={handleSync}
-            title={syncTitle(looper.baseLocked)}
-          >
-            {syncLabel(looper.baseLocked, tempo)}
-          </Button>
-        )}
+        <span className="ml-auto">
+          <LooperSyncControl looper={looper} tempo={tempo} size="sm" />
+        </span>
       </div>
 
-      <LooperTimeline looper={looper} />
-      <LooperTrackList looper={looper} compact />
+      <LooperTrackRack looper={looper} compact />
 
-      <div className="pt-2 border-t border-border-active">
+      {/* Collapsed by default: the assignments are made once and then used with
+          your feet, so the summary line is what the surface owes you after that. */}
+      <div className="pt-2">
         <LooperStomps
           triggers={triggers}
           armedAction={armedAction}

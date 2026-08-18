@@ -17,7 +17,7 @@ const CHAIN: GuideShot = {
   height: 98,
   alt: 'The chain strip and info bar showing effect details',
   caption:
-    'The chain strip (top) and info bar reflect the true signal order and the focused pedal.',
+    'On a narrow window the chain strip (top) joins the info bar, both reflecting the true signal order and the focused pedal.',
 };
 
 export function EditorBody() {
@@ -28,10 +28,11 @@ export function EditorBody() {
         cables showing the flow from input to output. The chain reads left to
         right and <strong>wraps onto as many rows as it needs</strong>, so it
         stacks downward instead of running off the side of the screen; a short
-        labeled stub marks where one row hands over to the next. The chain strip
-        at the top is a compact overview of the whole chain (click a block to
-        jump to it), and hovering a pedal , or clicking its <strong>i</strong> ,
-        shows its details in the info bar.
+        labeled stub marks where one row hands over to the next. Narrow the
+        window far enough and the rows fold into one swipeable line; a chain
+        strip then appears at the top as a compact overview, so you can click a
+        block to jump to a pedal that has scrolled out of view. Hovering a pedal
+        , or clicking its <strong>i</strong> , shows its details in the info bar.
       </p>
       <p>
         The board also <strong>scales itself to fit your window</strong>: on a

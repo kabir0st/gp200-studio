@@ -6,6 +6,8 @@ import {
   RANDOM_STYLES,
   SIGNATURES,
   SIGNATURE_IDS,
+  nextStepVelocity,
+  stepVelocityName,
   type DrumPattern,
   type RandomStyle,
 } from '@/core/drumMachine';
@@ -67,9 +69,19 @@ interface DrumSliderProps {
   value: number;
   display: string;
   onChange: (value: number) => void;
+  disabled?: boolean;
 }
 
-function DrumSlider({ label, min, max, step, value, display, onChange }: DrumSliderProps) {
+function DrumSlider({
+  label,
+  min,
+  max,
+  step,
+  value,
+  display,
+  onChange,
+  disabled = false,
+}: DrumSliderProps) {
   return (
     <div className="flex items-center gap-2 min-w-44 flex-1">
       <span className="font-mono-display text-label text-text-secondary w-12">{label}</span>
@@ -79,8 +91,9 @@ function DrumSlider({ label, min, max, step, value, display, onChange }: DrumSli
         max={max}
         step={step}
         value={value}
+        disabled={disabled}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="flex-1 min-w-16 accent-accent-amber"
+        className="flex-1 min-w-16 accent-accent-amber disabled:opacity-40"
         aria-label={label}
       />
       <b className="font-mono-display text-caption text-text-secondary w-10 text-right tabular-nums">
@@ -233,7 +246,25 @@ export function DrumMachinePanel({ drums }: DrumMachinePanelProps) {
           value={drums.bpm}
           display={String(drums.bpm)}
           onChange={drums.setBpm}
+          disabled={drums.followPatch}
         />
+        {/* Follow the patch tempo, so a tempo-synced tremolo or delay and the
+            drums count the same beat. Off by default: the tempo belongs to the
+            patch, so an always-on link would change the drums under you on every
+            patch change, and the drums are meant to work with no device at all. */}
+        <Button
+          size="sm"
+          variant={drums.followPatch ? 'primary' : 'secondary'}
+          aria-pressed={drums.followPatch}
+          title={
+            drums.followPatch
+              ? `Following the patch tempo (${drums.patchTempo} BPM), so tempo-synced effects and the drums agree. Click to set the drum tempo by hand again`
+              : `Follow the patch tempo (${drums.patchTempo} BPM), so a synced tremolo or delay and the drums count the same beat. Tempos above ${DRUM_BPM_MAX} are held at ${DRUM_BPM_MAX}`
+          }
+          onClick={() => drums.setFollowPatch(!drums.followPatch)}
+        >
+          ⇄ PATCH TEMPO
+        </Button>
         <DrumSlider
           label="SWING"
           min={0}
@@ -275,20 +306,26 @@ export function DrumMachinePanel({ drums }: DrumMachinePanelProps) {
               >
                 {lane.label}
               </button>
-              {barSteps.map((stepIndex) => (
-                <button
-                  key={stepIndex}
-                  type="button"
-                  className={cellClass(
-                    drums.steps[lane.id][stepIndex] ?? 0,
-                    stepIndex % signature.group === 0 && stepIndex > 0,
-                    drums.playing && displayStep === stepIndex,
-                  )}
-                  aria-label={`${lane.label} step ${stepIndex + 1}`}
-                  aria-pressed={(drums.steps[lane.id][stepIndex] ?? 0) > 0}
-                  onClick={() => drums.toggleStep(lane.id, stepIndex)}
-                />
-              ))}
+              {barSteps.map((stepIndex) => {
+                const velocity = drums.steps[lane.id][stepIndex] ?? 0;
+                return (
+                  <button
+                    key={stepIndex}
+                    type="button"
+                    className={cellClass(
+                      velocity,
+                      stepIndex % signature.group === 0 && stepIndex > 0,
+                      drums.playing && displayStep === stepIndex,
+                    )}
+                    aria-label={`${lane.label} step ${stepIndex + 1}`}
+                    aria-pressed={velocity > 0}
+                    // Where the click ring goes next, so the levels are
+                    // discoverable without having to click through all four.
+                    title={`${lane.label} step ${stepIndex + 1}: ${stepVelocityName(velocity)} — click for ${stepVelocityName(nextStepVelocity(velocity))}`}
+                    onClick={() => drums.toggleStep(lane.id, stepIndex)}
+                  />
+                );
+              })}
             </div>
           ))}
         </div>

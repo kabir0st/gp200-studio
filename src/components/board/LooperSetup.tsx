@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { useAudioEngine } from '@/components/AudioEngineProvider';
 import { Button } from '@/components/ui/Button';
+import { LooperSyncControl } from '@/components/board/LooperControls';
 import type { LooperApi } from '@/hooks/useLooper';
 import { LOOPER_HOTKEYS } from '@/hooks/useLooperHotkeys';
 import {
@@ -148,7 +149,7 @@ export function LooperSetup({ looper, tempo }: LooperSetupProps) {
 
   const gridHint = () => {
     if (looper.hasContent) {
-      return 'The bar is set for this session. Clear every track to choose a new one.';
+      return 'The bar is set for this session. CLEAR ALL deletes every track and lets you choose a new one.';
     }
     if (looper.baseLocked) {
       return 'Takes are rounded to this bar exactly , no reaction time in the tempo.';
@@ -178,23 +179,10 @@ export function LooperSetup({ looper, tempo }: LooperSetupProps) {
       <div className="grid gap-2 sm:grid-cols-2">
         <SetupBlock title="Loop grid" value={barLabel()} hint={gridHint()}>
           <div className="flex flex-wrap items-center gap-2">
-            <Button
-              size="sm"
-              variant={takeVariant(looper.baseLocked)}
-              disabled={looper.hasContent}
-              onClick={() => looper.lockBaseSeconds(tempo.barSeconds)}
-              title="Use one drum-machine bar as the looper's bar"
-            >
-              ↻ LOCK BAR TO DRUMS
-            </Button>
+            <LooperSyncControl looper={looper} tempo={tempo} size="sm" />
             <span className="font-mono-display text-caption text-text-secondary tabular-nums">
               {tempo.label} · {tempo.barSeconds.toFixed(3)} s
             </span>
-            {looper.baseLocked && !looper.hasContent && (
-              <Button size="sm" variant="ghost" onClick={looper.unlockBase}>
-                UNLOCK
-              </Button>
-            )}
           </div>
         </SetupBlock>
 

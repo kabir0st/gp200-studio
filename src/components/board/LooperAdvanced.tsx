@@ -6,13 +6,12 @@ import {
   type ExpTarget,
 } from '@/core/looperBindings';
 import { Button } from '@/components/ui/Button';
-import { LooperTimeline } from '@/components/board/LooperTimeline';
+import { LooperTrackRack } from '@/components/board/LooperTrackRack';
 import { LooperSetup, type LooperTempo } from '@/components/board/LooperSetup';
 import {
   LooperImportButton,
   LooperInputMeter,
   LooperMasterLevel,
-  LooperTrackList,
 } from '@/components/board/LooperControls';
 import { LooperStomps } from '@/components/board/LooperStomps';
 import { fmtCycle, playAllLabel, recordButtonState } from '@/components/board/looperLabels';
@@ -55,7 +54,10 @@ function setupSummary(looper: LooperApi): string {
   const parts: string[] = [];
   if (looper.baseDurationSec === null) parts.push('bar not set');
   else parts.push(`bar ${looper.baseDurationSec.toFixed(2)}s`);
-  if (looper.baseLocked) parts.push('locked to drums');
+  if (looper.baseLocked) {
+    if (looper.baseLockedLabel) parts.push(`locked to drums (${looper.baseLockedLabel})`);
+    else parts.push('locked to drums');
+  }
   if (looper.settings.recordBars === null) parts.push('free length');
   else parts.push(`${looper.settings.recordBars}-bar takes`);
   if (looper.settings.autoStart) parts.push('starts on first note');
@@ -324,14 +326,11 @@ export function LooperAdvanced({
         </p>
       )}
 
-      {/* The visual: waveform lanes across the cycle with a shared playhead */}
-      <LooperTimeline looper={looper} />
-
-      {/* Track rows: the control surface for what the timeline shows */}
-      <LooperTrackList looper={looper} />
+      {/* One row per track: its controls sitting on its own waveform */}
+      <LooperTrackRack looper={looper} />
 
       {/* Footswitch assignments (compact grid) + what the EXP pedal drives. */}
-      <div className="pt-2 border-t border-border-active flex flex-col gap-3">
+      <div className="pt-2 flex flex-col gap-3">
         <LooperStomps
           triggers={triggers}
           armedAction={armedAction}

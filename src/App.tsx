@@ -84,9 +84,15 @@ function App() {
   }, [theme, toggleTheme]);
   const audioEngine = useAudioEngine();
   const looper = useLooper(audioEngine);
+  // Per-patch VOL/PAN/TEMPO live in the preset (decoded from the .prst / device
+  // dump), so the deck reflects the loaded patch instead of a constant. The
+  // tempo is read up here because the drum machine can be asked to follow it.
+  const patchVolume = preset?.patchVolume ?? 50;
+  const patchPan = preset?.patchPan ?? 0;
+  const patchTempo = preset?.patchTempo ?? 120;
   // Practice drum machine: lives here (not in a drawer) so the beat keeps
   // playing while the drawer is closed and across the phone/desktop swap.
-  const drumMachine = useDrumMachine(audioEngine);
+  const drumMachine = useDrumMachine(audioEngine, patchTempo);
   // Keyboard transport for the loop station. Bound at the window rather than in
   // the drawer: the loop plays on with the drawer closed, so the keys must too.
   useLooperHotkeys(looper, looper.ready);
@@ -170,12 +176,6 @@ function App() {
     track('view_change', { view: 'guide' });
     window.open('/guide', '_blank', 'noopener');
   }, []);
-  // Per-patch VOL/PAN/TEMPO now live in the preset (decoded from the .prst /
-  // device dump), so the deck reflects the loaded patch instead of a constant.
-  const patchVolume = preset?.patchVolume ?? 50;
-  const patchPan = preset?.patchPan ?? 0;
-  const patchTempo = preset?.patchTempo ?? 120;
-
   const [pushProgress, setPushProgress] = useState<PushProgress | null>(null);
   const pushAbortRef = useRef<AbortController | null>(null);
 

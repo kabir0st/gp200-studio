@@ -25,9 +25,12 @@ export function DrumsBody() {
         A step-sequenced kit that runs entirely in the browser , no GP-200
         needed, so it works offline and while you're editing on the train. Pick a{' '}
         <strong>kit</strong> and a <strong>groove</strong>, set{' '}
-        <strong>BPM</strong>, <strong>swing</strong> and volume, and toggle
-        individual steps on the grid to make it yours. Accent a hit by toggling
-        it again, and mute a lane to drop the hats or the kick.
+        <strong>BPM</strong>, <strong>swing</strong> and volume, and click
+        individual steps on the grid to make it yours. Each click steps a pad
+        through <strong>hit</strong>, <strong>accent</strong> and{' '}
+        <strong>ghost</strong> before clearing it again, so the softer notes the
+        preset grooves use are yours to place too; mute a lane to drop the hats
+        or the kick.
       </p>
       <List>
         <li>

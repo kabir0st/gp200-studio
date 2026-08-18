@@ -379,7 +379,13 @@ export function PedalBoard({
         drumsPlaying={drumMachine.playing}
         sendCC={sendCC}
       />
-      <ChainStrip effects={preset.effects} onJump={scrollToPedal} />
+      {/* Only in the single-row band. On the full board every pedal is already
+          on screen with its own chain number, bypass state and info chip, so the
+          strip is a second copy of what is right below it; once the rows fold
+          into one swipeable line it becomes the only way to reach a pedal that
+          has scrolled off. Below 640px MobileShell takes over and brings its
+          own chain screen. */}
+      {singleRow && <ChainStrip effects={preset.effects} onJump={scrollToPedal} />}
       <InfoBar
         slot={inspected}
         art={inspected ? lookupPedalArt(artIndex, inspected.effectId) : undefined}

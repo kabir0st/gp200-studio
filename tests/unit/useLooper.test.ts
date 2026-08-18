@@ -352,3 +352,107 @@ describe('transport basics', () => {
     expect(h.api().baseDurationSec).toBeCloseTo(1, 6);
   });
 });
+
+describe('a bar locked to the drums', () => {
+  it('remembers the tempo it was locked to, so the label cannot drift', async () => {
+    // The lock copies a bar LENGTH once. Reading the drum machine's live tempo
+    // for the label would describe a tempo the loop is not running at as soon
+    // as the drum machine is retuned.
+    const h = await mountForTakes();
+    await act(async () => {
+      h.api().lockBaseSeconds(2, '120 BPM · 4/4');
+    });
+    expect(h.api().baseLocked).toBe(true);
+    expect(h.api().baseLockedLabel).toBe('120 BPM · 4/4');
+
+    act(() => h.api().unlockBase());
+    expect(h.api().baseLockedLabel).toBeNull();
+  });
+
+  it('survives a take and comes back through CLEAR ALL, not a page reload', async () => {
+    // The route out of a locked bar with tracks on it: CLEAR ALL keeps the bar
+    // (deliberately) but re-enables unlocking, which is what the UI now says.
+    const h = await mountForTakes();
+    await act(async () => {
+      h.api().lockBaseSeconds(2, '120 BPM · 4/4');
+    });
+    await h.take(2 * RATE);
+    expect(h.api().hasContent).toBe(true);
+
+    // Locked with content: unlocking is refused, so the bar is still 2s.
+    act(() => h.api().unlockBase());
+    expect(h.api().baseLocked).toBe(true);
+    expect(h.api().baseDurationSec).toBeCloseTo(2, 6);
+
+    act(() => h.api().clearAll());
+    expect(h.api().tracks).toHaveLength(0);
+    expect(h.api().baseLocked).toBe(true);
+    expect(h.api().baseLockedLabel).toBe('120 BPM · 4/4');
+
+    act(() => h.api().unlockBase());
+    expect(h.api().baseLocked).toBe(false);
+    expect(h.api().baseDurationSec).toBeNull();
+    expect(h.api().baseLockedLabel).toBeNull();
+  });
+
+  it('keeps the label through an undo, as it keeps the bar', async () => {
+    const h = await mountForTakes();
+    await act(async () => {
+      h.api().lockBaseSeconds(1, '120 BPM · 4/4');
+    });
+    await h.take(RATE);
+    act(() => h.api().undo());
+
+    expect(h.api().baseLocked).toBe(true);
+    expect(h.api().baseLockedLabel).toBe('120 BPM · 4/4');
+  });
+});
+
+describe('track level', () => {
+  it('lives on the row, so the slider still reads right after a remount', async () => {
+    // It used to be component-local state: closing the drawer reset every
+    // slider to 100% while the audio node stayed where the user put it.
+    const h = await mountForTakes();
+    await h.take(RATE);
+    expect(h.api().tracks[0].gain).toBe(1);
+
+    const id = h.api().tracks[0].id;
+    act(() => h.api().updateTrackGain(id, 0.5));
+    expect(h.api().tracks[0].gain).toBeCloseTo(0.5, 6);
+  });
+
+  it('is mixer state, not history: undo leaves a survivor at the level it was set to', async () => {
+    const h = await mountForTakes();
+    await h.take(RATE);
+    const id = h.api().tracks[0].id;
+    act(() => h.api().updateTrackGain(id, 0.5));
+
+    await h.take(RATE);
+    act(() => h.api().undo());
+
+    expect(h.api().tracks).toHaveLength(1);
+    expect(h.api().tracks[0].gain).toBeCloseTo(0.5, 6);
+  });
+});
+
+describe('selection after an undo', () => {
+  it('lands on a track that still exists, so the selected-track keys still work', async () => {
+    // pushHistory runs mid-finalize, when the selection is already the in-flight
+    // take's lane , a lane the snapshot deliberately skips. Restoring that id
+    // left play/mute/EXP addressing a row that was gone, doing nothing at all.
+    const h = await mountForTakes();
+    await h.take(RATE);
+    await h.take(RATE);
+    expect(h.api().tracks).toHaveLength(2);
+
+    act(() => h.api().undo());
+
+    const rows = h.api().tracks;
+    expect(rows).toHaveLength(1);
+    expect(h.api().selectedTrack).toBe(rows[0].id);
+
+    // and the selection is live, not just a number
+    act(() => h.api().togglePlaySelected());
+    expect(h.api().tracks[0].state).toBe('stopped');
+  });
+});

@@ -15,7 +15,9 @@
   flex-direction: column;
 }
 
-/* ── chain strip ── */
+/* ── chain strip ──
+   Rendered only in the single-row band (see PedalBoard): on the full board it
+   would just restate the pedals below it. */
 .board-view .chain-strip {
   display: flex;
   align-items: center;

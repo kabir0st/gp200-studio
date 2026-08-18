@@ -88,6 +88,29 @@ describe('LooperStomps', () => {
     expect(getByText(/Connect the GP-200 to assign footswitches/)).toBeTruthy();
   });
 
+  it('names the assigned actions in the collapsed summary', () => {
+    // The panel is shut by default, so the header alone has to answer "which
+    // actions are covered" without anyone opening it.
+    const { container, getByText } = render(
+      <LooperStomps triggers={TWO_ASSIGNED} {...NOOP_PROPS} />,
+    );
+    expect(container.querySelector('details')?.open).toBe(false);
+    expect(getByText('✓ REC / STOP · ✓ PLAY')).toBeTruthy();
+  });
+
+  it('says nothing is assigned rather than showing an empty summary', () => {
+    const { getByText } = render(<LooperStomps triggers={{}} {...NOOP_PROPS} />);
+    expect(getByText(/none assigned — hands-free transport/)).toBeTruthy();
+  });
+
+  it('keeps CLEAR ALL out of the summary, where it would just toggle the panel', () => {
+    const { container, getByText } = render(
+      <LooperStomps triggers={TWO_ASSIGNED} {...NOOP_PROPS} />,
+    );
+    const summary = container.querySelector('summary')!;
+    expect(summary.contains(getByText('CLEAR ALL'))).toBe(false);
+  });
+
   it('reports a duplicate stomp by the action that already owns it', () => {
     const { getByText } = render(
       <LooperStomps
