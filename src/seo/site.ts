@@ -4,7 +4,7 @@ export const ORIGIN = 'https://gp200studio.com';
 export const SITE_NAME = 'GP200 Studio';
 export const OG_IMAGE = `${ORIGIN}/og-image.png`;
 export const OG_IMAGE_ALT =
-  'GP200 Studio: edit and push Valeton GP-200 presets live from your browser.';
+  'GP200 Studio: the Valeton GP-200 pedalboard editor with its pedals and patch cables. Edit presets and stack unlimited loops with the new loop station, live from your browser.';
 
 export const AUTHOR = {
   name: 'Kabir Tamari',

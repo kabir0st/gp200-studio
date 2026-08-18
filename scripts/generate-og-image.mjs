@@ -22,11 +22,16 @@
  *   • The maskable icon must be opaque and leave a sacrificial margin, since
  *     Android crops it to an arbitrary shape.
  *
- * The OG card is original vector/HTML art evoking the GP-200 floor unit (colors,
- * LCD, footswitches), with no Valeton logos or trademarks, matching the rule in
- * scripts/generate-pedal-art.mjs. Brand fonts (JetBrains Mono, DM Sans) are
- * embedded as base64 @font-face so the render is self-contained and doesn't
- * depend on Chromium's system fonts.
+ * The OG card is minimal: a text band (wordmark, tagline, NEW · loop station)
+ * over a flat dark field, with the dark editor-board guide screenshot cropped
+ * to its two pedal rows spanning the full width below, top edge faded into the
+ * background. The crop is a pixel offset into 02-editor-board-dark.png
+ * (2400×1250) — re-run `npm run gen:shots` first if that shot is stale, and
+ * re-check the offsets if the board layout moves.
+ * No Valeton logos or trademarks appear in the vector art, matching the rule in
+ * scripts/generate-pedal-art.mjs. Brand fonts (JetBrains Mono, DM Sans) and the
+ * screenshot are embedded as base64 data URIs so the render is self-contained
+ * and doesn't depend on Chromium's system fonts or network.
  *
  * Rasterization uses Playwright's headless Chromium (already a devDependency).
  * The PNGs are committed to public/, so this only needs re-running when the
@@ -37,6 +42,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'public');
@@ -68,7 +74,7 @@ const FONTS = `
 
 /* ── the GP-200 mark, scaled up from public/favicon.svg (original art) ────── */
 const MARK = `
-<svg width="200" height="200" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<svg width="60" height="60" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <rect width="32" height="32" rx="7" fill="#2b2926"/>
   <rect width="32" height="32" rx="7" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
   <rect x="6" y="7" width="13" height="7" rx="1.5" fill="#0c1a0e"/>
@@ -80,60 +86,53 @@ const MARK = `
   <circle cx="19" cy="24" r="3" fill="none" stroke="#b0aca3" stroke-width="1.6"/>
 </svg>`;
 
-const CHIPS = ['.prst editor', 'USB-MIDI', '305 effects', 'no install'];
+/* ── card imagery, embedded as a data URI ──────────────────────────────────
+ * The extract is a pixel offset into 02-editor-board-dark.png (2400×1250),
+ * cropping the app chrome away so only the two pedal rows and their cables
+ * remain. Re-check it after regenerating shots. */
+async function boardCropUri() {
+  const board = join(ROOT, 'public', 'guide', '02-editor-board-dark.png');
+  const buf = await sharp(board)
+    .extract({ left: 0, top: 200, width: 2400, height: 900 })
+    .resize({ width: 1200 })
+    .webp({ quality: 90 })
+    .toBuffer();
+  return `data:image/webp;base64,${buf.toString('base64')}`;
+}
 
 /* ── 1200×630 Open Graph card as a self-contained HTML doc ────────────────── */
-function ogHtml() {
+async function ogHtml() {
+  const board = await boardCropUri();
   return `<!doctype html><html><head><meta charset="utf-8"><style>
   ${FONTS}
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 1200px; height: 630px; }
-  .card {
-    width: 1200px; height: 630px; position: relative; overflow: hidden;
-    background:
-      radial-gradient(1100px 700px at 78% -10%, rgba(93,240,138,.14), transparent 60%),
-      radial-gradient(900px 600px at 12% 120%, rgba(217,161,60,.12), transparent 55%),
-      linear-gradient(155deg, ${INK} 0%, ${DEEP} 100%);
-    color: #f4f1ea; font-family: '${SANS}', system-ui, sans-serif;
-    display: flex; flex-direction: column; justify-content: space-between;
-    padding: 72px 80px;
-  }
-  /* faint horizon grid */
-  .grid { position: absolute; inset: 0; opacity: .06;
-    background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px);
-    background-size: 60px 60px; mask-image: linear-gradient(180deg, transparent, #000 40%, #000 70%, transparent); }
-  .top { display: flex; align-items: center; gap: 28px; position: relative; }
-  .wordmark { font-family: '${MONO}', monospace; font-weight: 700; font-size: 84px; letter-spacing: -2px; line-height: 1; }
+  .card { width: 1200px; height: 630px; position: relative; overflow: hidden;
+    background: #17181a; color: #f4f1ea; font-family: '${SANS}', system-ui, sans-serif; }
+  .board { position: absolute; left: 0; right: 0; bottom: 0; }
+  .board img { width: 1200px; display: block;
+    mask-image: linear-gradient(180deg, transparent 0, #000 90px); }
+  .top { position: absolute; left: 64px; right: 64px; top: 48px; }
+  .row { display: flex; align-items: center; justify-content: space-between; }
+  .logo { display: flex; align-items: center; gap: 16px; }
+  .wordmark { font-family: '${MONO}', monospace; font-weight: 700; font-size: 48px; letter-spacing: -1.5px; line-height: 1; }
   .wordmark .accent { color: ${LCD}; }
-  .kicker { font-family: '${MONO}', monospace; font-weight: 700; font-size: 20px; letter-spacing: 6px;
-    text-transform: uppercase; color: ${LED}; margin-bottom: 22px; }
-  .mid { position: relative; }
-  .tagline { font-size: 46px; font-weight: 600; line-height: 1.15; max-width: 940px; letter-spacing: -.5px; }
+  .tagline { font-size: 31px; font-weight: 600; line-height: 1.22; letter-spacing: -.4px; color: #ece8df;
+    margin-top: 30px; }
   .tagline .em { color: ${LCD}; }
-  .sub { font-size: 25px; color: #b7b1a5; margin-top: 20px; max-width: 900px; line-height: 1.4; }
-  .bottom { display: flex; align-items: center; justify-content: space-between; position: relative; }
-  .chips { display: flex; gap: 14px; flex-wrap: wrap; }
-  .chip { font-family: '${MONO}', monospace; font-size: 20px; font-weight: 400; color: #e7e2d8;
-    border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.04);
-    border-radius: 999px; padding: 11px 20px; }
-  .url { font-family: '${MONO}', monospace; font-size: 24px; color: ${LCD}; font-weight: 700; letter-spacing: .5px; }
+  .new { font-family: '${MONO}', monospace; font-size: 15px; font-weight: 700; letter-spacing: 2.5px;
+    text-transform: uppercase; color: ${LED}; margin-top: 14px; }
+  .url { font-family: '${MONO}', monospace; font-size: 20px; color: ${LCD}; font-weight: 700; letter-spacing: .5px; }
   </style></head><body>
   <div class="card">
-    <div class="grid"></div>
-    <div>
-      <div class="kicker">Valeton GP-200 · browser editor</div>
-      <div class="top">
-        ${MARK}
-        <div class="wordmark">GP200 <span class="accent">Studio</span></div>
+    <div class="board"><img src="${board}"></div>
+    <div class="top">
+      <div class="row">
+        <div class="logo">${MARK}<div class="wordmark">GP200 <span class="accent">Studio</span></div></div>
+        <div class="url">gp200studio.com</div>
       </div>
-    </div>
-    <div class="mid">
-      <div class="tagline">Edit &amp; push <span class="em">GP-200</span> presets<br>live from your browser.</div>
-      <div class="sub">Load, tweak and export <b>.prst</b> preset files and send changes to the pedal over USB-MIDI. No install, no account, no backend.</div>
-    </div>
-    <div class="bottom">
-      <div class="chips">${CHIPS.map((c) => `<span class="chip">${c}</span>`).join('')}</div>
-      <div class="url">gp200studio.com</div>
+      <div class="tagline">Edit presets &amp; stack <span class="em">unlimited loops</span>, live from your browser.</div>
+      <div class="new">NEW · Loop station</div>
     </div>
   </div>
   </body></html>`;
@@ -217,7 +216,7 @@ async function main() {
 
   console.log('Generating social card + icons…');
   // Opaque by design (see the header note on the transparent/opaque split).
-  await shoot(ogHtml(), 1200, 630, 'og-image.png', { omitBackground: false });
+  await shoot(await ogHtml(), 1200, 630, 'og-image.png', { omitBackground: false });
   await shoot(appleIconHtml(180), 180, 180, 'apple-touch-icon.png', { omitBackground: false });
   await shoot(maskableIconHtml(512), 512, 512, 'icon-maskable-512.png', { omitBackground: false });
   // Transparent corners.
