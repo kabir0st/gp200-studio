@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAudioEngine } from '@/components/AudioEngineProvider';
 import { Button } from '@/components/ui/Button';
-import { Led } from '@/components/ui/Badge';
 import type { LooperApi } from '@/hooks/useLooper';
+import type { LooperTempo } from '@/components/board/LooperSetup';
 import { track as trackEvent } from '@/core/analytics';
 import { fileExt } from '@/core/analyticsEvents';
 
@@ -57,6 +57,65 @@ export function LooperMasterLevel({ level, onChange }: LooperMasterLevelProps) {
         {percent}%
       </span>
     </div>
+  );
+}
+
+interface LooperSyncControlProps {
+  looper: LooperApi;
+  /** the practice drum machine's current bar, offered as the grid to lock to */
+  tempo: LooperTempo;
+  size?: 'sm' | 'md';
+}
+
+/**
+ * Lock the loop's bar to the drum machine's, or release it again.
+ *
+ * The locked state stays on screen after the first take, disabled, rather than
+ * disappearing: the bar genuinely cannot be released while tracks exist (the
+ * engine refuses), and a control that vanishes reads as a control that never
+ * existed , which is how people conclude the only way out is a page reload.
+ * Disabled-with-a-reason names CLEAR ALL as the way back instead.
+ *
+ * The label comes from `baseLockedLabel`, frozen when the lock was taken, not
+ * from the live tempo: the lock copies a bar length once, so a drum machine
+ * retuned afterwards would otherwise have this button describing a tempo the
+ * loop is not running at.
+ */
+export function LooperSyncControl({ looper, tempo, size = 'md' }: LooperSyncControlProps) {
+  const locked = looper.baseLocked;
+  // The bar can only be taken or released on an empty board , the engine
+  // refuses either once a take exists, so the button has to say so rather than
+  // sit there looking live and doing nothing.
+  const held = looper.hasContent;
+  const label = locked ? `↻ SYNCED · ${looper.baseLockedLabel ?? tempo.label}` : '↻ SYNC TO DRUMS';
+
+  let title = 'Take the bar length from the practice drum machine, so the loop lands exactly in time';
+  if (locked) {
+    title = 'The loop is locked to the drum machine. Click to let your first take set it instead';
+  }
+  if (held && locked) {
+    title = 'Locked to the drum machine for this session. CLEAR ALL deletes every track and releases it';
+  }
+  if (held && !locked) {
+    title = 'Your first take already set the bar. CLEAR ALL deletes every track and lets you sync to the drums instead';
+  }
+
+  return (
+    <Button
+      size={size}
+      variant={locked ? 'primary' : 'secondary'}
+      disabled={held}
+      title={title}
+      onClick={() => {
+        if (locked) {
+          looper.unlockBase();
+          return;
+        }
+        looper.lockBaseSeconds(tempo.barSeconds, tempo.label);
+      }}
+    >
+      {label}
+    </Button>
   );
 }
 
@@ -150,115 +209,5 @@ export function LooperInputMeter({ barClassName = 'flex-1' }: LooperInputMeterPr
   );
 }
 
-function trackRowClass(selected: boolean): string {
-  const base =
-    'flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg border bg-bg-hover cursor-pointer';
-  if (selected) return `${base} border-accent-amber`;
-  return `${base} border-border-active`;
-}
-
-function playPauseLabel(state: string): string {
-  if (state === 'playing') return 'Pause';
-  return 'Play';
-}
-
-function muteVariant(muted: boolean): 'primary' | 'ghost' {
-  if (muted) return 'primary';
-  return 'ghost';
-}
-
-interface LooperTrackListProps {
-  looper: LooperApi;
-  /** drop the per-track transport and bar count, leaving level / mute / delete */
-  compact?: boolean;
-}
-
-/** One row per recorded or imported track: the control surface for the timeline. */
-export function LooperTrackList({ looper, compact = false }: LooperTrackListProps) {
-  // Track gains keyed by dynamic track id; default 1 for new tracks.
-  const [gains, setGains] = useState<Record<number, number>>({});
-
-  const setTrackGain = (id: number, value: number) => {
-    setGains((prev) => ({ ...prev, [id]: value }));
-    looper.setTrackGain(id, value);
-  };
-
-  return (
-    <div className="flex flex-col gap-2">
-      {looper.tracks.map((trackRow) => {
-        const selected = trackRow.id === looper.selectedTrack;
-        const position = looper.tracks.indexOf(trackRow) + 1;
-        const recordingThis = looper.recordArmedTrack === trackRow.id;
-        const live = trackRow.state === 'playing' || trackRow.state === 'recording';
-        return (
-          <div
-            key={trackRow.id}
-            className={trackRowClass(selected)}
-            onClick={() => looper.selectTrack(trackRow.id)}
-          >
-            <Led active={live} />
-            <span
-              className="font-mono-display text-label text-text-secondary w-24 truncate"
-              title={trackRow.label}
-            >
-              {trackRow.label}
-            </span>
-            {!compact && (
-              <span
-                className="font-mono-display text-micro text-text-muted tabular-nums w-12"
-              >
-                {trackRow.bars > 0 && `${trackRow.bars}b`}
-                {trackRow.bars === 0 && '—'}
-              </span>
-            )}
-            {recordingThis && trackRow.state === 'armed' && (
-              <span className="font-mono-display text-caption text-accent-red">◌ armed</span>
-            )}
-            {recordingThis && trackRow.state !== 'armed' && (
-              <span className="font-mono-display text-caption text-accent-red">● recording</span>
-            )}
-            {!compact && (
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={!trackRow.hasAudio}
-                onClick={() => looper.togglePlay(trackRow.id)}
-              >
-                {playPauseLabel(trackRow.state)}
-              </Button>
-            )}
-            <Button
-              variant={muteVariant(trackRow.muted)}
-              size="sm"
-              disabled={!trackRow.hasAudio}
-              onClick={() => looper.setMute(trackRow.id, !trackRow.muted)}
-            >
-              Mute
-            </Button>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={gains[trackRow.id] ?? 1}
-              disabled={!trackRow.hasAudio}
-              onChange={(event) => setTrackGain(trackRow.id, Number(event.target.value))}
-              className="order-last basis-full sm:order-none sm:basis-0 sm:flex-1
-                min-w-0 accent-accent-amber"
-              aria-label={`Track ${position} level`}
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-auto sm:ml-0"
-              onClick={() => looper.clear(trackRow.id)}
-              title="Delete this track"
-            >
-              ✕
-            </Button>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+// The per-track rows moved into LooperTrackRack, where each one sits with its
+// own waveform instead of restating it in a second list.

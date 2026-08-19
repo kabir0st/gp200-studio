@@ -111,6 +111,44 @@ const VELOCITY_BY_CHAR: Record<string, number> = {
   X: 1,
 };
 
+/** The four levels a grid cell can hold, in the order clicking walks them. */
+export const STEP_VELOCITIES = {
+  rest: 0,
+  ghost: VELOCITY_BY_CHAR['.'],
+  normal: VELOCITY_BY_CHAR.x,
+  accent: VELOCITY_BY_CHAR.X,
+} as const;
+
+/**
+ * Next level for a grid cell that was clicked: rest → normal → accent → ghost
+ * → rest.
+ *
+ * Presets and the randomizer have always written ghost hits, and the grid has
+ * always drawn all three levels, but a two-state toggle could only ever produce
+ * two of them: clicking a preset's ghost note destroyed it and there was no way
+ * back. A single ring keeps one input for touch (the phone renders this same
+ * grid) and reaches every level.
+ *
+ * Normal comes first because it is the ordinary case, and ghost comes last
+ * because it is the refinement you add to a part that already plays. Bucketed
+ * on the same thresholds the grid paints with, so any velocity from a preset or
+ * a randomize lands on a defined successor.
+ */
+export function nextStepVelocity(current: number): number {
+  if (current <= 0) return STEP_VELOCITIES.normal;
+  if (current >= 1) return STEP_VELOCITIES.ghost;
+  if (current >= 0.5) return STEP_VELOCITIES.accent;
+  return STEP_VELOCITIES.rest;
+}
+
+/** What a cell at `velocity` is called, for tooltips and labels. */
+export function stepVelocityName(velocity: number): string {
+  if (velocity <= 0) return 'off';
+  if (velocity >= 1) return 'accent';
+  if (velocity >= 0.5) return 'hit';
+  return 'ghost';
+}
+
 /** `'X-x.'`-notation → velocities (X accent, x normal, . ghost, - rest). */
 export function parseLane(notation: string, expectedSteps: number): number[] {
   if (notation.length !== expectedSteps) {

@@ -17,7 +17,9 @@
 import type { AnalyticsEvent, AnalyticsParams } from './analyticsEvents';
 
 const ID_SHAPE = /^G-[A-Z0-9]{4,}$/;
-const PROD_HOSTS = new Set(['kabirtamari.com', 'gp200.afterhour.uk']);
+// Only the canonical apex. The legacy hosts (kabirtamari.com/gp200studio and
+// gp200.afterhour.uk) now 301 here, so a page can never finish loading there.
+const PROD_HOSTS = new Set(['gp200studio.com']);
 
 /** Mirrors src/core/debugFlags.ts. Set to '1' in DevTools and reload to route
  *  events into GA4 DebugView:
@@ -171,22 +173,10 @@ export function setAnalyticsContext(props: Record<string, string | number | bool
   }
 }
 
-/** Manual page_view. The app has no router, so GA4's history-based enhanced
- *  measurement never fires and every virtual view has to be sent by hand. */
-export function trackVirtualPageView(path: string, title: string): void {
-  if (!bootstrap()) return;
-  if (sent >= MAX_EVENTS_PER_SESSION) return;
-  sent++;
-  try {
-    const origin = globalThis.location?.origin ?? '';
-    call('event', 'page_view', {
-      page_title: title,
-      page_location: `${origin}${import.meta.env.BASE_URL}${path}`,
-    });
-  } catch {
-    // no-op
-  }
-}
+// There is deliberately no trackVirtualPageView() here any more. It existed
+// because the guide was SPA state with no URL, so GA4 never saw it as a page.
+// The guide is now a set of real prerendered documents, and bootstrap()'s
+// `config` call sends an accurate page_view on each one for free.
 
 /** Test seam: clears every piece of memoised module state. */
 export function __resetAnalyticsForTests(): void {

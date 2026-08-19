@@ -22,6 +22,7 @@ const fakeLooper: LooperApi = {
   isArmed: false,
   recordArmedTrack: null,
   baseDurationSec: null,
+  baseLockedLabel: null,
   cycleBars: 1,
   cycleDurationSec: null,
   selectedTrack: null,
@@ -193,10 +194,33 @@ describe.skipIf(!HAS_FIXTURES)('PedalBoard (render smoke test)', () => {
     expect(second.querySelector('.p-off-tag')).toBeNull();
   });
 
-  it('shows the chain strip with one chip per slot and the info-bar hint', () => {
+  it('leaves the chain strip off the full board, where the pedals already show it', () => {
     const { container } = renderBoard();
-    expect(container.querySelectorAll('.chain-node')).toHaveLength(11);
+    expect(container.querySelectorAll('.chain-node')).toHaveLength(0);
     expect(container.querySelector('.info-bar')?.textContent).toContain('Hover a pedal');
+  });
+
+  it('brings the chain strip back once the rows fold into one swipeable line', () => {
+    // Below 720px the board is a single horizontally-scrolled row, so most of
+    // the chain is off screen and the strip is the only way to jump to a pedal.
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query === '(max-width: 720px)',
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    })) as typeof window.matchMedia;
+    try {
+      const { container } = renderBoard();
+      expect(container.querySelectorAll('.chain-node')).toHaveLength(11);
+      expect(container.querySelectorAll('.chain-end')).toHaveLength(2);
+    } finally {
+      window.matchMedia = original;
+    }
   });
 
   it('footswitch click reports the slot identity, not the array position', () => {
@@ -273,7 +297,6 @@ describe.skipIf(!HAS_FIXTURES)('PedalBoard (render smoke test)', () => {
     // the lines happen to break.
     expect(badges[0]).toContain('IN');
     expect(badges[badges.length - 1]).toContain('OUT');
-    expect(container.querySelectorAll('.chain-end')).toHaveLength(2);
   });
 
   it('the stage lights switch reports its state and toggles the theme', () => {

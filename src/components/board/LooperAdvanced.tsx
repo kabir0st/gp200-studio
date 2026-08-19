@@ -6,13 +6,12 @@ import {
   type ExpTarget,
 } from '@/core/looperBindings';
 import { Button } from '@/components/ui/Button';
-import { LooperTimeline } from '@/components/board/LooperTimeline';
+import { LooperTrackRack } from '@/components/board/LooperTrackRack';
 import { LooperSetup, type LooperTempo } from '@/components/board/LooperSetup';
 import {
   LooperImportButton,
   LooperInputMeter,
   LooperMasterLevel,
-  LooperTrackList,
 } from '@/components/board/LooperControls';
 import { LooperStomps } from '@/components/board/LooperStomps';
 import { fmtCycle, playAllLabel, recordButtonState } from '@/components/board/looperLabels';
@@ -55,7 +54,10 @@ function setupSummary(looper: LooperApi): string {
   const parts: string[] = [];
   if (looper.baseDurationSec === null) parts.push('bar not set');
   else parts.push(`bar ${looper.baseDurationSec.toFixed(2)}s`);
-  if (looper.baseLocked) parts.push('locked to drums');
+  if (looper.baseLocked) {
+    if (looper.baseLockedLabel) parts.push(`locked to drums (${looper.baseLockedLabel})`);
+    else parts.push('locked to drums');
+  }
   if (looper.settings.recordBars === null) parts.push('free length');
   else parts.push(`${looper.settings.recordBars}-bar takes`);
   if (looper.settings.autoStart) parts.push('starts on first note');
@@ -87,6 +89,9 @@ export function LooperAdvanced({
   const [setupOpen, setSetupOpen] = useState(!looper.hasContent);
   const button = recordButtonState(looper);
   const noTracks = looper.tracks.length === 0;
+  // The bar outlives the last track when it was locked to a tempo, and CLEAR is
+  // the only way back to a blank transport , so it stays live while one exists.
+  const nothingToClear = noTracks && looper.baseDurationSec === null;
 
   const updateExpTarget = (target: ExpTarget) => {
     onBindingsChange({ ...bindings, expTarget: target });
@@ -140,9 +145,12 @@ export function LooperAdvanced({
             last chord smears over the top of the loop.
           </li>
           <li>
-            If takes land consistently late or early, nudge TIMING TRIM. The app
-            already compensates for the round trip your interface reports; the
-            trim covers whatever that number misses.
+            If overdubs land consistently late or early, nudge TIMING TRIM. The
+            app already compensates for the round trip your interface reports;
+            the trim covers whatever that number misses. It only moves where the
+            loop starts inside audio that was captured either way, so nudging it
+            never costs you the front of a take , and it does nothing to a take
+            recorded with nothing playing, which has no round trip to correct.
           </li>
           <li>
             The loop is as long as the LONGEST take. Play past the end and it
@@ -260,7 +268,7 @@ export function LooperAdvanced({
             >
               ↷
             </Button>
-            <Button variant="danger" size="sm" disabled={noTracks} onClick={looper.clearAll}>
+            <Button variant="danger" size="sm" disabled={nothingToClear} onClick={looper.clearAll}>
               Clear All
             </Button>
           </div>
@@ -318,14 +326,11 @@ export function LooperAdvanced({
         </p>
       )}
 
-      {/* The visual: waveform lanes across the cycle with a shared playhead */}
-      <LooperTimeline looper={looper} />
-
-      {/* Track rows: the control surface for what the timeline shows */}
-      <LooperTrackList looper={looper} />
+      {/* One row per track: its controls sitting on its own waveform */}
+      <LooperTrackRack looper={looper} />
 
       {/* Footswitch assignments (compact grid) + what the EXP pedal drives. */}
-      <div className="pt-2 border-t border-border-active flex flex-col gap-3">
+      <div className="pt-2 flex flex-col gap-3">
         <LooperStomps
           triggers={triggers}
           armedAction={armedAction}

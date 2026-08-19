@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/prerender.mjs",
     "deploy": "npm run build && wrangler deploy",
     "lint": "oxlint",
     "preview": "vite preview",
@@ -14,7 +14,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "gen:og": "node scripts/generate-og-image.mjs"
+    "gen:og": "node scripts/generate-og-image.mjs",
+    "gen:shots": "node scripts/capture-guide-shots.mjs",
+    "gen:shots:optimize": "node scripts/optimize-guide-shots.mjs"
   },
   "dependencies": {
     "@fontsource/dm-sans": "^5.2.8",
@@ -38,9 +40,11 @@
     "oxlint": "^1.71.0",
     "playwright": "^1.61.1",
     "postcss": "^8.5.19",
+    "sharp": "^0.35.3",
     "tailwindcss": "^3.4.19",
     "typescript": "~6.0.2",
     "vite": "^8.1.1",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "wrangler": "^4.123.0"
   }
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GP200Preset } from '@/core/types';
 import { SysExCodec } from '@/core/SysExCodec';
 import { getEffectName, getSlotModule } from '@/core/effectNames';
@@ -74,6 +74,78 @@ function panLabel(pan: number): string {
   if (pan === 0) return 'C';
   if (pan < 0) return `L${Math.abs(pan)}`;
   return `R${pan}`;
+}
+
+const TEMPO_MIN = 40;
+const TEMPO_MAX = 250;
+
+interface TempoDraftInputProps {
+  value: number;
+  disabled: boolean;
+  onCommit: (bpm: number) => void;
+}
+
+/**
+ * Tempo entry that validates on commit instead of on every keystroke.
+ *
+ * A controlled number input that clamps inside onChange cannot be typed into:
+ * clear it, type "1", and 1 clamps up to the 40 floor, so the next keystroke
+ * builds on 40 and 120 is unreachable. The draft is therefore a string — the
+ * only shape that can hold a half-typed "12" or an empty field — and the clamp
+ * happens once, when the value is committed.
+ *
+ * Commit has to cover unmount, not just blur: DeckPop closes on a document
+ * mousedown, so clicking away tears this input down before a blur ever reaches
+ * React, and the number the user typed would be dropped. Each commit also sends
+ * exactly one SysEx frame, where the old per-keystroke clamp sent one per digit.
+ */
+function TempoDraftInput({ value, disabled, onCommit }: TempoDraftInputProps) {
+  const [draft, setDraft] = useState(() => String(value));
+  const inputRef = useRef<HTMLInputElement>(null);
+  // The unmount commit fires from a cleanup that must not resubscribe on every
+  // keystroke, so it reads the current draft through a ref rather than deps.
+  const latest = useRef({ draft, value, onCommit });
+  latest.current = { draft, value, onCommit };
+
+  useEffect(() => {
+    setDraft(String(value));
+  }, [value]);
+
+  /** `syncDraft` is false on the unmount path, where setting state is pointless. */
+  const flush = useCallback((syncDraft: boolean) => {
+    const { draft: text, value: current, onCommit: send } = latest.current;
+    const parsed = Number(text);
+    if (text.trim() === '' || !Number.isFinite(parsed)) {
+      if (syncDraft) setDraft(String(current));
+      return;
+    }
+    const bpm = Math.max(TEMPO_MIN, Math.min(TEMPO_MAX, Math.round(parsed)));
+    if (syncDraft) setDraft(String(bpm));
+    if (bpm !== current) send(bpm);
+  }, []);
+
+  useEffect(() => () => flush(false), [flush]);
+
+  return (
+    <input
+      ref={inputRef}
+      type="number"
+      className="dp-num"
+      min={TEMPO_MIN}
+      max={TEMPO_MAX}
+      value={draft}
+      disabled={disabled}
+      aria-label="Tempo in BPM"
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={() => flush(true)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') {
+          flush(true);
+          inputRef.current?.blur();
+        }
+      }}
+    />
+  );
 }
 
 /** Patch control deck: volume · pan/tempo · live readouts · meters · routing
@@ -180,26 +252,18 @@ export function SwitcherUnit({
               <div className="dp-row">
                 <input
                   type="range"
-                  min={40}
-                  max={250}
+                  min={TEMPO_MIN}
+                  max={TEMPO_MAX}
                   step={1}
                   value={patchTempo}
                   disabled={!connected}
                   aria-label="Tempo"
                   onChange={(event) => onTempoChange(Number(event.target.value))}
                 />
-                <input
-                  type="number"
-                  className="dp-num"
-                  min={40}
-                  max={250}
+                <TempoDraftInput
                   value={patchTempo}
                   disabled={!connected}
-                  aria-label="Tempo in BPM"
-                  onChange={(event) => {
-                    const bpm = Math.max(40, Math.min(250, Number(event.target.value)));
-                    onTempoChange(bpm);
-                  }}
+                  onCommit={onTempoChange}
                 />
               </div>
             </div>

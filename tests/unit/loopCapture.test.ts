@@ -4,6 +4,11 @@ import {
   snapToZeroCrossing,
   findOnset,
   roundTripSamples,
+  planCapture,
+  resolveHead,
+  capturedFrames,
+  guardPreRollFrames,
+  LATENCY_TRIM_MAX_MS,
   dbToGain,
   gainToDb,
   clampRecordSettings,
@@ -95,21 +100,19 @@ describe('findOnset', () => {
 });
 
 describe('roundTripSamples', () => {
-  it('adds input, output and the user trim', () => {
+  it('adds the input and output legs the device reports', () => {
     const samples = roundTripSamples({
       outputLatencySec: 0.01,
       inputLatencySec: 0.02,
-      trimMs: 5,
       sampleRate: 48000,
     });
-    expect(samples).toBe(Math.round(0.035 * 48000));
+    expect(samples).toBe(Math.round(0.03 * 48000));
   });
 
-  it('never goes negative, however far the trim is pulled back', () => {
+  it('never goes negative', () => {
     expect(roundTripSamples({
-      outputLatencySec: 0.005,
-      inputLatencySec: 0.005,
-      trimMs: -150,
+      outputLatencySec: -0.005,
+      inputLatencySec: 0.001,
       sampleRate: 48000,
     })).toBe(0);
   });
@@ -219,5 +222,130 @@ describe('softClipCurve', () => {
     for (const level of [0.2, 0.7, 0.95]) {
       expect(at(curve, level)).toBeCloseTo(-at(curve, -level), 6);
     }
+  });
+});
+
+describe('planCapture', () => {
+  const RATE = 48000;
+  const BASE = RATE * 2; // one 2 s bar
+  const IN = 0.01;
+  const OUT = 0.02;
+
+  function grid(trimMs: number, patch: Record<string, unknown> = {}) {
+    return planCapture({
+      mode: 'grid',
+      startFrame: RATE * 10, // a downbeat at t = 10 s
+      sampleRate: RATE,
+      inputLatencySec: IN,
+      outputLatencySec: OUT,
+      trimMs,
+      againstPlayback: true,
+      baseSamples: BASE,
+      recordBars: null,
+      tailBlendMs: 220,
+      ...patch,
+    });
+  }
+
+  it('puts the loop point a full round trip plus the trim past the downbeat', () => {
+    expect(grid(0).loopHeadFrame).toBe(RATE * 10 + Math.round(0.03 * RATE));
+    expect(grid(30).loopHeadFrame).toBe(RATE * 10 + Math.round(0.06 * RATE));
+    expect(grid(-30).loopHeadFrame).toBe(RATE * 10);
+  });
+
+  it('arms a guard ahead of the loop point, so the trim never costs audio', () => {
+    // This is the bug: at any trim, the capture window still opens far enough
+    // ahead of the loop point that the head can be found inside it.
+    for (const trim of [0, 30, 150, -30, -150]) {
+      const plan = grid(trim);
+      expect(plan.guardFrames).toBeGreaterThan(0);
+      expect(plan.armFrame).toBe(plan.loopHeadFrame - plan.guardFrames);
+      expect(plan.armFrame).toBeGreaterThanOrEqual(0);
+      // the entire trim range fits inside the guard
+      expect(plan.guardFrames).toBeGreaterThanOrEqual(
+        Math.abs(Math.round((trim / 1000) * RATE)),
+      );
+    }
+  });
+
+  it('keeps a free take exactly the gap between the two presses, whatever the trim', () => {
+    // Head is at `loopHeadFrame`; stopRecord pushes the stop edge by the same
+    // `offsetFrames`, so the trim cancels between the two edges.
+    const pressStop = RATE * 14;
+    for (const trim of [0, 30, -100]) {
+      const plan = grid(trim);
+      const stopFrame = pressStop + plan.offsetFrames;
+      expect(stopFrame - plan.loopHeadFrame).toBe(pressStop - RATE * 10);
+    }
+  });
+
+  it('keeps a fixed-length take exactly recordBars long, whatever the trim', () => {
+    for (const trim of [0, 30, -100]) {
+      const plan = grid(trim, { recordBars: 2 });
+      // the worklet body covers the guard as well as the music
+      expect(plan.bodyFrames).toBe(plan.guardFrames + BASE * 2);
+      const head = resolveHead(plan.loopHeadFrame, plan.armFrame);
+      expect(capturedFrames(plan.bodyFrames, plan.bodyFrames, head)).toBe(BASE * 2);
+    }
+  });
+
+  it('absorbs a late worklet start into the head instead of rotating the take', () => {
+    const plan = grid(30, { recordBars: 2 });
+    const late = 512; // the worklet could not honour the whole guard
+    const head = resolveHead(plan.loopHeadFrame, plan.armFrame + late);
+    expect(head).toBe(plan.guardFrames - late);
+    // Over-long by exactly the shortfall, which quantizeToBase rounds back.
+    expect(capturedFrames(plan.bodyFrames, plan.bodyFrames, head)).toBe(BASE * 2 + late);
+  });
+
+  it('ignores the trim and the output leg when nothing is playing to follow', () => {
+    // A take with no reference cannot be "late" against anything, so charging
+    // it an output leg or a trim would only rotate it against its own grid.
+    const now = planCapture({
+      mode: 'now',
+      startFrame: RATE * 10,
+      sampleRate: RATE,
+      inputLatencySec: IN,
+      outputLatencySec: OUT,
+      trimMs: 30,
+      againstPlayback: false,
+      baseSamples: null,
+      recordBars: null,
+      tailBlendMs: 220,
+    });
+    expect(now.offsetFrames).toBe(Math.round(IN * RATE));
+    expect(now.guardFrames).toBe(0);
+    expect(now.armFrame).toBe(now.loopHeadFrame);
+  });
+
+  it('grid-arms without the output leg when everything is stopped', () => {
+    const plan = grid(30, { againstPlayback: false });
+    expect(plan.offsetFrames).toBe(Math.round(IN * RATE));
+  });
+
+  it('keeps enough tail to cover the guard the head may move across', () => {
+    const plan = grid(0);
+    expect(plan.tailFrames).toBeGreaterThanOrEqual(
+      Math.round(0.22 * RATE) + plan.guardFrames,
+    );
+  });
+});
+
+describe('guardPreRollFrames', () => {
+  it('covers the whole trim range when the bar is long enough', () => {
+    expect(guardPreRollFrames(48000, 48000 * 2))
+      .toBe(Math.round((LATENCY_TRIM_MAX_MS / 1000) * 48000));
+  });
+
+  it('caps at a quarter bar, so a fast locked tempo cannot misround a take', () => {
+    // 240 BPM, one beat per bar => 0.25 s. A flat 150 ms guard here would push
+    // the capture past half a bar and quantizeToBase would call it two bars.
+    const base = Math.round(0.25 * 48000);
+    expect(guardPreRollFrames(48000, base)).toBe(Math.floor(base / 4));
+  });
+
+  it('falls back to the full range with no bar yet', () => {
+    expect(guardPreRollFrames(48000, null))
+      .toBe(Math.round((LATENCY_TRIM_MAX_MS / 1000) * 48000));
   });
 });

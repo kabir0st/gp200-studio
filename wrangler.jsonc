@@ -6,14 +6,31 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "not_found_handling": "single-page-application"
+    // Required, and it must live HERE rather than at the top level — wrangler
+    // silently ignores an unknown top-level field with only a warning. Without
+    // it, Workers Assets answers any request whose path matches a built file
+    // and worker/index.js never runs, so the legacy-host 301s below do
+    // nothing at all. That is the bug the previous config shipped with.
+    "run_worker_first": true,
+    // One canonical URL shape: /guide/loop-station, with /guide/loop-station/
+    // redirected to it at the edge, so canonicals and internal links agree.
+    "html_handling": "drop-trailing-slash",
+    // Was "single-page-application", which returned 200 + the landing page for
+    // every unmatched URL — a soft-404 factory. The site is now a finite set of
+    // prerendered pages, so a real 404 is both possible and correct.
+    "not_found_handling": "404-page"
   },
   "routes": [
+    { "pattern": "gp200studio.com", "custom_domain": true },
+    // www resolves and is 301'd to the apex by the Worker (host mismatch), so
+    // links and typed URLs on the www form don't dead-end on a DNS failure.
+    { "pattern": "www.gp200studio.com", "custom_domain": true },
+    // Legacy #1: the old subfolder home. 301s to the apex, path preserved.
     {
       "pattern": "kabirtamari.com/gp200studio*",
       "zone_name": "kabirtamari.com"
     },
-    // Legacy domain, kept attached so the Worker can 301 it to the new home.
+    // Legacy #2: the original custom domain. 301s to the apex.
     {
       "pattern": "gp200.afterhour.uk",
       "custom_domain": true

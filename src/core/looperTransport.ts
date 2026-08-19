@@ -89,6 +89,76 @@ export function nextBoundary(now: number, transportStart: number, loopDuration: 
   return transportStart + boundary * loopDuration;
 }
 
+/**
+ * The boundary a REC press means, resolved on the clock the PLAYER is on.
+ *
+ * `nextBoundary` alone answers on the SCHEDULING clock, but the player is
+ * hearing audio one output latency old: a downbeat scheduled just before `now`
+ * has not reached their ears yet, and pressing REC to catch it would skip it
+ * and arm the one after , a whole cycle late. Searching from
+ * `now - outputLatency` puts the question back in the player's frame, so the
+ * boundary they are reaching for is the one they get.
+ *
+ * The result can therefore be at or slightly before `now`. That is deliberate:
+ * the capture edge derived from it still lands in the future once the round
+ * trip is added, and any part of a guard pre-roll that reaches into the past is
+ * absorbed by loopCapture.resolveHead().
+ */
+export function boundaryForPress(
+  now: number,
+  outputLatencySec: number,
+  transportStart: number,
+  loopDuration: number,
+): number {
+  return nextBoundary(now - Math.max(0, outputLatencySec), transportStart, loopDuration);
+}
+
+/**
+ * Whether a track that is ALREADY playing keeps its phase when the cycle is
+ * re-tiled from `prevCycleBars` to `nextCycleBars` , i.e. whether its running
+ * source can be left alone instead of being stopped and relaunched.
+ *
+ * A source looping a tiled buffer emits `content[(t - A) mod trackLen]`, but
+ * only while `trackLen` divides the cycle: otherwise the tiling ends in a
+ * truncated repeat and the content genuinely moves when the width changes.
+ * Given that divisibility, re-anchoring the transport by a whole number of old
+ * cycles leaves `(t - A) mod trackLen` untouched, so the output is bit-identical
+ * and the cheapest correct thing to do is nothing at all , which is also the
+ * only way an overdub can grow the loop without breaking what is playing.
+ *
+ * Non-positive bar counts answer false, which fails toward relaunching , the
+ * safe direction.
+ */
+export function cyclePhaseSurvives(
+  trackBars: number,
+  prevCycleBars: number,
+  nextCycleBars: number,
+): boolean {
+  if (trackBars <= 0 || prevCycleBars <= 0 || nextCycleBars <= 0) return false;
+  return prevCycleBars % trackBars === 0 && nextCycleBars % trackBars === 0;
+}
+
+/**
+ * The transport origin implied by a take's own first sample.
+ *
+ * `headFrame` is the context frame the loop's sample 0 was captured on. It
+ * carries what the player played one input latency earlier, and putting it back
+ * out of the speakers costs one output latency, so anchoring the grid a full
+ * round trip before it makes the loop play back where it was performed.
+ *
+ * Note what is NOT in here: the user's latency trim. The trim exists to move
+ * captured audio relative to the grid, so folding it into the grid as well
+ * would cancel it out (and compound it on every later take).
+ */
+export function anchorFromCapture(
+  headFrame: number,
+  sampleRate: number,
+  inputLatencySec: number,
+  outputLatencySec: number,
+): number {
+  return samplesToSeconds(headFrame, sampleRate) - inputLatencySec - outputLatencySec;
+}
+
 /** Integer loop number since the transport started (0 before the first wrap). */
 export function loopIndex(now: number, transportStart: number, loopDuration: number): number {
   if (loopDuration <= 0) return 0;

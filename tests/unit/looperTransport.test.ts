@@ -10,6 +10,9 @@ import {
   playhead,
   barSecondsFromTempo,
   frameAtTime,
+  boundaryForPress,
+  cyclePhaseSurvives,
+  anchorFromCapture,
 } from '@/core/looperTransport';
 
 describe('sample/second conversion', () => {
@@ -148,5 +151,55 @@ describe('frameAtTime', () => {
   it('rounds to the nearest frame and clamps below zero', () => {
     expect(frameAtTime(1 + 0.6 / 48000, 48000)).toBe(48001);
     expect(frameAtTime(-3, 48000)).toBe(0);
+  });
+});
+
+describe('boundaryForPress', () => {
+  // A 2 s cycle anchored at 10, with a 40 ms output leg. The player hears the
+  // downbeat at 12.04, so a press "just before" it sits at ~12.02 on the
+  // scheduling clock , already past it.
+  const anchor = 10;
+  const cycle = 2;
+  const out = 0.04;
+
+  it('catches the downbeat the player is reaching for, not the next one', () => {
+    expect(boundaryForPress(12.02, out, anchor, cycle)).toBeCloseTo(12, 9);
+    // nextBoundary alone is exactly the bug: a whole cycle late.
+    expect(nextBoundary(12.02, anchor, cycle)).toBeCloseTo(14, 9);
+  });
+
+  it('still arms the next downbeat from the middle of a cycle', () => {
+    expect(boundaryForPress(13, out, anchor, cycle)).toBeCloseTo(14, 9);
+  });
+
+  it('ignores a negative reported latency', () => {
+    expect(boundaryForPress(13, -1, anchor, cycle)).toBeCloseTo(14, 9);
+  });
+});
+
+describe('cyclePhaseSurvives', () => {
+  it('keeps a track whose length divides both widths', () => {
+    expect(cyclePhaseSurvives(1, 1, 2)).toBe(true);
+    expect(cyclePhaseSurvives(1, 2, 4)).toBe(true);
+    expect(cyclePhaseSurvives(2, 4, 8)).toBe(true);
+    // shrinking back down, which is what an undo does
+    expect(cyclePhaseSurvives(1, 2, 1)).toBe(true);
+  });
+
+  it('relaunches a track whose tiling was, or becomes, a partial repeat', () => {
+    expect(cyclePhaseSurvives(3, 4, 8)).toBe(false);
+    expect(cyclePhaseSurvives(4, 4, 6)).toBe(false);
+  });
+
+  it('fails toward relaunching on nonsense bar counts', () => {
+    expect(cyclePhaseSurvives(1, 0, 2)).toBe(false);
+    expect(cyclePhaseSurvives(0, 1, 2)).toBe(false);
+    expect(cyclePhaseSurvives(1, 1, 0)).toBe(false);
+  });
+});
+
+describe('anchorFromCapture', () => {
+  it('places the grid a full round trip before the captured head', () => {
+    expect(anchorFromCapture(48000, 48000, 0.01, 0.02)).toBeCloseTo(0.97, 9);
   });
 });

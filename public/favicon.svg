@@ -1,5 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- GP200 Studio mark: the GP-200 floor unit, simplified -->
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <title>GP200 Studio</title>
+  <!-- GP200 Studio mark: the GP-200 floor unit, simplified.
+       The canvas outside the rx=7 corners is deliberately transparent: it is
+       what keeps the generated PNG icons free of white notches. Do not add a
+       background rect here (see scripts/generate-og-image.mjs). -->
   <rect width="32" height="32" rx="7" fill="#232220"/>
   <!-- LCD -->
   <rect x="6" y="7" width="13" height="7" rx="1.5" fill="#0c1a0e"/>

@@ -6,6 +6,7 @@ import {
   SIGNATURES,
   drumSamplePath,
   getPattern,
+  nextStepVelocity,
   randomizePattern,
   secondsPerStep,
   type DrumKit,
@@ -36,6 +37,10 @@ export interface DrumMachineApi {
   patternId: string;
   patternName: string;
   bpm: number;
+  /** the drum tempo is mirroring the patch tempo instead of standing alone */
+  followPatch: boolean;
+  /** the patch tempo on offer to follow, echoed back for the panel's labels */
+  patchTempo: number;
   swing: number;
   signature: SignatureId;
   /** 0..100 master level */
@@ -53,6 +58,7 @@ export interface DrumMachineApi {
   togglePlay: () => void;
   stop: () => void;
   setBpm: (bpm: number) => void;
+  setFollowPatch: (follow: boolean) => void;
   setSwing: (swing: number) => void;
   setSignature: (signature: SignatureId) => void;
   setVolume: (volume: number) => void;
@@ -85,12 +91,6 @@ function clampBpm(bpm: number): number {
   return Math.max(DRUM_BPM_MIN, Math.min(DRUM_BPM_MAX, Math.round(bpm)));
 }
 
-function toggledVelocity(current: number, step: number, group: number): number {
-  if (current > 0) return 0;
-  if (step % group === 0) return 1;
-  return 0.7;
-}
-
 /** Cut or zero-pad every lane to the new bar length. */
 function resizeLanes(
   steps: Record<DrumLaneId, readonly number[]>,
@@ -108,7 +108,11 @@ function resizeLanes(
   return resized;
 }
 
-export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
+/**
+ * @param patchTempo the GP-200's own patch tempo, mirrored while the user has
+ *   asked the drums to follow it (see `setFollowPatch`).
+ */
+export function useDrumMachine(engine: AudioMeterApi, patchTempo: number): DrumMachineApi {
   const initialPattern = getPattern('rock-basic');
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -117,6 +121,7 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
   const [patternId, setPatternId] = useState(initialPattern.id);
   const [patternName, setPatternName] = useState(initialPattern.name);
   const [bpm, setBpmState] = useState(initialPattern.bpm);
+  const [followPatch, setFollowPatchState] = useState(false);
   const [swing, setSwingState] = useState(initialPattern.swing);
   const [signature, setSignatureState] = useState<SignatureId>(initialPattern.signature);
   const [volume, setVolumeState] = useState(80);
@@ -127,6 +132,9 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
   // re-arming the interval).
   const bpmRef = useRef(bpm);
   bpmRef.current = bpm;
+  // applyPattern is a stable callback, so it reads the link through a ref.
+  const followPatchRef = useRef(followPatch);
+  followPatchRef.current = followPatch;
   const swingRef = useRef(swing);
   swingRef.current = swing;
   const stepsRef = useRef(steps);
@@ -329,6 +337,25 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
     setBpmState(clampBpm(nextBpm));
   }, []);
 
+  /**
+   * Follow the patch tempo, so a tempo-synced tremolo or delay on the GP-200
+   * and the practice drums are counting the same beat.
+   *
+   * Opt-in rather than automatic: the patch tempo belongs to the patch, so an
+   * always-on link would yank the drum tempo out from under you every time you
+   * changed patch, and the drum machine is meant to work with no device
+   * connected at all. Clamped to the drum machine's own range, which stops
+   * 10 BPM short of the GP-200's 250.
+   */
+  const setFollowPatch = useCallback((follow: boolean) => {
+    setFollowPatchState(follow);
+  }, []);
+
+  useEffect(() => {
+    if (!followPatch) return;
+    setBpmState(clampBpm(patchTempo));
+  }, [followPatch, patchTempo]);
+
   const setSwing = useCallback((nextSwing: number) => {
     setSwingState(Math.max(0, Math.min(0.5, nextSwing)));
   }, []);
@@ -367,7 +394,9 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
     setPatternId(next.id);
     setPatternName(next.name);
     setSteps(next.steps);
-    setBpmState(next.bpm);
+    // A pattern picks the groove; while the link is on, the patch owns the
+    // tempo. Same reasoning as randomize keeping the user's feel below.
+    if (!followPatchRef.current) setBpmState(next.bpm);
     setSwingState(next.swing);
     setSignatureState(next.signature);
     nextRef.current = {
@@ -389,10 +418,9 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
   }, []);
 
   const toggleStep = useCallback((laneId: DrumLaneId, step: number) => {
-    const group = SIGNATURES[signatureRef.current].group;
     setSteps((prev) => {
       const lane = [...prev[laneId]];
-      lane[step] = toggledVelocity(lane[step], step, group);
+      lane[step] = nextStepVelocity(lane[step]);
       return { ...prev, [laneId]: lane };
     });
     setPatternId('custom');
@@ -409,8 +437,8 @@ export function useDrumMachine(engine: AudioMeterApi): DrumMachineApi {
 
   return {
     playing, loading, error, kitId, patternId, patternName,
-    bpm, swing, signature, volume, getCurrentStep, steps, mutedLanes,
-    togglePlay, stop, setBpm, setSwing, setSignature, setVolume,
+    bpm, followPatch, patchTempo, swing, signature, volume, getCurrentStep, steps, mutedLanes,
+    togglePlay, stop, setBpm, setFollowPatch, setSwing, setSignature, setVolume,
     selectKit, selectPattern, randomize, toggleStep, toggleLaneMute,
   };
 }

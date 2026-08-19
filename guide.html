@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Shell for the fourteen prerendered guide pages. Everything between the
+         seo markers is replaced per route by scripts/prerender.mjs; the
+         placeholders below only ever show up in `npm run dev`. -->
+    <!--seo:start-->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>GP200 Studio Guide: Valeton GP-200, End to End</title>
+    <meta
+      name="description"
+      content="The complete GP200 Studio guide: the pedalboard editor, the multi-layer loop station, footswitch and expression assignment, patch management and .prst files."
+    />
+    <meta name="author" content="Kabir Tamari" />
+    <meta name="theme-color" content="#e8e9eb" />
+    <link rel="canonical" href="https://gp200studio.com/guide" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <!--seo:end-->
+
+    <!-- Same pre-paint theme script as index.html. It is what makes the light
+         or dark screenshot correct on the very first paint of a static page
+         with no React on it. See the note there about the theme-color tag. -->
+    <script>
+      try {
+        var t = localStorage.getItem('gp200:theme');
+        if (t === 'dark' || t === 'light') {
+          document.documentElement.dataset.theme = t;
+          document
+            .querySelector('meta[name="theme-color"]')
+            .setAttribute('content', t === 'dark' ? '#17181a' : '#e8e9eb');
+        }
+      } catch (e) {
+        /* blocked storage: fall through to the light default */
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/guide-main.ts"></script>
+  </body>
+</html>

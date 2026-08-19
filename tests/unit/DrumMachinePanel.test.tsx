@@ -14,6 +14,8 @@ function makeApi(overrides: Partial<DrumMachineApi> = {}): DrumMachineApi {
     patternId: rockBasic.id,
     patternName: rockBasic.name,
     bpm: rockBasic.bpm,
+    followPatch: false,
+    patchTempo: 120,
     swing: 0,
     signature: rockBasic.signature,
     volume: 80,
@@ -23,6 +25,7 @@ function makeApi(overrides: Partial<DrumMachineApi> = {}): DrumMachineApi {
     togglePlay: vi.fn(),
     stop: vi.fn(),
     setBpm: vi.fn(),
+    setFollowPatch: vi.fn(),
     setSwing: vi.fn(),
     setSignature: vi.fn(),
     setVolume: vi.fn(),
@@ -100,5 +103,26 @@ describe('DrumMachinePanel', () => {
     render(<DrumMachinePanel drums={api} />);
     const patternSelect = screen.getByLabelText<HTMLSelectElement>('Drum pattern');
     expect(patternSelect.value).toBe('custom');
+  });
+
+  it('offers the patch-tempo link as an off-by-default toggle', () => {
+    const api = makeApi();
+    render(<DrumMachinePanel drums={api} />);
+    const link = screen.getByRole('button', { name: /PATCH TEMPO/ });
+    expect(link.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(link);
+    expect(api.setFollowPatch).toHaveBeenCalledWith(true);
+  });
+
+  it('hands the BPM slider over to the patch while the link is on', () => {
+    // The tempo has one owner at a time: leaving the slider live would invite
+    // an edit that the next patch-tempo change silently overwrites.
+    const api = makeApi({ followPatch: true, patchTempo: 96 });
+    render(<DrumMachinePanel drums={api} />);
+    expect(screen.getByLabelText<HTMLInputElement>('BPM').disabled).toBe(true);
+    const link = screen.getByRole('button', { name: /PATCH TEMPO/ });
+    expect(link.getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(link);
+    expect(api.setFollowPatch).toHaveBeenCalledWith(false);
   });
 });

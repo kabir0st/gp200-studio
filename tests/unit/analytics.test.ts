@@ -18,7 +18,7 @@ function gtagScripts(): NodeListOf<Element> {
 }
 
 /** Put the module in the one state where analytics is live. */
-function enableProd(hostname = 'kabirtamari.com') {
+function enableProd(hostname = 'gp200studio.com') {
   vi.stubEnv('PROD', true);
   vi.stubEnv('VITE_GA_MEASUREMENT_ID', 'G-TESTID123');
   vi.stubGlobal('location', { hostname, origin: `https://${hostname}` });
@@ -58,6 +58,17 @@ describe('analytics: production gating', () => {
     enableProd('someone-elses-fork.pages.dev');
     expect(isAnalyticsEnabled()).toBe(false);
   });
+
+  // Both legacy homes now only ever 301 to the apex, so a page can never
+  // finish loading on them. If one of these ever reports again, the redirect
+  // has stopped working — which is a ranking problem, not just a stats one.
+  it.each(['kabirtamari.com', 'gp200.afterhour.uk'])(
+    'stays off on the legacy host %s, which now only redirects',
+    (host) => {
+      enableProd(host);
+      expect(isAnalyticsEnabled()).toBe(false);
+    },
+  );
 
   it('stays off when the measurement id is missing', () => {
     enableProd();

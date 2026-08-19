@@ -11,10 +11,12 @@ import {
   MAX_STEPS,
   drumSamplePath,
   getPattern,
+  nextStepVelocity,
   parseLane,
   randomizePattern,
   secondsPerStep,
   stepStartSeconds,
+  stepVelocityName,
 } from '../../src/core/drumMachine';
 
 describe('parseLane', () => {
@@ -167,5 +169,35 @@ describe('randomizePattern', () => {
       // index used deliberately: the two hat lanes align by grid position
       if (openVelocity > 0) expect(rolled.steps.hatClosed[stepIndex]).toBe(0);
     });
+  });
+});
+
+describe('nextStepVelocity', () => {
+  it('walks a cell through every level and back to silence in four clicks', () => {
+    // The ring is the only way to author a ghost note, so it has to reach all
+    // four levels from a standing start and then clear itself.
+    const walk: number[] = [];
+    let velocity = 0;
+    for (let click = 0; click < 4; click += 1) {
+      velocity = nextStepVelocity(velocity);
+      walk.push(velocity);
+    }
+    expect(walk.map(stepVelocityName)).toEqual(['hit', 'accent', 'ghost', 'off']);
+    expect(walk[3]).toBe(0);
+  });
+
+  it('gives every velocity a preset can hold a defined successor', () => {
+    // parseLane's four notation levels are what presets and randomize emit; a
+    // click on any of them must land on another level, never on a dead value.
+    const fromPresets = parseLane('X-x.------------', 16).slice(0, 4);
+    expect(fromPresets).toEqual([1, 0, 0.7, 0.35]);
+    expect(fromPresets.map(nextStepVelocity)).toEqual([0.35, 0.7, 1, 0]);
+  });
+
+  it('promotes a ghost instead of dead-ending on it', () => {
+    // The old two-state toggle turned a preset's ghost off and could never put
+    // one back; clicking one now continues around the ring.
+    expect(nextStepVelocity(0.35)).toBe(0);
+    expect(nextStepVelocity(nextStepVelocity(0.35))).toBe(0.7);
   });
 });
