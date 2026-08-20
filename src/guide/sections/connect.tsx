@@ -1,4 +1,4 @@
-import { H3, List } from '../prose';
+import { H3, List, Note } from '../prose';
 
 export function ConnectBody() {
   return (
@@ -48,7 +48,33 @@ export function ConnectBody() {
           <strong>Grant the permission prompt.</strong> Web MIDI asks once per
           site; if you dismissed it, clear the site permission and reload.
         </li>
+        <li>
+          <strong>On Linux, load the ALSA sequencer bridge.</strong> This one
+          looks like a broken app rather than a missing driver, so it is worth
+          knowing about; the note below has the one-line fix.
+        </li>
       </List>
+
+      <Note title="Linux: the pedal is there, the browser can't see it">
+        <p>
+          Chrome reads Web MIDI from the ALSA <em>sequencer</em>, never from
+          rawmidi directly. Your GP-200 can be listed by <code>lsusb</code>, own
+          a card in <code>/proc/asound/cards</code> and expose a{' '}
+          <code>/dev/snd/midiC*D*</code> node while still appearing in no
+          browser at all, because the kernel module that publishes rawmidi
+          devices as sequencer clients (<code>snd-seq-midi</code>) has not been
+          loaded. CONNECT then reports the ports it can see, and the pedal
+          is not among them.
+        </p>
+        <p>
+          Fix it for this session with{' '}
+          <code>sudo modprobe snd-seq-midi</code>, then reload the page (no
+          replug needed). Confirm with{' '}
+          <code>grep '^Client' /proc/asound/seq/clients</code>, which should now
+          list a GP-200 client. To survive reboots:{' '}
+          <code>echo snd-seq-midi | sudo tee /etc/modules-load.d/snd-seq-midi.conf</code>.
+        </p>
+      </Note>
     </>
   );
 }

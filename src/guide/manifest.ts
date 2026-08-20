@@ -199,7 +199,7 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'Connect a Valeton GP-200 over USB in Chrome or Edge: the firmware handshake, live two-way sync, the MIDI channel, and what to do if it is not found.',
     blurb: 'The USB handshake, the firmware check, and how live two-way sync behaves.',
-    lastmod: '2026-08-17',
+    lastmod: '2026-08-20',
     faq: [
       {
         q: 'Which browsers work with the Valeton GP-200?',
@@ -208,6 +208,10 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
       {
         q: 'Does it work on Linux?',
         a: 'Yes — anywhere Chrome or Edge runs, including Linux, which the official Valeton editor does not support at all.',
+      },
+      {
+        q: 'Why can\'t Chrome see my GP-200 on Linux?',
+        a: 'Chrome enumerates Web MIDI from the ALSA sequencer, not from rawmidi, so a pedal that lsusb and /proc/asound/cards both list can still be invisible to the browser. Run "sudo modprobe snd-seq-midi" and reload the page.',
       },
     ],
   },
@@ -237,7 +241,7 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'What GP200 Studio needs to run, what works offline, which browsers support Web MIDI, and exactly what data does and does not leave your machine.',
     blurb: 'What it needs, what works offline, and what data never leaves your machine.',
-    lastmod: '2026-08-17',
+    lastmod: '2026-08-20',
     faq: [
       {
         q: 'Do my presets get uploaded anywhere?',

@@ -1,2 +1,5 @@
+allowBuilds:
+  esbuild: true
+  workerd: true
 minimumReleaseAgeExclude:
   - autoprefixer@10.5.3

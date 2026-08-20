@@ -16,7 +16,9 @@ export function RequirementsBody() {
         <li>
           Any desktop OS , Windows, macOS or Linux , plus ChromeOS and Android.
           Linux is worth calling out: the official Valeton editor does not
-          support it at all, which is a large part of why this exists.
+          support it at all, which is a large part of why this exists. It does
+          need one piece of local setup the other platforms don't; see{' '}
+          <A href="/guide/connect-gp-200">Connecting your GP-200</A>.
         </li>
       </List>
 

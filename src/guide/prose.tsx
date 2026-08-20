@@ -29,7 +29,14 @@ export function Note({ title, children }: { title: string; children: ReactNode }
       <p className="font-mono-display text-micro font-bold tracking-widest uppercase text-text-muted mb-1.5">
         {title}
       </p>
-      <div className="font-mono-display text-caption tracking-wide text-text-secondary [&>p]:m-0 [&>p+p]:mt-2">
+      {/* The body is already monospace, so a bare <code> would be invisible in
+          here; the chip treatment is what makes a shell command scannable.
+          break-words keeps a long one-liner inside the card on a phone. */}
+      <div
+        className="font-mono-display text-caption tracking-wide text-text-secondary [&>p]:m-0 [&>p+p]:mt-2
+          [&_code]:rounded [&_code]:border [&_code]:border-border-subtle [&_code]:bg-bg-input
+          [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-text-primary [&_code]:break-words"
+      >
         {children}
       </div>
     </Card>
