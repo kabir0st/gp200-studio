@@ -30,6 +30,12 @@ interface PresetActions {
   setPatchPan: (value: number) => void;
   /** Per-patch tempo in BPM. */
   setPatchTempo: (value: number) => void;
+  /** Per-patch style tag (index into PATCH_STYLES). */
+  setPatchStyle: (index: number) => void;
+  /** Per-patch free-text note, trimmed to the device's 40 bytes. */
+  setPatchNote: (note: string) => void;
+  /** FX-loop routing mode: 0 = parallel, 1 = serial. */
+  setFxLoopMode: (mode: number) => void;
   reset: () => void;
 }
 
@@ -112,7 +118,7 @@ export function usePreset(): PresetActions {
   }, []);
 
   const setFxLoopSend = useCallback((pos: number) => {
-    const clamped = Math.max(1, Math.min(10, pos));
+    const clamped = Math.max(1, Math.min(11, pos));
     setPreset((prev) => {
       if (!prev) return null;
       const nextReturn = Math.max(clamped, prev.fxLoopReturn);
@@ -121,7 +127,7 @@ export function usePreset(): PresetActions {
   }, []);
 
   const setFxLoopReturn = useCallback((pos: number) => {
-    const clamped = Math.max(1, Math.min(10, pos));
+    const clamped = Math.max(1, Math.min(11, pos));
     setPreset((prev) => {
       if (!prev) return null;
       const nextSend = Math.min(clamped, prev.fxLoopSend);
@@ -182,6 +188,23 @@ export function usePreset(): PresetActions {
     setPreset((prev) => (prev ? { ...prev, patchTempo: clamped } : null));
   }, []);
 
+  const setPatchStyle = useCallback((index: number) => {
+    const clamped = Math.max(0, Math.min(0xFFFF, Math.round(index)));
+    setPreset((prev) => (prev ? { ...prev, patchStyle: clamped } : null));
+  }, []);
+
+  const setPatchNote = useCallback((note: string) => {
+    // The field is 40 bytes on the device, so trim here rather than letting
+    // the encoder silently drop the tail.
+    const trimmed = note.slice(0, 40);
+    setPreset((prev) => (prev ? { ...prev, patchNote: trimmed || undefined } : null));
+  }, []);
+
+  const setFxLoopMode = useCallback((mode: number) => {
+    const next = mode === 1 ? 1 : 0;
+    setPreset((prev) => (prev ? { ...prev, fxLoopMode: next } : null));
+  }, []);
+
   const setExpAssignment = useCallback((
     page: number,
     item: number,
@@ -209,8 +232,8 @@ export function usePreset(): PresetActions {
   return {
     preset, loadPreset, setPatchName, setAuthor,
     toggleEffect, changeEffect, reorderEffects, setParam,
-    setFxLoopSend, setFxLoopReturn, setCtrlBlock, setCtrlMask, setExpAssignment,
-    setPatchVolume, setPatchPan, setPatchTempo,
+    setFxLoopSend, setFxLoopReturn, setFxLoopMode, setCtrlBlock, setCtrlMask, setExpAssignment,
+    setPatchVolume, setPatchPan, setPatchTempo, setPatchStyle, setPatchNote,
     reset,
   };
 }

@@ -24,13 +24,17 @@ const OFFSET_PRE_META    = 0x30;
 // Per-patch settings inside the pre-name block (mirror of PRSTDecoder).
 const OFFSET_PATCH_SLOT  = 0x34;  // u8: target slot 0..255 (mirrored at 0x90)
 const OFFSET_PATCH_TEMPO = 0x36;  // u16 LE
-const OFFSET_PATCH_VOLUME = 0x38; // u8
-const OFFSET_PATCH_PAN   = 0x3C;  // s8
+const OFFSET_PATCH_VOLUME = 0x38; // u16 LE, but 0..100 so only the low byte is written
+const OFFSET_PATCH_PAN   = 0x3A;  // s16 LE
+const OFFSET_PATCH_STYLE = 0x3C;  // u16 LE
+const OFFSET_FX_MODE     = 0x42;  // u16 LE: 0 = parallel, 1 = serial
 
 const OFFSET_PATCH_NAME  = 0x44;
 const PATCH_NAME_MAX     = 16;   // name is 16 bytes, author follows at 0x54
 const OFFSET_AUTHOR      = 0x54;
 const AUTHOR_MAX         = 16;
+const OFFSET_NOTE        = 0x64;
+const NOTE_MAX           = 40;
 
 // Routing section (0x8C-0x9F)
 const OFFSET_ROUTING     = 0x8C;
@@ -117,6 +121,11 @@ export class PRSTEncoder {
     // the old bytes in the round-tripped buffer.
     gen.writeAscii(OFFSET_AUTHOR, preset.author ?? '', AUTHOR_MAX);
 
+    // ── Note (0x64-0x8B) ─────────────────────────────────────────────────
+    // Same full-field write as the author: clearing a note has to zero the old
+    // bytes on a rawSource-based preset, not just shorten the string.
+    gen.writeAscii(OFFSET_NOTE, preset.patchNote ?? '', NOTE_MAX);
+
     // ── Routing section (0x8C-0x9F) ──────────────────────────────────────
     // Header constants only seeded for synthetic presets; rawSource already
     // carries the correct ones. Routing-order bytes (OFFSET_ROUTING+8..+18)
@@ -141,7 +150,9 @@ export class PRSTEncoder {
     // them, so a straight round-trip stays byte-exact.
     gen.writeUint16LE(OFFSET_PATCH_TEMPO, preset.patchTempo);
     gen.writeUint8(OFFSET_PATCH_VOLUME, preset.patchVolume);
-    gen.writeUint8(OFFSET_PATCH_PAN, preset.patchPan & 0xFF);
+    gen.writeUint16LE(OFFSET_PATCH_PAN, preset.patchPan & 0xFFFF);
+    gen.writeUint16LE(OFFSET_PATCH_STYLE, preset.patchStyle);
+    gen.writeUint16LE(OFFSET_FX_MODE, preset.fxLoopMode);
 
     // Target slot at 0x34. Only written when known: a genuine file decoded via
     // rawSource already carries its slot, and a synthetic preset stays 0 until

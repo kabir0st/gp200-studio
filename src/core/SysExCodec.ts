@@ -190,17 +190,30 @@ export const SysExCodec = {
 
     const rawSend = decoded.length > 106 ? decoded[106] : 4;
     const rawReturn = decoded.length > 107 ? decoded[107] : 4;
-    const fxLoopSend = rawSend >= 1 && rawSend <= 10 ? rawSend : 4;
-    const fxLoopReturn = rawReturn >= 1 && rawReturn <= 10 ? rawReturn : 4;
+    const fxLoopSend = rawSend >= 1 && rawSend <= 11 ? rawSend : 4;
+    const fxLoopReturn = rawReturn >= 1 && rawReturn <= 11 ? rawReturn : 4;
 
-    // Per-patch VOL/PAN/TEMPO. Dump mirrors the file shifted -0x28, so file
-    // 0x36/0x38/0x3C land at 14/16/20. Defensively clamped like fxLoop above.
+    // Per-patch VOL/PAN/TEMPO/STYLE/NOTE. Dump mirrors the file shifted -0x28,
+    // so file 0x36/0x38/0x3A/0x3C/0x42/0x64 land at 14/16/18/20/26/60.
+    // Defensively clamped like fxLoop above.
     const rawVol = decoded.length > 16 ? decoded[16] : 50;
     const patchVolume = rawVol <= 100 ? rawVol : 50;
     const patchTempo = decoded.length > 15 ? decoded[14] | (decoded[15] << 8) : 120;
-    const rawPan = decoded.length > 20 ? decoded[20] : 0;
-    const panSigned = rawPan > 127 ? rawPan - 256 : rawPan;
+    const rawPan = decoded.length > 19 ? decoded[18] | (decoded[19] << 8) : 0;
+    const panSigned = rawPan > 0x7FFF ? rawPan - 0x10000 : rawPan;
     const patchPan = panSigned >= -50 && panSigned <= 50 ? panSigned : 0;
+    const patchStyle = decoded.length > 21 ? decoded[20] | (decoded[21] << 8) : 0;
+    const fxLoopMode = decoded.length > 27 && (decoded[26] | (decoded[27] << 8)) === 1 ? 1 : 0;
+
+    // Note at decoded[60:100] (40 bytes, null-terminated)
+    let patchNote = '';
+    if (decoded.length > 99) {
+      for (let i = 0; i < 40; i++) {
+        const b = decoded[60 + i];
+        if (b === 0) break;
+        patchNote += String.fromCharCode(b);
+      }
+    }
 
     const effects: GP200Preset['effects'] = [];
     const view = new DataView(decoded.buffer, decoded.byteOffset, decoded.byteLength);
@@ -254,7 +267,9 @@ export const SysExCodec = {
 
     return GP200PresetSchema.parse({
       version: '1', patchName, author: author || undefined, effects,
-      fxLoopSend, fxLoopReturn, patchVolume, patchPan, patchTempo, checksum: 0,
+      fxLoopSend, fxLoopReturn, fxLoopMode,
+      patchVolume, patchPan, patchStyle, patchTempo, checksum: 0,
+      patchNote: patchNote || undefined,
       expAssignments: controls?.exp,
       ctrlAssignments: controls?.ctrl,
     });

@@ -159,3 +159,57 @@ describe.skipIf(!HAS_FIXTURES)('FootswitchPanel', () => {
     expect(queryByText(/sent to the connected GP-200/)).toBeNull();
   });
 });
+
+describe('FootswitchPanel: device model', () => {
+  // Synthetic preset, so this block runs everywhere rather than only on a
+  // machine that has the gitignored device dumps.
+  const preset = {
+    version: '1',
+    patchName: 'Test',
+    effects: Array.from({ length: 11 }, (_unused, slotIndex) => ({
+      slotIndex, effectId: 0, enabled: true, params: Array(15).fill(0),
+    })),
+    checksum: 0,
+    fxLoopSend: 4,
+    fxLoopReturn: 4,
+    fxLoopMode: 0,
+    patchVolume: 50,
+    patchPan: 0,
+    patchStyle: 0,
+    patchTempo: 120,
+  } as unknown as Parameters<typeof FootswitchPanel>[0]['preset'];
+
+  const props = {
+    preset,
+    connected: false,
+    onCtrlBlockToggle: vi.fn(),
+    onCtrlClear: vi.fn(),
+    onDeviceModelChange: vi.fn(),
+  };
+
+  it('draws eight footswitches for the GP-200', () => {
+    const { getAllByRole } = render(<FootswitchPanel {...props} deviceModel="gp200" />);
+    expect(getAllByRole('radio')).toHaveLength(8);
+  });
+
+  it('draws four for the LT', () => {
+    const { getAllByRole } = render(<FootswitchPanel {...props} deviceModel="gp200lt" />);
+    expect(getAllByRole('radio')).toHaveLength(4);
+  });
+
+  it('does not leave the editor pointing at a switch the LT lacks', () => {
+    const { getAllByRole, rerender } = render(
+      <FootswitchPanel {...props} deviceModel="gp200" />,
+    );
+    fireEvent.click(getAllByRole('radio')[7]);
+    expect(getAllByRole('radio')[7]).toHaveAttribute('aria-checked', 'true');
+
+    rerender(<FootswitchPanel {...props} deviceModel="gp200lt" />);
+    const ltSwitches = getAllByRole('radio');
+    expect(ltSwitches).toHaveLength(4);
+    // Selection lands on the last switch the LT actually has, rather than
+    // silently editing a CTRL 8 the user cannot press.
+    expect(ltSwitches.filter((s) => s.getAttribute('aria-checked') === 'true')).toHaveLength(1);
+    expect(ltSwitches[3]).toHaveAttribute('aria-checked', 'true');
+  });
+});

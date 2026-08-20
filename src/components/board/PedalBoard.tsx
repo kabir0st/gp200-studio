@@ -35,15 +35,19 @@ import { CableLayer } from './CableLayer';
 import { SwitcherUnit } from './SwitcherUnit';
 import { BoardTopBar } from './BoardTopBar';
 import { DeckDrawer } from './DeckDrawer';
+import { FxScenarioPicker } from '@/components/FxScenarioPicker';
+import type { DeviceModelId } from '@/core/deviceModel';
+import { PatchDetailsPanel } from '@/components/PatchDetailsPanel';
 import { Dialog } from '@/components/ui/Dialog';
 import { Tabs } from '@/components/ui/Tabs';
 import { useCoarsePointer, useSingleRowBoard } from '@/hooks/useMediaQuery';
 import { prefersReducedMotion } from '@/lib/motion';
 import './board.css';
 
-type PatchSettingsTab = 'exp' | 'ctrl' | 'bulk';
+type PatchSettingsTab = 'details' | 'exp' | 'ctrl' | 'bulk';
 
 const PATCH_SETTINGS_TABS = [
+  { id: 'details', label: 'Details' },
   { id: 'exp', label: 'Expression' },
   { id: 'ctrl', label: 'Footswitches' },
   { id: 'bulk', label: 'Bulk Apply' },
@@ -77,6 +81,17 @@ export interface PedalBoardProps {
   onCloseRequest: () => void;
   onFxSendChange: (pos: number) => void;
   onFxReturnChange: (pos: number) => void;
+  /** Applies an FX-loop scenario by id (see core/fxScenarios). */
+  onApplyFxScenario: (scenarioId: string) => void;
+  /** FX-loop routing mode: 0 = parallel, 1 = serial. */
+  onFxModeChange: (mode: number) => void;
+  /** Per-patch style tag (index into PATCH_STYLES). */
+  /** Which GP-200 variant the user has (LT has 4 footswitches). */
+  deviceModel: DeviceModelId;
+  onDeviceModelChange: (id: DeviceModelId) => void;
+  onStyleChange: (index: number) => void;
+  /** Per-patch free-text note (40 bytes on the device). */
+  onNoteChange: (note: string) => void;
   onExpParamSelect: (
     page: number,
     item: number,
@@ -170,6 +185,12 @@ export function PedalBoard({
   onCloseRequest,
   onFxSendChange,
   onFxReturnChange,
+  onApplyFxScenario,
+  onFxModeChange,
+  deviceModel,
+  onDeviceModelChange,
+  onStyleChange,
+  onNoteChange,
   onExpParamSelect,
   onExpMinMax,
   onCtrlBlockToggle,
@@ -450,9 +471,14 @@ export function PedalBoard({
           onSendChange={onFxSendChange}
           onReturnChange={onFxReturnChange}
         />
-        <p className="font-mono-display text-caption text-text-muted mt-1">
+        <p className="font-mono-display text-caption text-text-muted mt-1 mb-4">
           Drag ↗ SEND and ↘ RETURN between blocks. Send = Return bypasses the loop.
         </p>
+        <FxScenarioPicker
+          preset={preset}
+          onApply={onApplyFxScenario}
+          onModeChange={onFxModeChange}
+        />
       </DeckDrawer>
 
       {/* One per-patch settings surface, split into tabs: EXP assignment
@@ -471,6 +497,13 @@ export function PedalBoard({
           onSelect={selectPatchTab}
         />
         <div role="tabpanel" className="pt-4">
+          {patchTab === 'details' && (
+            <PatchDetailsPanel
+              preset={preset}
+              onStyleChange={onStyleChange}
+              onNoteChange={onNoteChange}
+            />
+          )}
           {patchTab === 'exp' && (
             <ControllerPanel
               preset={preset}
@@ -486,6 +519,8 @@ export function PedalBoard({
               connected={connected}
               onCtrlBlockToggle={onCtrlBlockToggle}
               onCtrlClear={onCtrlClear}
+              deviceModel={deviceModel}
+              onDeviceModelChange={onDeviceModelChange}
             />
           )}
           {patchTab === 'bulk' && (

@@ -3,6 +3,14 @@ import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 import { PatchPicker } from './PatchPicker';
 import { SysExCodec } from '@/core/SysExCodec';
+import {
+  EMPTY_SELECTION,
+  collapseToAnchor,
+  selectAll,
+  selectSlot,
+  selectedSlots as slotsOf,
+  type SlotSelection,
+} from '@/core/slotSelection';
 
 export interface BulkExportProgress {
   done: number;
@@ -25,6 +33,14 @@ export interface PatchManagerSheetProps {
   bulkProgress: BulkExportProgress | null;
   onCancelBulk: () => void;
   onImportToSlot: (slot: number, bytes: Uint8Array) => Promise<void>;
+  /** Read a slot into the in-app clipboard. */
+  onCopySlot: (slot: number) => Promise<void>;
+  /** Write the clipboard into a slot. */
+  onPasteToSlot: (slot: number) => Promise<void>;
+  /** Exchange the contents of two slots. */
+  onSwapSlots: (first: number, second: number) => Promise<void>;
+  /** Label of whatever is on the clipboard, or null when it is empty. */
+  clipboardLabel: string | null;
   onRenameSlot: (slot: number, name: string) => Promise<void>;
   onRefreshNames: () => void;
   /** Load a .prst into the editor buffer (pushes + saves when connected). */
@@ -64,13 +80,20 @@ export function PatchManagerSheet({
   bulkProgress,
   onCancelBulk,
   onImportToSlot,
+  onCopySlot,
+  onPasteToSlot,
+  onSwapSlots,
+  clipboardLabel,
   onRenameSlot,
   onRefreshNames,
   onImportFile,
   onExportRequest,
   userIrNames,
 }: PatchManagerSheetProps) {
-  const [selected, setSelected] = useState<number | null>(null);
+  // Anchor + extras. The anchor is what every single-slot action acts on, so
+  // multi-select sits on top of those buttons without changing them.
+  const [selection, setSelection] = useState<SlotSelection>(EMPTY_SELECTION);
+  const selected = selection.anchor;
   const [irListOpen, setIrListOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -89,9 +112,20 @@ export function PatchManagerSheet({
   let currentLabel = '-';
   if (currentSlot !== null) currentLabel = SysExCodec.slotToLabel(currentSlot);
 
-  function handleSelect(slot: number) {
-    setSelected(slot);
+  const selectedSlots = slotsOf(selection);
+
+  function handleSelect(slot: number, modifiers?: { shift: boolean; toggle: boolean }) {
     setRenaming(false);
+    setSelection((prev) => selectSlot(prev, slot, modifiers));
+  }
+
+  function selectBank() {
+    if (selected === null) return;
+    setSelection((prev) => selectAll(prev, bankSlotsOf(selected)));
+  }
+
+  function clearSelection() {
+    setSelection(collapseToAnchor);
   }
 
   function handleActivateFromPicker(slot: number) {
@@ -246,6 +280,14 @@ export function PatchManagerSheet({
         >
           EXPORT .PRST
         </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => window.print()}
+          title="Print a rig sheet: this patch, its footswitches, and the slot list"
+        >
+          PRINT
+        </Button>
         <input
           ref={editorFileInputRef}
           type="file"
@@ -339,6 +381,7 @@ export function PatchManagerSheet({
           namesLoadProgress={namesLoadProgress}
           currentSlot={currentSlot}
           selected={selected}
+          multiSelected={selection.extra}
           onSelect={handleSelect}
           onActivate={handleActivateFromPicker}
         />
@@ -425,8 +468,119 @@ export function PatchManagerSheet({
           </Button>
         </div>
 
+        {/* Selection + arrange. Shift-click a second row for a range,
+            ctrl/cmd-click to pick slots one at a time. */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span
+            className="font-mono-display text-caption"
+            style={{ color: 'var(--text-muted)' }}
+            role="status"
+            aria-live="polite"
+          >
+            {selectedSlots.length > 1 ? `${selectedSlots.length} selected` : 'shift/ctrl-click to select more'}
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={selected === null || busy || bulkRunning}
+            onClick={selectBank}
+            title="Select all four slots in this bank"
+          >
+            SELECT BANK
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={selectedSlots.length < 2 || busy || bulkRunning}
+            onClick={clearSelection}
+            title="Reduce the selection back to one slot"
+          >
+            CLEAR
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={actionsDisabled}
+            onClick={() => {
+              if (selected !== null) void runBusy(() => onCopySlot(selected));
+            }}
+            title="Copy this patch into the app clipboard"
+          >
+            COPY
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={actionsDisabled || clipboardLabel === null}
+            onClick={() => {
+              if (selected !== null) void runBusy(() => onPasteToSlot(selected));
+            }}
+            title={clipboardLabel
+              ? `Overwrite ${selectedLabel} with the copied patch (${clipboardLabel})`
+              : 'Copy a patch first'}
+          >
+            PASTE{clipboardLabel ? ` (${clipboardLabel})` : ''}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={selectedSlots.length !== 2 || !connected || busy || bulkRunning}
+            onClick={() => {
+              if (selectedSlots.length === 2) {
+                void runBusy(() => onSwapSlots(selectedSlots[0], selectedSlots[1]));
+              }
+            }}
+            title="Exchange the two selected patches"
+          >
+            SWAP
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={actionsDisabled || selectedSlots.length !== 1 || selected === 0}
+            onClick={() => {
+              if (selected !== null && selected > 0) {
+                const target = selected - 1;
+                void runBusy(async () => {
+                  await onSwapSlots(target, selected);
+                  setSelection({ anchor: target, extra: new Set() });
+                });
+              }
+            }}
+            title="Swap this patch with the slot above it"
+          >
+            ▲ UP
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={actionsDisabled || selectedSlots.length !== 1 || selected === 255}
+            onClick={() => {
+              if (selected !== null && selected < 255) {
+                const target = selected + 1;
+                void runBusy(async () => {
+                  await onSwapSlots(selected, target);
+                  setSelection({ anchor: target, extra: new Set() });
+                });
+              }
+            }}
+            title="Swap this patch with the slot below it"
+          >
+            ▼ DOWN
+          </Button>
+        </div>
+
         {/* Bulk actions */}
         <div className="flex flex-wrap items-center gap-1.5">
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={selectedSlots.length < 2 || !connected || busy || bulkRunning}
+            onClick={() => void onExportSlots(selectedSlots)}
+            title="Download every selected slot as .prst files in a ZIP"
+          >
+            EXPORT SELECTED
+          </Button>
           <Button
             size="sm"
             variant="ghost"

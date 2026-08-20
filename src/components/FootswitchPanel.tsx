@@ -2,6 +2,12 @@ import { useState, type CSSProperties } from 'react';
 import type { GP200Preset, CtrlAssignment } from '@/core/types';
 import { getSlotModule, getEffectName, MODULE_COLORS } from '@/core/effectNames';
 import { defaultCtrlAssignments } from '@/core/controlRecords';
+import {
+  DEVICE_MODELS,
+  DEFAULT_DEVICE_MODEL,
+  ctrlCountFor,
+  type DeviceModelId,
+} from '@/core/deviceModel';
 
 interface FootswitchPanelProps {
   preset: GP200Preset;
@@ -9,9 +15,13 @@ interface FootswitchPanelProps {
   onCtrlBlockToggle: (ctrlIndex: number, blockIndex: number, on: boolean) => void;
   /** Clear every block off one CTRL footswitch (whole-mask reset). */
   onCtrlClear?: (ctrlIndex: number) => void;
+  /** Which variant the user has: the LT has 4 CTRL switches, the rest 8. */
+  deviceModel?: DeviceModelId;
+  onDeviceModelChange?: (id: DeviceModelId) => void;
 }
 
-const CTRL_COUNT = 8;
+// The file always carries 8 CTRL records; this is only how many the panel
+// draws, which depends on the hardware in front of the user.
 // The 11 chain effect blocks (bits 0-10) plus the FX LOOP insert (bit 11), which
 // a CTRL footswitch can toggle like any block. FX LOOP is a routing element, not
 // an effect module, so it has no SLOT_MODULES / getSlotModule entry of its own.
@@ -19,7 +29,7 @@ const FX_LOOP_BLOCK = 11;
 const FX_LOOP_LABEL = 'FX LOOP';
 const BLOCK_COUNT = 12;
 
-const CTRL_INDICES = Array.from({ length: CTRL_COUNT }, (_, ctrlIndex) => ctrlIndex);
+const ctrlIndices = (count: number) => Array.from({ length: count }, (_, ctrlIndex) => ctrlIndex);
 const BLOCK_INDICES = Array.from({ length: BLOCK_COUNT }, (_, blockIndex) => blockIndex);
 
 // Blocks 0-10 map to a real effect module; block 11 is the FX loop insert. Its
@@ -212,15 +222,21 @@ export function FootswitchPanel({
   connected,
   onCtrlBlockToggle,
   onCtrlClear,
+  deviceModel = DEFAULT_DEVICE_MODEL,
+  onDeviceModelChange,
 }: FootswitchPanelProps) {
   const [selectedCtrl, setSelectedCtrl] = useState(0);
+  // Switching to a model with fewer switches must not leave the editor
+  // pointing at a switch that is no longer drawn.
+  const ctrlCount = ctrlCountFor(deviceModel);
+  const activeCtrl = Math.min(selectedCtrl, ctrlCount - 1);
 
   const assignments = assignmentsOf(preset);
   const maskByCtrl = new Map<number, number>();
   for (const assignment of assignments) {
     maskByCtrl.set(assignment.ctrlIndex, assignment.blockMask);
   }
-  const selectedMask = maskByCtrl.get(selectedCtrl) ?? 0;
+  const selectedMask = maskByCtrl.get(activeCtrl) ?? 0;
   const selectedModules = assignedModules(selectedMask);
 
   const slotByBlock = new Map<number, { effectName: string; bypassed: boolean }>();
@@ -253,16 +269,38 @@ export function FootswitchPanel({
         aria-label="CTRL footswitch to edit"
         className="flex flex-wrap gap-2"
       >
-        {CTRL_INDICES.map((ctrlIndex) => (
+        {ctrlIndices(ctrlCount).map((ctrlIndex) => (
           <FootswitchButton
             key={ctrlIndex}
             ctrlIndex={ctrlIndex}
             mask={maskByCtrl.get(ctrlIndex) ?? 0}
-            selected={ctrlIndex === selectedCtrl}
+            selected={ctrlIndex === activeCtrl}
             onSelect={setSelectedCtrl}
           />
         ))}
       </div>
+
+      {onDeviceModelChange && (
+        <label className="flex items-center gap-2 mt-3 font-mono-display text-caption"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          <span>Pedal</span>
+          <select
+            value={deviceModel}
+            onChange={(e) => onDeviceModelChange(e.target.value as DeviceModelId)}
+            className="rounded px-1.5 py-0.5 bg-transparent"
+            style={{ border: '1px solid rgba(128,128,128,0.30)', color: 'inherit' }}
+          >
+            {Object.values(DEVICE_MODELS).map((model) => (
+              <option key={model.id} value={model.id}>{model.name}</option>
+            ))}
+          </select>
+          <span>
+            {`${ctrlCount} footswitches. Assignments for any switch
+              your pedal lacks are kept in the patch, not erased.`}
+          </span>
+        </label>
+      )}
 
       <div className="flex items-center justify-between gap-3 mt-4 mb-2">
         <p className="text-xs min-w-0" style={{ color: 'var(--text-secondary)' }}>
@@ -270,7 +308,7 @@ export function FootswitchPanel({
             className="font-mono-display text-label font-bold tracking-wider mr-2"
             style={{ color: 'var(--accent-amber)' }}
           >
-            {`CTRL ${selectedCtrl + 1}`}
+            {`CTRL ${activeCtrl + 1}`}
           </span>
           {summary}
         </p>
@@ -278,7 +316,7 @@ export function FootswitchPanel({
           <button
             type="button"
             disabled={selectedModules.length === 0}
-            onClick={() => onCtrlClear(selectedCtrl)}
+            onClick={() => onCtrlClear(activeCtrl)}
             className="font-mono-display text-label font-bold tracking-wider uppercase
               px-2.5 py-1.5 rounded flex-shrink-0 disabled:opacity-40"
             style={{
@@ -301,7 +339,7 @@ export function FootswitchPanel({
               effectName={blockEffectName(blockIndex, slotInfo?.effectName)}
               bypassed={slotInfo?.bypassed ?? false}
               active={(selectedMask & blockBit(blockIndex)) !== 0}
-              ctrlIndex={selectedCtrl}
+              ctrlIndex={activeCtrl}
               onToggle={onCtrlBlockToggle}
             />
           );

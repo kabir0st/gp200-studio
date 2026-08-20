@@ -79,7 +79,7 @@ export function ChainScreen({
               dragging={drag.from === position}
             />
 
-            {/* FX loop send/return are chain positions (1..10), so they render
+            {/* FX loop send/return are chain positions (1..11), so they render
                 between rows exactly where they sit in the signal path. They
                 stay mounted during a drag: a marker belongs to a position, not
                 to a block, so it correctly holds still while blocks move past

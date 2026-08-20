@@ -324,3 +324,171 @@ select option {
     scroll-behavior: auto !important;
   }
 }
+
+/* ── Printable rig sheet ──────────────────────────────────────────────────
+   The app is a dark, scrolling, dialog-heavy workspace; paper is none of
+   those things. Rather than coax the board into printing, a dedicated sheet
+   (components/RigSheet.tsx) is hidden on screen and swapped in for print, so
+   any PRINT button is just window.print().
+
+   `visibility` rather than `display` for the hide-everything-else rule:
+   it survives dialogs and any future portal without needing to know where in
+   the tree they render. */
+.rig-sheet {
+  display: none;
+}
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .rig-sheet,
+  .rig-sheet * {
+    visibility: visible;
+  }
+
+  .rig-sheet {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 0;
+    color: #000;
+    background: #fff;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10pt;
+    line-height: 1.35;
+  }
+
+  .rs-head {
+    border-bottom: 1.5pt solid #000;
+    padding-bottom: 4pt;
+    margin-bottom: 10pt;
+  }
+
+  .rs-head h1 {
+    font-size: 18pt;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .rs-head p {
+    margin: 2pt 0 0;
+    font-size: 9pt;
+  }
+
+  .rs-block {
+    margin-bottom: 12pt;
+    break-inside: avoid;
+  }
+
+  .rs-block h2 {
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-bottom: 0.5pt solid #999;
+    padding-bottom: 2pt;
+    margin: 0 0 5pt;
+  }
+
+  /* Page 2 onwards: the slot list is a reference table, not part of the
+     one-page patch summary a player reads mid-set. */
+  .rs-break {
+    break-before: page;
+  }
+
+  .rs-facts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3pt 12pt;
+    margin: 0;
+  }
+
+  .rs-facts dt {
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #555;
+  }
+
+  .rs-facts dd {
+    margin: 0;
+    font-weight: 500;
+  }
+
+  .rs-note {
+    margin: 6pt 0 0;
+    padding: 4pt 6pt;
+    border-left: 2pt solid #000;
+    font-style: italic;
+  }
+
+  .rs-chain,
+  .rs-ctrl,
+  .rs-slots {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .rs-chain li,
+  .rs-ctrl li {
+    display: grid;
+    grid-template-columns: 2.2em 3.2em 1fr 2.6em 8.5em;
+    gap: 6pt;
+    padding: 1.2pt 0;
+    border-bottom: 0.25pt solid #ddd;
+  }
+
+  .rs-ctrl li {
+    grid-template-columns: 5em 1fr;
+  }
+
+  /* A bypassed block still belongs on the sheet — you need to know it is
+     there and off — but it should not read as part of the live chain. */
+  .rs-off {
+    color: #888;
+  }
+
+  .rs-pos {
+    font-weight: 700;
+  }
+
+  .rs-state {
+    text-align: right;
+    font-size: 8pt;
+  }
+
+  .rs-loop {
+    font-size: 8pt;
+  }
+
+  .rs-slots {
+    column-count: 3;
+    column-gap: 14pt;
+  }
+
+  .rs-slots li {
+    display: flex;
+    gap: 5pt;
+    break-inside: avoid;
+    padding: 0.6pt 0;
+    font-size: 8.5pt;
+  }
+
+  .rs-now {
+    font-weight: 700;
+  }
+
+  @page {
+    margin: 14mm;
+  }
+}
