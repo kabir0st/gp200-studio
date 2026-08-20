@@ -43,8 +43,6 @@ export interface GuideSection {
   metaDescription: string;
   /** One-line summary for the hub's table of contents. */
   blurb: string;
-  /** Absolute-from-root image used for this page's TechArticle image. */
-  ogImage?: string;
   /** ISO date, bumped by hand when this section's copy changes. */
   lastmod: string;
   /** Rendered visibly on the page, and mirrored into FAQPage JSON-LD. */
@@ -65,7 +63,6 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'GP200 Studio is a free, open-source browser editor and loop station for the Valeton GP-200. Edit presets and push them live over USB-MIDI.',
     blurb: 'What the app is, what it needs, and what it can do without a pedal plugged in.',
-    ogImage: '/guide/01-landing.png',
     lastmod: '2026-08-17',
     faq: [
       {
@@ -87,7 +84,6 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'Your GP-200 signal chain drawn as real stompboxes with patch cables. How the board wraps, scales to your window, and switches stage themes.',
     blurb: 'Your signal chain as physical pedals, with cables, a chain strip and stage lighting.',
-    ogImage: '/guide/02-editor-board.png',
     lastmod: '2026-08-17',
   },
   {
@@ -99,7 +95,6 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'Bypass, replace, retune and reorder the GP-200 effect blocks. All 305 effects in a searchable browser, scoped to each block’s module.',
     blurb: 'Bypass, swap, edit and reorder the effect blocks in the chain.',
-    ogImage: '/guide/03-effect-picker.png',
     lastmod: '2026-08-17',
   },
   {
@@ -122,7 +117,6 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'Route the external FX loop anywhere in the chain, map expression pedals with heel and toe values, and bind the eight CTRL footswitches.',
     blurb: 'The FX loop, expression pedal mapping and the eight CTRL footswitch assignments.',
-    ogImage: '/guide/07-deck-ctrl.png',
     lastmod: '2026-08-17',
   },
   {
@@ -145,7 +139,6 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'A multi-layer looper the GP-200 does not ship with: unlimited phase-locked takes over USB audio, driven hands-free from the pedal’s footswitches.',
     blurb: 'Unlimited phase-locked layers over USB audio, driven from your own footswitches.',
-    ogImage: '/guide/08-deck-loop.png',
     lastmod: '2026-08-17',
     faq: [
       {
@@ -167,7 +160,6 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'A step-sequenced browser drum machine with kits, grooves, swing and 4/4, 3/4, 2/4 and 6/8 time — plus a MIDI remote for the GP-200’s own drums.',
     blurb: 'A browser drum machine that needs no pedal, plus a remote for the GP-200’s own drums.',
-    ogImage: '/guide/11-drums.png',
     lastmod: '2026-08-17',
   },
   {
@@ -190,7 +182,6 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'Browse, search, rename, open and export all 256 GP-200 slots, and back the whole device up to a single .zip file before you change anything.',
     blurb: 'All 256 slots in one searchable list, with per-slot actions and a full ZIP backup.',
-    ogImage: '/guide/10-patch-manager.png',
     lastmod: '2026-08-17',
     faq: [
       {
@@ -229,7 +220,6 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'Import and export native GP-200 .prst preset files — the same format the official editor uses — with or without a device connected.',
     blurb: 'Native .prst import and export, the same files the official editor writes.',
-    ogImage: '/guide/09-export-dialog.png',
     lastmod: '2026-08-17',
     faq: [
       {

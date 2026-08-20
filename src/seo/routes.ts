@@ -1,7 +1,6 @@
 import { GUIDE_SECTIONS } from '@/guide/manifest';
 import type { PageMeta } from './head';
 import { guideHubGraph, guideSectionGraph, homeGraph } from './schema';
-import { APP_DESCRIPTION } from './site';
 
 /**
  * Every URL the build emits, with the metadata that describes it. Consumed by
@@ -22,9 +21,22 @@ export interface Route {
   sitemap?: { priority: string; lastmod: string };
 }
 
-const HOME_TITLE = 'GP200 Studio: Valeton GP-200 Editor & Loop Station in Your Browser';
+/**
+ * 53 characters. No literal '&': escapeHtml turns it into '&amp;', which spends
+ * four of the ~60 a SERP shows on a single character.
+ */
+const HOME_TITLE = 'Valeton GP-200 Editor and Loop Station — GP200 Studio';
+
+/** 147 characters — inside Google's ~150-160 truncation point. */
 const HOME_DESCRIPTION =
-  'Free, open-source browser editor and multi-layer loop station for the Valeton GP-200. Edit presets, push changes live over USB-MIDI, and stack unlimited loops. No install, no backend.';
+  'Free, open-source browser editor and loop station for the Valeton GP-200. Edit presets, push changes live over USB-MIDI, and stack unlimited loops.';
+
+/**
+ * 111 characters — inside the ~125 social crawlers show. Benefit-first, since a
+ * card is scanned rather than searched.
+ */
+const HOME_OG_DESCRIPTION =
+  'Edit presets, push them live over USB-MIDI, and stack unlimited loops. Free, open-source, runs in your browser.';
 
 const GUIDE_DESCRIPTION =
   'The complete GP200 Studio guide: the pedalboard editor, the multi-layer loop station, footswitch and expression assignment, patch management and .prst files.';
@@ -45,6 +57,7 @@ export const ROUTES: readonly Route[] = [
       path: '/',
       title: HOME_TITLE,
       description: HOME_DESCRIPTION,
+      ogDescription: HOME_OG_DESCRIPTION,
       ogType: 'website',
       jsonLd: homeGraph(),
     },
@@ -72,7 +85,6 @@ export const ROUTES: readonly Route[] = [
       title: section.metaTitle,
       description: section.metaDescription,
       ogType: 'article',
-      ogImage: section.ogImage,
       jsonLd: guideSectionGraph(section),
     },
   })),
@@ -85,7 +97,7 @@ export const ROUTES: readonly Route[] = [
     meta: {
       path: '/404',
       title: 'Page not found — GP200 Studio',
-      description: APP_DESCRIPTION,
+      description: 'That page does not exist. Head back to the GP200 Studio editor or the guide.',
       ogType: 'website',
       robots: 'noindex, follow',
       jsonLd: [],

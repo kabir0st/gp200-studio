@@ -71,7 +71,7 @@ export function appNode(): Node {
     sameAs: [REPO],
     inLanguage: 'en',
     image: OG_IMAGE,
-    screenshot: [abs('/guide/02-editor-board.png'), abs('/guide/08-deck-loop.png')],
+    screenshot: [abs('/guide/02-editor-board-2400.webp'), abs('/guide/08-deck-loop-2400.webp')],
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
     featureList: [...APP_FEATURES],
   };
@@ -154,7 +154,7 @@ export function guideSectionGraph(section: GuideSection): Node[] {
       headline: section.title,
       description: section.metaDescription,
       url,
-      ...(section.ogImage ? { image: abs(section.ogImage) } : {}),
+      image: OG_IMAGE,
       author: personRef,
       publisher: personRef,
       dateModified: section.lastmod,

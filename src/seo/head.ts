@@ -1,4 +1,4 @@
-import { OG_IMAGE, OG_IMAGE_ALT, SITE_NAME, abs } from './site';
+import { OG_IMAGE, OG_IMAGE_ALT, OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH, SITE_NAME, abs } from './site';
 
 /**
  * A pure `<head>` string builder, shared by scripts/prerender.mjs and the
@@ -16,8 +16,20 @@ export interface PageMeta {
   path: string;
   title: string;
   description: string;
+  /**
+   * Social-only description. Search shows ~155 characters, but X and LinkedIn
+   * truncate around 125 — the two budgets conflict, so a page whose
+   * `description` is tuned for the SERP can author a shorter one here.
+   * Falls back to `description`.
+   */
+  ogDescription?: string;
   ogType: 'website' | 'article';
-  /** Site-root-relative image path. Falls back to the site OG card. */
+  /**
+   * Site-root-relative image path. Falls back to the site OG card.
+   *
+   * Never a /guide/*.png: scripts/prerender.mjs strips those from the build, so
+   * the URL would 404 and the preview would come out blank.
+   */
   ogImage?: string;
   /** JSON-LD nodes for this page's single @graph. */
   jsonLd: unknown[];
@@ -56,6 +68,8 @@ export function headFor(page: PageMeta): string {
   const canonical = abs(page.path);
   const image = page.ogImage ? abs(page.ogImage) : OG_IMAGE;
   const isPng = image.endsWith('.png');
+  const isSiteCard = image === OG_IMAGE;
+  const social = page.ogDescription ?? page.description;
 
   return [
     '<meta charset="UTF-8" />',
@@ -87,11 +101,20 @@ export function headFor(page: PageMeta): string {
     meta('property', 'og:type', page.ogType),
     meta('property', 'og:site_name', SITE_NAME),
     meta('property', 'og:title', page.title),
-    meta('property', 'og:description', page.description),
+    meta('property', 'og:description', social),
     meta('property', 'og:url', canonical),
     meta('property', 'og:image', image),
     meta('property', 'og:image:secure_url', image),
     ...(isPng ? [meta('property', 'og:image:type', 'image/png')] : []),
+    // Dimensions only for the site card, whose size is fixed and known. A
+    // per-page image would need its own pair, and a wrong one renders worse
+    // than none at all.
+    ...(isSiteCard
+      ? [
+          meta('property', 'og:image:width', String(OG_IMAGE_WIDTH)),
+          meta('property', 'og:image:height', String(OG_IMAGE_HEIGHT)),
+        ]
+      : []),
     meta('property', 'og:image:alt', OG_IMAGE_ALT),
     meta('property', 'og:locale', 'en_US'),
 
@@ -99,7 +122,7 @@ export function headFor(page: PageMeta): string {
     // summary_large_image card renders correctly without them.
     meta('name', 'twitter:card', 'summary_large_image'),
     meta('name', 'twitter:title', page.title),
-    meta('name', 'twitter:description', page.description),
+    meta('name', 'twitter:description', social),
     meta('name', 'twitter:image', image),
     meta('name', 'twitter:image:alt', OG_IMAGE_ALT),
 

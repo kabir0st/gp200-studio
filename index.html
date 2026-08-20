@@ -3,17 +3,20 @@
   <head>
     <!-- Everything between the seo markers is REPLACED at build time by
          scripts/prerender.mjs, which injects the head that src/seo/head.ts
-         builds for this route. What is written here is the same metadata for
-         "/", kept complete and correct on purpose so `npm run dev` and
-         `vite preview` still show sane tags. Edit src/seo/routes.ts, not this. -->
+         builds for this route. What is written here is the search-visible
+         subset of that head for "/" — deliberately no og:*, twitter:* or
+         JSON-LD, since no social crawler ever sees a dev server. It exists so
+         `npm run dev` and `vite preview` show sane tags. Keep the title and
+         description in step with HOME_TITLE / HOME_DESCRIPTION, but edit
+         src/seo/routes.ts first: that is the source of truth. -->
     <!--seo:start-->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-    <title>GP200 Studio: Valeton GP-200 Editor &amp; Loop Station in Your Browser</title>
+    <title>Valeton GP-200 Editor and Loop Station — GP200 Studio</title>
     <meta
       name="description"
-      content="Free, open-source browser editor and multi-layer loop station for the Valeton GP-200. Edit presets, push changes live over USB-MIDI, and stack unlimited loops. No install, no backend."
+      content="Free, open-source browser editor and loop station for the Valeton GP-200. Edit presets, push changes live over USB-MIDI, and stack unlimited loops."
     />
     <meta name="author" content="Kabir Tamari" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
