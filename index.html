@@ -54,6 +54,36 @@
         /* blocked storage: fall through to the light default */
       }
     </script>
+
+    <!-- Landing motion gate, decided before first paint.
+
+         The landing page's scroll animations need their targets to start
+         hidden, but gsap is behind a dynamic import (it must be: the page is
+         prerendered under Node, see src/components/landing/useLandingMotion.ts)
+         and so lands well after the first frame. Anything gsap hid would flash
+         visible first. So the hiding is CSS, gated on this attribute, and this
+         script decides — here, before anything paints — whether it is set at
+         all.
+
+         Never set means never hidden: JavaScript off, or reduced motion, and
+         the prerendered page simply reads. The timeout is the third case, a
+         bundle that never boots; useLandingMotion clears it on a successful
+         start, and drops the attribute itself if the import fails.
+
+         Landing only. Do not copy this into guide.html - those pages ship no
+         JavaScript at all, so nothing would ever un-hide them. -->
+    <script>
+      try {
+        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          document.documentElement.dataset.anim = 'on';
+          window.__gp200AnimFallback = setTimeout(function () {
+            document.documentElement.removeAttribute('data-anim');
+          }, 4000);
+        }
+      } catch (e) {
+        /* no matchMedia: leave every section visible */
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

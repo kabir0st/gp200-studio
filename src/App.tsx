@@ -65,6 +65,30 @@ function slotFilename(slot: number, name: string | null): string {
   return `${label} ${safeName}.prst`;
 }
 
+/**
+ * The two URLs this app answers on. Both go through BASE_URL for the same
+ * reason every runtime asset path does (see the `base` note in
+ * vite.config.ts): it is '/' today, and moving the site back into a subfolder
+ * stays a one-line change.
+ */
+const HOME_PATH = import.meta.env.BASE_URL;
+const EDITOR_PATH = `${import.meta.env.BASE_URL}editor`;
+
+/**
+ * Is the browser on this path right now, trailing slash or not?
+ *
+ * Production drops the trailing slash at the edge (wrangler.jsonc,
+ * `html_handling: "drop-trailing-slash"`), so `/editor/` never survives to
+ * reach the app there. It does survive on a plain static server, and a typed
+ * or pasted URL can carry one anywhere — a page that silently showed the
+ * landing instead of the editor because of one character would be a miserable
+ * thing to diagnose. Cheaper to not depend on the CDN having tidied up.
+ */
+function atPath(target: string): boolean {
+  const strip = (path: string) => path.replace(/\/+$/, '');
+  return strip(window.location.pathname) === strip(target);
+}
+
 function App() {
   const {
     preset, loadPreset, setPatchName, setAuthor, toggleEffect, changeEffect,
@@ -197,6 +221,68 @@ function App() {
   // close over a stale preset).
   const presetRef = useRef<GP200Preset | null>(preset);
   presetRef.current = preset;
+
+  /* ── The address bar ─────────────────────────────────────────────────────
+   * There is no router here, and adding one would be a lot of machinery for
+   * two URLs. The board is simply what this component renders once a preset
+   * exists, so the whole of "routing" is keeping `location.pathname` in step
+   * with that one boolean, in both directions.
+   *
+   * Driven off the preset rather than off each button on purpose: all five
+   * ways into the editor (blank, device, import, slot, the landing's sticky
+   * bar) end in a loadPreset, so one effect covers every one of them and a
+   * sixth cannot be added that forgets to.
+   *
+   * scripts/prerender.mjs emits a real dist/editor/index.html, so /editor is
+   * a file the CDN serves rather than a path needing an SPA rewrite — which
+   * is what lets wrangler.jsonc keep `not_found_handling: "404-page"` and go
+   * on returning honest 404s for everything else. */
+
+  // Arriving at /editor directly — a bookmark, a shared link, a reload.
+  //
+  // Once, on load, and the guard is load-bearing rather than defensive: this
+  // effect's condition is "no preset, and the URL says /editor", and CLOSE
+  // produces exactly that state for the instant before the effect below has
+  // rewritten the URL. Left to re-run, it would reopen the editor the moment
+  // it was closed, and CLOSE would look like a dead button.
+  const urlHandled = useRef(false);
+  useEffect(() => {
+    if (urlHandled.current) return;
+    urlHandled.current = true;
+    if (presetRef.current || !atPath(EDITOR_PATH)) return;
+    markEditorEntry('blank');
+    loadPreset(createDefaultPreset());
+  }, [markEditorEntry, loadPreset]);
+
+  // Mirror open/closed into the URL. The guard matters: on a direct load the
+  // path is already right, and pushing it again would put a duplicate entry
+  // in the history that Back would appear to do nothing on.
+  useEffect(() => {
+    const target = preset ? EDITOR_PATH : HOME_PATH;
+    if (atPath(target)) return;
+    window.history.pushState(null, '', `${target}${window.location.search}`);
+  }, [preset]);
+
+  // Back and Forward. On a popstate the URL has already changed and the app
+  // has to catch up, so here the address bar is the source of truth.
+  //
+  // Going back out of the editor discards the loaded patch — which is exactly
+  // what the board's own CLOSE button does (`onCloseRequest: reset` below),
+  // so this adds a second door to a room that was already unlocked, not a new
+  // way to lose work.
+  useEffect(() => {
+    const onPopState = () => {
+      const wantsEditor = atPath(EDITOR_PATH);
+      if (wantsEditor && !presetRef.current) {
+        markEditorEntry('blank');
+        loadPreset(createDefaultPreset());
+      } else if (!wantsEditor && presetRef.current) {
+        reset();
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [markEditorEntry, loadPreset, reset]);
 
   // Reset the firmware warning once the device disconnects, so reconnecting
   // to a different (or updated) device shows the warning fresh if it applies.

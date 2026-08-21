@@ -63,6 +63,26 @@ export const ROUTES: readonly Route[] = [
     },
   },
   {
+    // The editor's own URL, so a session can be bookmarked, shared and told
+    // apart in analytics. Deliberately absent from SITEMAP_ROUTES and marked
+    // noindex: what ships here is an app shell, and the prose that earns the
+    // search traffic is all on '/' and under '/guide'. Its prerendered body
+    // (src/prerender/EditorShell.tsx) exists for the visitor who arrives with
+    // JavaScript off, not for a crawler.
+    path: '/editor',
+    shell: 'main',
+    kind: 'app',
+    meta: {
+      path: '/editor',
+      title: 'Editor — GP200 Studio',
+      description:
+        'The GP200 Studio editor: build a Valeton GP-200 patch on a visual pedalboard, push it live over USB-MIDI, and stack loops over your playing.',
+      ogType: 'website',
+      robots: 'noindex, follow',
+      jsonLd: [],
+    },
+  },
+  {
     path: '/guide',
     shell: 'guide',
     kind: 'guide',

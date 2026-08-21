@@ -98,8 +98,18 @@
 
    Pedal bodies are deliberately untouched. They come from the artwork
    manifest (physical objects don't repaint when the house lights drop);
-   what dims is the room around them: case, chassis, chrome and dialogs. */
-:root[data-theme='dark'] {
+   what dims is the room around them: case, chassis, chrome and dialogs.
+
+   `.theme-dark` selects the same declarations on a subtree instead of the
+   document, because custom properties inherit. The landing hero uses it to
+   stay a dark stage in both themes (src/components/landing/landing.css)
+   without a second copy of any component rule. One caveat comes with it:
+   rules written as `:root[data-theme='dark'] .x` — the .shot-light/.shot-dark
+   swap just below is the only one — do NOT apply inside such an island while
+   the document itself is light, which is why LandingShot takes an explicit
+   variant rather than relying on that swap. */
+:root[data-theme='dark'],
+.theme-dark {
   --bg-primary: #17181a;
   --bg-surface: #1e2023;
   --bg-surface-raised: #24262a;
