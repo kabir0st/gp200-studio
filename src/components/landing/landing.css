@@ -348,15 +348,15 @@
   will-change: transform;
 }
 
-/* Standing just clear of the viewport edge rather than hanging off it: the
-   cabinets still run past the frame at narrow widths, but on a wide screen
-   they read as two amps placed on the stage, not two amps sliding out of it. */
+/* Standing clear of the walls rather than pushed up against them. The gap
+   scales with the viewport, so the stacks sit in the room at every width
+   instead of being flush at one and stranded at another. */
 .lp-stack.left {
-  left: clamp(-12px, -0.4vw, 8px);
+  left: clamp(10px, 2vw, 44px);
 }
 
 .lp-stack.right {
-  right: clamp(-12px, -0.4vw, 8px);
+  right: clamp(10px, 2vw, 44px);
 }
 
 /* the deck: a lit front lip over a darker floor, the way a riser catches the
@@ -1248,14 +1248,19 @@
   }
 }
 
-@media (min-width: 900px) {
-  /* the stacks need room beside the copy before they are worth showing; below
-     this they would either cover the headline or shrink to a sticker */
+@media (min-width: 1200px) {
+  /* The stacks need room beside the copy before they are worth showing, and
+     standing them clear of the walls costs more of it. Below this the copy
+     column and a cabinet end up within a few pixels of each other, so the
+     stacks simply don't appear and the hero is a single clean column. */
   .lp-stack {
     display: block;
   }
+  /* Room for a cabinet plus its wall gap on each side. Worked from the widest
+     the cabinet gets — a 200x320 viewBox at `height`, so 0.625 of it — plus
+     the inset above, with margin left over at every step from 1200 up. */
   .lp-stage {
-    padding-inline: clamp(200px, 22vw, 340px);
+    padding-inline: clamp(360px, 27vw, 400px);
   }
   .lp-cable-band {
     display: block;

@@ -260,6 +260,12 @@ function App() {
   useEffect(() => {
     const target = preset ? EDITOR_PATH : HOME_PATH;
     if (atPath(target)) return;
+    // Only ever move between the two URLs this app owns. If it has been
+    // mounted anywhere else — a dev server's SPA fallback answering a guide
+    // URL with index.html is the real case — then rewriting that URL to '/'
+    // silently throws away the address the reader asked for, and the guide
+    // link they clicked looks like it bounced them home.
+    if (!atPath(HOME_PATH) && !atPath(EDITOR_PATH)) return;
     window.history.pushState(null, '', `${target}${window.location.search}`);
   }, [preset]);
 
