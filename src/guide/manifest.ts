@@ -199,7 +199,7 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'Connect a Valeton GP-200 over USB in Chrome or Edge: the firmware handshake, live two-way sync, the MIDI channel, and what to do if it is not found.',
     blurb: 'The USB handshake, the firmware check, and how live two-way sync behaves.',
-    lastmod: '2026-08-20',
+    lastmod: '2026-08-21',
     faq: [
       {
         q: 'Which browsers work with the Valeton GP-200?',
@@ -211,7 +211,11 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
       },
       {
         q: 'Why can\'t Chrome see my GP-200 on Linux?',
-        a: 'Chrome enumerates Web MIDI from the ALSA sequencer, not from rawmidi, so a pedal that lsusb and /proc/asound/cards both list can still be invisible to the browser. Run "sudo modprobe snd-seq-midi" and reload the page.',
+        a: 'Two causes look identical from the browser, and in both the CONNECT message lists only "Midi Through Port-0". Either your browser is a Flatpak or Snap build, which gets /dev/snd but no /run/udev and so drops every USB device, or the ALSA sequencer bridge is not loaded. Fix the first with "flatpak override --user --filesystem=/run/udev:ro <app-id>" and a full browser restart; fix the second with "sudo modprobe snd-seq-midi".',
+      },
+      {
+        q: 'Why does my Flatpak or Snap browser not see any USB MIDI device?',
+        a: 'Chromium binds ALSA cards to sequencer clients through udev, and a sandboxed browser is given the /dev/snd device nodes but not /run/udev. Every card-backed port is dropped and only card-less ones like Midi Through survive. Run "flatpak override --user --filesystem=/run/udev:ro com.brave.Browser" with your own app id, then quit the browser completely and reopen it — closing the window is not enough. A natively installed Chrome or Chromium needs none of this.',
       },
     ],
   },

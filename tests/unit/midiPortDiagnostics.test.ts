@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   describeMissingDevice,
+  hasOnlyVirtualPorts,
+  isVirtualPortName,
   needsAlsaSequencerHint,
   summarisePortNames,
 } from '@/core/midiPortDiagnostics';
@@ -111,5 +113,88 @@ describe('describeMissingDevice', () => {
           .toBe('device_not_found');
       }
     }
+  });
+});
+
+/**
+ * The all-virtual branch. A Flatpak or Snap browser gets /dev/snd through
+ * `devices=all` but never /run/udev, and Chromium needs udev to bind ALSA
+ * cards to sequencer clients — so every real device is dropped and only the
+ * card-less ports (Midi Through and friends) survive. That leaves a port list
+ * identical to the one an unloaded snd-seq-midi produces, which is why the
+ * message names both fixes rather than picking one.
+ */
+describe('isVirtualPortName', () => {
+  it('recognises the card-less ports that survive a udev-blind browser', () => {
+    expect(isVirtualPortName('Midi Through Port-0')).toBe(true);
+    expect(isVirtualPortName('MIDI through port-1')).toBe(true);
+    expect(isVirtualPortName('RtMidi Output Client')).toBe(true);
+    expect(isVirtualPortName('Virtual Raw MIDI 1-0')).toBe(true);
+    expect(isVirtualPortName('loopMIDI Port')).toBe(true);
+  });
+
+  it('does not claim real hardware', () => {
+    expect(isVirtualPortName('GP-200 MIDI 1')).toBe(false);
+    expect(isVirtualPortName('Scarlett 2i2 USB')).toBe(false);
+    expect(isVirtualPortName('')).toBe(false);
+  });
+});
+
+describe('hasOnlyVirtualPorts', () => {
+  it('fires when nothing card-backed made it through', () => {
+    expect(hasOnlyVirtualPorts(['Midi Through Port-0'])).toBe(true);
+    expect(hasOnlyVirtualPorts(['Midi Through Port-0', 'RtMidi Output'])).toBe(true);
+  });
+
+  it('stays quiet when any real device is visible', () => {
+    // Other hardware enumerated fine, so udev is working and the pedal alone
+    // is missing — a different fault with a different fix.
+    expect(hasOnlyVirtualPorts(['Midi Through Port-0', 'Scarlett 2i2 USB'])).toBe(false);
+  });
+
+  // `every` on an empty array is vacuously true; an empty list is "no MIDI at
+  // all", not "cards are being dropped", and must not land in this branch.
+  it('stays quiet on an empty list rather than firing vacuously', () => {
+    expect(hasOnlyVirtualPorts([])).toBe(false);
+  });
+});
+
+describe('describeMissingDevice: the sandboxed-browser branch', () => {
+  const onlyVirtual = () =>
+    describeMissingDevice({ portNames: ['Midi Through Port-0'], userAgent: LINUX_UA });
+
+  it('names the sandbox fix when only virtual ports survive', () => {
+    const message = onlyVirtual();
+    expect(message).toContain('Flatpak or Snap');
+    expect(message).toContain('flatpak override --user --filesystem=/run/udev:ro');
+  });
+
+  // The whole point of the branch: the modprobe advice is what someone whose
+  // browser is sandboxed has already tried, so it stays but stops being alone.
+  it('still offers the modprobe fix, since the page cannot tell them apart', () => {
+    expect(onlyVirtual()).toContain('sudo modprobe snd-seq-midi');
+  });
+
+  it('leaves the plain modprobe message alone when real hardware is listed', () => {
+    const message = describeMissingDevice({
+      portNames: ['Midi Through Port-0', 'Scarlett 2i2 USB'],
+      userAgent: LINUX_UA,
+    });
+    expect(message).toContain('sudo modprobe snd-seq-midi');
+    expect(message).not.toContain('Flatpak');
+  });
+
+  it('never mentions a sandbox off Linux, where there is no udev to miss', () => {
+    for (const ua of [MAC_UA, WINDOWS_UA, ANDROID_UA, CROS_UA, '']) {
+      expect(describeMissingDevice({ portNames: ['Midi Through Port-0'], userAgent: ua }))
+        .not.toContain('Flatpak');
+    }
+  });
+
+  // errorCode() matches on substrings in priority order, and this branch adds
+  // the most prose of any of them — the most chances to trip an earlier rule
+  // and silently retitle the connect_error funnel.
+  it('still buckets as device_not_found despite the added prose', () => {
+    expect(errorCode(onlyVirtual())).toBe('device_not_found');
   });
 });

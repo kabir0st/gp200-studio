@@ -49,13 +49,48 @@ export function ConnectBody() {
           site; if you dismissed it, clear the site permission and reload.
         </li>
         <li>
+          <strong>On Linux, check for a sandboxed browser.</strong> A Flatpak or
+          Snap Chrome, Chromium, Brave or Edge cannot see USB MIDI at all
+          without one extra grant; the first note below has the fix.
+        </li>
+        <li>
           <strong>On Linux, load the ALSA sequencer bridge.</strong> This one
           looks like a broken app rather than a missing driver, so it is worth
-          knowing about; the note below has the one-line fix.
+          knowing about; the second note below has the one-line fix.
         </li>
       </List>
 
-      <Note title="Linux: the pedal is there, the browser can't see it">
+      <Note title="Linux: a Flatpak or Snap browser cannot see USB devices">
+        <p>
+          Chromium binds ALSA cards to sequencer clients through{' '}
+          <strong>udev</strong>. A sandboxed browser is handed{' '}
+          <code>/dev/snd</code> but not <code>/run/udev</code>, so it drops
+          every card-backed port and keeps only the card-less ones. The tell is
+          a CONNECT message listing <code>Midi Through Port-0</code> and nothing
+          else: the sequencer is reachable, and the pedal is being filtered out
+          before it gets there. Everything else on the machine —{' '}
+          <code>lsusb</code>, <code>aconnect -l</code>, any native app — sees
+          the GP-200 perfectly, which is what makes this one so confusing.
+        </p>
+        <p>
+          Grant the sandbox read-only udev access:{' '}
+          <code>flatpak override --user --filesystem=/run/udev:ro com.brave.Browser</code>.
+          Substitute your own app id — <code>com.google.Chrome</code>,{' '}
+          <code>org.chromium.Chromium</code> or <code>com.microsoft.Edge</code>.
+          Then quit the browser <em>completely</em> and reopen it: closing the
+          window is not enough, because the old sandbox stays alive. Force it
+          with <code>flatpak kill com.brave.Browser</code>. To undo the grant,{' '}
+          <code>flatpak override --user --nofilesystem=/run/udev com.brave.Browser</code>.
+        </p>
+        <p>
+          Snap builds have the same shape of problem; connect the relevant
+          interface with <code>snap connect</code>, or install the browser
+          natively. A natively packaged Chrome or Chromium has no sandbox in
+          front of udev and needs none of this.
+        </p>
+      </Note>
+
+      <Note title="Linux: the ALSA sequencer bridge is not loaded">
         <p>
           Chrome reads Web MIDI from the ALSA <em>sequencer</em>, never from
           rawmidi directly. Your GP-200 can be listed by <code>lsusb</code>, own
