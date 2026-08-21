@@ -43,8 +43,6 @@ export interface GuideSection {
   metaDescription: string;
   /** One-line summary for the hub's table of contents. */
   blurb: string;
-  /** Absolute-from-root image used for this page's TechArticle image. */
-  ogImage?: string;
   /** ISO date, bumped by hand when this section's copy changes. */
   lastmod: string;
   /** Rendered visibly on the page, and mirrored into FAQPage JSON-LD. */
@@ -65,7 +63,6 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'GP200 Studio is a free, open-source browser editor and loop station for the Valeton GP-200. Edit presets and push them live over USB-MIDI.',
     blurb: 'What the app is, what it needs, and what it can do without a pedal plugged in.',
-    ogImage: '/guide/01-landing.png',
     lastmod: '2026-08-17',
     faq: [
       {
@@ -87,7 +84,6 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'Your GP-200 signal chain drawn as real stompboxes with patch cables. How the board wraps, scales to your window, and switches stage themes.',
     blurb: 'Your signal chain as physical pedals, with cables, a chain strip and stage lighting.',
-    ogImage: '/guide/02-editor-board.png',
     lastmod: '2026-08-17',
   },
   {
@@ -99,7 +95,6 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'Bypass, replace, retune and reorder the GP-200 effect blocks. All 305 effects in a searchable browser, scoped to each block’s module.',
     blurb: 'Bypass, swap, edit and reorder the effect blocks in the chain.',
-    ogImage: '/guide/03-effect-picker.png',
     lastmod: '2026-08-17',
   },
   {
@@ -122,7 +117,6 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'Route the external FX loop anywhere in the chain, map expression pedals with heel and toe values, and bind the eight CTRL footswitches.',
     blurb: 'The FX loop, expression pedal mapping and the eight CTRL footswitch assignments.',
-    ogImage: '/guide/07-deck-ctrl.png',
     lastmod: '2026-08-17',
   },
   {
@@ -145,7 +139,6 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'A multi-layer looper the GP-200 does not ship with: unlimited phase-locked takes over USB audio, driven hands-free from the pedal’s footswitches.',
     blurb: 'Unlimited phase-locked layers over USB audio, driven from your own footswitches.',
-    ogImage: '/guide/08-deck-loop.png',
     lastmod: '2026-08-17',
     faq: [
       {
@@ -167,7 +160,6 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'A step-sequenced browser drum machine with kits, grooves, swing and 4/4, 3/4, 2/4 and 6/8 time — plus a MIDI remote for the GP-200’s own drums.',
     blurb: 'A browser drum machine that needs no pedal, plus a remote for the GP-200’s own drums.',
-    ogImage: '/guide/11-drums.png',
     lastmod: '2026-08-17',
   },
   {
@@ -190,7 +182,6 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'Browse, search, rename, open and export all 256 GP-200 slots, and back the whole device up to a single .zip file before you change anything.',
     blurb: 'All 256 slots in one searchable list, with per-slot actions and a full ZIP backup.',
-    ogImage: '/guide/10-patch-manager.png',
     lastmod: '2026-08-17',
     faq: [
       {
@@ -208,7 +199,7 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'Connect a Valeton GP-200 over USB in Chrome or Edge: the firmware handshake, live two-way sync, the MIDI channel, and what to do if it is not found.',
     blurb: 'The USB handshake, the firmware check, and how live two-way sync behaves.',
-    lastmod: '2026-08-17',
+    lastmod: '2026-08-21',
     faq: [
       {
         q: 'Which browsers work with the Valeton GP-200?',
@@ -217,6 +208,14 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
       {
         q: 'Does it work on Linux?',
         a: 'Yes — anywhere Chrome or Edge runs, including Linux, which the official Valeton editor does not support at all.',
+      },
+      {
+        q: 'Why can\'t Chrome see my GP-200 on Linux?',
+        a: 'Two causes look identical from the browser, and in both the CONNECT message lists only "Midi Through Port-0". Either your browser is a Flatpak or Snap build, which gets /dev/snd but no /run/udev and so drops every USB device, or the ALSA sequencer bridge is not loaded. Fix the first with "flatpak override --user --filesystem=/run/udev:ro <app-id>" and a full browser restart; fix the second with "sudo modprobe snd-seq-midi".',
+      },
+      {
+        q: 'Why does my Flatpak or Snap browser not see any USB MIDI device?',
+        a: 'Chromium binds ALSA cards to sequencer clients through udev, and a sandboxed browser is given the /dev/snd device nodes but not /run/udev. Every card-backed port is dropped and only card-less ones like Midi Through survive. Run "flatpak override --user --filesystem=/run/udev:ro com.brave.Browser" with your own app id, then quit the browser completely and reopen it — closing the window is not enough. A natively installed Chrome or Chromium needs none of this.',
       },
     ],
   },
@@ -229,7 +228,6 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'Import and export native GP-200 .prst preset files — the same format the official editor uses — with or without a device connected.',
     blurb: 'Native .prst import and export, the same files the official editor writes.',
-    ogImage: '/guide/09-export-dialog.png',
     lastmod: '2026-08-17',
     faq: [
       {
@@ -247,7 +245,7 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'What GP200 Studio needs to run, what works offline, which browsers support Web MIDI, and exactly what data does and does not leave your machine.',
     blurb: 'What it needs, what works offline, and what data never leaves your machine.',
-    lastmod: '2026-08-17',
+    lastmod: '2026-08-20',
     faq: [
       {
         q: 'Do my presets get uploaded anywhere?',

@@ -1949,6 +1949,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* The not-found message names the ports the browser did see and, on Linux,
+     the modprobe fix — several lines inside the 520px panel. Wrap it and give
+     it a reading line-height instead of letting it squeeze the ✕ button. */
+  flex-wrap: wrap;
+  line-height: 1.55;
+  text-align: center;
   gap: 10px;
 }
 .landing-msg.error button {

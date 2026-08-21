@@ -13,6 +13,7 @@ import { presetNameCacheKey, loadCachedNames, saveCachedNames } from '@/core/pre
 import type { BulkApplyOptions, BulkApplyProgress } from '@/core/bulkApply';
 import { track } from '@/core/analytics';
 import { PRSTEncoder } from '@/core/PRSTEncoder';
+import { describeMissingDevice } from '@/core/midiPortDiagnostics';
 import { useMidiSend } from './useMidiSend';
 
 const READ_TIMEOUT_MS = 3000;
@@ -33,6 +34,17 @@ function getBytes(data: unknown): Uint8Array {
   if (data instanceof Uint8Array) return data;
   if (data instanceof DataView) return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
   return new Uint8Array(data as ArrayBuffer);
+}
+
+/** A real MIDIPort types `name` as `string | null`; our mocks match it. */
+function portName(port: unknown): string | null {
+  return (port as { name: string | null }).name;
+}
+
+/** The GP-200 identifies itself by name on every platform we support. */
+function isGP200Port(port: unknown): boolean {
+  const name = portName(port);
+  return typeof name === 'string' && name.includes('GP-200');
 }
 
 export interface UseMidiDeviceReturn {
@@ -427,18 +439,18 @@ export function useMidiDevice(): UseMidiDeviceReturn {
         }
       ).requestMIDIAccess({ sysex: true });
 
-      const output = Array.from(access.outputs.values()).find(p => {
-        // name can be string | null on real MIDIPort
-        const n = p as unknown as { name: string | null };
-        return typeof n.name === 'string' && n.name.includes('GP-200');
-      }) ?? null;
-      const input = Array.from(access.inputs.values()).find(p => {
-        const n = p as unknown as { name: string | null };
-        return typeof n.name === 'string' && n.name.includes('GP-200');
-      }) ?? null;
+      const outputs = Array.from(access.outputs.values());
+      const inputs = Array.from(access.inputs.values());
+      const output = outputs.find(isGP200Port) ?? null;
+      const input = inputs.find(isGP200Port) ?? null;
 
       if (!output || !input) {
-        throw new Error('GP-200 not found in MIDI ports');
+        // Both halves of the survey, so "sees the pedal's input but not its
+        // output" reads as the half-open port it is rather than as absence.
+        throw new Error(describeMissingDevice({
+          portNames: [...inputs, ...outputs].map(portName),
+          userAgent: typeof navigator === 'undefined' ? '' : navigator.userAgent,
+        }));
       }
 
       outputRef.current = output;

@@ -19,16 +19,16 @@
   ],
   "screenshots": [
     {
-      "src": "/guide/02-editor-board.png",
+      "src": "/guide/02-editor-board-2400.webp",
       "sizes": "2400x1250",
-      "type": "image/png",
+      "type": "image/webp",
       "form_factor": "wide",
       "label": "The GP200 Studio pedalboard editor"
     },
     {
-      "src": "/guide/08-deck-loop.png",
+      "src": "/guide/08-deck-loop-2400.webp",
       "sizes": "2400x1250",
-      "type": "image/png",
+      "type": "image/webp",
       "form_factor": "wide",
       "label": "The multi-layer loop station"
     }

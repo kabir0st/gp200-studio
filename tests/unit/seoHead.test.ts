@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { headFor } from '@/seo/head';
+import { escapeHtml, headFor } from '@/seo/head';
 import { ROUTES, SITEMAP_ROUTES } from '@/seo/routes';
-import { ORIGIN } from '@/seo/site';
+import { OG_IMAGE, ORIGIN } from '@/seo/site';
 
 /**
  * Guards the metadata that decides how every page is indexed. The head is a
@@ -10,6 +10,8 @@ import { ORIGIN } from '@/seo/site';
  */
 
 const heads = ROUTES.map((route) => [route.path, headFor(route.meta), route] as const);
+
+const metas = ROUTES.map((route) => [route.path, route.meta] as const);
 
 function count(html: string, pattern: RegExp): number {
   return (html.match(pattern) ?? []).length;
@@ -113,6 +115,66 @@ describe('seo head', () => {
     const block = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)![1];
     const parsed = JSON.parse(block) as { '@graph': { name: string }[] };
     expect(parsed['@graph'][0].name).toBe(payload);
+  });
+
+  /**
+   * The lengths crawlers actually enforce. Counted on the ESCAPED title,
+   * because that is the string that ships: a literal '&' becomes '&amp;' and
+   * burns four of the ~60 characters a result gets, for one glyph nobody sees.
+   */
+  it.each(metas)('%s fits the ~60-character title budget once escaped', (_path, meta) => {
+    expect(escapeHtml(meta.title).length).toBeLessThanOrEqual(60);
+  });
+
+  it.each(metas)('%s fits the ~160-character SERP description budget', (_path, meta) => {
+    expect(escapeHtml(meta.description).length).toBeLessThanOrEqual(160);
+  });
+
+  it('keeps every authored social description inside the ~125 a card shows', () => {
+    for (const [, meta] of metas) {
+      if (!meta.ogDescription) continue;
+      expect(escapeHtml(meta.ogDescription).length).toBeLessThanOrEqual(125);
+    }
+  });
+
+  it('sends the short description to social and the long one to search', () => {
+    const home = ROUTES.find((route) => route.path === '/')!.meta;
+    expect(home.ogDescription).toBeTruthy();
+
+    const html = headFor(home);
+    expect(attr(html, /property="og:description" content="([^"]+)"/)).toBe(home.ogDescription);
+    expect(attr(html, /name="twitter:description" content="([^"]+)"/)).toBe(home.ogDescription);
+    expect(attr(html, /name="description" content="([^"]+)"/)).toBe(home.description);
+  });
+
+  it('falls back to the search description when no social one is authored', () => {
+    const guide = ROUTES.find((route) => route.path === '/guide')!.meta;
+    expect(guide.ogDescription).toBeUndefined();
+    expect(attr(headFor(guide), /property="og:description" content="([^"]+)"/)).toBe(
+      guide.description,
+    );
+  });
+
+  /**
+   * scripts/prerender.mjs strips dist/guide/*.png at the end of the build, so
+   * an og:image pointing there 404s and the preview comes out blank. Eight
+   * section pages shipped exactly that way before this guard existed.
+   */
+  it.each(heads)('%s never points og:image at a stripped guide PNG', (_path, html) => {
+    expect(attr(html, /property="og:image" content="([^"]+)"/)).not.toMatch(/\/guide\/.*\.png$/);
+  });
+
+  it.each(heads)('%s declares dimensions whenever it uses the site card', (_path, html) => {
+    const image = attr(html, /property="og:image" content="([^"]+)"/);
+    const width = attr(html, /property="og:image:width" content="([^"]+)"/);
+    const height = attr(html, /property="og:image:height" content="([^"]+)"/);
+    // A per-page image would need its own pair; a wrong one renders worse than
+    // none, so the builder only claims a size it knows.
+    if (image === OG_IMAGE) {
+      expect([width, height]).toEqual(['1200', '630']);
+    } else {
+      expect([width, height]).toEqual([undefined, undefined]);
+    }
   });
 
   it('escapes quotes and angle brackets in meta content', () => {

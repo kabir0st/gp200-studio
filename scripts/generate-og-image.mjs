@@ -22,10 +22,10 @@
  *   • The maskable icon must be opaque and leave a sacrificial margin, since
  *     Android crops it to an arbitrary shape.
  *
- * The OG card is minimal: a text band (wordmark, tagline, NEW · loop station)
- * over a flat dark field, with the dark editor-board guide screenshot cropped
- * to its two pedal rows spanning the full width below, top edge faded into the
- * background. The crop is a pixel offset into 02-editor-board-dark.png
+ * The OG card is minimal: a text band (wordmark, tagline, an "Open the free
+ * editor" call to action beside the NEW · loop station badge) over a flat dark
+ * field, with the dark editor-board guide screenshot cropped to its two pedal
+ * rows spanning the full width below, top edge faded into the background. The crop is a pixel offset into 02-editor-board-dark.png
  * (2400×1250) — re-run `npm run gen:shots` first if that shot is stale, and
  * re-check the offsets if the board layout moves.
  * No Valeton logos or trademarks appear in the vector art, matching the rule in
@@ -47,7 +47,7 @@ import sharp from 'sharp';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'public');
 
-/* ── brand tokens (mirrors public/favicon.svg + docs/design-system.md) ────── */
+/* ── brand tokens (mirrors public/favicon.svg) ───────────────────────────── */
 const INK = '#232220'; // enclosure body / theme-color
 const DEEP = '#14110d'; // deep background
 const LCD = '#5df08a'; // LCD green accent
@@ -111,17 +111,20 @@ async function ogHtml() {
     background: #17181a; color: #f4f1ea; font-family: '${SANS}', system-ui, sans-serif; }
   .board { position: absolute; left: 0; right: 0; bottom: 0; }
   .board img { width: 1200px; display: block;
-    mask-image: linear-gradient(180deg, transparent 0, #000 90px); }
+    mask-image: linear-gradient(180deg, transparent 0, #000 150px); }
   .top { position: absolute; left: 64px; right: 64px; top: 48px; }
   .row { display: flex; align-items: center; justify-content: space-between; }
   .logo { display: flex; align-items: center; gap: 16px; }
   .wordmark { font-family: '${MONO}', monospace; font-weight: 700; font-size: 48px; letter-spacing: -1.5px; line-height: 1; }
   .wordmark .accent { color: ${LCD}; }
   .tagline { font-size: 31px; font-weight: 600; line-height: 1.22; letter-spacing: -.4px; color: #ece8df;
-    margin-top: 30px; }
+    margin-top: 24px; }
   .tagline .em { color: ${LCD}; }
+  .cta-row { display: flex; align-items: center; gap: 22px; margin-top: 22px; }
+  .cta { font-family: '${MONO}', monospace; font-size: 19px; font-weight: 700; letter-spacing: .3px;
+    color: #0c1a0e; background: ${LCD}; padding: 14px 26px; border-radius: 999px; }
   .new { font-family: '${MONO}', monospace; font-size: 15px; font-weight: 700; letter-spacing: 2.5px;
-    text-transform: uppercase; color: ${LED}; margin-top: 14px; }
+    text-transform: uppercase; color: ${LED}; }
   .url { font-family: '${MONO}', monospace; font-size: 20px; color: ${LCD}; font-weight: 700; letter-spacing: .5px; }
   </style></head><body>
   <div class="card">
@@ -132,7 +135,10 @@ async function ogHtml() {
         <div class="url">gp200studio.com</div>
       </div>
       <div class="tagline">Edit presets &amp; stack <span class="em">unlimited loops</span>, live from your browser.</div>
-      <div class="new">NEW · Loop station</div>
+      <div class="cta-row">
+        <div class="cta">Open the free editor →</div>
+        <div class="new">NEW · Loop station</div>
+      </div>
     </div>
   </div>
   </body></html>`;

@@ -1,9 +1,9 @@
 import { useRef } from 'react';
 
 interface FxLoopArrowsProps {
-  /** Current SEND position (1..10). */
+  /** Current SEND position (1..11); 11 = after the last block. */
   send: number;
-  /** Current RETURN position (1..10). */
+  /** Current RETURN position (1..11); 11 = after the last block. */
   ret: number;
   /** Called when the user drags or keyboard-shifts SEND. New position is unclamped; parent clamps + push-constraints. */
   onSendChange: (pos: number) => void;
@@ -17,7 +17,7 @@ export function FxLoopArrows({ send, ret, onSendChange, onReturnChange }: FxLoop
   function handleArrowKey(kind: 'send' | 'return', e: React.KeyboardEvent<HTMLButtonElement>) {
     const current = kind === 'send' ? send : ret;
     let next = current;
-    if (e.key === 'ArrowRight') next = Math.min(10, current + 1);
+    if (e.key === 'ArrowRight') next = Math.min(11, current + 1);
     else if (e.key === 'ArrowLeft') next = Math.max(1, current - 1);
     else return;
     e.preventDefault();
@@ -50,8 +50,10 @@ export function FxLoopArrows({ send, ret, onSendChange, onReturnChange }: FxLoop
         {['PRE', 'WAH', 'BST', 'AMP', 'NR', 'CAB', 'EQ', 'MOD', 'DLY', 'RVB', 'VOL'].map((name, idx) => (
           <div key={name} className="flex items-center" style={{ flex: '1 1 0', minWidth: 0 }}>
             <span className="opacity-50 px-1">{name}</span>
-            {idx < 10 && (
-              <div
+            {/* One drop gap after every block, VOL included: position 11 puts
+                the loop after the whole chain, which is what the 4-cable
+                method uses and what real device exports store. */}
+            <div
                 role="presentation"
                 data-gap={idx + 1}
                 onDragOver={handleDragOver}
@@ -66,9 +68,9 @@ export function FxLoopArrows({ send, ret, onSendChange, onReturnChange }: FxLoop
                     draggable
                     onDragStart={(e) => handleDragStart('send', e)}
                     onKeyDown={(e) => handleArrowKey('send', e)}
-                    aria-label={`FX Loop Send position, currently between effects ${idx + 1} and ${idx + 2}`}
+                    aria-label={idx < 10 ? `FX Loop Send position, currently between effects ${idx + 1} and ${idx + 2}` : 'FX Loop Send position, currently after the last effect'}
                     aria-valuemin={1}
-                    aria-valuemax={10}
+                    aria-valuemax={11}
                     aria-valuenow={send}
                     role="slider"
                     data-bypass={bypass}
@@ -90,9 +92,9 @@ export function FxLoopArrows({ send, ret, onSendChange, onReturnChange }: FxLoop
                     draggable
                     onDragStart={(e) => handleDragStart('return', e)}
                     onKeyDown={(e) => handleArrowKey('return', e)}
-                    aria-label={`FX Loop Return position, currently between effects ${idx + 1} and ${idx + 2}`}
+                    aria-label={idx < 10 ? `FX Loop Return position, currently between effects ${idx + 1} and ${idx + 2}` : 'FX Loop Return position, currently after the last effect'}
                     aria-valuemin={1}
-                    aria-valuemax={10}
+                    aria-valuemax={11}
                     aria-valuenow={ret}
                     role="slider"
                     data-bypass={bypass}
@@ -107,8 +109,7 @@ export function FxLoopArrows({ send, ret, onSendChange, onReturnChange }: FxLoop
                     ↘
                   </button>
                 )}
-              </div>
-            )}
+            </div>
           </div>
         ))}
       </div>

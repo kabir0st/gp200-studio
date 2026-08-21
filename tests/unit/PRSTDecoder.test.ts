@@ -248,7 +248,10 @@ describe('PRSTDecoder: per-patch VOL/PAN/TEMPO', () => {
     const data = new Uint8Array(readFileSync(scotlandKiss));
     const preset = new PRSTDecoder(data).decode();
     expect(preset.patchVolume).toBe(50);
-    expect(preset.patchPan).toBe(5);
+    // 0x3C used to be read as pan, which is why this once expected 5. That byte
+    // is the style tag (5 = Rock); pan lives at 0x3A and this patch is centred.
+    expect(preset.patchPan).toBe(0);
+    expect(preset.patchStyle).toBe(5);
     expect(preset.patchTempo).toBe(120);
   });
 
@@ -256,5 +259,79 @@ describe('PRSTDecoder: per-patch VOL/PAN/TEMPO', () => {
     const data = new Uint8Array(readFileSync(startPedal));
     const preset = new PRSTDecoder(data).decode();
     expect(preset.patchVolume).toBe(46);
+  });
+});
+
+describe('PRSTDecoder: pre-name u16 metadata block', () => {
+  /** 0x36..0x43 is seven consecutive u16 LE fields; write one of them. */
+  function withMeta(fields: Partial<Record<'tempo' | 'volume' | 'pan' | 'style' | 'fxMode', number>>) {
+    const buf = buildTestBuffer();
+    const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+    if (fields.tempo !== undefined) view.setUint16(0x36, fields.tempo, true);
+    if (fields.volume !== undefined) view.setUint16(0x38, fields.volume, true);
+    if (fields.pan !== undefined) view.setUint16(0x3A, fields.pan & 0xFFFF, true);
+    if (fields.style !== undefined) view.setUint16(0x3C, fields.style, true);
+    if (fields.fxMode !== undefined) view.setUint16(0x42, fields.fxMode, true);
+    return buf;
+  }
+
+  it('reads pan from 0x3A as a signed 16-bit value', () => {
+    expect(new PRSTDecoder(withMeta({ pan: 25 })).decode().patchPan).toBe(25);
+    expect(new PRSTDecoder(withMeta({ pan: -50 })).decode().patchPan).toBe(-50);
+    expect(new PRSTDecoder(withMeta({ pan: 0 })).decode().patchPan).toBe(0);
+  });
+
+  it('does not mistake the style tag at 0x3C for pan', () => {
+    const preset = new PRSTDecoder(withMeta({ style: 5, pan: 0 })).decode();
+    expect(preset.patchStyle).toBe(5);
+    expect(preset.patchPan).toBe(0);
+  });
+
+  it('clamps an out-of-range pan to centre rather than failing the decode', () => {
+    expect(new PRSTDecoder(withMeta({ pan: 900 })).decode().patchPan).toBe(0);
+  });
+
+  it('reads the FX-loop mode at 0x42, defaulting anything unknown to parallel', () => {
+    expect(new PRSTDecoder(withMeta({ fxMode: 1 })).decode().fxLoopMode).toBe(1);
+    expect(new PRSTDecoder(withMeta({ fxMode: 0 })).decode().fxLoopMode).toBe(0);
+    expect(new PRSTDecoder(withMeta({ fxMode: 7 })).decode().fxLoopMode).toBe(0);
+  });
+
+  it('reads the 40-byte note at 0x64 and leaves an empty note absent', () => {
+    const buf = buildTestBuffer();
+    '4CM for my Marshall'.split('').forEach((c, i) => { buf[0x64 + i] = c.charCodeAt(0); });
+    expect(new PRSTDecoder(buf).decode().patchNote).toBe('4CM for my Marshall');
+    expect(new PRSTDecoder(buildTestBuffer()).decode().patchNote).toBeUndefined();
+  });
+
+  it('keeps an FX-loop position of 11 instead of resetting it to 4', () => {
+    const buf = buildTestBuffer();
+    buf[0x92] = 11;
+    buf[0x93] = 11;
+    const preset = new PRSTDecoder(buf).decode();
+    expect(preset.fxLoopSend).toBe(11);
+    expect(preset.fxLoopReturn).toBe(11);
+  });
+
+  it('still falls back to 4 for a genuinely out-of-range FX-loop position', () => {
+    const buf = buildTestBuffer();
+    buf[0x92] = 12;
+    buf[0x93] = 0;
+    const preset = new PRSTDecoder(buf).decode();
+    expect(preset.fxLoopSend).toBe(4);
+    expect(preset.fxLoopReturn).toBe(4);
+  });
+});
+
+describe('PRSTDecoder: committed device export', () => {
+  const webExport = join(process.cwd(), 'web-export.prst');
+
+  it.skipIf(!existsSync(webExport))('reads it as a centred Rock patch, not pan 5', () => {
+    const preset = new PRSTDecoder(new Uint8Array(readFileSync(webExport))).decode();
+    expect(preset.patchName).toBe('littedrive2');
+    expect(preset.patchPan).toBe(0);
+    expect(preset.patchStyle).toBe(5);
+    expect(preset.patchVolume).toBe(86);
+    expect(preset.patchTempo).toBe(120);
   });
 });

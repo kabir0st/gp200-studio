@@ -9,13 +9,21 @@ const OFFSET_VERSION     = 0x15;  // 1 byte: version minor (e.g. 1)
 // Per-patch settings live in the pre-name metadata block (confirmed against
 // the encoder's own synthetic seeds and the committed fixtures).
 const OFFSET_PATCH_SLOT  = 0x34;  // u8, target slot 0..255 (mirrored at 0x90)
+// 0x36..0x43 is a run of seven u16 LE fields. Confirmed against real device
+// exports, where every high byte reads 0 and each value lands in range:
+//   0x36 tempo · 0x38 volume · 0x3A pan · 0x3C style
+//   0x3E send level · 0x40 return level · 0x42 loop mode
 const OFFSET_PATCH_TEMPO = 0x36;  // u16 LE, BPM (default 120)
-const OFFSET_PATCH_VOLUME = 0x38; // u8, 0..100 (default 50)
-const OFFSET_PATCH_PAN   = 0x3C;  // s8, 0 = center, - = L, + = R
+const OFFSET_PATCH_VOLUME = 0x38; // u16 LE, 0..100 (default 50); low byte is enough
+const OFFSET_PATCH_PAN   = 0x3A;  // s16 LE, 0 = center, - = L, + = R
+const OFFSET_PATCH_STYLE = 0x3C;  // u16 LE, index into PATCH_STYLES
+const OFFSET_FX_MODE     = 0x42;  // u16 LE, 0 = parallel, 1 = serial
 const OFFSET_PATCH_NAME  = 0x44;  // null-terminated, max 16 bytes (not 32; author follows)
 const PATCH_NAME_MAX     = 16;
 const OFFSET_AUTHOR      = 0x54;  // null-terminated, max 16 bytes
 const AUTHOR_MAX         = 16;
+const OFFSET_NOTE        = 0x64;  // null-terminated free text, max 40 bytes
+const NOTE_MAX           = 40;
 const OFFSET_CHECKSUM    = 0x4C6; // BE uint16 (last 2 bytes of 1224-byte file)
 
 const EFFECT_BLOCK_COUNT  = 11;    // GP-200 has 11 effect slots
@@ -110,17 +118,22 @@ export class PRSTDecoder {
 
     const rawSend = this.parser.readUint8(OFFSET_FX_SEND);
     const rawReturn = this.parser.readUint8(OFFSET_FX_RETURN);
-    const fxLoopSend = rawSend >= 1 && rawSend <= 10 ? rawSend : 4;
-    const fxLoopReturn = rawReturn >= 1 && rawReturn <= 10 ? rawReturn : 4;
+    const fxLoopSend = rawSend >= 1 && rawSend <= 11 ? rawSend : 4;
+    const fxLoopReturn = rawReturn >= 1 && rawReturn <= 11 ? rawReturn : 4;
 
-    // Per-patch VOL/PAN/TEMPO, defensively clamped like the FX-loop bytes so
-    // an unexpected value can't fail the whole decode.
+    // Per-patch VOL/PAN/TEMPO/STYLE, defensively clamped like the FX-loop bytes
+    // so an unexpected value can't fail the whole decode.
     const rawVol = this.parser.readUint8(OFFSET_PATCH_VOLUME);
     const patchVolume = rawVol <= 100 ? rawVol : 50;
     const patchTempo = this.parser.readUint16LE(OFFSET_PATCH_TEMPO);
-    const rawPan = this.parser.readUint8(OFFSET_PATCH_PAN);
-    const panSigned = rawPan > 127 ? rawPan - 256 : rawPan;
+    const rawPan = this.parser.readUint16LE(OFFSET_PATCH_PAN);
+    const panSigned = rawPan > 0x7FFF ? rawPan - 0x10000 : rawPan;
     const patchPan = panSigned >= -50 && panSigned <= 50 ? panSigned : 0;
+    const patchStyle = this.parser.readUint16LE(OFFSET_PATCH_STYLE);
+    // Only 0/1 are known; anything else is left at parallel rather than failing.
+    const rawFxMode = this.parser.readUint16LE(OFFSET_FX_MODE);
+    const fxLoopMode = rawFxMode === 1 ? 1 : 0;
+    const patchNote = this.parser.readAscii(OFFSET_NOTE, NOTE_MAX);
 
     // Target slot the patch belongs to (0..255). Preserved so a decode → edit →
     // re-export keeps landing on the same slot; the export dialog can override.
@@ -151,8 +164,9 @@ export class PRSTDecoder {
 
     return GP200PresetSchema.parse({
       version, patchName, author: author || undefined, effects,
-      fxLoopSend, fxLoopReturn,
-      patchVolume, patchPan, patchTempo, slotIndex,
+      fxLoopSend, fxLoopReturn, fxLoopMode,
+      patchVolume, patchPan, patchStyle, patchTempo, slotIndex,
+      patchNote: patchNote || undefined,
       checksum, rawSource,
       expAssignments: controls?.exp,
       ctrlAssignments: controls?.ctrl,

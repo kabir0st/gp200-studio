@@ -25,6 +25,10 @@ function renderSheet(overrides: Partial<Parameters<typeof PatchManagerSheet>[0]>
     bulkProgress: null,
     onCancelBulk: vi.fn(),
     onImportToSlot: vi.fn().mockResolvedValue(undefined),
+    onCopySlot: vi.fn().mockResolvedValue(undefined),
+    onPasteToSlot: vi.fn().mockResolvedValue(undefined),
+    onSwapSlots: vi.fn().mockResolvedValue(undefined),
+    clipboardLabel: null as string | null,
     onRenameSlot: vi.fn().mockResolvedValue(undefined),
     onRefreshNames: vi.fn(),
     onImportFile: vi.fn(),
@@ -115,5 +119,72 @@ describe('PatchManagerSheet', () => {
     await vi.waitFor(() => {
       expect(props.onRenameSlot).toHaveBeenCalledWith(1, 'Lead Boost');
     });
+  });
+});
+
+describe('PatchManagerSheet: selection and arrange', () => {
+  it('shift-clicking a second row selects the range between them', () => {
+    renderSheet();
+    fireEvent.click(screen.getByText('Clean'));
+    fireEvent.click(screen.getByText('Crunch'), { shiftKey: true });
+    expect(screen.getByRole('status')).toHaveTextContent('2 selected');
+  });
+
+  it('SELECT BANK picks all four slots in the bank', () => {
+    renderSheet();
+    fireEvent.click(screen.getByText('Clean'));
+    fireEvent.click(screen.getByRole('button', { name: 'SELECT BANK' }));
+    expect(screen.getByRole('status')).toHaveTextContent('4 selected');
+  });
+
+  it('CLEAR drops back to the single anchor row', () => {
+    renderSheet();
+    fireEvent.click(screen.getByText('Clean'));
+    fireEvent.click(screen.getByRole('button', { name: 'SELECT BANK' }));
+    fireEvent.click(screen.getByRole('button', { name: 'CLEAR' }));
+    expect(screen.getByRole('status')).not.toHaveTextContent('selected');
+  });
+
+  it('EXPORT SELECTED sends every selected slot, not just the anchor', () => {
+    const { props } = renderSheet();
+    fireEvent.click(screen.getByText('Clean'));
+    fireEvent.click(screen.getByRole('button', { name: 'SELECT BANK' }));
+    fireEvent.click(screen.getByRole('button', { name: 'EXPORT SELECTED' }));
+    expect(props.onExportSlots).toHaveBeenCalledWith([0, 1, 2, 3]);
+  });
+
+  it('PASTE stays disabled until something has been copied', () => {
+    renderSheet();
+    fireEvent.click(screen.getByText('Clean'));
+    expect(screen.getByRole('button', { name: /^PASTE/ })).toBeDisabled();
+  });
+
+  it('PASTE targets the selected slot once the clipboard has a patch', () => {
+    const { props } = renderSheet({ clipboardLabel: '01-A' });
+    fireEvent.click(screen.getByText('Crunch'));
+    fireEvent.click(screen.getByRole('button', { name: /^PASTE/ }));
+    expect(props.onPasteToSlot).toHaveBeenCalledWith(1);
+  });
+
+  it('SWAP needs exactly two slots selected', () => {
+    const { props } = renderSheet();
+    fireEvent.click(screen.getByText('Clean'));
+    expect(screen.getByRole('button', { name: 'SWAP' })).toBeDisabled();
+    fireEvent.click(screen.getByText('Crunch'), { shiftKey: true });
+    fireEvent.click(screen.getByRole('button', { name: 'SWAP' }));
+    expect(props.onSwapSlots).toHaveBeenCalledWith(0, 1);
+  });
+
+  it('DOWN swaps the selected patch with the slot below it', () => {
+    const { props } = renderSheet();
+    fireEvent.click(screen.getByText('Clean'));
+    fireEvent.click(screen.getByRole('button', { name: '▼ DOWN' }));
+    expect(props.onSwapSlots).toHaveBeenCalledWith(0, 1);
+  });
+
+  it('UP is unavailable on the very first slot', () => {
+    renderSheet();
+    fireEvent.click(screen.getByText('Clean'));
+    expect(screen.getByRole('button', { name: '▲ UP' })).toBeDisabled();
   });
 });

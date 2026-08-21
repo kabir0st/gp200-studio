@@ -11,7 +11,8 @@
  * invisible to search.
  *
  * Also emits dist/sitemap.xml, injects font preloads with the real build
- * hashes, and strips the source PNGs the guide no longer serves.
+ * hashes, strips the source PNGs the guide no longer serves, and asserts that
+ * nothing still references the files that strip removed.
  *
  * Usage: node scripts/prerender.mjs   (or: npm run build)
  */
@@ -154,6 +155,42 @@ function stripGuidePngs() {
   return bytes;
 }
 
+/* ── 7. Dead-asset guard ───────────────────────────────────────────────────
+ * The strip above runs after every page has already been written, so a page is
+ * free to reference a file that no longer exists — which is exactly how eight
+ * section pages came to advertise an og:image that 404s. Nothing catches that
+ * at runtime either: a broken social card just renders blank. So walk what
+ * actually ships and assert every /guide/ asset reference resolves.        */
+const ASSET_EXT = /\.(png|jpe?g|webp|avif|gif|svg|mp4|webm)$/i;
+
+function textFilesIn(dir, found = []) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) textFilesIn(full, found);
+    else if (/\.(html|webmanifest|xml|json)$/.test(entry.name)) found.push(full);
+  }
+  return found;
+}
+
+function assertGuideRefsResolve() {
+  const missing = new Map();
+  for (const file of textFilesIn(DIST)) {
+    const text = readFileSync(file, 'utf8');
+    for (const [, ref] of text.matchAll(/\/guide\/([A-Za-z0-9._-]+)/g)) {
+      if (!ASSET_EXT.test(ref) || existsSync(join(DIST, 'guide', ref))) continue;
+      if (!missing.has(ref)) missing.set(ref, new Set());
+      missing.get(ref).add(file.slice(DIST.length + 1));
+    }
+  }
+  if (missing.size) {
+    const lines = [...missing].map(
+      ([ref, where]) => `  /guide/${ref}  ← ${[...where].sort().join(', ')}`,
+    );
+    throw new Error(`Referenced by the build but not in it:\n${lines.join('\n')}`);
+  }
+  return true;
+}
+
 async function main() {
   buildSsr();
 
@@ -188,6 +225,9 @@ async function main() {
   if (stripped) {
     console.log(`  ✓ stripped ${(stripped / 1024 / 1024).toFixed(1)} MB of source PNGs from dist/guide`);
   }
+
+  assertGuideRefsResolve();
+  console.log('  ✓ every /guide asset reference resolves');
 
   console.log('\nDone.');
 }

@@ -56,16 +56,29 @@ export const GP200PresetSchema = z.object({
   author: z.string().max(16).optional(), // .prst offset 0x54, 16 bytes null-terminated
   effects: z.array(EffectSlotSchema).length(11), // GP-200 always has exactly 11 slots
   checksum: z.number().int().min(0).max(65535), // BE uint16 at end of file
-  /** FX-loop SEND insertion point. 1 = between PRE(0) and WAH(1). Range 1..10. */
-  fxLoopSend: z.number().int().min(1).max(10).default(4),
-  /** FX-loop RETURN insertion point. 1..10. Invariant SEND <= RETURN enforced at mutation points, not in the schema. */
-  fxLoopReturn: z.number().int().min(1).max(10).default(4),
+  /** FX-loop SEND insertion point. 1 = between PRE(0) and WAH(1). Range 1..11,
+   *  where 11 sits after the last block (the 4-cable-method position). */
+  fxLoopSend: z.number().int().min(1).max(11).default(4),
+  /** FX-loop RETURN insertion point. 1..11. Invariant SEND <= RETURN enforced at mutation points, not in the schema. */
+  fxLoopReturn: z.number().int().min(1).max(11).default(4),
+  /** FX-loop routing mode, .prst bytes 0x42-0x43 (u16 LE). 0 = parallel, 1 = serial. */
+  fxLoopMode: z.number().int().min(0).max(1).default(0),
   /** Per-patch master volume (0..100), .prst byte 0x38. Distinct from the VOL
-   *  effect block's own Volume knob. */
+   *  effect block's own Volume knob. The field is a u16 LE like its neighbours,
+   *  but the value never exceeds 100, so the low byte alone is read and written
+   *  and byte 0x39 is left untouched. */
   patchVolume: z.number().int().min(0).max(100).default(50),
-  /** Per-patch pan, .prst byte 0x3C as signed int8. 0 = center, negative = L,
+  /** Per-patch pan, .prst bytes 0x3A-0x3B (s16 LE). 0 = center, negative = L,
    *  positive = R (deck exposes L50..R50). */
   patchPan: z.number().int().min(-50).max(50).default(0),
+  /** Per-patch style/genre tag, .prst bytes 0x3C-0x3D (u16 LE). Index into
+   *  PATCH_STYLES (patchStyles.ts); 0 = none. Metadata only, but the pedal and
+   *  the official editor both display it. */
+  patchStyle: z.number().int().min(0).max(0xFFFF).default(0),
+  /** Per-patch free-text note, .prst offset 0x64, 40 bytes null-terminated.
+   *  Surfaced by the official editor; carried here so it survives a round trip
+   *  and can be edited. */
+  patchNote: z.string().max(40).optional(),
   /** Per-patch tempo in BPM, .prst bytes 0x36-0x37 (u16 LE). */
   patchTempo: z.number().int().min(0).max(0xFFFF).default(120),
   /**

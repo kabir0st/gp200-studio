@@ -7,6 +7,8 @@ import { DeviceLooperPanel } from '@/components/board/DeviceLooperPanel';
 import { BulkApplySection } from '@/components/BulkApplySection';
 import { DrumMachinePanel } from '@/components/board/DrumMachinePanel';
 import { FxLoopArrows } from '@/components/FxLoopArrows';
+import { FxScenarioPicker } from '@/components/FxScenarioPicker';
+import { PatchDetailsPanel } from '@/components/PatchDetailsPanel';
 import { ControllerPanel } from '@/components/ControllerPanel';
 import { FootswitchPanel } from '@/components/FootswitchPanel';
 import { Tabs } from '@/components/ui/Tabs';
@@ -21,9 +23,10 @@ import './mobile.css';
 
 type Sheet = 'fxloop' | 'patch' | 'meta' | null;
 
-type PatchSettingsTab = 'exp' | 'ctrl' | 'bulk';
+type PatchSettingsTab = 'details' | 'exp' | 'ctrl' | 'bulk';
 
 const PATCH_SETTINGS_TABS = [
+  { id: 'details', label: 'Details' },
   { id: 'exp', label: 'Expression' },
   { id: 'ctrl', label: 'Footswitches' },
   { id: 'bulk', label: 'Bulk Apply' },
@@ -67,6 +70,12 @@ export default function MobileShell({
   onCloseRequest,
   onFxSendChange,
   onFxReturnChange,
+  onApplyFxScenario,
+  onFxModeChange,
+  deviceModel,
+  onDeviceModelChange,
+  onStyleChange,
+  onNoteChange,
   onExpParamSelect,
   onExpMinMax,
   onCtrlBlockToggle,
@@ -335,6 +344,13 @@ export default function MobileShell({
           onSendChange={onFxSendChange}
           onReturnChange={onFxReturnChange}
         />
+        <div className="mt-4">
+          <FxScenarioPicker
+            preset={preset}
+            onApply={onApplyFxScenario}
+            onModeChange={onFxModeChange}
+          />
+        </div>
       </MobileSheet>
 
       {/* One per-patch settings sheet, mirroring the desktop PATCH SETTINGS
@@ -348,6 +364,13 @@ export default function MobileShell({
           onSelect={selectPatchTab}
         />
         <div role="tabpanel" className="pt-4">
+          {patchTab === 'details' && (
+            <PatchDetailsPanel
+              preset={preset}
+              onStyleChange={onStyleChange}
+              onNoteChange={onNoteChange}
+            />
+          )}
           {patchTab === 'exp' && (
             <ControllerPanel
               preset={preset}
@@ -363,6 +386,8 @@ export default function MobileShell({
               connected={connected}
               onCtrlBlockToggle={onCtrlBlockToggle}
               onCtrlClear={onCtrlClear}
+              deviceModel={deviceModel}
+              onDeviceModelChange={onDeviceModelChange}
             />
           )}
           {patchTab === 'bulk' && (

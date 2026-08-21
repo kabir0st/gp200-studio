@@ -78,9 +78,21 @@ describe('GP200PresetSchema', () => {
       checksum: 0,
     };
     expect(() => GP200PresetSchema.parse({ ...base, fxLoopSend: 0 })).toThrow();
-    expect(() => GP200PresetSchema.parse({ ...base, fxLoopSend: 11 })).toThrow();
+    expect(() => GP200PresetSchema.parse({ ...base, fxLoopSend: 12 })).toThrow();
     expect(() => GP200PresetSchema.parse({ ...base, fxLoopReturn: 0 })).toThrow();
-    expect(() => GP200PresetSchema.parse({ ...base, fxLoopReturn: 11 })).toThrow();
+    expect(() => GP200PresetSchema.parse({ ...base, fxLoopReturn: 12 })).toThrow();
+  });
+
+  it('accepts position 11, the after-the-last-block spot real exports use', () => {
+    const parsed = GP200PresetSchema.parse({
+      version: '1', patchName: 'X',
+      effects: FULL_EFFECTS,
+      checksum: 0,
+      fxLoopSend: 11,
+      fxLoopReturn: 11,
+    });
+    expect(parsed.fxLoopSend).toBe(11);
+    expect(parsed.fxLoopReturn).toBe(11);
   });
 });
 

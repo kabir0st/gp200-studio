@@ -1,5 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { usePreset } from '@/hooks/usePreset';
+import { applyFxScenario, findFxScenario } from '@/core/fxScenarios';
+import { patchStyleName } from '@/core/patchStyles';
 import { useMidiDevice } from '@/hooks/useMidiDevice';
 import { useLooper } from '@/hooks/useLooper';
 import { useDrumMachine } from '@/hooks/useDrumMachine';
@@ -24,12 +26,14 @@ import { Landing } from '@/components/Landing';
 import { PedalBoard, type PedalBoardProps } from '@/components/board/PedalBoard';
 import { useIsPhone } from '@/hooks/useMediaQuery';
 import { useTheme } from '@/hooks/useTheme';
+import { useDeviceModel } from '@/hooks/useDeviceModel';
 import { useUiSound } from '@/hooks/useUiSound';
 import { playSwitchClick } from '@/lib/uiSound';
 
 // Lazy so the phone tree and its stylesheet stay out of the desktop bundle.
 const MobileShell = lazy(() => import('@/components/mobile/MobileShell'));
 import { DeviceSlotBrowser } from '@/components/DeviceSlotBrowser';
+import { RigSheet } from '@/components/RigSheet';
 import { FirmwareCompatDialog } from '@/components/FirmwareCompatDialog';
 import { ExportPresetDialog } from '@/components/ExportPresetDialog';
 import {
@@ -64,8 +68,9 @@ function slotFilename(slot: number, name: string | null): string {
 function App() {
   const {
     preset, loadPreset, setPatchName, setAuthor, toggleEffect, changeEffect,
-    reorderEffects, setParam, setFxLoopSend, setFxLoopReturn, setCtrlBlock,
+    reorderEffects, setParam, setFxLoopSend, setFxLoopReturn, setFxLoopMode, setCtrlBlock,
     setCtrlMask, setExpAssignment, setPatchVolume, setPatchPan, setPatchTempo,
+    setPatchStyle, setPatchNote,
     reset,
   } = usePreset();
   const midiDevice = useMidiDevice();
@@ -74,6 +79,9 @@ function App() {
   // trees switch the same document attribute; the board's power switch and the
   // phone's DEVICE tab are two views of this one state.
   const { theme, toggleTheme } = useTheme();
+  // Which GP-200 variant is in front of the user; only the footswitch count
+  // differs, and the .prst keeps all 8 CTRL records either way.
+  const { deviceModel, setDeviceModel } = useDeviceModel();
   // The rocker's clack. Wrapped here rather than in the board so the phone's
   // DEVICE-tab toggle makes the same noise — both trees flip the same switch.
   const { soundOn, toggleSound } = useUiSound();
@@ -147,6 +155,7 @@ function App() {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [slotBrowserMode, setSlotBrowserMode] = useState<'pull' | 'push' | null>(null);
+  const [clipboard, setClipboard] = useState<{ preset: GP200Preset; label: string } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [firmwareWarningDismissed, setFirmwareWarningDismissed] = useState(false);
@@ -496,6 +505,53 @@ function App() {
     }
   }
 
+  // In-app patch clipboard, for copy/paste and swap in the patch manager.
+  // Built on pullPreset/pushPreset — the same proven read and flash-upload
+  // path the per-slot EXPORT and IMPORT buttons already use — rather than the
+  // device's own patch-move message, which is decoded but not hardware-verified
+  // and would reshuffle all 256 slots if it turned out to be wrong.
+  async function handleCopySlot(slot: number) {
+    try {
+      const pulled = await midiDevice.pullPreset(slot);
+      setClipboard({ preset: pulled, label: SysExCodec.slotToLabel(slot) });
+      setLoadError(null);
+    } catch {
+      setLoadError(`Failed to copy ${SysExCodec.slotToLabel(slot)} from device`);
+    }
+  }
+
+  async function handlePasteToSlot(slot: number) {
+    if (!clipboard) return;
+    try {
+      await midiDevice.pushPreset({ ...clipboard.preset, slotIndex: slot }, slot);
+      setLoadError(null);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      setLoadError(`Failed to paste into ${SysExCodec.slotToLabel(slot)}: ${detail}`);
+    }
+  }
+
+  async function handleSwapSlots(first: number, second: number) {
+    if (first === second) return;
+    try {
+      // Read both before writing either: a failed read then leaves the pedal
+      // untouched instead of half-swapped.
+      const a = await midiDevice.pullPreset(first);
+      const b = await midiDevice.pullPreset(second);
+      await midiDevice.pushPreset({ ...b, slotIndex: first }, first);
+      await midiDevice.pushPreset({ ...a, slotIndex: second }, second);
+      setLoadError(null);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      setLoadError(
+        `Failed to swap ${SysExCodec.slotToLabel(first)} and `
+        + `${SysExCodec.slotToLabel(second)}: ${detail}`,
+      );
+    } finally {
+      if (midiDevice.status === 'connected') midiDevice.loadPresetNames();
+    }
+  }
+
   async function handleRenameSlot(slot: number, name: string) {
     try {
       await midiDevice.renameSlot(slot, name);
@@ -714,7 +770,7 @@ function App() {
     onTempoChange: (v) => { setPatchTempo(v); if (midiDevice.status === 'connected') midiDevice.sendPatchTempo(v); },
     onCloseRequest: reset,
     onFxSendChange: (pos) => {
-      const clamped = Math.max(1, Math.min(10, pos));
+      const clamped = Math.max(1, Math.min(11, pos));
       const nextReturn = Math.max(clamped, preset.fxLoopReturn);
       const sendChanged = clamped !== preset.fxLoopSend;
       const returnPushed = nextReturn !== preset.fxLoopReturn;
@@ -726,7 +782,7 @@ function App() {
       }
     },
     onFxReturnChange: (pos) => {
-      const clamped = Math.max(1, Math.min(10, pos));
+      const clamped = Math.max(1, Math.min(11, pos));
       const nextSend = Math.min(clamped, preset.fxLoopSend);
       const returnChanged = clamped !== preset.fxLoopReturn;
       const sendPushed = nextSend !== preset.fxLoopSend;
@@ -736,6 +792,32 @@ function App() {
         if (returnChanged) midiDevice.sendFxLoopMove(order, nextSend, clamped, 'return');
         if (sendPushed) midiDevice.sendFxLoopMove(order, nextSend, clamped, 'send');
       }
+    },
+    // A scenario is just a loop mode plus AMP/CAB bypass states, so it reuses
+    // the same per-block toggle path the board uses. Only blocks whose state
+    // actually changes get a message, to keep the device quiet.
+    onApplyFxScenario: (scenarioId) => {
+      const scenario = findFxScenario(scenarioId);
+      if (!scenario) return;
+      const next = applyFxScenario(preset, scenario);
+      setFxLoopMode(next.fxLoopMode);
+      for (const slot of next.effects) {
+        const before = preset.effects.find((e) => e.slotIndex === slot.slotIndex);
+        if (!before || before.enabled === slot.enabled) continue;
+        toggleEffect(slot.slotIndex, slot.enabled);
+        if (midiDevice.status === 'connected') midiDevice.sendToggle(slot.slotIndex, slot.enabled);
+      }
+    },
+    onFxModeChange: (mode) => setFxLoopMode(mode),
+    deviceModel,
+    onDeviceModelChange: setDeviceModel,
+    onStyleChange: (index) => {
+      setPatchStyle(index);
+      if (midiDevice.status === 'connected') midiDevice.sendStyleName(patchStyleName(index));
+    },
+    onNoteChange: (note) => {
+      setPatchNote(note);
+      if (midiDevice.status === 'connected') midiDevice.sendNote(note.slice(0, 40));
     },
     onExpParamSelect: (page, item, blockIndex, paramIdx) => {
       // Persist with the patch; also apply live when a device is attached
@@ -847,6 +929,15 @@ function App() {
         </div>
       )}
 
+      {/* Hidden on screen; the print stylesheet swaps it in for the whole
+          page, so PRINT works from anywhere without the board's layout,
+          scroll containers or open dialogs getting in the way. */}
+      <RigSheet
+        preset={preset}
+        currentSlot={midiDevice.currentSlot}
+        presetNames={midiDevice.presetNames}
+      />
+
       <PatchManagerSheet
         open={showPatchManager}
         onClose={() => setShowPatchManager(false)}
@@ -862,6 +953,10 @@ function App() {
         bulkProgress={bulkProgress}
         onCancelBulk={() => { bulkCancelRef.current = true; }}
         onImportToSlot={handleImportToSlot}
+        onCopySlot={handleCopySlot}
+        onPasteToSlot={handlePasteToSlot}
+        onSwapSlots={handleSwapSlots}
+        clipboardLabel={clipboard?.label ?? null}
         onRenameSlot={handleRenameSlot}
         onRefreshNames={() => void midiDevice.refreshNames()}
         onImportFile={handleFile}

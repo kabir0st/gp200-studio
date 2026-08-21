@@ -82,13 +82,6 @@ describe('guide manifest', () => {
     },
   );
 
-  it('points every ogImage at a guide screenshot', () => {
-    for (const section of GUIDE_SECTIONS) {
-      if (!section.ogImage) continue;
-      expect(section.ogImage).toMatch(/^\/guide\/[\w-]+\.png$/);
-    }
-  });
-
   it('resolves every slug through the lookup map', () => {
     expect(GUIDE_BY_SLUG.size).toBe(GUIDE_SECTIONS.length);
     for (const section of GUIDE_SECTIONS) {

@@ -5,9 +5,13 @@ export interface PatchPickerProps {
   presetNames: (string | null)[];
   namesLoadProgress: number;
   currentSlot: number | null;
-  /** single-select highlight */
+  /** single-select highlight (the anchor row) */
   selected: number | null;
-  onSelect: (slot: number) => void;
+  /** Extra rows painted as selected. Omit for hosts that only single-select. */
+  multiSelected?: ReadonlySet<number>;
+  /** Modifiers let a host build shift-ranges and ctrl-toggles; hosts that
+   *  only single-select can ignore the second argument. */
+  onSelect: (slot: number, modifiers?: { shift: boolean; toggle: boolean }) => void;
   /** double-click / Enter confirm */
   onActivate?: (slot: number) => void;
 }
@@ -93,6 +97,7 @@ export function PatchPicker({
   namesLoadProgress,
   currentSlot,
   selected,
+  multiSelected,
   onSelect,
   onActivate,
 }: PatchPickerProps) {
@@ -189,7 +194,8 @@ export function PatchPicker({
             <section key={group.bank} className="pp-group">
               <h3 className="pp-group-head">{bankLabel(group.bank)}</h3>
               {group.rows.map((row) => {
-                const isSelected = row.slot === selected;
+                const isAnchor = row.slot === selected;
+                const isSelected = isAnchor || (multiSelected?.has(row.slot) ?? false);
                 const isCurrent = row.slot === currentSlot;
                 const rowClasses = ['pp-row'];
                 if (isSelected) rowClasses.push('selected');
@@ -199,13 +205,17 @@ export function PatchPicker({
                     key={row.slot}
                     type="button"
                     ref={(node) => {
-                      if (isSelected || (selected === null && isCurrent)) {
+                      if (isAnchor || (selected === null && isCurrent)) {
                         selectedRef.current = node;
                       }
                     }}
                     className={rowClasses.join(' ')}
-                    aria-current={isSelected}
-                    onClick={() => onSelect(row.slot)}
+                    aria-current={isAnchor}
+                    aria-selected={isSelected}
+                    onClick={(event) => onSelect(row.slot, {
+                      shift: event.shiftKey,
+                      toggle: event.ctrlKey || event.metaKey,
+                    })}
                     onDoubleClick={() => handleActivate(row.slot)}
                   >
                     <span className="pp-badge">{row.label}</span>

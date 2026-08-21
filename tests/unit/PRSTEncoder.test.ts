@@ -353,3 +353,76 @@ describe('PRSTEncoder: controller/EXP assignment records', () => {
     },
   );
 });
+
+describe('PRSTEncoder: pre-name u16 metadata block', () => {
+  const webExport = join(process.cwd(), 'web-export.prst');
+
+  it.skipIf(!existsSync(webExport))(
+    'round-trips a committed device export byte-for-byte, metadata block included',
+    () => {
+      // The older byte-compare above starts at 0x8C and so never covered the
+      // pre-name block (0x30-0x43) or the note (0x64-0x8B) — exactly the
+      // regions style/note/pan live in. Compare the whole file bar the
+      // recomputed checksum.
+      const original = new Uint8Array(readFileSync(webExport));
+      const preset = new PRSTDecoder(original).decode();
+      const encoded = new Uint8Array(new PRSTEncoder().encode(preset));
+      expect(encoded.byteLength).toBe(original.byteLength);
+      // 0x20-0x23 is the MRAP pointer, which the encoder rewrites on purpose:
+      // this fixture was exported before that repair landed and stores 0.
+      for (let i = 0; i < 0x4C6; i++) {
+        if (i >= 0x20 && i < 0x24) continue;
+        if (encoded[i] !== original[i]) {
+          throw new Error(
+            `byte diff at 0x${i.toString(16)}: original=${original[i]} encoded=${encoded[i]}`,
+          );
+        }
+      }
+    },
+  );
+
+  it('writes pan to 0x3A and style to 0x3C without either overwriting the other', () => {
+    const encoded = new Uint8Array(new PRSTEncoder().encode({
+      ...samplePreset, patchPan: -30, patchStyle: 12,
+    }));
+    const view = new DataView(encoded.buffer, encoded.byteOffset, encoded.byteLength);
+    expect(view.getInt16(0x3A, true)).toBe(-30);
+    expect(view.getUint16(0x3C, true)).toBe(12);
+  });
+
+  it('round-trips pan, style, note and FX-loop mode through decode → encode', () => {
+    const encoded = new Uint8Array(new PRSTEncoder().encode({
+      ...samplePreset,
+      patchPan: 17,
+      patchStyle: 14,
+      patchNote: '4CM for my Marshall',
+      fxLoopMode: 1,
+    }));
+    const decoded = new PRSTDecoder(encoded).decode();
+    expect(decoded.patchPan).toBe(17);
+    expect(decoded.patchStyle).toBe(14);
+    expect(decoded.patchNote).toBe('4CM for my Marshall');
+    expect(decoded.fxLoopMode).toBe(1);
+  });
+
+  it('clears a removed note instead of leaving the old bytes behind', () => {
+    const withNote = new Uint8Array(new PRSTEncoder().encode({
+      ...samplePreset, patchNote: 'scratch that',
+    }));
+    const preset = new PRSTDecoder(withNote).decode();
+    const cleared = new Uint8Array(new PRSTEncoder().encode({ ...preset, patchNote: undefined }));
+    expect(new PRSTDecoder(cleared).decode().patchNote).toBeUndefined();
+    for (let i = 0x64; i < 0x64 + 40; i++) expect(cleared[i]).toBe(0);
+  });
+
+  it('round-trips FX-loop position 11', () => {
+    const encoded = new Uint8Array(new PRSTEncoder().encode({
+      ...samplePreset, fxLoopSend: 11, fxLoopReturn: 11,
+    }));
+    expect(encoded[0x92]).toBe(11);
+    expect(encoded[0x93]).toBe(11);
+    const decoded = new PRSTDecoder(encoded).decode();
+    expect(decoded.fxLoopSend).toBe(11);
+    expect(decoded.fxLoopReturn).toBe(11);
+  });
+});
