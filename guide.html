@@ -19,6 +19,16 @@
     <link rel="manifest" href="/site.webmanifest" />
     <!--seo:end-->
 
+    <!-- The stylesheet is linked here rather than imported from guide-main.ts.
+         These pages ship their DOM prerendered, and CSS pulled in by a module
+         only lands once that module has run: in `vite dev` the whole guide
+         painted unstyled first — blue underlined links on a white page — and
+         then snapped into place on every navigation. A real <link> is
+         render-blocking, so the first paint is the finished page, and the guide
+         stays styled with JavaScript switched off. Vite rewrites this to the
+         hashed bundle at build time. -->
+    <link rel="stylesheet" href="/src/index.css" />
+
     <!-- Same pre-paint theme script as index.html. It is what makes the light
          or dark screenshot correct on the very first paint of a static page
          with no React on it. See the note there about the theme-color tag. -->
