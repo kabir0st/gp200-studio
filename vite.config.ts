@@ -1,6 +1,53 @@
-import { defineConfig } from 'vitest/config'
+import { defineConfig, type Plugin } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import { readFileSync } from 'node:fs'
 import path from 'node:path'
+
+/**
+ * Serves the prerendered guide pages during `npm run dev`.
+ *
+ * The guide has no client-side router: src/guide-main.ts renders nothing, and
+ * the DOM inside #root is written at build time by scripts/prerender.mjs. In
+ * dev that step has not run, so `/guide` was an empty shell and every deep
+ * `/guide/<slug>` fell through Vite's SPA fallback to index.html — the editor's
+ * landing page, served at a guide URL. Both looked like a broken link.
+ *
+ * This calls the same render() the build calls, per request, so the dev server
+ * shows what production will and guide copy can be edited without a build.
+ * `apply: 'serve'` because the build already has prerender.mjs for this.
+ *
+ * Only guide-shell routes are intercepted. '/' and '/editor' are the editor
+ * SPA, which the normal dev pipeline already serves correctly, and taking them
+ * over here would put an SSR pass in front of every hot reload.
+ */
+function guideDevServer(): Plugin {
+  return {
+    name: 'gp200-guide-dev',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        const url = (req.url ?? '/').split('?')[0].replace(/\/+$/, '') || '/'
+        try {
+          const mod = await server.ssrLoadModule('/src/prerender/entry-server.tsx')
+          if (!(mod.ROUTE_PATHS as string[]).includes(url)) return next()
+          const page = mod.render(url) as { head: string; body: string; shell: string }
+          if (page.shell !== 'guide') return next()
+
+          const shellPath = path.resolve(__dirname, 'guide.html')
+          const raw = readFileSync(shellPath, 'utf8')
+          const html = (await server.transformIndexHtml(url, raw, shellPath))
+            .replace(/<!--seo:start-->[\s\S]*?<!--seo:end-->/, page.head)
+            .replace('<div id="root"></div>', `<div id="root">${page.body}</div>`)
+
+          res.setHeader('Content-Type', 'text/html')
+          res.end(html)
+        } catch (error) {
+          next(error)
+        }
+      })
+    },
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig(() => ({
@@ -12,7 +59,7 @@ export default defineConfig(() => ({
   // Everything that resolves an asset at runtime still goes through
   // import.meta.env.BASE_URL, so the subfolder case remains a one-line change.
   base: '/',
-  plugins: [react()],
+  plugins: [react(), guideDevServer()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

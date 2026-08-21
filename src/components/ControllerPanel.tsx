@@ -139,7 +139,7 @@ function ParaCard({ preset, assignment, onParamSelect, onMinMax }: ParaCardProps
       <div className="flex items-baseline gap-2 mb-2 min-w-0">
         <span
           className="font-mono-display text-label font-bold tracking-wider flex-shrink-0"
-          style={{ color: 'var(--accent-amber)' }}
+          style={{ color: 'var(--accent)' }}
         >
           {`PARA ${item + 1}`}
         </span>
@@ -293,7 +293,7 @@ export function ControllerPanel({
             color: 'var(--text-primary)',
           };
           if (selected) {
-            tabStyle.border = '1px solid var(--accent-amber)';
+            tabStyle.border = '1px solid var(--accent)';
             tabStyle.background = 'rgba(212,162,78,0.10)';
           }
           return (
@@ -352,7 +352,7 @@ export function ControllerPanel({
               setLivePosition(position);
               sendCC(exp1Position(position));
             }}
-            className="flex-1 min-w-24 accent-accent-amber disabled:opacity-40"
+            className="flex-1 min-w-24 accent-accent disabled:opacity-40"
             aria-label="EXP 1 position"
           />
           <b

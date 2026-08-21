@@ -1,10 +1,18 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useRef } from 'react';
 import type { UseMidiDeviceReturn } from '@/hooks/useMidiDevice';
-import { SysExCodec } from '@/core/SysExCodec';
-import { SLOT_MODULES } from '@/core/effectNames';
-import { getBodySpec } from '@/components/board/boardPalette';
-import { Logo } from '@/components/Logo';
-import { Credits } from '@/components/Credits';
+import { LandingHero } from './landing/LandingHero';
+import { LandingStory } from './landing/LandingStory';
+import { LandingAmps } from './landing/LandingAmps';
+import { LandingStats } from './landing/LandingStats';
+import { LandingMarquee } from './landing/LandingMarquee';
+import { LandingFeatures } from './landing/LandingFeatures';
+import { LandingWorks } from './landing/LandingWorks';
+import { LandingFaq } from './landing/LandingFaq';
+import { LandingPosts } from './landing/LandingPosts';
+import { LandingFooter } from './landing/LandingFooter';
+import { LandingStickyCta } from './landing/LandingStickyCta';
+import { useLandingMotion } from './landing/useLandingMotion';
+import './landing/landing.css';
 
 interface LandingProps {
   midiDevice: UseMidiDeviceReturn;
@@ -16,127 +24,68 @@ interface LandingProps {
   onDismissError: () => void;
 }
 
-const FEATURES: string[] = [
-  'Multi-layer loop station: stack unlimited loops over USB audio, hands-free from the pedal',
-  'Visual pedalboard editor: drag to reorder, tweak every knob',
-  'Assign EXP pedals, CTRL footswitches, and the FX loop',
-  'Live USB-MIDI sync with your GP-200 (Chrome / Edge)',
-  'Import & export .prst, manage all 256 device patches',
-];
-
 /**
- * Stage-styled landing: two actions only. Connect the GP-200, or open the
- * editor with a blank preset. No file prompt; import lives in the board deck.
+ * The home page.
+ *
+ * Two jobs at once, and the order matters. It is the app's front door — the
+ * connect button and the blank-preset escape hatch are the first thing under
+ * the headline — and it is also the only marketing page the product has, the
+ * page gp200studio.com serves and the one every social card links to.
+ *
+ * The page is dark end to end — `.theme-dark`, the inherited-token island
+ * declared alongside `:root[data-theme='dark']` in src/index.css — regardless
+ * of the theme the editor is set to. A pedalboard photographs better under
+ * house lights down, it matches the social card the page is usually reached
+ * from, and it means the landing page never has a light/dark state of its own
+ * to get out of step with the board's.
+ *
+ * It is prerendered to static HTML by scripts/prerender.mjs, so everything
+ * below is written to read completely with JavaScript switched off: real
+ * anchors out to /guide and the write-ups, <details> for the FAQ, the real
+ * figures in the stats, and no section that starts life invisible. Motion is
+ * layered on top by useLandingMotion, never underneath.
+ *
+ * Composition only; each section owns its own markup in ./landing/, and every
+ * word lives in ./landing/copy.ts.
  */
-export function Landing({ midiDevice, onOpenBlank, onOpenCurrent, loadError, onDismissError }: LandingProps) {
-  const { status, handshakeStep, errorMessage, currentSlot, connect } = midiDevice;
-  const [webMidiSupported, setWebMidiSupported] = useState(true);
-
-  useEffect(() => {
-    setWebMidiSupported('requestMIDIAccess' in navigator);
-  }, []);
-
-  const busy = status === 'connecting' || status === 'handshaking';
-  const connected = status === 'connected';
-  const slotLabel = currentSlot !== null ? SysExCodec.slotToLabel(currentSlot) : null;
-  const deviceName = currentSlot !== null ? midiDevice.presetNames[currentSlot] : null;
-
-  let connectLabel = 'AFTER CONNECTING YOUR GP-200, CLICK HERE';
-  if (busy) {
-    connectLabel = handshakeStep ?? 'CONNECTING…';
-  } else if (status === 'error') {
-    connectLabel = 'RETRY CONNECT';
-  }
+export function Landing({
+  midiDevice,
+  onOpenBlank,
+  onOpenCurrent,
+  loadError,
+  onDismissError,
+}: LandingProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  useLandingMotion(rootRef);
 
   return (
-    <div className="landing-view">
-      <div className="landing-panel">
-        <div className="landing-chips" aria-hidden="true">
-          {SLOT_MODULES.map((mod) => {
-            const spec = getBodySpec(mod);
-            const vars = { '--body': spec.body, '--ink': spec.ink } as CSSProperties;
-            return (
-              <span key={mod} className="landing-chip" style={vars}>
-                {mod}
-              </span>
-            );
-          })}
-        </div>
+    <div className="lp theme-dark" ref={rootRef}>
+      <LandingHero
+        midiDevice={midiDevice}
+        onOpenBlank={onOpenBlank}
+        onOpenCurrent={onOpenCurrent}
+        loadError={loadError}
+        onDismissError={onDismissError}
+      />
 
-        <div className="landing-logo">
-          <Logo size={72} />
-        </div>
-        <h1 className="landing-title">GP200 Studio</h1>
-        <p className="landing-sub">Valeton GP-200 pedalboard editor &amp; loop station</p>
+      <main className="lp-main">
+        <LandingStats />
+        <LandingStory />
+        <LandingAmps />
+        <LandingMarquee />
+        <LandingFeatures />
+        <LandingWorks />
+        <LandingFaq />
+        <LandingPosts />
+      </main>
 
-        <div className="landing-actions">
-          {connected ? (
-            <button type="button" className="landing-btn primary" onClick={onOpenCurrent}>
-              <span className="landing-led on" aria-hidden="true" />
-              OPEN CURRENT PRESET
-              {slotLabel && (
-                <span className="landing-btn-sub">
-                  Slot {slotLabel}{deviceName ? ` »${deviceName}«` : ''}
-                </span>
-              )}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="landing-btn primary"
-              disabled={busy || !webMidiSupported}
-              onClick={() => void connect()}
-            >
-              <span className={`landing-led${busy ? ' busy' : ''}`} aria-hidden="true" />
-              {connectLabel}
-            </button>
-          )}
-        </div>
+      <LandingFooter onOpenBlank={onOpenBlank} />
 
-        <ul className="landing-features">
-          {FEATURES.map((feature) => (
-            <li key={feature} className="landing-feature">
-              {feature}
-            </li>
-          ))}
-        </ul>
-
-        {/* A real link, not a button: this is the only crawlable edge from the
-            home page into the guide's fourteen indexable URLs, and the landing
-            markup is prerendered, so a crawler that runs no JavaScript still
-            follows it. */}
-        <a className="landing-guide-link" href="/guide">
-          Read the guide →
-        </a>
-
-        {status === 'error' && errorMessage && (
-          <p className="landing-msg error" role="alert">{errorMessage}</p>
-        )}
-        {loadError && (
-          <p className="landing-msg error" role="alert">
-            {loadError}
-            <button type="button" onClick={onDismissError} aria-label="Dismiss error">✕</button>
-          </p>
-        )}
-        {!webMidiSupported && (
-          <p className="landing-msg">
-            Web MIDI is not available in this browser; use Chrome or Edge to connect a device.
-            You can still open the editor and export presets.
-          </p>
-        )}
-        {!connected && webMidiSupported && status !== 'error' && (
-          <p className="landing-msg">
-            Plug the GP-200 into your computer over USB and power it on, then click the button above.
-          </p>
-        )}
-
-        <button type="button" className="landing-btn ghost" onClick={onOpenBlank}>
-          OPEN WITHOUT CONNECTING
-          <span className="landing-btn-sub">for tests · blank preset</span>
-        </button>
-
-        <Credits className="landing-credits" />
-      </div>
+      <LandingStickyCta
+        midiDevice={midiDevice}
+        onOpenBlank={onOpenBlank}
+        onOpenCurrent={onOpenCurrent}
+      />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 interface CreditsProps {
-  /** Extra classes on the wrapper (Landing uses `.landing-credits`; the guide
+  /** Extra classes on the wrapper (Landing uses `.lp-credits`; the guide
    *  passes Tailwind utilities). */
   className?: string;
 }

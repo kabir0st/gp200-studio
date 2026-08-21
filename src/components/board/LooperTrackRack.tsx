@@ -49,7 +49,7 @@ function readPalette(el: HTMLElement): Palette {
     barLine: token('--border-active', '#aaa69d'),
     laneBg: token('--bg-deep', '#ccc9c1'),
     take: token('--accent-green', '#2f7e4f'),
-    importColor: token('--accent-amber', '#8a6320'),
+    importColor: token('--accent', '#0b6f82'),
     muted: token('--text-muted', '#5f5c55'),
   };
 }
@@ -174,7 +174,7 @@ function RecordStatus({ armed, listening, readoutRef }: RecordStatusProps) {
 
 function trackRowClass(selected: boolean): string {
   const base = 'rounded-lg border bg-bg-hover overflow-hidden cursor-pointer';
-  if (selected) return `${base} border-accent-amber`;
+  if (selected) return `${base} border-accent`;
   return `${base} border-border-active`;
 }
 
@@ -367,7 +367,7 @@ export function LooperTrackRack({ looper, compact = false }: LooperTrackRackProp
                     looper.updateTrackGain(trackRow.id, Number(event.target.value))
                   }
                   className="order-last basis-full sm:order-none sm:basis-0 sm:flex-1
-                    min-w-0 accent-accent-amber"
+                    min-w-0 accent-accent"
                   aria-label={`Track ${index + 1} level`}
                 />
                 <Button
@@ -407,8 +407,8 @@ export function LooperTrackRack({ looper, compact = false }: LooperTrackRackProp
 
                 <div
                   ref={registerPlayhead(trackRow.id)}
-                  className="absolute top-0 bottom-0 w-px bg-accent-amber pointer-events-none
-                    shadow-glow-amber"
+                  className="absolute top-0 bottom-0 w-px bg-accent pointer-events-none
+                    shadow-glow-accent"
                   style={{ transform: 'translateX(0px)', willChange: 'transform' }}
                 />
               </div>

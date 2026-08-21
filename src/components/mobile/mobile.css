@@ -100,7 +100,7 @@
 .mobile-view .m-header-sync-fill {
   display: block;
   height: 100%;
-  background: var(--accent-amber);
+  background: var(--accent);
   transition: width 120ms linear;
 }
 
@@ -418,7 +418,7 @@
 
 .mobile-view .m-marker-edit {
   font-size: 10px;
-  color: var(--accent-amber);
+  color: var(--accent);
 }
 
 /* ----------------------------------------------------------- pedal editor */

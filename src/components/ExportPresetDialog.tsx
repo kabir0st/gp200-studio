@@ -46,7 +46,7 @@ export function ExportPresetDialog({ open, onClose, initialName, initialAuthor, 
     <Dialog open={open} onClose={onClose} title="Export Preset">
       <h2
         className="font-mono-display text-lg font-bold tracking-tight mb-5"
-        style={{ color: 'var(--accent-amber)' }}
+        style={{ color: 'var(--accent)' }}
       >
         Export Preset
       </h2>

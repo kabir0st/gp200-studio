@@ -47,7 +47,7 @@ export function LooperMasterLevel({ level, onChange }: LooperMasterLevelProps) {
         step={0.01}
         value={level}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="flex-1 min-w-0 accent-accent-amber"
+        className="flex-1 min-w-0 accent-accent"
         aria-label="Loop station output level"
       />
       <span

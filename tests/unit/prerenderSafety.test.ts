@@ -29,7 +29,7 @@ describe('prerender safety', () => {
   it('renders every route to static markup with no browser globals', async () => {
     const { render, ROUTE_PATHS } = await import('@/prerender/entry-server');
 
-    expect(ROUTE_PATHS).toHaveLength(16);
+    expect(ROUTE_PATHS).toHaveLength(17);
 
     for (const path of ROUTE_PATHS) {
       const page = render(path);

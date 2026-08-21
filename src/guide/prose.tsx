@@ -50,7 +50,7 @@ export function A({ href, children }: { href: string; children: ReactNode }) {
     <a
       href={href}
       {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-      className="underline text-text-secondary hover:text-accent-amber"
+      className="underline text-text-secondary hover:text-accent"
     >
       {children}
     </a>

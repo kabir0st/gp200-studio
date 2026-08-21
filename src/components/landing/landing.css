@@ -1,0 +1,1397 @@
+/* ════════════════════════════════════════════════════════════════════════
+   Landing page (src/components/Landing.tsx and ./landing/*).
+
+   The home page is a marketing page and the app's front door at the same
+   time, so it borrows the board's vocabulary — light case, chrome surfaces,
+   JetBrains-mono display type, amber as the single accent — but at reading
+   scale rather than instrument scale.
+
+   Three things here are load-bearing:
+
+   1. Everything is token-driven (src/index.css), so the sections below the
+      hero follow the stage theme with no second set of rules. The hero is
+      pinned dark by `.theme-dark`, an inherited-token island declared
+      alongside `:root[data-theme='dark']`.
+
+   2. `.lp-reveal` is hidden ONLY under `:root[data-anim='on']`, which the
+      pre-paint script in index.html sets when motion is welcome and a
+      dynamic import failure clears. With JavaScript off the attribute is
+      never set and the whole page reads normally. See useLandingMotion.ts.
+
+   3. The hero's entrance is CSS, not GSAP: gsap arrives after first paint,
+      so anything it hid above the fold would flash visible first.
+
+   Mobile-first. The old landing card had no media queries at all, and the
+   phone is where most GP-200 owners meet this page.
+   ════════════════════════════════════════════════════════════════════════ */
+
+.lp {
+  --lp-max: 1120px;
+  --lp-pad: clamp(20px, 5vw, 48px);
+  /* The page's column grid, held as a custom property rather than inherited.
+     `grid-template-columns: inherit` only reaches a band whose parent is
+     itself the grid, and the footer sits outside <main> — it inherited `none`,
+     lost the named lines, and laid itself out against phantom columns. A
+     variable resolves the same for every band wherever it sits in the tree. */
+  --lp-cols:
+    [full-start] minmax(var(--lp-pad), 1fr)
+    [content-start] minmax(0, var(--lp-max)) [content-end]
+    minmax(var(--lp-pad), 1fr) [full-end];
+  --lp-radius: 14px;
+  --lp-gap: clamp(56px, 9vw, 112px);
+  min-height: 100%;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow-x: clip;
+}
+
+/* ── shared scaffolding ────────────────────────────────────────────────── */
+
+/* Every section runs edge to edge and centres its own content, rather than
+   the whole page sitting inside one margined box. The named columns do the
+   centring, so a band only has to say which column it wants:
+
+     grid-column: full     → the band itself, wall to wall
+     grid-column: content  → what is inside it, in the reading column
+
+   A band repeats the same track list from `--lp-cols`, which is what lets its
+   children land in `content` without a second wrapper element in every
+   section. */
+.lp-main {
+  display: grid;
+  grid-template-columns: var(--lp-cols);
+}
+
+.lp-main > * {
+  grid-column: content;
+}
+
+.lp-band {
+  grid-column: full;
+  display: grid;
+  grid-template-columns: var(--lp-cols);
+  padding-block: var(--lp-gap);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.lp-band > * {
+  grid-column: content;
+}
+
+/* alternating deck colour, so the page reads as a run of surfaces rather
+   than one field with text on it */
+.lp-band.tint {
+  background: var(--bg-surface);
+}
+
+.lp-h2 {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: clamp(22px, 3.4vw, 30px);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.lp-section-head {
+  max-width: 640px;
+  margin-bottom: clamp(28px, 4vw, 44px);
+}
+
+.lp-section-sub {
+  margin: 12px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.lp-section-sub a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+}
+
+/* the numbered marker on each story section, mirroring the guide hub's
+   numbered index cards so the two pages read as one site */
+.lp-part {
+  display: block;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+/* ── buttons ───────────────────────────────────────────────────────────── */
+
+.lp-btn {
+  position: relative;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 17px 22px;
+  border-radius: 10px;
+  background: var(--chrome-face);
+  border: 1px solid var(--chrome-border);
+  color: var(--chrome-text);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  transition: border-color 0.12s ease, transform 0.15s ease-out, box-shadow 0.12s ease;
+}
+
+.lp-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.lp-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.lp-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #17181a;
+  box-shadow: 0 8px 24px var(--glow-accent);
+  /* keep a long label clear of the absolutely-positioned LED on both sides */
+  padding-inline: 44px;
+}
+
+.lp-btn.primary:hover:not(:disabled) {
+  box-shadow: 0 12px 30px var(--glow-accent);
+}
+
+.lp-btn.compact {
+  flex-direction: row;
+  padding: 11px 18px;
+  font-size: 11px;
+}
+
+/* de-emphasised escape hatch: open a blank preset with no device attached */
+.lp-btn.ghost {
+  background: transparent;
+  border-style: dashed;
+  color: var(--chrome-muted);
+  box-shadow: none;
+}
+
+.lp-btn.ghost:hover:not(:disabled) {
+  color: var(--chrome-text);
+}
+
+.lp-btn-sub {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.lp-led {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(23, 24, 26, 0.35);
+}
+
+.lp-led.on {
+  background: #1d5c37;
+  box-shadow: 0 0 8px 2px rgba(29, 92, 55, 0.45);
+}
+
+.lp-led.busy {
+  background: #17181a;
+  animation: led-pulse 1.2s ease-in-out infinite;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   Hero — always the dark stage, in both themes (`.theme-dark`)
+
+   No decorative gradient anywhere in here, on the type or behind it. The
+   depth comes from the same places the board's does: a hairline faceplate
+   edge, a screwed-down plate, real patch cables and a cast shadow. The only
+   gradients the hero paints are inside LandingCables — a cable's rubber
+   sheath and a plug's chrome — which are lifted verbatim from CableLayer.tsx.
+   ════════════════════════════════════════════════════════════════════════ */
+
+.lp-hero {
+  position: relative;
+  isolation: isolate;
+  background: var(--case);
+  color: var(--chrome-text);
+  padding-bottom: clamp(36px, 6vw, 64px);
+  /* the faceplate edge: a lit top lip over a dark body, the way the board's
+     chassis catches the house lights */
+  border-top: 1px solid color-mix(in srgb, var(--chrome-text) 12%, transparent);
+  overflow: clip;
+}
+
+.lp-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding: 20px var(--lp-pad);
+}
+
+.lp-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lp-brand-name {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--chrome-text);
+}
+
+.lp-nav-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px 20px;
+  flex-wrap: wrap;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.lp-nav-links a {
+  color: var(--chrome-muted);
+  text-decoration: none;
+}
+
+.lp-nav-links a:hover {
+  color: var(--accent);
+}
+
+/* "developed by" stays dim so the byline reads as one item next to the two
+   navigation links rather than competing with them */
+.lp-nav-by {
+  color: color-mix(in srgb, var(--chrome-muted) 62%, transparent);
+  text-transform: none;
+  letter-spacing: 0.06em;
+}
+
+.lp-nav-by a {
+  text-transform: none;
+  color: var(--chrome-muted);
+}
+
+.lp-nav-coffee {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 15px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  color: var(--accent) !important;
+  text-transform: none;
+  letter-spacing: 0.04em;
+  transition: background 0.12s ease, transform 0.15s ease-out;
+}
+
+.lp-nav-coffee:hover {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+/* ── the stage ─────────────────────────────────────────────────────────────
+   A half-stack at each side, the copy between them, a deck under all three.
+   The stacks are deliberately allowed to run off the viewport: cropping them
+   is what makes the reader feel stood between them rather than shown a
+   picture of them. ── */
+
+.lp-stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: end;
+  padding: clamp(28px, 5vw, 56px) var(--lp-pad) clamp(40px, 6vw, 76px);
+}
+
+.lp-stage-copy {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  max-width: 640px;
+  margin-inline: auto;
+  text-align: center;
+  padding-bottom: clamp(12px, 2vw, 28px);
+}
+
+/* ── the lights ────────────────────────────────────────────────────────────
+   Hung at the top corners and rotated on their yokes to aim inward and down,
+   the way a real one is pointed. The rotation pivots on the lens
+   (`transform-origin`), so aiming is a single number rather than a position
+   and an angle that have to be re-tuned together.
+
+   z-index 0 puts them behind the copy and the cabinets but in front of the
+   hero's own background: the beam falls across the stage and the button sits
+   in it, rather than the beam being painted over the button. */
+.lp-light {
+  position: absolute;
+  top: -78px;
+  z-index: 0;
+  /* Sized by WIDTH, not height. The viewBox is mostly beam, so its height is
+     an implementation detail; the width is what sets how big the fixture
+     reads, and driving the scale from it means the beam can be made longer
+     without the can growing to match. */
+  width: clamp(150px, 15vw, 222px);
+  height: auto;
+  pointer-events: none;
+}
+
+/* The aim is a ladder, not one number. The lights hang near the walls and the
+   button is centred, so the angle between them opens up as the viewport gets
+   wider: it wants 50deg at 1280 and 66deg at 2200. A single rotation lands the
+   beam a couple of hundred pixels wide of the button at one end or the other,
+   so the angle steps with the width. Measured, not guessed — the three values
+   are the mid-point of each band. */
+/* Negative on the left, positive on the right. CSS rotation is clockwise, so
+   the sign that points a downward beam *inward* is the counter-intuitive one:
+   the left-hand light has to turn anticlockwise to sweep right. */
+.lp-light.left {
+  left: clamp(-40px, 1vw, 60px);
+  transform-origin: 50% 10%;
+  transform: rotate(-53deg);
+}
+
+.lp-light.right {
+  right: clamp(-40px, 1vw, 60px);
+  transform-origin: 50% 10%;
+  transform: rotate(53deg);
+}
+
+@media (min-width: 1600px) {
+  .lp-light.left { transform: rotate(-60deg); }
+  .lp-light.right { transform: rotate(60deg); }
+}
+
+@media (min-width: 2000px) {
+  .lp-light.left { transform: rotate(-65deg); }
+  .lp-light.right { transform: rotate(65deg); }
+}
+
+/* Below the stack breakpoint the hero is one narrow column and two crossing
+   beams sit on top of the headline instead of beside it. */
+@media (max-width: 1199px) {
+  .lp-light {
+    display: none;
+  }
+}
+
+/* the stacks are absolutely placed so the copy column keeps the full width to
+   itself while they overlap the edges */
+.lp-stack {
+  display: none;
+  position: absolute;
+  bottom: clamp(34px, 5vw, 66px);
+  z-index: 1;
+  height: clamp(300px, 40vw, 470px);
+  width: auto;
+  filter: drop-shadow(0 26px 34px rgba(0, 0, 0, 0.55));
+  will-change: transform;
+}
+
+/* Standing clear of the walls rather than pushed up against them. The gap
+   scales with the viewport, so the stacks sit in the room at every width
+   instead of being flush at one and stranded at another. */
+.lp-stack.left {
+  left: clamp(10px, 2vw, 44px);
+}
+
+.lp-stack.right {
+  right: clamp(10px, 2vw, 44px);
+}
+
+/* the deck: a lit front lip over a darker floor, the way a riser catches the
+   footlights. Flat colours and one hairline, not a wash. */
+.lp-deck {
+  position: absolute;
+  inset: auto 0 0;
+  height: clamp(34px, 5vw, 66px);
+  background: var(--board);
+  border-top: 1px solid color-mix(in srgb, var(--chrome-text) 16%, transparent);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.6);
+}
+
+.lp-chips {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.lp-chip {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--body, #444);
+  color: var(--ink, #eee);
+  border: 1px solid color-mix(in srgb, var(--ink, #888) 25%, transparent);
+}
+
+.lp-h1 {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+/* the brand reads as a model designation stamped above the line, which is why
+   it is mono, small, amber and letterspaced rather than a second headline */
+.lp-h1-brand {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.lp-h1-line {
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: clamp(32px, 5.4vw, 52px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  max-width: 16ch;
+  color: var(--chrome-text);
+}
+
+.lp-lede {
+  max-width: 50ch;
+  margin: 20px auto 0;
+  font-size: clamp(15px, 1.8vw, 17px);
+  line-height: 1.65;
+  color: var(--chrome-muted);
+}
+
+.lp-connect {
+  margin-top: clamp(24px, 3.5vw, 34px);
+}
+
+.lp-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+  max-width: 400px;
+  margin-inline: auto;
+}
+
+.lp-msg {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  line-height: 1.6;
+  letter-spacing: 0.05em;
+  color: var(--chrome-muted);
+  max-width: 44ch;
+  margin: 16px auto 0;
+}
+
+.lp-msg.error {
+  color: var(--accent-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* the not-found message names the ports the browser did see and, on Linux,
+     the modprobe fix — several lines. Wrap it rather than squeezing the ✕. */
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.lp-msg.error button {
+  font-weight: 800;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: inherit;
+}
+
+.lp-guide-link {
+  display: inline-block;
+  margin-top: 20px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--chrome-text);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.lp-guide-link:hover {
+  color: var(--accent);
+}
+
+/* ── the cables, drooping out of the copy and into the screenshot ──────── */
+
+.lp-cable-band {
+  position: relative;
+  /* over the screenshot frame, not behind it: these are cables lying on the
+     unit, and the negative margin is what lands them there */
+  z-index: 2;
+  width: min(100%, 720px);
+  margin: clamp(24px, 3.5vw, 40px) auto -30px;
+  padding-inline: var(--lp-pad);
+  pointer-events: none;
+  /* below 900px the hero is one narrow column, the frame sits close under the
+     copy, and a cable run across it reads as a stray squiggle */
+  display: none;
+}
+
+.lp-cables {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* the editor screenshot, tilted into the page. `perspective` lives on the
+   wrapper so useLandingMotion can scrub rotateX on the frame itself. */
+.lp-hero-shot {
+  max-width: 1240px;
+  margin: clamp(20px, 3vw, 32px) auto 0;
+  padding-inline: var(--lp-pad);
+  perspective: 1600px;
+}
+
+.lp-hero-frame {
+  border-radius: var(--lp-radius);
+  border: 1px solid var(--chrome-border);
+  background: var(--chrome-bg);
+  padding: 8px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+  transform-origin: 50% 0%;
+  will-change: transform;
+}
+
+.lp-shot-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+/* ── hero entrance: CSS, so it is correct on the first painted frame ───── */
+
+@keyframes lp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.lp-anim {
+  animation: lp-rise 0.65s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+/* Keyed off the copy column, not off the hero, so adding a wrapper somewhere
+   in between cannot silently re-time the sequence. */
+.lp-stage-copy .lp-anim:nth-child(1) { animation-delay: 0.02s; }
+.lp-stage-copy .lp-anim:nth-child(2) { animation-delay: 0.09s; }
+.lp-stage-copy .lp-anim:nth-child(3) { animation-delay: 0.16s; }
+.lp-stage-copy .lp-anim:nth-child(4) { animation-delay: 0.23s; }
+.lp-stage-copy .lp-anim:nth-child(5) { animation-delay: 0.3s; }
+.lp-hero-shot.lp-anim { animation-delay: 0.4s; animation-duration: 0.9s; }
+
+/* ════════════════════════════════════════════════════════════════════════
+   Below the fold — follows the stage theme
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* the GSAP reveal gate. Set by the pre-paint script in index.html only when
+   motion is welcome, cleared if the bundle never boots. Nothing else on this
+   page may hide content unconditionally. */
+:root[data-anim='on'] .lp-reveal {
+  opacity: 0;
+}
+
+/* ── stats rule ────────────────────────────────────────────────────────── */
+
+.lp-stats-band {
+  padding-block: clamp(30px, 4.5vw, 46px);
+  background: var(--bg-surface);
+}
+
+.lp-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px 16px;
+}
+
+/* the old rating plate, flattened into one stencilled line under the figures */
+.lp-spec-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 26px;
+  margin: clamp(24px, 3vw, 34px) 0 0;
+  padding-top: clamp(18px, 2.5vw, 24px);
+  border-top: 1px solid var(--border-subtle);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.lp-spec-pair {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.lp-spec-pair dt {
+  color: var(--text-muted);
+}
+
+.lp-spec-pair dd {
+  margin: 0;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.lp-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lp-stat-value {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: clamp(30px, 5vw, 44px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+  /* the counter rewrites this text; reserve the digits so the rule below it
+     cannot shuffle while it counts */
+  font-variant-numeric: tabular-nums;
+}
+
+.lp-stat-label {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ── story sections ────────────────────────────────────────────────────── */
+
+/* `.lp-story` is the full-bleed band; `.lp-story-inner` is the two-column
+   layout inside it. They have to be separate elements: the band's job is to
+   pass the page's own track list down so its content lands in the reading
+   column, and it cannot also declare columns of its own. */
+.lp-story-inner {
+  display: grid;
+  gap: clamp(28px, 5vw, 48px);
+  align-items: center;
+}
+
+.lp-story-text {
+  max-width: 56ch;
+}
+
+.lp-story-lede {
+  margin: 16px 0 0;
+  font-size: clamp(17px, 2.2vw, 20px);
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.lp-story-body {
+  margin: 14px 0 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+.lp-points {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lp-points li {
+  position: relative;
+  padding-left: 20px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.lp-points li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.lp-story-shots {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.lp-shot {
+  margin: 0;
+  padding: 6px;
+  border-radius: var(--lp-radius);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.14);
+  will-change: transform;
+}
+
+.lp-photo .lp-shot-img {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+/* ── the amps, by their real names ─────────────────────────────────────── */
+
+.lp-amps .lp-amp-list {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  /* one hairline grid: the cells share borders instead of each carrying its
+     own, which is what makes it read as a table of models rather than a wall
+     of cards */
+  background: var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--lp-radius);
+  overflow: hidden;
+}
+
+.lp-amp {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  background: var(--bg-surface);
+}
+
+/* the pedal's own code, set the way the pedal sets it */
+.lp-amp dt {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.lp-amp dd {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.lp-amp-more {
+  margin: 18px 0 0;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ── pedal rail ────────────────────────────────────────────────────────── */
+
+.lp-marquee {
+  overflow: hidden;
+  padding-block: clamp(24px, 3vw, 36px);
+  /* fade the rail out at both edges so the loop seam is never the thing you
+     notice about it */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+
+.lp-marquee > .lp-marquee-track {
+  grid-column: full;
+}
+
+.lp-marquee-track {
+  display: flex;
+  align-items: center;
+  gap: clamp(20px, 4vw, 44px);
+  width: max-content;
+  will-change: transform;
+}
+
+.lp-marquee-pedal {
+  display: block;
+  height: clamp(74px, 11vw, 104px);
+  width: auto;
+  opacity: 0.75;
+}
+
+/* ── feature grid ──────────────────────────────────────────────────────── */
+
+.lp-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.lp-card {
+  padding: 22px 20px;
+  border-radius: var(--lp-radius);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  /* z-index target: a grown card has to draw over its neighbours in the grid. */
+  position: relative;
+  transition: border-color 0.12s ease, transform 0.15s ease-out;
+}
+
+.lp-card:hover {
+  border-color: var(--accent);
+}
+
+.lp-card-title {
+  margin: 0;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.lp-card-body {
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* ── FAQ ───────────────────────────────────────────────────────────────── */
+
+.lp-faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 780px;
+}
+
+/* <details>, not a JS accordion: the prerendered page has no React on it
+   until the bundle boots, and every answer must still open before then. */
+.lp-faq-item {
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  padding: 4px 18px;
+}
+
+.lp-faq-item summary {
+  cursor: pointer;
+  padding: 15px 0;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  list-style: none;
+}
+
+.lp-faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.lp-faq-item summary::after {
+  content: '+';
+  float: right;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.lp-faq-item[open] summary::after {
+  content: '–';
+}
+
+.lp-faq-item p {
+  margin: 0 0 16px;
+  padding-right: 24px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+/* ── build log ─────────────────────────────────────────────────────────── */
+
+.lp-post-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.lp-post {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  padding: 20px;
+  border-radius: var(--lp-radius);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  text-decoration: none;
+  height: 100%;
+  position: relative;
+  transition: border-color 0.12s ease, transform 0.15s ease-out;
+}
+
+.lp-post:hover {
+  border-color: var(--accent);
+}
+
+.lp-post-part {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.lp-post-title {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.lp-post-blurb {
+  display: block;
+  margin-top: 8px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.lp-post-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 14px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* the arrow is the only moving part: it steps out of the card on hover the way
+   the cards lift, so the external jump is signalled before the click */
+.lp-post-arrow {
+  font-size: 12px;
+  transition: transform 0.12s ease, color 0.12s ease;
+}
+
+.lp-post:hover .lp-post-arrow {
+  color: var(--accent);
+  transform: translate(2px, -2px);
+}
+
+/* ── footer ────────────────────────────────────────────────────────────── */
+
+.lp-footer {
+  padding-block: clamp(56px, 8vw, 96px) clamp(40px, 6vw, 64px);
+  border-bottom: none;
+  text-align: center;
+}
+
+.lp-footer-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.lp-footer-cta .lp-section-sub {
+  max-width: 46ch;
+}
+
+.lp-footer-cta .lp-btn {
+  margin-top: 6px;
+}
+
+.lp-footer-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 20px;
+  margin-top: 4px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lp-footer-links a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.lp-footer-links a:hover {
+  color: var(--accent);
+}
+
+/* Credits is shared with the guide footer; only the wrapper differs. */
+.lp-credits {
+  margin-top: clamp(40px, 6vw, 64px);
+  padding-top: 28px;
+  border-top: 1px solid var(--border-subtle);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.lp-credits .credits-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 16px;
+}
+
+.lp-credits .credits-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.lp-credits .credits-links a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* the support link is promoted out of the 10px credits row into its own pill;
+   `order: -1` lifts it above the byline without reordering the markup (the
+   guide footer wants it last). */
+.lp-credits .credits-coffee {
+  order: -1;
+  margin-bottom: 6px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: var(--accent);
+  text-decoration: none;
+  position: relative;
+  transition: background 0.12s ease, transform 0.15s ease-out;
+}
+
+.lp-credits .credits-coffee:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+/* ── sticky bar ────────────────────────────────────────────────────────────
+   Hidden unconditionally, not behind `data-anim`: with no JavaScript there is
+   no scroll trigger to reveal it, and a bar pinned over a static page would
+   just cover the content. Everything it offers exists in the hero and the
+   footer too. GSAP's autoAlpha drives `visibility`, which is also what keeps
+   it from swallowing clicks while it is down. */
+.lp-sticky {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 40;
+  visibility: hidden;
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  max-width: calc(100vw - 24px);
+  padding: 10px 12px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.24);
+}
+
+/* Hidden until there is room for it: on a phone the wordmark wrapped to two
+   lines and pushed the button past the pill's own rounded edge. The bar is
+   there for the button, and the name is on the page above it either way. */
+.lp-sticky-name {
+  display: none;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+}
+
+.lp-sticky-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.lp-sticky-link {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.lp-sticky-link:hover {
+  color: var(--accent);
+}
+
+/* The pill overrides `.lp-btn.primary`'s wide `padding-inline` with a tight
+   one, leaving nowhere for the hero button's absolutely-positioned LED to sit
+   without landing on the text. `.lp-btn.compact` is already a row with a gap,
+   so put the dot in flow instead. */
+.lp-btn.compact .lp-led {
+  position: static;
+  transform: none;
+  flex: none;
+}
+
+/* The label is a live handshake step while connecting, and those run as long
+   as `Slot A1 · Some Patch Name`. Clamp it: the bar is `position: fixed` and a
+   phone has no room for it to grow into. */
+.lp-sticky-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: min(220px, 44vw);
+}
+
+/* ── the /editor shell ─────────────────────────────────────────────────────
+   What ships at /editor before the bundle boots, and what stays if it never
+   does (src/prerender/EditorShell.tsx). It reuses `.lp .theme-dark` so the
+   hand-off to the real editor is not a flash of a differently-coloured page. */
+
+.lp-shell {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: clamp(64px, 14vh, 140px) var(--lp-pad);
+  text-align: center;
+}
+
+.lp-shell-title {
+  margin: 22px 0 0;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: clamp(22px, 4vw, 30px);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--chrome-text);
+}
+
+.lp-shell-body {
+  margin: 16px 0 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--chrome-muted);
+}
+
+.lp-shell-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 22px;
+  margin: 28px 0 0;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lp-shell-links a {
+  color: var(--accent);
+  text-underline-offset: 4px;
+}
+
+/* ── hover grows, it does not lift ─────────────────────────────────────────
+   The gesture the app already teaches: hover a knob on the board and it grows
+   (board.css, `.board-view .knob:hover { transform: scale(1.2) }`). This page
+   answers a hover the same way, and borrows all four of that rule's guards —
+   the `hover: hover` query, the 0.15s ease-out, the z-index, and the
+   reduced-motion opt-out at the bottom of this file.
+
+   What does NOT carry over is the factor. A knob is 48px, so scale(1.2) is a
+   9.6px jump; the same number on a 355px card is 71px, which reads as the
+   layout breaking rather than the card responding. So the *growth* is matched
+   instead of the scale: every element gains roughly 8-9px, which means the
+   small pills scale most and the wide cards least, and the gesture feels like
+   one gesture across the page.
+
+   Deliberately not in here: `.lp-shot`, `.lp-hero-frame`, `.lp-marquee-track`
+   and `.lp-stack`. GSAP scrubs `transform` on all four (parallax, hero tilt,
+   the pedal rail, the speaker bump), and a CSS hover transform would be
+   overwritten mid-scroll by the timeline's inline style.
+
+   Guarded by `hover: hover` so a touchscreen laptop — which keeps the desktop
+   tree — cannot leave a card stuck big after a tap. */
+@media (hover: hover) {
+  /* ~190px wide → +9px */
+  .lp-nav-coffee:hover,
+  .lp-credits .credits-coffee:hover {
+    transform: scale(1.05);
+  }
+
+  /* ~400px wide → +8px */
+  .lp-btn:hover:not(:disabled) {
+    transform: scale(1.02);
+    z-index: 1;
+  }
+
+  /* ~355px wide → +9px */
+  .lp-card:hover {
+    transform: scale(1.025);
+    z-index: 1;
+  }
+
+  /* ~560px wide → +8px */
+  .lp-post:hover {
+    transform: scale(1.015);
+    z-index: 1;
+  }
+}
+
+/* Press releases the growth, so a click reads as the thing being pushed back
+   down. Same idea as `.board-view .chain-node:active` on the board. */
+.lp-nav-coffee:active,
+.lp-credits .credits-coffee:active,
+.lp-btn:active:not(:disabled),
+.lp-card:active,
+.lp-post:active {
+  transform: none;
+}
+
+/* ── breakpoints ───────────────────────────────────────────────────────── */
+
+@media (min-width: 620px) {
+  .lp-amps .lp-amp-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .lp-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .lp-post-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .lp-stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .lp-actions {
+    max-width: 460px;
+  }
+  .lp-sticky {
+    padding-left: 20px;
+  }
+  .lp-sticky-name {
+    display: inline;
+  }
+}
+
+@media (min-width: 1200px) {
+  /* The stacks need room beside the copy before they are worth showing, and
+     standing them clear of the walls costs more of it. Below this the copy
+     column and a cabinet end up within a few pixels of each other, so the
+     stacks simply don't appear and the hero is a single clean column. */
+  .lp-stack {
+    display: block;
+  }
+  /* Room for a cabinet plus its wall gap on each side. Worked from the widest
+     the cabinet gets — a 200x320 viewBox at `height`, so 0.625 of it — plus
+     the inset above, with margin left over at every step from 1200 up. */
+  .lp-stage {
+    padding-inline: clamp(360px, 27vw, 400px);
+  }
+  .lp-cable-band {
+    display: block;
+  }
+  .lp-story-inner {
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.18fr);
+  }
+  /* alternate which side the screenshot falls on, without reordering the
+     markup: the prose stays first in the reading and tab order either way */
+  .lp-story.flip .lp-story-text {
+    order: 2;
+  }
+  .lp-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .lp-amps .lp-amp-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ── reduced motion ────────────────────────────────────────────────────────
+   src/index.css already flattens `animation-duration` / `transition-duration`
+   globally, which covers the hero's CSS entrance. GSAP bypasses both, so
+   useLandingMotion checks the query itself and never starts — which also
+   means `data-anim` is never set and nothing below the fold is ever hidden.
+   All that is left here is the transform idle state. */
+@media (prefers-reduced-motion: reduce) {
+  .lp-marquee-track,
+  .lp-hero-frame,
+  .lp-shot,
+  .lp-stack,
+  .lp-stack [data-lp-cone] {
+    transform: none !important;
+    will-change: auto;
+  }
+  .lp-card:hover,
+  .lp-post:hover,
+  .lp-btn:hover:not(:disabled),
+  .lp-nav-coffee:hover,
+  .lp-credits .credits-coffee:hover {
+    transform: none;
+  }
+}

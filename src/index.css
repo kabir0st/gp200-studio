@@ -43,20 +43,31 @@
   --text-muted: #5c6066;
   --border-subtle: #d9dbdf;
   --border-active: #adb1b7;
-  --accent-amber: #8a6320;
-  --accent-amber-dim: #6b4e19;
+  /* The accent is cyan, and red/green are the only status colours. That split
+     is the whole scheme: cyan means "you can act on this or you just did",
+     red and green mean "this is the state of something". The knob halo below
+     was already cyan for exactly that reason, so the accent now agrees with
+     the one interaction cue the board had rather than arguing with it.
+
+     Two values per theme, both carrying their own contrast: #0b6f82 clears
+     WCAG AA on --bg-surface (5.2:1) and the bright twin takes --bg-primary as
+     its text colour on a filled button (10.3:1). */
+  --accent: #0b6f82;
+  --accent-dim: #095766;
   --accent-red: #b4423a;
   --accent-green: #2f7e4f;
-  --glow-amber: rgba(138, 99, 32, 0.18);
+  --glow-accent: rgba(11, 111, 130, 0.18);
   --glow-red: rgba(180, 66, 58, 0.15);
   --glow-green: rgba(47, 126, 79, 0.15);
   /* neon halo on a hovered/dragged pedal knob: the cue that the knob has
-     claimed the mouse wheel. Cyan on purpose -- amber/red/green are status
-     colours here, and this is an interaction state, not a status. */
+     claimed the mouse wheel. The same cyan family as --accent, brighter and
+     more saturated because a halo has to read as light rather than as ink. */
   --knob-glow: rgba(0, 178, 204, 0.62);
   --knob-glow-soft: rgba(0, 178, 204, 0.3);
   --knob-track: #d9dbdf;
-  --knob-fill: #8a6320;
+  /* the filled part of a knob's arc IS the accent -- held as a reference, not
+     a second copy of the hex, which is how it silently stayed amber once. */
+  --knob-fill: var(--accent);
 
   /* ── Board view environment (docs/board-design-system.md, LIGHT values) ──
      Skeuomorphic component styles live in src/components/board/board.css;
@@ -98,8 +109,18 @@
 
    Pedal bodies are deliberately untouched. They come from the artwork
    manifest (physical objects don't repaint when the house lights drop);
-   what dims is the room around them: case, chassis, chrome and dialogs. */
-:root[data-theme='dark'] {
+   what dims is the room around them: case, chassis, chrome and dialogs.
+
+   `.theme-dark` selects the same declarations on a subtree instead of the
+   document, because custom properties inherit. The landing hero uses it to
+   stay a dark stage in both themes (src/components/landing/landing.css)
+   without a second copy of any component rule. One caveat comes with it:
+   rules written as `:root[data-theme='dark'] .x` — the .shot-light/.shot-dark
+   swap just below is the only one — do NOT apply inside such an island while
+   the document itself is light, which is why LandingShot takes an explicit
+   variant rather than relying on that swap. */
+:root[data-theme='dark'],
+.theme-dark {
   --bg-primary: #17181a;
   --bg-surface: #1e2023;
   --bg-surface-raised: #24262a;
@@ -113,17 +134,17 @@
   --text-muted: #98938a;
   --border-subtle: #33363b;
   --border-active: #4d515a;
-  --accent-amber: #e0a949;
-  --accent-amber-dim: #b8873a;
+  --accent: #4fd6ee;
+  --accent-dim: #33aec4;
   --accent-red: #e2685c;
   --accent-green: #4fbd7d;
-  --glow-amber: rgba(224, 169, 73, 0.3);
+  --glow-accent: rgba(79, 214, 238, 0.3);
   --glow-red: rgba(226, 104, 92, 0.28);
   --glow-green: rgba(79, 189, 125, 0.26);
   --knob-glow: rgba(96, 235, 255, 0.68);
   --knob-glow-soft: rgba(96, 235, 255, 0.32);
   --knob-track: #3a3d42;
-  --knob-fill: #e0a949;
+  --knob-fill: var(--accent);
 
   --case: #141517;
   --board: #1c1e21;
@@ -203,12 +224,12 @@ input[type="range"]::-webkit-slider-thumb {
   border-radius: 50%;
   background: var(--knob-fill);
   margin-top: -6px;
-  box-shadow: 0 0 8px var(--glow-amber), 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 8px var(--glow-accent), 0 1px 3px rgba(0, 0, 0, 0.3);
   transition: box-shadow 0.15s;
 }
 
 input[type="range"]::-webkit-slider-thumb:hover {
-  box-shadow: 0 0 14px var(--glow-amber), 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 14px var(--glow-accent), 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 input[type="range"]::-moz-range-track {
@@ -223,7 +244,7 @@ input[type="range"]::-moz-range-thumb {
   border: none;
   border-radius: 50%;
   background: var(--knob-fill);
-  box-shadow: 0 0 8px var(--glow-amber), 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 8px var(--glow-accent), 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 /* ── Select styling ── */
@@ -304,9 +325,9 @@ select option {
    clicks don't trigger it, keeping the UI calm. Components that need a
    custom ring can opt out per-case with focus-visible:outline-none. */
 :focus-visible {
-  outline: 2px solid var(--accent-amber);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px var(--glow-amber);
+  box-shadow: 0 0 0 4px var(--glow-accent);
   border-radius: 4px;
 }
 

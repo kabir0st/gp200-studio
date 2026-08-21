@@ -71,7 +71,7 @@ export function DeviceSlotBrowser({
                 className="h-full rounded-full transition-all"
                 style={{
                   width: `${(namesLoadProgress / 256) * 100}%`,
-                  background: 'var(--accent-amber)',
+                  background: 'var(--accent)',
                 }}
               />
             </div>

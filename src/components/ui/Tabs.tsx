@@ -19,7 +19,7 @@ const BASE_TAB_CLASSES =
 
 function tabClasses(selected: boolean): string {
   if (selected) {
-    return `${BASE_TAB_CLASSES} text-accent-amber border-accent-amber`;
+    return `${BASE_TAB_CLASSES} text-accent border-accent`;
   }
   return (
     `${BASE_TAB_CLASSES} text-text-secondary border-transparent ` +

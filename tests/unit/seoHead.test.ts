@@ -22,8 +22,9 @@ function attr(html: string, pattern: RegExp): string | undefined {
 }
 
 describe('seo head', () => {
-  it('covers the home page, the guide hub, 13 sections and a 404', () => {
-    expect(ROUTES).toHaveLength(16);
+  it('covers the home page, the editor, the guide hub, 13 sections and a 404', () => {
+    expect(ROUTES).toHaveLength(17);
+    // /editor is an app shell, so it is described but never advertised.
     expect(SITEMAP_ROUTES).toHaveLength(15);
   });
 
@@ -45,10 +46,16 @@ describe('seo head', () => {
     expect(html).toContain('content="Kabir Tamari"');
   });
 
-  it('marks only the 404 page noindex', () => {
+  // The two pages with nothing for a searcher to land on: the 404, and the
+  // editor, which is an app shell whose prose all lives on '/' and '/guide'.
+  // Everything else must stay indexable — that is what this asserts, and the
+  // set is the allowlist rather than a reason to stop checking.
+  const NOINDEX = new Set(['/404', '/editor']);
+
+  it('marks only the 404 and the editor noindex', () => {
     for (const [path, html] of heads) {
       const robots = attr(html, /name="robots" content="([^"]+)"/) ?? '';
-      expect(robots.includes('noindex')).toBe(path === '/404');
+      expect(robots.includes('noindex')).toBe(NOINDEX.has(path));
     }
   });
 

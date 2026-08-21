@@ -83,7 +83,7 @@ export function BulkApplySection({
             className="h-full rounded-full transition-all"
             style={{
               width: `${(progress.done / progress.total) * 100}%`,
-              background: 'var(--accent-amber)',
+              background: 'var(--accent)',
             }}
           />
         </div>
@@ -178,7 +178,7 @@ export function BulkApplySection({
           value={volume}
           disabled={!applyVolume}
           onChange={(event) => setVolume(Number(event.target.value))}
-          className="flex-1 min-w-16 accent-accent-amber disabled:opacity-40"
+          className="flex-1 min-w-16 accent-accent disabled:opacity-40"
           aria-label="Patch volume to apply"
         />
         <b className="w-8 text-right tabular-nums text-text-secondary">{volume}</b>

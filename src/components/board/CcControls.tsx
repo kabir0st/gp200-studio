@@ -31,7 +31,7 @@ export function CcSlider({ label, value, disabled, onChange }: CcSliderProps) {
         value={value}
         disabled={disabled}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="flex-1 min-w-16 accent-accent-amber"
+        className="flex-1 min-w-16 accent-accent"
         aria-label={label}
       />
       <b className="font-mono-display text-caption text-text-secondary w-8 text-right tabular-nums">

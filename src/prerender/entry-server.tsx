@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Landing } from '@/components/Landing';
+import { EditorShell } from './EditorShell';
 import { GuideHub } from '@/guide/GuideHub';
 import { GuideSectionPage } from '@/guide/GuideSection';
 import { NotFound } from '@/guide/NotFound';
@@ -51,6 +52,7 @@ function LandingPage() {
 
 function bodyFor(route: Route): string {
   if (route.path === '/') return renderToStaticMarkup(<LandingPage />);
+  if (route.path === '/editor') return renderToStaticMarkup(<EditorShell />);
   if (route.path === '/404') return renderToStaticMarkup(<NotFound />);
   if (route.path === '/guide') return renderToStaticMarkup(<GuideHub />);
   const slug = route.path.replace('/guide/', '');

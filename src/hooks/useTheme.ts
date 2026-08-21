@@ -11,14 +11,18 @@ const THEME_COLOR: Record<ThemeName, string> = {
 };
 
 /**
- * The theme the document is already showing. index.html sets `data-theme` from
- * localStorage before first paint (no flash of the wrong stage), so React must
- * adopt that value rather than re-deciding it and re-painting.
+ * The theme the document is already showing. index.html sets `data-theme`
+ * before first paint (no flash of the wrong stage), so React must adopt that
+ * value rather than re-deciding it and re-painting.
+ *
+ * Dark is the fallback, and the check is written against 'light' so that any
+ * value the pre-paint script did not set — a missing attribute, a typo, a
+ * blocked localStorage — lands on the default rather than on the exception.
  */
 function readInitialTheme(): ThemeName {
-  if (typeof document === 'undefined') return 'light';
-  if (document.documentElement.dataset.theme === 'dark') return 'dark';
-  return 'light';
+  if (typeof document === 'undefined') return 'dark';
+  if (document.documentElement.dataset.theme === 'light') return 'light';
+  return 'dark';
 }
 
 /**
@@ -26,10 +30,15 @@ function readInitialTheme(): ThemeName {
  * src/index.css selected by `:root[data-theme]`, so switching is one attribute
  * write and every component (Tailwind tokens, board.css, mobile.css) follows.
  *
+ * Dark by default. The board is a stage instrument, the landing page it is
+ * reached through is a dark stage end to end, and lights-down is the room a
+ * pedalboard is usually in. The light stage is still there on the power
+ * rocker, and once flipped it is remembered.
+ *
  * The choice is remembered in localStorage. It is deliberately NOT seeded from
- * `prefers-color-scheme`: the board is a stage instrument whose light
- * environment is a design decision, and OS dark mode shouldn't silently change
- * how a pedalboard looks under stage lights.
+ * `prefers-color-scheme`: the board's light environment is a design decision,
+ * and OS light mode shouldn't silently change how a pedalboard looks under
+ * stage lights.
  */
 export function useTheme() {
   const [theme, setTheme] = useState<ThemeName>(readInitialTheme);

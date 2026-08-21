@@ -41,7 +41,7 @@ const BLOCK_CLASS =
 const TITLE_CLASS =
   'font-mono-display text-label text-text-secondary uppercase tracking-widest';
 const HINT_CLASS = 'font-mono-display text-caption text-text-muted';
-const VALUE_CLASS = 'font-mono-display text-caption text-accent-amber tabular-nums';
+const VALUE_CLASS = 'font-mono-display text-caption text-accent tabular-nums';
 
 interface BlockProps {
   title: string;
@@ -250,7 +250,7 @@ export function LooperSetup({ looper, tempo }: LooperSetupProps) {
             step={10}
             value={settings.tailBlendMs}
             onChange={(event) => updateSettings({ tailBlendMs: Number(event.target.value) })}
-            className="w-full accent-accent-amber"
+            className="w-full accent-accent"
             aria-label="Loop join length in milliseconds"
           />
         </SetupBlock>
@@ -269,7 +269,7 @@ export function LooperSetup({ looper, tempo }: LooperSetupProps) {
             step={5}
             value={settings.latencyTrimMs}
             onChange={(event) => updateSettings({ latencyTrimMs: Number(event.target.value) })}
-            className="flex-1 min-w-[10rem] accent-accent-amber"
+            className="flex-1 min-w-[10rem] accent-accent"
             aria-label="Extra latency trim in milliseconds"
           />
           <span className="font-mono-display text-caption text-text-secondary tabular-nums w-20 text-right">

@@ -4,7 +4,7 @@ import { Credits } from '@/components/Credits';
 import { GUIDE_SECTIONS } from './manifest';
 
 const CREDITS_CLASS =
-  'font-mono-display text-label text-text-muted tracking-wide flex flex-col items-start gap-1 [&_.credits-links]:flex [&_.credits-links]:flex-wrap [&_.credits-links]:gap-4 [&_.credits-links]:mt-1 [&_a]:text-text-secondary [&_a]:underline [&_a:hover]:text-accent-amber [&_.credits-coffee]:order-first [&_.credits-coffee]:mb-3 [&_.credits-coffee]:rounded-full [&_.credits-coffee]:border [&_.credits-coffee]:border-accent-amber [&_.credits-coffee]:px-4 [&_.credits-coffee]:py-2 [&_.credits-coffee]:text-[12px] [&_.credits-coffee]:font-bold [&_.credits-coffee]:!text-accent-amber [&_.credits-coffee]:!no-underline';
+  'font-mono-display text-label text-text-muted tracking-wide flex flex-col items-start gap-1 [&_.credits-links]:flex [&_.credits-links]:flex-wrap [&_.credits-links]:gap-4 [&_.credits-links]:mt-1 [&_a]:text-text-secondary [&_a]:underline [&_a:hover]:text-accent [&_.credits-coffee]:order-first [&_.credits-coffee]:mb-3 [&_.credits-coffee]:rounded-full [&_.credits-coffee]:border [&_.credits-coffee]:border-accent [&_.credits-coffee]:px-4 [&_.credits-coffee]:py-2 [&_.credits-coffee]:text-[12px] [&_.credits-coffee]:font-bold [&_.credits-coffee]:!text-accent [&_.credits-coffee]:!no-underline';
 
 /**
  * Header, sidebar and footer shared by /guide and every /guide/<slug> page.
@@ -81,7 +81,7 @@ export function GuideChrome({
           <footer className="mt-14 pt-6 border-t border-border-subtle flex flex-col items-start gap-3">
             <a
               href="/"
-              className="font-mono-display text-label tracking-wide text-text-secondary underline hover:text-accent-amber"
+              className="font-mono-display text-label tracking-wide text-text-secondary underline hover:text-accent"
             >
               ← Back to the app
             </a>
