@@ -178,6 +178,7 @@ export function useLandingMotion(scope: RefObject<HTMLElement | null>) {
         const cones = q<SVGGElement>('[data-lp-cone]');
         const cabs = q<SVGElement>('[data-lp-cab]');
         const jewels = q<SVGElement>('[data-lp-jewel]');
+        const beams = q<SVGGElement>('[data-lp-beam]');
         if (cones.length) {
           const bar = gsap.timeline({ repeat: -1 });
           const BEAT = 0.5;
@@ -200,7 +201,14 @@ export function useLandingMotion(scope: RefObject<HTMLElement | null>) {
                 .to(cabs, { y: 2, duration: 0.05, ease: 'power3.out' }, at)
                 .to(cabs, { y: 0, duration: 0.38, ease: 'elastic.out(1, 0.5)' }, at + 0.05)
                 .to(jewels, { opacity: 1, duration: 0.05 }, at)
-                .to(jewels, { opacity: 0.62, duration: 0.42, ease: 'sine.out' }, at + 0.05);
+                .to(jewels, { opacity: 0.62, duration: 0.42, ease: 'sine.out' }, at + 0.05)
+                // The lights lift with the kick too, so the stage reads as one
+                // rig on one clock rather than three things each doing its own
+                // thing. Shallow on purpose: the beams land on the button, and
+                // anything more than a breath there turns the primary action
+                // into a flashing sign.
+                .to(beams, { opacity: 1, duration: 0.06, ease: 'power2.out' }, at)
+                .to(beams, { opacity: 0.86, duration: 0.44, ease: 'sine.out' }, at + 0.06);
             }
           }
           const stage = root.querySelector<HTMLElement>('.lp-stage');

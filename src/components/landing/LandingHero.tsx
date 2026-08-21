@@ -9,6 +9,7 @@ import { LandingConnect } from './LandingConnect';
 import { LandingShot } from './LandingShot';
 import { LandingCables } from './LandingCables';
 import { LandingStack } from './LandingStack';
+import { LandingLight } from './LandingLight';
 import { HERO } from './copy';
 
 interface LandingHeroProps {
@@ -76,6 +77,11 @@ export function LandingHero({
           </a>
         </span>
       </nav>
+
+      {/* Rigged over the stage and aimed at the CONNECT button, so the
+          brightest thing on the page and the thing to click are the same. */}
+      <LandingLight side="left" />
+      <LandingLight side="right" />
 
       <div className="lp-stage">
         <LandingStack side="left" />

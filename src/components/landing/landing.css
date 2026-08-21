@@ -335,6 +335,67 @@
   padding-bottom: clamp(12px, 2vw, 28px);
 }
 
+/* ── the lights ────────────────────────────────────────────────────────────
+   Hung at the top corners and rotated on their yokes to aim inward and down,
+   the way a real one is pointed. The rotation pivots on the lens
+   (`transform-origin`), so aiming is a single number rather than a position
+   and an angle that have to be re-tuned together.
+
+   z-index 0 puts them behind the copy and the cabinets but in front of the
+   hero's own background: the beam falls across the stage and the button sits
+   in it, rather than the beam being painted over the button. */
+.lp-light {
+  position: absolute;
+  top: -78px;
+  z-index: 0;
+  /* Sized by WIDTH, not height. The viewBox is mostly beam, so its height is
+     an implementation detail; the width is what sets how big the fixture
+     reads, and driving the scale from it means the beam can be made longer
+     without the can growing to match. */
+  width: clamp(150px, 15vw, 222px);
+  height: auto;
+  pointer-events: none;
+}
+
+/* The aim is a ladder, not one number. The lights hang near the walls and the
+   button is centred, so the angle between them opens up as the viewport gets
+   wider: it wants 50deg at 1280 and 66deg at 2200. A single rotation lands the
+   beam a couple of hundred pixels wide of the button at one end or the other,
+   so the angle steps with the width. Measured, not guessed — the three values
+   are the mid-point of each band. */
+/* Negative on the left, positive on the right. CSS rotation is clockwise, so
+   the sign that points a downward beam *inward* is the counter-intuitive one:
+   the left-hand light has to turn anticlockwise to sweep right. */
+.lp-light.left {
+  left: clamp(-40px, 1vw, 60px);
+  transform-origin: 50% 10%;
+  transform: rotate(-53deg);
+}
+
+.lp-light.right {
+  right: clamp(-40px, 1vw, 60px);
+  transform-origin: 50% 10%;
+  transform: rotate(53deg);
+}
+
+@media (min-width: 1600px) {
+  .lp-light.left { transform: rotate(-60deg); }
+  .lp-light.right { transform: rotate(60deg); }
+}
+
+@media (min-width: 2000px) {
+  .lp-light.left { transform: rotate(-65deg); }
+  .lp-light.right { transform: rotate(65deg); }
+}
+
+/* Below the stack breakpoint the hero is one narrow column and two crossing
+   beams sit on top of the headline instead of beside it. */
+@media (max-width: 1199px) {
+  .lp-light {
+    display: none;
+  }
+}
+
 /* the stacks are absolutely placed so the copy column keeps the full width to
    itself while they overlap the edges */
 .lp-stack {
