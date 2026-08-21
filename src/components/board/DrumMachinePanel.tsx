@@ -93,7 +93,7 @@ function DrumSlider({
         value={value}
         disabled={disabled}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="flex-1 min-w-16 accent-accent-amber disabled:opacity-40"
+        className="flex-1 min-w-16 accent-accent disabled:opacity-40"
         aria-label={label}
       />
       <b className="font-mono-display text-caption text-text-secondary w-10 text-right tabular-nums">

@@ -21,11 +21,11 @@ export function NotFound() {
           split into separate pages, or the link may simply be wrong.
         </p>
         <p>
-          <a href="/" className="underline text-text-secondary hover:text-accent-amber">
+          <a href="/" className="underline text-text-secondary hover:text-accent">
             Open the editor
           </a>{' '}
           or{' '}
-          <a href="/guide" className="underline text-text-secondary hover:text-accent-amber">
+          <a href="/guide" className="underline text-text-secondary hover:text-accent">
             start at the top of the guide
           </a>
           .
@@ -40,7 +40,7 @@ export function NotFound() {
           <li key={section.slug}>
             <a
               href={`/guide/${section.slug}`}
-              className="text-text-secondary underline hover:text-accent-amber"
+              className="text-text-secondary underline hover:text-accent"
             >
               {section.title}
             </a>

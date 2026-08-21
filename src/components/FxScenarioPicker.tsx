@@ -32,7 +32,7 @@ export function FxScenarioPicker({ preset, onApply, onModeChange }: FxScenarioPi
               className="text-left rounded px-2.5 py-2 transition-colors"
               style={{
                 border: '1px solid',
-                borderColor: selected ? 'var(--accent-amber)' : 'rgba(128,128,128,0.30)',
+                borderColor: selected ? 'var(--accent)' : 'rgba(128,128,128,0.30)',
                 background: selected ? 'rgba(255,176,0,0.10)' : 'transparent',
               }}
             >
@@ -57,7 +57,7 @@ export function FxScenarioPicker({ preset, onApply, onModeChange }: FxScenarioPi
             className="flex-1 rounded px-2 py-1.5 text-sm transition-colors"
             style={{
               border: '1px solid',
-              borderColor: preset.fxLoopMode === mode ? 'var(--accent-amber)' : 'rgba(128,128,128,0.30)',
+              borderColor: preset.fxLoopMode === mode ? 'var(--accent)' : 'rgba(128,128,128,0.30)',
               background: preset.fxLoopMode === mode ? 'rgba(255,176,0,0.10)' : 'transparent',
             }}
           >

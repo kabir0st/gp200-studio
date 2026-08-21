@@ -77,7 +77,7 @@ export function FxLoopArrows({ send, ret, onSendChange, onReturnChange }: FxLoop
                     title={bypass ? 'FX Loop bypass (Send = Return)' : 'Send'}
                     className="leading-none cursor-grab"
                     style={{
-                      color: 'var(--accent-amber)',
+                      color: 'var(--accent)',
                       opacity: bypass ? 0.5 : 1,
                       transform: 'translateY(-2px)',
                     }}
@@ -101,7 +101,7 @@ export function FxLoopArrows({ send, ret, onSendChange, onReturnChange }: FxLoop
                     title={bypass ? 'FX Loop bypass (Send = Return)' : 'Return'}
                     className="leading-none cursor-grab"
                     style={{
-                      color: 'var(--accent-amber)',
+                      color: 'var(--accent)',
                       opacity: bypass ? 0.5 : 1,
                       transform: 'translateY(2px)',
                     }}

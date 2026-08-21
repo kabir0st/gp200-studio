@@ -38,7 +38,7 @@ export function FirmwareCompatDialog({ detectedVersion, onContinue, onDisconnect
           type="checkbox"
           checked={acknowledged}
           onChange={(e) => setAcknowledged(e.target.checked)}
-          className="accent-accent-amber"
+          className="accent-accent"
         />
         I understand the risk
       </label>

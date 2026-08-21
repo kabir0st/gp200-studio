@@ -204,9 +204,9 @@ export function LooperStomps({
         )}
 
         {verbose && (
-          <div className="px-3 py-2 rounded-lg border border-accent-amber bg-accent-amber/10">
+          <div className="px-3 py-2 rounded-lg border border-accent bg-accent/10">
             <p
-              className="font-mono-display text-label text-accent-amber uppercase
+              className="font-mono-display text-label text-accent uppercase
                 tracking-widest mb-1"
             >
               ⚠ Before you assign a footswitch
@@ -216,10 +216,10 @@ export function LooperStomps({
         )}
 
         {!verbose && (
-          <details className="rounded-lg border border-accent-amber bg-accent-amber/10">
+          <details className="rounded-lg border border-accent bg-accent/10">
             <summary
               className="px-3 py-2 cursor-pointer select-none list-none font-mono-display
-                text-caption text-accent-amber"
+                text-caption text-accent"
             >
               ⚠ Switches must be set to CTRL 1–8, one effect block each — why
             </summary>

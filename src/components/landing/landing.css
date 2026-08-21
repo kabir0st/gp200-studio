@@ -107,7 +107,7 @@
 }
 
 .lp-section-sub a {
-  color: var(--accent-amber);
+  color: var(--accent);
   text-underline-offset: 3px;
 }
 
@@ -119,7 +119,7 @@
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.24em;
-  color: var(--accent-amber);
+  color: var(--accent);
   margin-bottom: 14px;
 }
 
@@ -146,7 +146,7 @@
 }
 
 .lp-btn:hover:not(:disabled) {
-  border-color: var(--accent-amber);
+  border-color: var(--accent);
 }
 
 .lp-btn:disabled {
@@ -155,16 +155,16 @@
 }
 
 .lp-btn.primary {
-  background: var(--accent-amber);
-  border-color: var(--accent-amber);
+  background: var(--accent);
+  border-color: var(--accent);
   color: #17181a;
-  box-shadow: 0 8px 24px var(--glow-amber);
+  box-shadow: 0 8px 24px var(--glow-accent);
   /* keep a long label clear of the absolutely-positioned LED on both sides */
   padding-inline: 44px;
 }
 
 .lp-btn.primary:hover:not(:disabled) {
-  box-shadow: 0 12px 30px var(--glow-amber);
+  box-shadow: 0 12px 30px var(--glow-accent);
 }
 
 .lp-btn.compact {
@@ -279,7 +279,7 @@
 }
 
 .lp-nav-links a:hover {
-  color: var(--accent-amber);
+  color: var(--accent);
 }
 
 /* "developed by" stays dim so the byline reads as one item next to the two
@@ -300,15 +300,15 @@
   align-items: center;
   padding: 8px 15px;
   border-radius: 999px;
-  border: 1px solid var(--accent-amber);
-  color: var(--accent-amber) !important;
+  border: 1px solid var(--accent);
+  color: var(--accent) !important;
   text-transform: none;
   letter-spacing: 0.04em;
   transition: background 0.12s ease, transform 0.15s ease-out;
 }
 
 .lp-nav-coffee:hover {
-  background: color-mix(in srgb, var(--accent-amber) 14%, transparent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
 /* ── the stage ─────────────────────────────────────────────────────────────
@@ -406,7 +406,7 @@
   font-weight: 800;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: var(--accent-amber);
+  color: var(--accent);
 }
 
 .lp-h1-line {
@@ -482,7 +482,7 @@
 }
 
 .lp-guide-link:hover {
-  color: var(--accent-amber);
+  color: var(--accent);
 }
 
 /* ── the cables, drooping out of the copy and into the screenshot ──────── */
@@ -626,7 +626,7 @@
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.02em;
-  color: var(--accent-amber);
+  color: var(--accent);
   /* the counter rewrites this text; reserve the digits so the rule below it
      cannot shuffle while it counts */
   font-variant-numeric: tabular-nums;
@@ -697,7 +697,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--accent-amber);
+  background: var(--accent);
 }
 
 .lp-story-shots {
@@ -752,7 +752,7 @@
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--accent-amber);
+  color: var(--accent);
 }
 
 .lp-amp dd {
@@ -822,7 +822,7 @@
 }
 
 .lp-card:hover {
-  border-color: var(--accent-amber);
+  border-color: var(--accent);
 }
 
 .lp-card-title {
@@ -879,7 +879,7 @@
   content: '+';
   float: right;
   font-weight: 800;
-  color: var(--accent-amber);
+  color: var(--accent);
 }
 
 .lp-faq-item[open] summary::after {
@@ -919,7 +919,7 @@
 }
 
 .lp-post:hover {
-  border-color: var(--accent-amber);
+  border-color: var(--accent);
 }
 
 .lp-post-part {
@@ -927,7 +927,7 @@
   font-size: 17px;
   font-weight: 800;
   line-height: 1;
-  color: var(--accent-amber);
+  color: var(--accent);
 }
 
 .lp-post-title {
@@ -968,7 +968,7 @@
 }
 
 .lp-post:hover .lp-post-arrow {
-  color: var(--accent-amber);
+  color: var(--accent);
   transform: translate(2px, -2px);
 }
 
@@ -1014,7 +1014,7 @@
 }
 
 .lp-footer-links a:hover {
-  color: var(--accent-amber);
+  color: var(--accent);
 }
 
 /* Credits is shared with the guide footer; only the wrapper differs. */
@@ -1045,7 +1045,7 @@
 }
 
 .lp-credits .credits-links a:hover {
-  color: var(--accent-amber);
+  color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -1060,16 +1060,16 @@
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  border: 1px solid var(--accent-amber);
+  border: 1px solid var(--accent);
   border-radius: 999px;
-  color: var(--accent-amber);
+  color: var(--accent);
   text-decoration: none;
   position: relative;
   transition: background 0.12s ease, transform 0.15s ease-out;
 }
 
 .lp-credits .credits-coffee:hover {
-  background: color-mix(in srgb, var(--accent-amber) 12%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 /* ── sticky bar ────────────────────────────────────────────────────────────
@@ -1122,7 +1122,7 @@
 }
 
 .lp-sticky-link:hover {
-  color: var(--accent-amber);
+  color: var(--accent);
 }
 
 /* ── the /editor shell ─────────────────────────────────────────────────────
@@ -1167,7 +1167,7 @@
 }
 
 .lp-shell-links a {
-  color: var(--accent-amber);
+  color: var(--accent);
   text-underline-offset: 4px;
 }
 

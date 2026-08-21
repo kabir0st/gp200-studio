@@ -78,7 +78,7 @@ function FootswitchButton({ ctrlIndex, mask, selected, onSelect }: FootswitchBut
     background: 'rgba(0,0,0,0.03)',
   };
   if (selected) {
-    buttonStyle.border = '1px solid var(--accent-amber)';
+    buttonStyle.border = '1px solid var(--accent)';
     buttonStyle.background = 'rgba(212,162,78,0.10)';
     buttonStyle.boxShadow = '0 0 0 2px rgba(212,162,78,0.18)';
   }
@@ -87,7 +87,7 @@ function FootswitchButton({ ctrlIndex, mask, selected, onSelect }: FootswitchBut
     background: 'linear-gradient(180deg, #f2f2ee, #d8d8d2)',
   };
   if (selected) {
-    capStyle.border = '2px solid var(--accent-amber)';
+    capStyle.border = '2px solid var(--accent)';
   }
   return (
     <button
@@ -306,7 +306,7 @@ export function FootswitchPanel({
         <p className="text-xs min-w-0" style={{ color: 'var(--text-secondary)' }}>
           <span
             className="font-mono-display text-label font-bold tracking-wider mr-2"
-            style={{ color: 'var(--accent-amber)' }}
+            style={{ color: 'var(--accent)' }}
           >
             {`CTRL ${activeCtrl + 1}`}
           </span>
