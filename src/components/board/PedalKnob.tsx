@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { KnobParam } from '@/core/effectParams';
 import { KNOB_STYLES, type BodySpec } from './boardPalette';
 import { clampSnap, formatValue } from './paramValue';
+import { KNOB_VIEWBOX, keyStep, knobAngle, tickPaths } from './knobGeometry';
 
 interface PedalKnobProps {
   param: KnobParam;
@@ -13,12 +14,8 @@ interface PedalKnobProps {
   pedalName: string;
 }
 
-const START_ANGLE = -135;
-const SWEEP = 270;
 /** pixels of vertical drag for a full min→max sweep (mockup-tested) */
 const DRAG_RANGE_PX = 160;
-/** wheel notches (and arrow-key presses) for a full min→max sweep */
-const NOTCHES_PER_SWEEP = 50;
 /** Chrome's pixel delta for one mouse-wheel detent */
 const WHEEL_NOTCH_DELTA = 100;
 /** a violent flick shouldn't slam the param into its rail in one event */
@@ -33,12 +30,6 @@ function wheelPixels(event: WheelEvent): number {
   return event.deltaY;
 }
 
-function polar(cx: number, cy: number, r: number, deg: number): [number, number] {
-  const rad = ((deg - 90) * Math.PI) / 180;
-  return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
-}
-
-
 /**
  * Skeuomorphic rotary knob: 270° sweep, vertical pointer drag, mouse wheel,
  * double-click reset, arrow-key steps. The pointer position IS the value.
@@ -50,24 +41,12 @@ export function PedalKnob({ param, value, onChange, knobStyle, ink, pedalName }:
   const dragStart = useRef({ y: 0, value: 0 });
   const unitRef = useRef<HTMLDivElement>(null);
 
-  const pct = param.max > param.min ? (value - param.min) / (param.max - param.min) : 0;
-  const angle = START_ANGLE + SWEEP * pct;
-
-  const ticks: string[] = [];
-  for (let i = 0; i <= 10; i++) {
-    const a = START_ANGLE + (SWEEP * i) / 10;
-    const [x0, y0] = polar(50, 50, 42, a);
-    const [x1, y1] = polar(50, 50, 48, a);
-    ticks.push(`M ${x0} ${y0} L ${x1} ${y1}`);
-  }
-
-  // never below the param's own step, or clampSnap would round a nudge straight
-  // back to the current value and the knob would sit dead under the wheel.
-  const rawStep = (param.max - param.min) / NOTCHES_PER_SWEEP;
-  const keyStep = Math.max(rawStep, param.step);
+  const angle = knobAngle(value, param);
+  const ticks = tickPaths();
+  const step = keyStep(param);
 
   const nudge = (notches: number) => {
-    const next = clampSnap(value + notches * keyStep, param);
+    const next = clampSnap(value + notches * step, param);
     if (next !== value) onChange(next);
   };
   // the wheel listener below is attached once, so it reads the live handler
@@ -134,7 +113,7 @@ export function PedalKnob({ param, value, onChange, knobStyle, ink, pedalName }:
       onDoubleClick={() => onChange(param.default)}
     >
       <svg
-        viewBox="0 0 100 100"
+        viewBox={`0 0 ${KNOB_VIEWBOX} ${KNOB_VIEWBOX}`}
         role="slider"
         tabIndex={0}
         aria-label={`${pedalName} ${param.name}`}

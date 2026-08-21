@@ -5,6 +5,7 @@ import { getEffectParams, type EffectParam } from '@/core/effectParams';
 import { getBodySpec } from '@/components/board/boardPalette';
 import { formatValue } from '@/components/board/paramValue';
 import type { PedalArtEntry } from '@/components/board/pedalManifest';
+import { PedalArt } from './PedalArt';
 
 interface ChainRowProps {
   slot: EffectSlot;
@@ -34,12 +35,12 @@ function summarize(defs: EffectParam[], params: number[]): string {
 }
 
 /**
- * One chain block as a list row.
+ * One chain block as a pedal card.
  *
- * The phone drops the pedal enclosure entirely , a 172/310px body cannot tile
- * on a 390px viewport without a horizontal scroller. What the enclosure
- * communicated survives: module color as a left edge band, the LED as the
- * bypass switch state, and the effect name at reading size.
+ * The board's 172/310px enclosure cannot tile on a 390px viewport, but the
+ * thing it was communicating can: the card wears the same body gradient, gloss
+ * sweep and corner screws, carries the effect's own artwork cropped to the
+ * pedal itself, and lights the same LED. Only the proportions are the phone's.
  *
  * Three separate targets, so no interaction has to be moded: the grip drags,
  * the body opens the editor, the switch toggles bypass.
@@ -82,8 +83,10 @@ export function ChainRow({
   }
 
   return (
-    <li
-      className={`m-row${slot.enabled ? '' : ' bypassed'}${dragging ? ' dragging' : ''}`}
+    // data-drag-row sits on the card, not the <li> that wraps it: the card is
+    // what GSAP transforms, and the cable in the gap below has to stay put.
+    <div
+      className={`m-pedal-card${slot.enabled ? '' : ' bypassed'}${dragging ? ' dragging' : ''}`}
       style={vars}
       data-drag-row=""
     >
@@ -97,20 +100,25 @@ export function ChainRow({
         <span className="m-grip-dots" aria-hidden="true" />
       </button>
 
-      <button type="button" className="m-row-main" onClick={onOpen}>
-        <span className="m-row-band" aria-hidden="true" />
-        <span className="m-row-pos">{displayIndex + 1}</span>
-        <span className="m-row-text">
-          <span className="m-row-top">
-            <span className="m-row-module">{moduleName}</span>
-            <span className="m-row-name">{effectName}</span>
+      <button type="button" className="m-card-main" onClick={onOpen}>
+        <span className="m-card-pos">{displayIndex + 1}</span>
+        {/* Fixed box, so eleven cards of wildly different shapes — a tall
+            stompbox, a wide amp head — still line up as one list. The artwork
+            is letterboxed inside it by pedals.css. */}
+        <span className="m-card-thumb">{art && <PedalArt art={art} />}</span>
+        {/* The name owns its own line. Sharing one with the module chip cost it
+            most of the column on a 320px screen — "Green OD" came out as
+            "Gr…" — and the chip pairs more naturally with the values anyway. */}
+        <span className="m-card-text">
+          <span className="m-card-name">{effectName}</span>
+          <span className="m-card-bottom">
+            <span className="m-card-module">{moduleName}</span>
+            {summary && <span className="m-card-summary">{summary}</span>}
           </span>
-          {summary && <span className="m-row-summary">{summary}</span>}
-        </span>
-        <span className="m-row-chevron" aria-hidden="true">
-          ›
         </span>
       </button>
+
+      <span className="m-card-led" aria-hidden="true" />
 
       <button
         type="button"
@@ -122,6 +130,6 @@ export function ChainRow({
       >
         <span className="m-switch-knob" aria-hidden="true" />
       </button>
-    </li>
+    </div>
   );
 }

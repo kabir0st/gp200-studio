@@ -25,6 +25,7 @@ import type { GP200Preset } from '@/core/types';
 import { Landing } from '@/components/Landing';
 import { PedalBoard, type PedalBoardProps } from '@/components/board/PedalBoard';
 import { useIsPhone } from '@/hooks/useMediaQuery';
+import { useCoalescedParamSend } from '@/hooks/useCoalescedParamSend';
 import { useTheme } from '@/hooks/useTheme';
 import { useDeviceModel } from '@/hooks/useDeviceModel';
 import { useUiSound } from '@/hooks/useUiSound';
@@ -757,11 +758,15 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [changeEffect, midiDevice.status]);
 
+  // One frame per parameter on the wire. A knob drag reports far more often
+  // than that, and the extra frames are values nobody ever saw.
+  const sendParamCoalesced = useCoalescedParamSend(midiDevice.sendParamChange);
+
   const handleSlotParamChange = useCallback((slotIndex: number, effectId: number, paramIndex: number, value: number) => {
     setParam(slotIndex, paramIndex, value);
-    if (midiDevice.status === 'connected') midiDevice.sendParamChange(slotIndex, paramIndex, effectId, value);
+    if (midiDevice.status === 'connected') sendParamCoalesced(slotIndex, paramIndex, effectId, value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setParam, midiDevice.status]);
+  }, [setParam, midiDevice.status, sendParamCoalesced]);
 
   const handleDragStart = useCallback((index: number) => setDragIndex(index), []);
   const handleDragOver = useCallback((e: React.DragEvent, index: number) => {

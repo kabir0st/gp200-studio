@@ -1,0 +1,650 @@
+/*
+ * The physical half of the phone UI: artwork, pedal cards, patch cables, knobs
+ * and the footswitch. Split out of mobile.css, which keeps the shell, the
+ * navigation, the sheets and the generic form controls.
+ *
+ * Same scoping rule as mobile.css and for the same reason: every selector is
+ * prefixed `.mobile-view`, so nothing here can reach the desktop board even by
+ * accident. Do not add bare element selectors or :root variables.
+ */
+
+/* ------------------------------------------------------------------- art */
+
+/*
+ * Crop an artwork to its content box.
+ *
+ * `--art-x` / `--art-w` are canvas units (the artwork is a 160×64 viewBox) set
+ * inline by PedalArt. The image is blown up so that `--art-w` units fill the
+ * box's width, then slid left by `--art-x` of those same units — which is a
+ * crop expressed entirely in the artwork's own coordinate system, so it holds
+ * at any rendered size.
+ */
+.mobile-view .m-art {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  /* Fluid default: fill the width, take the height the shape asks for. The
+     letterboxed case sets width and height inline, which wins over both — an
+     explicit height is exactly what aspect-ratio yields to. */
+  width: 100%;
+  /* single-number form: `<number> / <number>` gets ambiguous with var() */
+  aspect-ratio: calc(var(--art-w) / 64);
+}
+
+.mobile-view .m-art img {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  /* max-width would otherwise clamp the blown-up image back to the box */
+  max-width: none;
+  width: calc(100% * 160 / var(--art-w));
+  left: calc(-100% * var(--art-x) / var(--art-w));
+}
+
+/* ------------------------------------------------------------------ hero */
+
+/*
+ * The pedal on a lit stage, at the top of the editor. The floor picks up the
+ * block's own body colour, so swapping an effect changes the light in the room
+ * — the pedal itself is never tinted, matching the board's rule that physical
+ * objects don't repaint.
+ */
+.mobile-view .m-hero {
+  display: flex;
+  justify-content: center;
+  padding: 10px 12px 14px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 12px;
+  background:
+    radial-gradient(
+      120% 78% at 50% 100%,
+      color-mix(in srgb, var(--body) 20%, transparent),
+      transparent 72%
+    ),
+    var(--bg-deep);
+}
+
+.mobile-view .m-hero .m-art {
+  width: 100%;
+  /* wide subjects (amps, cabs, racks) hit this first; a stompbox is capped by
+     its own aspect ratio long before, which is what keeps it from towering */
+  max-width: 320px;
+}
+
+/* ------------------------------------------------------------ chain card */
+
+/*
+ * One chain block, wearing the board's enclosure: body gradient, gloss sweep,
+ * inset highlight, LED. Only the proportions are the phone's — the desktop
+ * needs 172px because eleven of them tile across a stage, while here one card
+ * spans the viewport and the space goes to the artwork and a readable name.
+ */
+.mobile-view .m-pedal-card {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-height: 74px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(165deg, var(--body), var(--body-deep, var(--body)));
+  color: var(--ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.26);
+}
+
+/* gloss sweep, as on the board's enclosure */
+.mobile-view .m-pedal-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.16), transparent 42%);
+  pointer-events: none;
+}
+
+/*
+ * Bypass is a scrim, never `opacity`. Fading the card would wash the body
+ * colour out with it, and the colour is the block's identity — the board makes
+ * the same choice at .pedal::after. The grip and the switch sit above the
+ * scrim: a bypassed block must still be reorderable and, above all, switchable
+ * back on.
+ */
+.mobile-view .m-pedal-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 12px;
+  /* Lighter than the board's 0.48: a card shows far less body than a 172px
+     enclosure does, and at that strength every bypassed block collapsed to the
+     same anonymous grey — the exact failure a scrim was chosen to avoid. */
+  background: rgba(10, 11, 13, 0.32);
+  opacity: 0;
+  transition: opacity 150ms ease;
+  pointer-events: none;
+}
+
+.mobile-view .m-pedal-card.bypassed::after {
+  opacity: 1;
+}
+
+.mobile-view .m-pedal-card .m-grip,
+.mobile-view .m-pedal-card .m-switch {
+  position: relative;
+  z-index: 2;
+}
+
+/* the grip belongs to the card now, so it wears the body rather than chrome */
+.mobile-view .m-pedal-card .m-grip {
+  border-right: 1px solid rgba(0, 0, 0, 0.22);
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.mobile-view .m-pedal-card .m-grip-dots {
+  color: var(--ink);
+}
+
+.mobile-view .m-pedal-card .m-switch {
+  align-self: center;
+  margin-right: 10px;
+}
+
+.mobile-view .m-card-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px 8px 8px;
+  text-align: left;
+  background: none;
+  border: 0;
+  color: inherit;
+}
+
+.mobile-view .m-card-pos {
+  flex: none;
+  align-self: flex-start;
+  min-width: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+/*
+ * A fixed box the artwork is letterboxed into — `object-fit: contain`, done by
+ * hand because the crop lives in CSS rather than in the file.
+ *
+ * `container-type: size` turns the box into a query container so the two rules
+ * below can size the artwork against it: take the full height unless the shape
+ * is too wide for the box, in which case take the full width and let the height
+ * follow. That is the whole of contain, and doing it here rather than in JS is
+ * what lets the media query at the bottom of this file resize a thumbnail
+ * without a matching edit in PedalArt.
+ */
+.mobile-view .m-card-thumb {
+  flex: none;
+  width: 72px;
+  height: 52px;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-view .m-card-thumb .m-art {
+  width: min(100cqw, calc(var(--art-w) / 64 * 100cqh));
+  height: min(100cqh, calc(64 / var(--art-w) * 100cqw));
+}
+
+.mobile-view .m-card-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mobile-view .m-card-bottom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* The ink is the only text colour this body allows, so the chip is drawn as an
+   outline in it rather than as a second fill that would have to be legible
+   against eleven different enclosures. */
+.mobile-view .m-card-module {
+  flex: none;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  opacity: 0.65;
+}
+
+.mobile-view .m-card-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.mobile-view .m-card-summary {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  opacity: 0.72;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-view .m-card-led {
+  align-self: center;
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.6);
+  transition: background 150ms ease, box-shadow 150ms ease;
+}
+
+.mobile-view .m-pedal-card:not(.bypassed) .m-card-led {
+  background: var(--led);
+  box-shadow: 0 0 8px var(--led), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+/* ---------------------------------------------------------------- cables */
+
+/*
+ * The run between two cards. Fixed size and left-inset, so it lines up with
+ * every card above and below it without measuring one — which is what lets it
+ * stay put and stay correct while GSAP slides cards past it during a reorder.
+ */
+.mobile-view .m-cable {
+  display: block;
+  height: 24px;
+  padding-left: 52px;
+  pointer-events: none;
+}
+
+.mobile-view .m-cable svg {
+  display: block;
+  width: 24px;
+  height: 28px;
+  /* the plugs sit outside the 24px flow height on purpose, so each one reads as
+     seated in the card above or below rather than floating in the gap */
+  margin-top: -2px;
+  overflow: visible;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+}
+
+/* the gradient sprite: present in the document, occupying nothing */
+.mobile-view .m-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* Small phones: give the text column back the width the artwork was using.
+   The thumb stays big enough to tell a stompbox from an amp head, which is all
+   it has to do at a glance. */
+@media (max-width: 359.98px) {
+  .mobile-view .m-card-thumb {
+    width: 60px;
+    height: 46px;
+  }
+
+  .mobile-view .m-grip {
+    width: 36px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-view .m-pedal-card::after,
+  .mobile-view .m-card-led {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------ pedal face */
+
+/*
+ * The knobs, on the block's own body. Three across is not a guess: across all
+ * 305 effects the commonest knob count is exactly 3 (139 effects), then 6 (66)
+ * and 5 (41) — so most faces land on one full row, and almost all the rest on
+ * two.
+ */
+.mobile-view .m-face {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px 4px;
+  padding: 16px 10px 14px;
+  border-radius: 12px;
+  background: linear-gradient(165deg, var(--body), var(--body-deep, var(--body)));
+  color: var(--ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.28);
+}
+
+/* amps keep their knobs on the brushed control panel, as the hardware does */
+.mobile-view .m-face.amp-panel {
+  background: linear-gradient(180deg, var(--panel), color-mix(in srgb, var(--panel) 78%, #000));
+  color: var(--panel-text);
+}
+
+/* ----------------------------------------------------------------- knob */
+
+.mobile-view .m-knob {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  /*
+   * The whole point of the horizontal-drag design: the browser keeps the
+   * vertical axis, so the param list still scrolls with a finger dragged
+   * straight up or down across a knob, and only sideways movement reaches us.
+   * Never `none` here — that is the board's bargain, and it would trap the
+   * page. (mobile.css documents the grip as the one element that may use it.)
+   */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: ew-resize;
+}
+
+.mobile-view .m-knob svg {
+  display: block;
+  width: 72px;
+  height: 72px;
+  /* so the focus ring below traces the cap instead of boxing it */
+  border-radius: 50%;
+  transition: filter 150ms ease;
+}
+
+/* A round ring rather than the UA's square outline, and an accent colour rather
+   than the glow alone — a drop-shadow in the body's own palette is not a
+   dependable focus indicator across eleven different enclosures. */
+.mobile-view .m-knob svg:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.mobile-view .m-knob.dragging svg,
+.mobile-view .m-knob svg:focus-visible {
+  filter: drop-shadow(0 0 4px var(--knob-glow)) drop-shadow(0 0 11px var(--knob-glow-soft));
+}
+
+.mobile-view .m-knob-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.mobile-view .m-knob-value {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------ focus rail */
+
+.mobile-view .m-rail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 4px 6px 4px 4px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 10px;
+  background: var(--chrome-bg);
+}
+
+.mobile-view .m-rail-reset {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--chrome-muted);
+  font-size: 17px;
+  line-height: 1;
+}
+
+.mobile-view .m-rail-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--chrome-muted);
+}
+
+.mobile-view .m-rail-value {
+  flex: none;
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--chrome-text);
+}
+
+/* ----------------------------------------------------------- footswitch */
+
+/*
+ * A footswitch, not a form button: chrome ring, ribbed tread, LED above, and it
+ * sinks when pressed. Parked at the bottom of the editor so it sits under a
+ * thumb no matter how short the param list is.
+ */
+.mobile-view .m-stomp {
+  position: relative;
+  width: 100%;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 10px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--strip-bg), var(--bg-deep));
+  color: var(--chrome-muted);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  transition: transform 90ms ease, box-shadow 90ms ease;
+}
+
+.mobile-view .m-stomp:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.35);
+}
+
+.mobile-view .m-stomp.on {
+  color: var(--chrome-text);
+}
+
+.mobile-view .m-stomp-led {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+  transition: background 150ms ease, box-shadow 150ms ease;
+}
+
+.mobile-view .m-stomp.on .m-stomp-led {
+  background: var(--led);
+  box-shadow: 0 0 10px var(--led), inset 0 1px 1px rgba(255, 255, 255, 0.45);
+}
+
+/* the ribbed tread plate, drawn rather than typed so it stays even */
+.mobile-view .m-stomp-tread {
+  width: 118px;
+  height: 13px;
+  border-radius: 3px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.16) 0 2px,
+    transparent 2px 5px
+  );
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.mobile-view .m-stomp-label {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-view .m-knob svg,
+  .mobile-view .m-stomp,
+  .mobile-view .m-stomp-led {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------------ rack */
+
+/*
+ * A 19" rack unit to mount a borrowed panel in — the looper, the drum machine,
+ * the device readouts. The phone tree reuses those components whole and never
+ * restyles their insides, so everything that makes them feel like one rig has
+ * to happen at the frame: ears, screws, a name plate.
+ */
+.mobile-view .m-rack {
+  border: 1px solid var(--chrome-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--chrome-bg);
+}
+
+.mobile-view .m-rack-plate {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--chrome-border);
+  background: linear-gradient(180deg, var(--strip-bg), var(--bg-deep));
+}
+
+/* a rack ear: two screws in a brushed tab */
+.mobile-view .m-rack-ear {
+  flex: none;
+  width: 12px;
+  height: 24px;
+  border-radius: 2px;
+  background-color: rgba(0, 0, 0, 0.22);
+  background-image:
+    radial-gradient(circle 2px at 6px 6px, #e2e2e2, #8f8f8f 60%, rgba(0, 0, 0, 0.5)),
+    radial-gradient(circle 2px at 6px 18px, #e2e2e2, #8f8f8f 60%, rgba(0, 0, 0, 0.5));
+  background-repeat: no-repeat;
+}
+
+.mobile-view .m-rack-title {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--chrome-text);
+}
+
+.mobile-view .m-rack-body {
+  padding: 12px;
+}
+
+/* ---------------------------------------------------- device front panel */
+
+.mobile-view .m-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--strip-bg), var(--chrome-bg));
+}
+
+.mobile-view .m-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* a quarter-inch jack socket, so the connection state reads as a socket rather
+   than a status line */
+.mobile-view .m-panel-jack {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #6e6e6e, #262628 58%, #0c0c0d);
+  box-shadow: inset 0 0 0 1.5px rgba(220, 220, 220, 0.35), 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.mobile-view .m-panel-status {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--chrome-text);
+}
+
+/* ------------------------------------------------------- device chassis */
+
+.mobile-view .m-chassis {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 12px;
+  background: var(--chrome-bg);
+}
+
+.mobile-view .m-chassis-title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--chrome-muted);
+}
+
+/* the levels sit on brushed metal, not on a pedal body */
+.mobile-view .m-face.chassis {
+  background: linear-gradient(180deg, var(--strip-bg), var(--bg-deep));
+  color: var(--chrome-text);
+}
+
+.mobile-view .m-knob.disabled {
+  opacity: 0.4;
+  cursor: default;
+}

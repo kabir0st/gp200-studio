@@ -15,11 +15,14 @@ import { Tabs } from '@/components/ui/Tabs';
 import { MobileHeader } from './MobileHeader';
 import { MobileTabBar, type MobileTab } from './MobileTabBar';
 import { MobileSheet } from './MobileSheet';
+import { CableDefs } from './ChainCable';
+import { MobileRack } from './MobileRack';
 import { ChainScreen } from './ChainScreen';
 import { PedalEditorScreen } from './PedalEditorScreen';
 import { DeviceScreen } from './DeviceScreen';
 import { track } from '@/core/analytics';
 import './mobile.css';
+import './pedals.css';
 
 type Sheet = 'fxloop' | 'patch' | 'meta' | null;
 
@@ -179,6 +182,9 @@ export default function MobileShell({
 
   return (
     <div className="mobile-view">
+      {/* one copy of the cable gradients for every cable on the chain screen */}
+      <CableDefs />
+
       <MobileHeader
         connected={connected}
         patchName={preset.patchName}
@@ -191,6 +197,10 @@ export default function MobileShell({
       <main className="m-main" ref={mainRef}>
         {tab === 'chain' && editingSlot && editingIndex !== null && (
           <PedalEditorScreen
+            // Remount per block: the editor holds scroll-adjacent UI state (the
+            // focus rail's target, the picker) that means nothing once you are
+            // looking at a different pedal.
+            key={editingSlot.slotIndex}
             slot={editingSlot}
             index={editingIndex}
             chainLength={preset.effects.length}
@@ -218,40 +228,43 @@ export default function MobileShell({
 
         {tab === 'loop' && (
           <div className="m-screen">
-            <h2 className="m-screen-title">LOOP STATION</h2>
-            <LooperPanel
-              looper={looper}
-              tempo={looperTempo}
-              bindings={looperBindings}
-              onBindingsChange={onLooperBindingsChange}
-              onEnableAudio={onEnableAudio}
-              audioStarting={audioStarting}
-              triggers={looperTriggers}
-              armedAction={looperArmedAction}
-              onArmLearn={onLooperArmLearn}
-              onClearTrigger={onLooperClearTrigger}
-              onClearAll={onLooperClearAll}
-              learnNotice={looperLearnNotice}
-              learnEnabled={connected}
-            />
-            {/* The pedal's own single loop, collapsed under the loop station */}
-            <div className="mt-4 pt-4 border-t border-border-active">
+            <MobileRack title="Loop Station">
+              <LooperPanel
+                looper={looper}
+                tempo={looperTempo}
+                bindings={looperBindings}
+                onBindingsChange={onLooperBindingsChange}
+                onEnableAudio={onEnableAudio}
+                audioStarting={audioStarting}
+                triggers={looperTriggers}
+                armedAction={looperArmedAction}
+                onArmLearn={onLooperArmLearn}
+                onClearTrigger={onLooperClearTrigger}
+                onClearAll={onLooperClearAll}
+                learnNotice={looperLearnNotice}
+                learnEnabled={connected}
+              />
+            </MobileRack>
+            {/* The pedal's own single loop, racked under the loop station */}
+            <MobileRack title="GP-200 Loop">
               <DeviceLooperPanel connected={connected} sendCC={sendCC} />
-            </div>
+            </MobileRack>
           </div>
         )}
 
         {tab === 'drums' && (
           <div className="m-screen">
-            <h2 className="m-screen-title">PRACTICE DRUMS</h2>
-            <DrumMachinePanel drums={drumMachine} />
-            <h2 className="m-screen-title mt-6">GP-200 DRUMS &amp; TUNER</h2>
-            <DrumsPanel
-              connected={connected}
-              sendCC={sendCC}
-              ccChannel={ccChannel}
-              onCcChannelChange={onCcChannelChange}
-            />
+            <MobileRack title="Practice Drums">
+              <DrumMachinePanel drums={drumMachine} />
+            </MobileRack>
+            <MobileRack title="GP-200 Drums &amp; Tuner">
+              <DrumsPanel
+                connected={connected}
+                sendCC={sendCC}
+                ccChannel={ccChannel}
+                onCcChannelChange={onCcChannelChange}
+              />
+            </MobileRack>
           </div>
         )}
 

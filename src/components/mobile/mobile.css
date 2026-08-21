@@ -175,117 +175,15 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
+/* One chain position: the card, any FX marker at this position, and the cable
+   running to the next block. The card is styled in pedals.css. */
 .mobile-view .m-row-wrap {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.mobile-view .m-row {
-  display: flex;
-  align-items: stretch;
-  gap: 8px;
-  min-height: 72px;
-  background: var(--chrome-bg);
-  border: 1px solid var(--chrome-border);
-  border-radius: 12px;
-  overflow: hidden;
-  /* opacity only , transform belongs to the GSAP drag tweens */
-  transition: opacity 120ms ease;
-}
-
-/* Bypass dims the row but never disables it , the design system forbids
-   greying a block out, and every control stays live while bypassed. */
-.mobile-view .m-row.bypassed {
-  opacity: 0.55;
-}
-
-
-.mobile-view .m-row-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 4px 0 0;
-  text-align: left;
-  background: none;
-  border: 0;
-}
-
-/* module identity as a color band , what the enclosure body did on desktop */
-.mobile-view .m-row-band {
-  flex: none;
-  width: 6px;
-  align-self: stretch;
-  background: linear-gradient(180deg, var(--body), var(--body-deep, var(--body)));
-}
-
-.mobile-view .m-row-pos {
-  flex: none;
-  width: 22px;
-  text-align: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--chrome-muted);
-}
-
-.mobile-view .m-row-text {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.mobile-view .m-row-top {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  min-width: 0;
-}
-
-/* The border keeps near-white module bodies (PRE, EQ, NR) legible as chips
-   against the light case; without it those three read as untinted text. */
-.mobile-view .m-row-module {
-  flex: none;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  padding: 2px 5px;
-  border-radius: 4px;
-  border: 1px solid rgba(0, 0, 0, 0.14);
-  background: var(--body);
-  color: var(--ink);
-}
-
-.mobile-view .m-row-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--chrome-text);
-}
-
-.mobile-view .m-row-summary {
-  font-size: 11px;
-  color: var(--chrome-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mobile-view .m-row-chevron {
-  flex: none;
-  font-size: 20px;
-  color: var(--chrome-muted);
-  padding-right: 2px;
+  gap: 6px;
 }
 
 /* --------------------------------------------------------------- switches */
@@ -293,13 +191,17 @@
 .mobile-view .m-switch {
   flex: none;
   align-self: center;
-  width: 56px;
-  height: 32px;
+  width: 48px;
+  height: 28px;
   margin-right: 10px;
   border-radius: 999px;
   border: 1px solid var(--chrome-border);
   background: var(--bg-deep);
   position: relative;
+  /* A recessed slot, so "off" reads as a slot in both stages rather than
+     relying on the track being dark — --bg-deep is near-black under the dark
+     stage but a pale grey under the light one. */
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
   transition: background 140ms ease;
 }
 
@@ -307,28 +209,38 @@
   background: var(--led, #2f7e4f);
 }
 
+/* Chrome, not white. A pure-white paddle on an unlit track was the brightest
+   thing on a bypassed card, so "off" read as "on" at a glance; the paddle only
+   goes bright when the block is actually live. */
 .mobile-view .m-switch-knob {
   position: absolute;
   top: 3px;
   left: 3px;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  transition: transform 140ms ease;
+  background: radial-gradient(circle at 38% 32%, #d8d8d8, #9c9c9c 60%, #6d6d6d);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transition: transform 140ms ease, background 140ms ease;
 }
 
 .mobile-view .m-switch.on .m-switch-knob {
-  transform: translateX(24px);
+  background: radial-gradient(circle at 38% 32%, #ffffff, #f0f0f0 60%, #d2d2d2);
+  transform: translateX(20px);
 }
 
 /* --------------------------------------------------------- reorder / markers */
 
 /* The grip is the ONLY element in the mobile tree with touch-action:none.
    That is what lets a drag start immediately with no long-press delay: the
-   grip claims the gesture, while a press anywhere else on the row still
-   scrolls the list normally. Putting this on .m-row would swallow scroll. */
+   grip claims the gesture, while a press anywhere else on the card still
+   scrolls the list normally. Putting this on .m-pedal-card would swallow
+   scroll.
+
+   The knobs (.m-knob, pedals.css) take `touch-action: pan-y`, which is not the
+   same bargain: it gives the vertical axis back to the browser and claims only
+   horizontal movement, so a knob can be turned inside a list that still
+   scrolls. Nothing else may take `none`. */
 .mobile-view .m-grip {
   flex: none;
   align-self: stretch;
@@ -372,11 +284,7 @@
    rule: this is a multi-element timeline over a live gesture, which is the
    GSAP case. Do not add `transform`, `box-shadow` or a `transition` for these
    here; CSS would fight the tweens for the same properties. */
-.mobile-view .m-row.dragging {
-  border-color: var(--border-active);
-}
-
-.mobile-view .m-row.dragging .m-grip {
+.mobile-view .m-pedal-card.dragging .m-grip {
   background: var(--bg-hover);
   cursor: grabbing;
 }
@@ -385,12 +293,6 @@
 .mobile-view .m-list.dragging {
   user-select: none;
   -webkit-user-select: none;
-}
-
-/* The row transition is for bypass opacity only; naming the property keeps it
-   from also animating the GSAP-owned transform. */
-.mobile-view .m-row {
-  transition-property: opacity;
 }
 
 .mobile-view .m-marker {
@@ -461,13 +363,6 @@
   min-height: 72px;
 }
 
-.mobile-view .m-identity-art {
-  flex: none;
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-}
-
 .mobile-view .m-identity-text {
   flex: 1;
   min-width: 0;
@@ -485,12 +380,16 @@
   white-space: nowrap;
 }
 
+/* Two lines: the fallback descriptions from EFFECT_DESCRIPTIONS are sentences,
+   not model names, and a single nowrap line cut most of them mid-word. */
 .mobile-view .m-identity-based {
   font-size: 11px;
   opacity: 0.7;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .mobile-view .m-identity-swap {
@@ -965,7 +864,6 @@
 /* ------------------------------------------------------- reduced motion */
 
 @media (prefers-reduced-motion: reduce) {
-  .mobile-view .m-row,
   .mobile-view .m-switch,
   .mobile-view .m-switch-knob {
     transition: none;
