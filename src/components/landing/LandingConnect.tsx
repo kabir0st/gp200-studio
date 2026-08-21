@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
 import type { UseMidiDeviceReturn } from '@/hooks/useMidiDevice';
 import { SysExCodec } from '@/core/SysExCodec';
+import { useConnectCta } from './useConnectCta';
 
 interface LandingConnectProps {
   midiDevice: UseMidiDeviceReturn;
@@ -20,10 +20,8 @@ interface LandingConnectProps {
  * sell the app first, so the surrounding markup carries `data-lp-cta` for the
  * sticky bar's ScrollTrigger to watch (see useLandingMotion).
  *
- * `webMidiSupported` is resolved in an effect rather than at render: this
- * component is prerendered under Node, where there is no `navigator`, and the
- * static HTML must not claim Web MIDI is missing before the browser has
- * spoken.
+ * The connect button's label and flags come from useConnectCta, shared with
+ * the sticky bar so the two can't disagree about the same handshake.
  */
 export function LandingConnect({
   midiDevice,
@@ -32,30 +30,17 @@ export function LandingConnect({
   loadError,
   onDismissError,
 }: LandingConnectProps) {
-  const { status, handshakeStep, errorMessage, currentSlot, connect } = midiDevice;
-  const [webMidiSupported, setWebMidiSupported] = useState(true);
+  const { status, errorMessage, currentSlot, connect } = midiDevice;
+  const {
+    busy,
+    connected,
+    webMidiSupported,
+    label: connectLabel,
+    hint: connectHint,
+  } = useConnectCta(midiDevice);
 
-  useEffect(() => {
-    setWebMidiSupported('requestMIDIAccess' in navigator);
-  }, []);
-
-  const busy = status === 'connecting' || status === 'handshaking';
-  const connected = status === 'connected';
   const slotLabel = currentSlot !== null ? SysExCodec.slotToLabel(currentSlot) : null;
   const deviceName = currentSlot !== null ? midiDevice.presetNames[currentSlot] : null;
-
-  // The sub-label carries the instruction the old single long label used to:
-  // people click this before the pedal is plugged in, and the handshake then
-  // fails for a reason that has nothing to do with the app.
-  let connectLabel = 'CONNECT YOUR GP-200';
-  let connectHint: string | null = 'plug it in over USB first';
-  if (busy) {
-    connectLabel = handshakeStep ?? 'CONNECTING…';
-    connectHint = null;
-  } else if (status === 'error') {
-    connectLabel = 'RETRY CONNECT';
-    connectHint = null;
-  }
 
   return (
     <div className="lp-connect" data-lp-cta>

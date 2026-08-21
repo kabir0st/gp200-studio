@@ -20,7 +20,7 @@
     />
     <meta name="author" content="Kabir Tamari" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-    <meta name="theme-color" content="#e8e9eb" />
+    <meta name="theme-color" content="#17181a" />
     <meta name="apple-mobile-web-app-title" content="GP200 Studio" />
     <link rel="canonical" href="https://gp200studio.com/" />
 
@@ -42,17 +42,21 @@
          Do not add media-scoped light/dark theme-color variants alongside it —
          only one tag may exist or this silently patches the wrong one. -->
     <script>
-      try {
-        var t = localStorage.getItem('gp200:theme');
-        if (t === 'dark' || t === 'light') {
-          document.documentElement.dataset.theme = t;
-          document
-            .querySelector('meta[name="theme-color"]')
-            .setAttribute('content', t === 'dark' ? '#17181a' : '#e8e9eb');
+      (function () {
+        // Dark is the default, so it is the starting value rather than a
+        // branch: a blocked localStorage, a cleared one, or a value that is
+        // neither 'light' nor 'dark' all leave it in place.
+        var t = 'dark';
+        try {
+          var stored = localStorage.getItem('gp200:theme');
+          if (stored === 'light' || stored === 'dark') t = stored;
+        } catch (e) {
+          /* blocked storage: keep the default */
         }
-      } catch (e) {
-        /* blocked storage: fall through to the light default */
-      }
+        document.documentElement.dataset.theme = t;
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', t === 'dark' ? '#17181a' : '#e8e9eb');
+      })();
     </script>
 
     <!-- Landing motion gate, decided before first paint.

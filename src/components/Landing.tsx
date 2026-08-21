@@ -58,8 +58,6 @@ export function Landing({
   const rootRef = useRef<HTMLDivElement>(null);
   useLandingMotion(rootRef);
 
-  const connected = midiDevice.status === 'connected';
-
   return (
     <div className="lp theme-dark" ref={rootRef}>
       <LandingHero
@@ -84,8 +82,9 @@ export function Landing({
       <LandingFooter onOpenBlank={onOpenBlank} />
 
       <LandingStickyCta
-        label={connected ? 'OPEN CURRENT PRESET' : 'OPEN THE EDITOR'}
-        onActivate={connected ? onOpenCurrent : onOpenBlank}
+        midiDevice={midiDevice}
+        onOpenBlank={onOpenBlank}
+        onOpenCurrent={onOpenCurrent}
       />
     </div>
   );

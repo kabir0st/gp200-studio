@@ -13,7 +13,7 @@
       content="The complete GP200 Studio guide: the pedalboard editor, the multi-layer loop station, footswitch and expression assignment, patch management and .prst files."
     />
     <meta name="author" content="Kabir Tamari" />
-    <meta name="theme-color" content="#e8e9eb" />
+    <meta name="theme-color" content="#17181a" />
     <link rel="canonical" href="https://gp200studio.com/guide" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
@@ -23,17 +23,21 @@
          or dark screenshot correct on the very first paint of a static page
          with no React on it. See the note there about the theme-color tag. -->
     <script>
-      try {
-        var t = localStorage.getItem('gp200:theme');
-        if (t === 'dark' || t === 'light') {
-          document.documentElement.dataset.theme = t;
-          document
-            .querySelector('meta[name="theme-color"]')
-            .setAttribute('content', t === 'dark' ? '#17181a' : '#e8e9eb');
+      (function () {
+        // Dark is the default, so it is the starting value rather than a
+        // branch: a blocked localStorage, a cleared one, or a value that is
+        // neither 'light' nor 'dark' all leave it in place.
+        var t = 'dark';
+        try {
+          var stored = localStorage.getItem('gp200:theme');
+          if (stored === 'light' || stored === 'dark') t = stored;
+        } catch (e) {
+          /* blocked storage: keep the default */
         }
-      } catch (e) {
-        /* blocked storage: fall through to the light default */
-      }
+        document.documentElement.dataset.theme = t;
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', t === 'dark' ? '#17181a' : '#e8e9eb');
+      })();
     </script>
   </head>
   <body>

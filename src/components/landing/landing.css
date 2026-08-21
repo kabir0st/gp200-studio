@@ -1151,14 +1151,18 @@
   align-items: center;
   gap: 18px;
   max-width: calc(100vw - 24px);
-  padding: 10px 12px 10px 20px;
+  padding: 10px 12px;
   border-radius: 999px;
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.24);
 }
 
+/* Hidden until there is room for it: on a phone the wordmark wrapped to two
+   lines and pushed the button past the pill's own rounded edge. The bar is
+   there for the button, and the name is on the page above it either way. */
 .lp-sticky-name {
+  display: none;
   font-family: var(--font-jetbrains-mono), monospace;
   font-size: 11px;
   font-weight: 800;
@@ -1184,6 +1188,26 @@
 
 .lp-sticky-link:hover {
   color: var(--accent);
+}
+
+/* The pill overrides `.lp-btn.primary`'s wide `padding-inline` with a tight
+   one, leaving nowhere for the hero button's absolutely-positioned LED to sit
+   without landing on the text. `.lp-btn.compact` is already a row with a gap,
+   so put the dot in flow instead. */
+.lp-btn.compact .lp-led {
+  position: static;
+  transform: none;
+  flex: none;
+}
+
+/* The label is a live handshake step while connecting, and those run as long
+   as `Slot A1 · Some Patch Name`. Clamp it: the bar is `position: fixed` and a
+   phone has no room for it to grow into. */
+.lp-sticky-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: min(220px, 44vw);
 }
 
 /* ── the /editor shell ─────────────────────────────────────────────────────
@@ -1306,6 +1330,12 @@
   }
   .lp-actions {
     max-width: 460px;
+  }
+  .lp-sticky {
+    padding-left: 20px;
+  }
+  .lp-sticky-name {
+    display: inline;
   }
 }
 

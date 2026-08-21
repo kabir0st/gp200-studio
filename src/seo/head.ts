@@ -82,7 +82,7 @@ export function headFor(page: PageMeta): string {
     // Exactly one theme-color tag. The pre-paint script rewrites the first
     // match's content on load, so media-scoped light/dark variants would
     // break it — see the comment beside that script in index.html.
-    '<meta name="theme-color" content="#e8e9eb" />',
+    '<meta name="theme-color" content="#17181a" />',
     meta('name', 'apple-mobile-web-app-title', SITE_NAME),
     `<link rel="canonical" href="${canonical}" />`,
 
