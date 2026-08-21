@@ -1,23 +1,22 @@
-import type { EffectParam } from '@/core/effectParams';
-import { ParamSlider } from './ParamSlider';
+import type { SwitchParam, ComboxParam } from '@/core/effectParams';
 
 interface ParamRowProps {
-  param: EffectParam;
+  param: SwitchParam | ComboxParam;
   value: number;
   onChange: (value: number) => void;
-  /** for the accessible label on switch/select rows */
+  /** for the accessible label */
   effectName: string;
 }
 
 /**
- * Dispatches one param definition to its control. Knobs become sliders; switch
- * and combo params keep native controls, sized up for touch by mobile.css.
+ * A switch or mode param, as a full-width row below the pedal face.
+ *
+ * Knobs are not routed through here — they live in the face grid as MobileKnob,
+ * laid out the way they sit on the hardware. These two keep native controls:
+ * a toggle and a `<select>` are what touch and assistive tech already know, and
+ * a mode list of a dozen options has no better shape on a 390px screen.
  */
 export function ParamRow({ param, value, onChange, effectName }: ParamRowProps) {
-  if (param.type === 'knob') {
-    return <ParamSlider param={param} value={value} onChange={onChange} />;
-  }
-
   if (param.type === 'switch') {
     const on = value !== 0;
     const next = param.options.find((o) => o.id !== value) ?? param.options[0];

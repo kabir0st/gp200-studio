@@ -2,11 +2,15 @@ import { useState } from 'react';
 import { SysExCodec } from '@/core/SysExCodec';
 import { tunerShow } from '@/core/ccControl';
 import type { CCCommand } from '@/core/ccControl';
+import type { KnobParam } from '@/core/effectParams';
 import { COFFEE_URL } from '@/components/Credits';
 import { AudioMeters } from '@/components/board/AudioMeters';
 import { RemotePanel } from '@/components/board/RemotePanel';
 import { DeviceStatePanel } from '@/components/board/DeviceStatePanel';
 import type { DeviceStateDump } from '@/core/SysExCodec';
+import { MobileKnob } from './MobileKnob';
+import { FocusRail } from './FocusRail';
+import { MobileRack } from './MobileRack';
 
 interface DeviceScreenProps {
   connected: boolean;
@@ -31,50 +35,27 @@ interface DeviceScreenProps {
   deviceState: DeviceStateDump | null;
 }
 
-/** Labelled full-width slider, the same control ParamSlider uses. */
-function LevelRow({
-  label,
-  value,
-  min,
-  max,
-  readout,
-  disabled,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  readout: string;
-  disabled: boolean;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <div className="m-param">
-      <div className="m-param-head">
-        <span className="m-param-name">{label}</span>
-        <span className="m-param-value">{readout}</span>
-      </div>
-      <div className="m-param-control">
-        <input
-          type="range"
-          className="m-slider"
-          min={min}
-          max={max}
-          value={value}
-          aria-label={label}
-          disabled={disabled}
-          onChange={(e) => onChange(Number(e.target.value))}
-        />
-      </div>
-    </div>
-  );
-}
+/**
+ * The three patch-global levels, described the way an effect's params are so
+ * they can wear the same knob.
+ *
+ * `idx` is a local identifier here, not a slot in the device's 15-float param
+ * array — nothing sends these by index, and the rail only needs to tell one
+ * knob from another.
+ */
+const LEVELS = [
+  { type: 'knob', name: 'VOLUME', idx: 0, min: 0, max: 100, step: 1, default: 80 },
+  { type: 'knob', name: 'PAN', idx: 1, min: -50, max: 50, step: 1, default: 0 },
+  { type: 'knob', name: 'TEMPO', idx: 2, min: 40, max: 250, step: 1, default: 120 },
+] as const satisfies readonly KnobParam[];
 
 /**
- * Session + patch-global tab. Collects everything the desktop splits between
- * the top bar's right cluster and the floating deck, which on a phone were a
- * wall of ~10px buttons competing for the same strip.
+ * Session + patch-global tab: the desk the pedal is plugged into.
+ *
+ * Collects everything the desktop splits between the top bar's right cluster
+ * and the floating deck, which on a phone were a wall of ~10px buttons
+ * competing for one strip. The borrowed panels (remote, state dump, meters) are
+ * reused whole and mounted in racks rather than restyled.
  */
 export function DeviceScreen({
   connected,
@@ -99,11 +80,16 @@ export function DeviceScreen({
   deviceState,
 }: DeviceScreenProps) {
   const slotLabel = currentSlot === null ? null : SysExCodec.slotToLabel(currentSlot);
-  const panReadout = patchPan === 0 ? 'C' : patchPan < 0 ? `L${-patchPan}` : `R${patchPan}`;
   // Device tuner toggle (CC58), mirrors BoardTopBar's local best-effort state:
   // the pedal doesn't report tuner visibility, so a front-panel close can
   // drift this until the next tap resyncs it.
   const [tunerOpen, setTunerOpen] = useState(false);
+  /** which level knob the rail is pointed at */
+  const [focusIdx, setFocusIdx] = useState<number | null>(null);
+
+  const values = [patchVolume, patchPan, patchTempo];
+  const setters = [onVolumeChange, onPanChange, onTempoChange];
+  const focus = focusIdx === null ? null : LEVELS[focusIdx];
 
   function handleToggleTuner() {
     const next = !tunerOpen;
@@ -113,11 +99,14 @@ export function DeviceScreen({
 
   return (
     <div className="m-screen">
-      <section className="m-section">
-        <h2 className="m-screen-title">DEVICE</h2>
-        <div className="m-status">
+      {/* the front panel: what is plugged in, and what you can do about it */}
+      <section className="m-panel">
+        <div className="m-panel-head">
+          <span className="m-panel-jack" aria-hidden="true" />
           <span className={`m-dot${connected ? ' on' : ''}`} aria-hidden="true" />
-          <span>{connected ? 'USB-MIDI CONNECTED' : 'NOT CONNECTED'}</span>
+          <span className="m-panel-status">
+            {connected ? 'USB-MIDI CONNECTED' : 'NOT CONNECTED'}
+          </span>
           {firmware && <span className="m-status-fw">FW {firmware}</span>}
         </div>
         <div className="m-btn-grid">
@@ -148,34 +137,30 @@ export function DeviceScreen({
         </div>
       </section>
 
-      <section className="m-section">
-        <h3 className="m-section-title">PATCH</h3>
-        <LevelRow
-          label="VOLUME"
-          value={patchVolume}
-          min={0}
-          max={100}
-          readout={String(patchVolume)}
-          disabled={!connected}
-          onChange={onVolumeChange}
-        />
-        <LevelRow
-          label="PAN"
-          value={patchPan}
-          min={-50}
-          max={50}
-          readout={panReadout}
-          disabled={!connected}
-          onChange={onPanChange}
-        />
-        <LevelRow
-          label="TEMPO"
-          value={patchTempo}
-          min={40}
-          max={250}
-          readout={`${patchTempo} BPM`}
-          disabled={!connected}
-          onChange={onTempoChange}
+      {/* the patch's own levels, on a chassis strip rather than in a form */}
+      <section className="m-chassis">
+        <h3 className="m-chassis-title">PATCH</h3>
+        <div className="m-face chassis">
+          {LEVELS.map((param, i) => (
+            <MobileKnob
+              key={param.name}
+              param={param}
+              value={values[i]}
+              onChange={setters[i]}
+              knobStyle="cream"
+              ink="var(--chrome-text)"
+              pedalName="Patch"
+              onFocus={setFocusIdx}
+              // these three are device-session settings; the board's deck gates
+              // them on a connection the same way
+              disabled={!connected}
+            />
+          ))}
+        </div>
+        <FocusRail
+          param={focus}
+          value={focus ? values[focus.idx] : 0}
+          onChange={(idx, value) => setters[idx](value)}
         />
       </section>
 
@@ -191,20 +176,17 @@ export function DeviceScreen({
         </div>
       </section>
 
-      <section className="m-section">
-        <h3 className="m-section-title">MIDI REMOTE</h3>
+      <MobileRack title="MIDI Remote">
         <RemotePanel connected={connected} sendCC={sendCC} />
-      </section>
+      </MobileRack>
 
-      <section className="m-section">
-        <h3 className="m-section-title">DEVICE STATE</h3>
+      <MobileRack title="Device State">
         <DeviceStatePanel connected={connected} state={deviceState} />
-      </section>
+      </MobileRack>
 
-      <section className="m-section">
-        <h3 className="m-section-title">AUDIO</h3>
+      <MobileRack title="Audio">
         <AudioMeters />
-      </section>
+      </MobileRack>
 
       <section className="m-section">
         <div className="m-btn-grid">

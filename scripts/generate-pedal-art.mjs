@@ -7,7 +7,8 @@
  * "Based On" hardware in valeton-docs/GP200 - Effects v1.8.0.pdf), and emits:
  *
  *   public/pedals/{slug}.svg        one per unique effect name+module
- *   public/pedals/manifest.json     name/module → file, basedOn, type, blurb
+ *   public/pedals/manifest.json     name/module → file, basedOn, type, blurb,
+ *                                   body colors, and the artwork's content box
  *
  * Slug convention comes from docs/board-design-system.md (name lowercased,
  * non-alphanumerics → '-'). When two different effects share a slug (e.g.
@@ -571,6 +572,41 @@ const MOTIFS = {
 /* dispatcher */
 const TEMPLATES = { stomp: tplStomp, rocker: tplRocker, eq: tplEq, amp: tplAmp, cab: tplCab, acoustic: tplAcoustic, rack: tplRack, tape: tplTape, util: tplUtil };
 
+/**
+ * Content box of each template's subject on the 160×64 canvas, as { x, w }.
+ *
+ * Every template centres its subject and leaves the rest of the canvas empty,
+ * so a viewer that fits the whole 160-wide canvas into a small square renders a
+ * 42-wide stompbox at a tenth of the space it was given. The phone UI crops to
+ * this box instead (see src/components/board/pedalManifest.ts `artBox`).
+ *
+ * Deliberately a parallel table rather than a second return value from each
+ * tpl* function: the SVG-emitting code is then provably untouched by this
+ * addition, so regenerating can only ever change manifest.json. The widths here
+ * are the same expressions the templates use — keep them in step.
+ *
+ * `y` is always 0..64: every subject uses the full canvas height.
+ */
+const centred = (w) => ({ x: (W - w) / 2, w });
+
+const BOXES = {
+  // body is `wide ? 58 : 42` (round is a r=27 circle), plus the 3.4-wide side
+  // jacks that only the rectangular shapes carry
+  stomp: (s) => (s.shape === 'round' ? centred(54) : centred((s.shape === 'big' ? 58 : 42) + 6.8)),
+  // base wedge spans x 36..124
+  rocker: () => ({ x: 36, w: 88 }),
+  eq: (s) => centred(s.bands > 6 ? 76 : 52),
+  amp: () => centred(148),
+  cab: (s) => centred(s.rows >= 2 || s.cols >= 2 ? 108 : 84),
+  // widest body is the jumbo at cx ± 21. The name sits off to the right at
+  // cx + 34 and is deliberately outside the box: cropped thumbnails show the
+  // instrument, and the full canvas (hero art) still shows the label.
+  acoustic: () => centred(44),
+  rack: () => centred(148),
+  tape: () => centred(96),
+  util: () => centred(58),
+};
+
 /* ════════════════════════════════════════════════════════════════════════
  * 4. MAIN: merge effect list with specs, emit SVGs + manifest
  * ════════════════════════════════════════════════════════════════════════ */
@@ -695,6 +731,7 @@ function main() {
       basedOn: spec.basedOn ?? '-',
       blurb: spec.blurb ?? TYPE_BLURBS[spec.type] ?? '',
       colors: bodyColorsFor(spec, e.module),
+      art: BOXES[spec.t](spec),
     });
   }
 

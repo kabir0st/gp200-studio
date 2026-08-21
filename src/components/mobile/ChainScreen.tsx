@@ -4,6 +4,7 @@ import type { ManifestIndex } from '@/components/board/pedalManifest';
 import { lookupPedalArt } from '@/components/board/pedalManifest';
 import { displayPosition, useDragReorder } from '@/hooks/useDragReorder';
 import { ChainRow } from './ChainRow';
+import { ChainCable } from './ChainCable';
 
 interface ChainScreenProps {
   preset: GP200Preset;
@@ -65,7 +66,7 @@ export function ChainScreen({
         </li>
 
         {chain.map((slot, position) => (
-          <div key={slot.slotIndex} className="m-row-wrap">
+          <li key={slot.slotIndex} className="m-row-wrap">
             <ChainRow
               slot={slot}
               index={position}
@@ -78,6 +79,12 @@ export function ChainScreen({
               onDragHandleDown={drag.start}
               dragging={drag.from === position}
             />
+
+            {/* The patch cable out of this block. Drawn before any FX marker at
+                this position so every card visibly has a lead leaving it —
+                a marker is a label on the run, not a break in it. The last
+                block runs to OUT, which the marker below already draws. */}
+            {position < chain.length - 1 && <ChainCable />}
 
             {/* FX loop send/return are chain positions (1..11), so they render
                 between rows exactly where they sit in the signal path. They
@@ -97,7 +104,7 @@ export function ChainScreen({
                 <span className="m-marker-edit">EDIT</span>
               </button>
             )}
-          </div>
+          </li>
         ))}
 
         <li className="m-marker">
