@@ -1,5 +1,5 @@
 import { Shot } from '../Shot';
-import { H3, List } from '../prose';
+import { H2, List } from '../prose';
 import { SHOT_H, SHOT_W, type GuideShot } from '../manifest';
 
 const DRUMS: GuideShot = {
@@ -20,7 +20,7 @@ export function DrumsBody() {
         remote for the GP-200's own drums.
       </p>
 
-      <H3>Practice drum machine (browser audio)</H3>
+      <H2>Practice drum machine (browser audio)</H2>
       <p>
         A step-sequenced kit that runs entirely in the browser , no GP-200
         needed, so it works offline and while you're editing on the train. Pick a{' '}
@@ -51,7 +51,7 @@ export function DrumsBody() {
       </List>
       <Shot shot={DRUMS} priority />
 
-      <H3>GP-200 hardware drums (MIDI remote)</H3>
+      <H2>GP-200 hardware drums (MIDI remote)</H2>
       <p>
         Below it, the same drawer remote-controls the pedal's built-in drum
         machine over MIDI: start/stop, rhythm selection and drum volume, plus the{' '}

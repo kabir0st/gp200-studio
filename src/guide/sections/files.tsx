@@ -1,5 +1,5 @@
 import { Shot } from '../Shot';
-import { A, H3 } from '../prose';
+import { A, H2 } from '../prose';
 import { SHOT_H, SHOT_W, type GuideShot } from '../manifest';
 
 const EXPORT: GuideShot = {
@@ -21,7 +21,7 @@ export function FilesBody() {
         connected also previews the patch live on the device.
       </p>
 
-      <H3>Why the format matters</H3>
+      <H2>Why the format matters</H2>
       <p>
         <code>.prst</code> is the GP-200's own preset format , the same files
         Valeton's official editor reads and writes, not a conversion or an
@@ -38,7 +38,7 @@ export function FilesBody() {
         which is credited in the project README.
       </p>
 
-      <H3>Backing up more than one patch</H3>
+      <H2>Backing up more than one patch</H2>
       <p>
         The FILE row is a single-patch tool. For everything at once, use the
         bulk ZIP export in{' '}
@@ -47,7 +47,7 @@ export function FilesBody() {
         <A href="/guide/bulk-apply">Bulk Apply</A> overwrites anything.
       </p>
 
-      <Shot shot={EXPORT} priority />
+      <Shot shot={EXPORT} />
     </>
   );
 }

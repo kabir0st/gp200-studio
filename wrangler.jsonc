@@ -26,8 +26,17 @@
     // links and typed URLs on the www form don't dead-end on a DNS failure.
     { "pattern": "www.gp200studio.com", "custom_domain": true },
     // Legacy #1: the old subfolder home. 301s to the apex, path preserved.
+    // Two exact patterns rather than one "gp200studio*" glob: route patterns
+    // match on a raw prefix, so the single glob also captured siblings like
+    // /gp200studio-archive that were never part of this app, handed them to the
+    // Worker, and had them 301'd into a 404 on the apex. Splitting the bare
+    // path from the subtree keeps the match to what actually moved.
     {
-      "pattern": "kabirtamari.com/gp200studio*",
+      "pattern": "kabirtamari.com/gp200studio",
+      "zone_name": "kabirtamari.com"
+    },
+    {
+      "pattern": "kabirtamari.com/gp200studio/*",
       "zone_name": "kabirtamari.com"
     },
     // Legacy #2: the original custom domain. 301s to the apex.

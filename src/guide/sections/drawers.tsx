@@ -1,5 +1,5 @@
 import { Shot } from '../Shot';
-import { H3 } from '../prose';
+import { H2 } from '../prose';
 import { SHOT_H, SHOT_W, type GuideShot } from '../manifest';
 
 const FXLOOP: GuideShot = {
@@ -37,7 +37,7 @@ export function DrawersBody() {
         they are the FX Loop and Patch Settings sheets on the DEVICE tab.
       </p>
 
-      <H3>FX Loop</H3>
+      <H2>FX Loop</H2>
       <p>
         Drag the <strong>↗ SEND</strong> and <strong>↘ RETURN</strong> arrows
         between blocks to place your external effects loop anywhere in the
@@ -46,7 +46,7 @@ export function DrawersBody() {
       </p>
       <Shot shot={FXLOOP} priority />
 
-      <H3>Expression pedals</H3>
+      <H2>Expression pedals</H2>
       <p>
         Assign the expression pedals across three pages (EXP1 Mode A, EXP1 Mode
         B, EXP2), each with three assignment slots. For each slot, pick a pedal,
@@ -55,7 +55,7 @@ export function DrawersBody() {
       </p>
       <Shot shot={EXP} />
 
-      <H3>Footswitches (CTRL 1–8)</H3>
+      <H2>Footswitches (CTRL 1–8)</H2>
       <p>
         Assign the eight CTRL footswitches. Pick a footswitch, then tap the
         effect blocks it should toggle; one switch can stomp several pedals at

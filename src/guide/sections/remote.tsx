@@ -1,4 +1,4 @@
-import { H3, List } from '../prose';
+import { H2, List } from '../prose';
 
 export function RemoteBody() {
   return (
@@ -10,7 +10,7 @@ export function RemoteBody() {
         useful when the unit is on the floor and you are not.
       </p>
 
-      <H3>What it sends</H3>
+      <H2>What it sends</H2>
       <p>
         These are ordinary three-byte control changes, not SysEx , the same
         messages listed in Valeton's own MIDI Control Information List, sent on
@@ -32,7 +32,7 @@ export function RemoteBody() {
         </li>
       </List>
 
-      <H3>Device state</H3>
+      <H2>Device state</H2>
       <p>
         Underneath it, a read-only <strong>device state</strong> panel shows what
         the unit reported when it connected: tuner reference (A4), global EQ

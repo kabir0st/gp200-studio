@@ -33,6 +33,10 @@ export function LandingAmps() {
       </dl>
 
       <p className="lp-amp-more lp-reveal">{AMP_MODELS_MORE}</p>
+
+      <a className="lp-guide-link lp-reveal" href="/guide/changing-effects">
+        How the effect browser works &rarr;
+      </a>
     </section>
   );
 }

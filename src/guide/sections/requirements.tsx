@@ -1,9 +1,9 @@
-import { A, H3, List } from '../prose';
+import { A, H2, List } from '../prose';
 
 export function RequirementsBody() {
   return (
     <>
-      <H3>What you need</H3>
+      <H2>What you need</H2>
       <List>
         <li>
           Live device features need a GP-200 over USB in Chrome or Edge (Web
@@ -24,7 +24,7 @@ export function RequirementsBody() {
         </li>
       </List>
 
-      <H3>Browser support, precisely</H3>
+      <H2>Browser support, precisely</H2>
       <p>
         The dividing line is <strong>Web MIDI</strong>, and it is not a
         preference , Firefox and Safari have not shipped it, so there is no
@@ -36,7 +36,7 @@ export function RequirementsBody() {
         one-time microphone permission for the input.
       </p>
 
-      <H3>Privacy</H3>
+      <H2>Privacy</H2>
       <p>
         Your patches never leave your machine , there is no account and no
         server storing them. Every byte of decoding, editing and encoding happens
@@ -49,7 +49,7 @@ export function RequirementsBody() {
         the browser's Global Privacy Control signal turns it off entirely.
       </p>
 
-      <H3>Licence &amp; limits</H3>
+      <H2>Licence &amp; limits</H2>
       <p>
         GP200 Studio is free software under the{' '}
         <A href="https://www.gnu.org/licenses/gpl-3.0.html">GPL-3.0</A>, and the

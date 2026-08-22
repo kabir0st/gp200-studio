@@ -1,4 +1,4 @@
-import { H3, List, Note } from '../prose';
+import { H2, List, Note } from '../prose';
 
 export function ConnectBody() {
   return (
@@ -17,7 +17,7 @@ export function ConnectBody() {
         back into the editor too.
       </p>
 
-      <H3>About the firmware warning</H3>
+      <H2>About the firmware warning</H2>
       <p>
         The preset format has only been verified against firmware{' '}
         <strong>1.8</strong>. If your unit reports anything else you will get a
@@ -28,7 +28,7 @@ export function ConnectBody() {
         backup from the patch manager first if you do.
       </p>
 
-      <H3>If the pedal isn't found</H3>
+      <H2>If the pedal isn't found</H2>
       <List>
         <li>
           <strong>Check the browser.</strong> Firefox and Safari do not implement

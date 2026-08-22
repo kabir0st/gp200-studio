@@ -195,7 +195,7 @@ async function main() {
   buildSsr();
 
   const entry = pathToFileURL(join(SSR_DIR, 'entry-server.js')).href;
-  const { render, ROUTE_PATHS, sitemapXml } = await import(entry);
+  const { render, ROUTE_PATHS, sitemapXml, robotsTxt } = await import(entry);
 
   const shells = readShells();
   const preloads = fontPreloads();
@@ -215,6 +215,11 @@ async function main() {
 
   writeFileSync(join(DIST, 'sitemap.xml'), sitemapXml());
   console.log('  ✓ sitemap.xml');
+
+  // Generated, not copied from public/: the Sitemap line has to name the same
+  // origin the canonicals do, and a static file cannot know it.
+  writeFileSync(join(DIST, 'robots.txt'), robotsTxt());
+  console.log('  ✓ robots.txt');
 
   // guide.html was only ever a Rollup entry to get a hashed bundle; every real
   // page has now been written to its own path.

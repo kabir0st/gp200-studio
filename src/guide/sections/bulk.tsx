@@ -1,4 +1,4 @@
-import { H3, List, Note } from '../prose';
+import { H2, List, Note } from '../prose';
 
 export function BulkBody() {
   return (
@@ -10,7 +10,7 @@ export function BulkBody() {
         whole range of patches in one pass.
       </p>
 
-      <H3>What it can write</H3>
+      <H2>What it can write</H2>
       <List>
         <li>
           <strong>CTRL footswitch assignments</strong> , the eight footswitch →
@@ -25,7 +25,7 @@ export function BulkBody() {
         </li>
       </List>
 
-      <H3>Choosing the range</H3>
+      <H2>Choosing the range</H2>
       <p>
         Pick <strong>all 256 patches</strong>, or a <strong>bank range</strong>{' '}
         (for example banks 1–8, which is 32 patches). A progress readout counts

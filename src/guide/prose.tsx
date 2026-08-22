@@ -7,13 +7,22 @@ import { Card } from '@/components/ui/Card';
  * the thirteen section files readable and keeps the styling in one place.
  */
 
-/** A sub-heading within a section. Renders h3 — the page's h1 is the section
- *  title and h2 is reserved for the FAQ, so the outline stays well formed. */
-export function H3({ children }: { children: ReactNode }) {
+/**
+ * A sub-heading within a section. Renders h2: the page's h1 is the section
+ * title, so body sub-heads are the next level down.
+ *
+ * This used to render h3, reserving h2 for the FAQ block "so the outline stays
+ * well formed" — which inverted the actual document order. The FAQ heading is
+ * rendered AFTER the body (GuideSection.tsx), so the outline read
+ * h1 → h3 → h3 … → h2, and the five sections that use sub-heads without a FAQ
+ * had no h2 at all. A trailing FAQ h2 is fine once the body sub-heads are h2
+ * too, which is what this is.
+ */
+export function H2({ children }: { children: ReactNode }) {
   return (
-    <h3 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-6">
+    <h2 className="font-mono-display text-base font-bold tracking-wide text-text-primary mt-6">
       {children}
-    </h3>
+    </h2>
   );
 }
 

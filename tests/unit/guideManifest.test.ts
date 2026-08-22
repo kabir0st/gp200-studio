@@ -66,6 +66,24 @@ describe('guide manifest', () => {
     },
   );
 
+  /**
+   * One brand suffix, spelled the same way every time. Four were in use at
+   * once — including a truncated "— GP200" on two sections, which reads as a
+   * copy error in a result list — because nothing checked. A SERP shows these
+   * side by side, so the inconsistency is visible exactly where it costs most.
+   */
+  it.each(GUIDE_SECTIONS.map((s) => [s.slug, s] as const))(
+    '%s carries the one canonical brand suffix',
+    (_slug, section) => {
+      expect(section.metaTitle.endsWith(' \u2014 GP200 Studio')).toBe(true);
+      // ...and says it once: a title whose own text ends in the brand would
+      // otherwise read "GP200 Studio — GP200 Studio".
+      const stem = section.metaTitle.slice(0, -' \u2014 GP200 Studio'.length);
+      expect(stem).not.toMatch(/GP200 Studio$/);
+      expect(stem.length).toBeGreaterThan(0);
+    },
+  );
+
   it.each(GUIDE_SECTIONS.map((s) => [s.slug, s] as const))(
     '%s has a well-sized meta description',
     (_slug, section) => {

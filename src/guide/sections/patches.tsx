@@ -48,7 +48,7 @@ export function PatchesBody() {
         <strong>LOAD</strong> and <strong>SAVE AS</strong> use a slot picker to
         pull a patch into the editor or write the current patch to a chosen slot.
       </p>
-      <Shot shot={MANAGER} priority />
+      <Shot shot={MANAGER} />
     </>
   );
 }

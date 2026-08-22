@@ -1,5 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 /**
  * The most important test in the SEO work, and the only one that runs in a
@@ -55,6 +57,74 @@ describe('prerender safety', () => {
   it('rejects an unregistered path instead of emitting an empty page', async () => {
     const { render } = await import('@/prerender/entry-server');
     expect(() => render('/guide/not-a-real-section')).toThrow(/No route registered/);
+  });
+
+  it('derives every emitted URL from ORIGIN, with no second copy of it', async () => {
+    const { sitemapXml, robotsTxt } = await import('@/prerender/entry-server');
+    const { ORIGIN } = await import('@/seo/site');
+
+    // robots.txt is generated for exactly this reason: it used to be a static
+    // public/ file with the origin spelled out, so a domain move was a two-place
+    // edit and nothing caught the half that got missed.
+    expect(robotsTxt()).toContain(`Sitemap: ${ORIGIN}/sitemap.xml`);
+
+    for (const url of sitemapXml().match(/<loc>([^<]+)<\/loc>/g) ?? []) {
+      expect(url).toContain(ORIGIN);
+    }
+  });
+
+  /**
+   * scripts/prerender.mjs only ever replaces the region between the seo markers.
+   * Anything a shell declares OUTSIDE them survives into all 17 pages verbatim —
+   * so a <title> or canonical added there ships twice on every page, and the
+   * head builder's own "exactly one" assertions cannot see it, because they run
+   * on headFor()'s string rather than on the composed document.
+   *
+   * The theme-color case is worse than a duplicate: index.html's pre-paint
+   * script rewrites the FIRST match, so a stray one before the markers would
+   * silently take over the theme.
+   */
+  it('keeps metadata out of the shells, where prerender cannot replace it', () => {
+    for (const shell of ['index.html', 'guide.html']) {
+      const html = readFileSync(join(process.cwd(), shell), 'utf8');
+      const start = html.indexOf('<!--seo:start-->');
+      const end = html.indexOf('<!--seo:end-->');
+      expect(start, `${shell} seo:start`).toBeGreaterThan(-1);
+      expect(end, `${shell} seo:end`).toBeGreaterThan(start);
+
+      const outside = html.slice(0, start) + html.slice(end);
+      for (const pattern of [
+        /<title[\s>]/i,
+        /<link[^>]+rel=["']canonical["']/i,
+        /<meta[^>]+name=["']description["']/i,
+        /<meta[^>]+name=["']theme-color["']/i,
+        /<meta[^>]+property=["']og:/i,
+      ]) {
+        expect(outside, `${shell} declares ${pattern} outside the seo markers`).not.toMatch(pattern);
+      }
+    }
+  });
+
+  /**
+   * The landing page is the strongest URL on the site and used to link to
+   * /guide and nothing beneath it, so all thirteen sections depended on a single
+   * hop. These deep links are the fix — and because they are hand-written slugs
+   * rather than derived from the manifest, a rename would turn one into a 404
+   * silently. This is what makes that a test failure instead.
+   */
+  it('links the landing page into real guide sections', async () => {
+    const { render } = await import('@/prerender/entry-server');
+    const { GUIDE_SECTIONS } = await import('@/guide/manifest');
+
+    const slugs = new Set(GUIDE_SECTIONS.map((s: { slug: string }) => s.slug));
+    const linked = new Set(
+      [...render('/').body.matchAll(/href="\/guide\/([a-z0-9-]+)"/g)].map((m) => m[1]),
+    );
+
+    expect(linked.size, 'landing links no guide section').toBeGreaterThanOrEqual(3);
+    for (const slug of linked) {
+      expect(slugs, `landing links /guide/${slug}, which is not a section`).toContain(slug);
+    }
   });
 
   it('emits a sitemap listing every indexable URL', async () => {

@@ -30,6 +30,9 @@ export function LandingStory() {
                 <li key={point}>{point}</li>
               ))}
             </ul>
+            <a className="lp-guide-link" href={`/guide/${section.guide.slug}`}>
+              {section.guide.label} &rarr;
+            </a>
           </div>
 
           <div className="lp-story-shots lp-reveal">

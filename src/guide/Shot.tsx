@@ -13,6 +13,12 @@ import type { GuideShot } from './manifest';
  *    image with `loading="lazy"` is never fetched, so the hidden variant is
  *    free — and the visible one is correct on the very first paint.
  *
+ *    That "free" holds ONLY while the hidden twin stays lazy. `display: none`
+ *    does not cancel an *eager* fetch, so passing `priority` to both twins —
+ *    which this did — pulled two 2400-wide images at fetchpriority=high on
+ *    every page with a priority shot, and painted one of them. The dark twin is
+ *    therefore pinned to `priority={false}` below, whatever the caller asks for.
+ *
  * 2. `width`/`height` are the *intrinsic* pixel size. Together with the
  *    `h-auto` class they give the browser the aspect ratio before the bytes
  *    arrive, which is what keeps cumulative layout shift at zero.
@@ -25,10 +31,14 @@ import type { GuideShot } from './manifest';
 // The guide sidebar is w-60 (15rem) and only present from lg up.
 const SIZES = '(min-width: 1024px) calc(100vw - 15rem), 100vw';
 
-function sources(stem: string, width: number, type: 'avif' | 'webp') {
-  // 04-info-bar-chain is 2400x98, so it has no 1200 variant to offer.
-  const widths = width >= 2400 ? [1200, 2400] : [2400];
-  return widths.map((w) => `${stem}-${w}.${type} ${w}w`).join(', ');
+// scripts/optimize-guide-shots.mjs emits exactly these two widths for every
+// shot, in both formats and both themes. There is no per-shot variation to
+// branch on — an earlier version tried to, guarding on `width >= 2400` when
+// every shot is 2400 wide, so the other arm was unreachable.
+const WIDTHS = [1200, 2400];
+
+function sources(stem: string, type: 'avif' | 'webp') {
+  return WIDTHS.map((w) => `${stem}-${w}.${type} ${w}w`).join(', ');
 }
 
 function Themed({ shot, theme, priority }: { shot: GuideShot; theme: 'light' | 'dark'; priority: boolean }) {
@@ -37,10 +47,10 @@ function Themed({ shot, theme, priority }: { shot: GuideShot; theme: 'light' | '
   const hidden = theme === 'dark';
   return (
     <picture className={hidden ? 'shot-dark' : 'shot-light'}>
-      <source type="image/avif" srcSet={sources(stem, shot.width, 'avif')} sizes={SIZES} />
-      <source type="image/webp" srcSet={sources(stem, shot.width, 'webp')} sizes={SIZES} />
+      <source type="image/avif" srcSet={sources(stem, 'avif')} sizes={SIZES} />
+      <source type="image/webp" srcSet={sources(stem, 'webp')} sizes={SIZES} />
       <img
-        src={`${stem}-${shot.width >= 2400 ? 1200 : 2400}.webp`}
+        src={`${stem}-1200.webp`}
         // The dark twin is the same picture; announcing it twice would just
         // make the figure read as two images to a screen reader.
         alt={hidden ? '' : shot.alt}
@@ -62,7 +72,9 @@ export function Shot({ shot, priority = false }: { shot: GuideShot; priority?: b
     <Card className="p-2 mt-5">
       <figure className="m-0">
         <Themed shot={shot} theme="light" priority={priority} />
-        <Themed shot={shot} theme="dark" priority={priority} />
+        {/* Never priority: it is display:none, and an eager fetch would race
+            the visible twin for the LCP slot. See note 1 in the file header. */}
+        <Themed shot={shot} theme="dark" priority={false} />
         <figcaption className="font-mono-display text-caption text-text-muted tracking-wide mt-2 px-1">
           {shot.caption}
         </figcaption>

@@ -1,5 +1,5 @@
 import { Shot } from '../Shot';
-import { H3 } from '../prose';
+import { H2 } from '../prose';
 import { SHOT_H, SHOT_W, type GuideShot } from '../manifest';
 
 const SIMPLE: GuideShot = {
@@ -31,7 +31,7 @@ export function LooperBody() {
         capture the first time, and you pick the GP-200 as the input.
       </p>
 
-      <H3>Simple and Advanced</H3>
+      <H2>Simple and Advanced</H2>
       <p>
         The drawer has two faces, and the toggle at the top right remembers which
         one you used last. <strong>SIMPLE</strong> is the default: one big record
@@ -55,7 +55,7 @@ export function LooperBody() {
         the same looper , switching is only about how much is on screen.
       </p>
 
-      <H3>Stacking layers</H3>
+      <H2>Stacking layers</H2>
       <p>
         Every record pass adds a new layer, quantized and phase-locked to the
         loop, with no limit on the number of layers , so the tenth overdub is
@@ -74,7 +74,7 @@ export function LooperBody() {
         headroom.
       </p>
 
-      <H3>Starting and stopping in time</H3>
+      <H2>Starting and stopping in time</H2>
       <p>
         Everything that decides where a take begins and ends lives under{' '}
         <strong>RECORD SETUP</strong>, on the <strong>ADVANCED</strong> face. The
@@ -114,7 +114,7 @@ export function LooperBody() {
         </li>
       </ul>
 
-      <H3>How the loop point is joined</H3>
+      <H2>How the loop point is joined</H2>
       <p>
         The downbeat is usually the loudest thing in a take, so fading it in ,
         which is what a plain crossfade does , is exactly what makes a loop sound
@@ -126,7 +126,7 @@ export function LooperBody() {
         smears over the top of the loop.
       </p>
 
-      <H3>Keyboard</H3>
+      <H2>Keyboard</H2>
       <p>
         <strong>R</strong> records and stops, <strong>SPACE</strong> plays and
         stops everything, <strong>Ctrl/⌘ Z</strong> undoes , and mid-take it
@@ -138,7 +138,7 @@ export function LooperBody() {
         the drawer closed, and stand down while you're typing in a field.
       </p>
 
-      <H3>Hands-free from the pedal</H3>
+      <H2>Hands-free from the pedal</H2>
       <p>
         Playing guitar and clicking a mouse don't mix, so the looper can be
         driven from the GP-200's own footswitches , and because that is the only
@@ -159,7 +159,7 @@ export function LooperBody() {
         same button.
       </p>
 
-      <Shot shot={SIMPLE} priority />
+      <Shot shot={SIMPLE} />
       <Shot shot={ADVANCED} />
     </>
   );

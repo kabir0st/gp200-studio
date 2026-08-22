@@ -51,6 +51,15 @@ export interface StorySection {
   points: readonly string[];
   /** Stems under public/guide/, without the `-dark` twin or the size suffix. */
   shots: readonly { name: string; alt: string }[];
+  /**
+   * The guide section this story block is the summary of.
+   *
+   * The landing page linked to /guide and nothing below it, so all thirteen
+   * section URLs hung off a single hop from the strongest page on the site.
+   * Each block already IS the short version of one section, so the deep link is
+   * editorial rather than bolted on.
+   */
+  guide: { slug: string; label: string };
 }
 
 /** The three things worth scrolling for, in the order the README makes them. */
@@ -71,6 +80,7 @@ export const STORY: readonly StorySection[] = [
         alt: 'The effect browser open on the high-gain amp category, each effect showing the real amplifier it models.',
       },
     ],
+    guide: { slug: 'pedalboard-editor', label: 'More on the pedalboard editor' },
   },
   {
     part: '02',
@@ -88,6 +98,7 @@ export const STORY: readonly StorySection[] = [
         alt: 'The multi-layer loop station with two recorded takes, each drawn as a waveform with its own controls.',
       },
     ],
+    guide: { slug: 'loop-station', label: 'More on the loop station' },
   },
   {
     part: '03',
@@ -109,6 +120,7 @@ export const STORY: readonly StorySection[] = [
         alt: 'The expression pedal panel, assigning a treadle to a single knob with heel and toe values.',
       },
     ],
+    guide: { slug: 'patch-settings', label: 'More on footswitches and expression pedals' },
   },
 ] as const;
 

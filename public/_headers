@@ -1,0 +1,19 @@
+# Cache policy for Workers Static Assets.
+#
+# Workers Assets ships exactly one default for every file it serves:
+#
+#   Cache-Control: public, max-age=0, must-revalidate
+#
+# That is the right answer for HTML — a deploy lands immediately, and a crawler
+# revalidating on each fetch is what keeps the prerendered pages fresh in the
+# index — so HTML is deliberately left on it and is not listed here.
+#
+# It is the wrong answer for /assets/*. Everything Vite emits there is
+# content-addressed: the hash in the filename IS the cache key, and a changed
+# file arrives under a new name. Revalidating those costs a conditional round
+# trip per asset on every repeat visit and can never return anything but 304.
+# The service worker's cacheFirst rule hides this for returning visitors, but
+# only after it has registered — never on a first visit, and never for a
+# crawler, which does not run service workers at all.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

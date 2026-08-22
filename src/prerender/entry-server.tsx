@@ -6,6 +6,7 @@ import { GuideSectionPage } from '@/guide/GuideSection';
 import { NotFound } from '@/guide/NotFound';
 import { headFor } from '@/seo/head';
 import { ROUTES, SITEMAP_ROUTES, type Route } from '@/seo/routes';
+import { abs } from '@/seo/site';
 import { STUB_MIDI_DEVICE } from './stubMidiDevice';
 
 /**
@@ -70,7 +71,11 @@ export const ROUTE_PATHS: string[] = ROUTES.map((route) => route.path);
 
 export function sitemapXml(): string {
   const urls = SITEMAP_ROUTES.map((route) => {
-    const loc = `https://gp200studio.com${route.path === '/' ? '/' : route.path}`;
+    // abs(), not a literal: the origin has exactly one definition (seo/site.ts)
+    // and every URL the build emits — canonical, og:url, sitemap loc, the
+    // robots.txt line below — has to agree with it or a domain move breaks a
+    // subset of them silently.
+    const loc = abs(route.path);
     return [
       '  <url>',
       `    <loc>${loc}</loc>`,
@@ -87,4 +92,14 @@ export function sitemapXml(): string {
     '</urlset>',
     '',
   ].join('\n');
+}
+
+/**
+ * robots.txt, generated rather than shipped as a static public/ file so the
+ * Sitemap line cannot drift from ORIGIN. It was a hardcoded literal, which made
+ * the origin a two-place edit on a domain move with nothing to catch the half
+ * that got missed.
+ */
+export function robotsTxt(): string {
+  return ['User-agent: *', 'Allow: /', '', `Sitemap: ${abs('/sitemap.xml')}`, ''].join('\n');
 }

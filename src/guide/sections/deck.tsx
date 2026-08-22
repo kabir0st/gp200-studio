@@ -1,4 +1,4 @@
-import { H3, List } from '../prose';
+import { H2, List } from '../prose';
 
 export function DeckBody() {
   return (
@@ -13,7 +13,7 @@ export function DeckBody() {
         <strong>SAVE TO [slot]</strong> button writes the current patch to the
         active slot.
       </p>
-      <H3>What each control covers</H3>
+      <H2>What each control covers</H2>
       <List>
         <li>
           <strong>VOL</strong> runs 0–100 and is the patch's own output level ,
@@ -35,7 +35,7 @@ export function DeckBody() {
           exactly where a sweep is without looking down at the floor.
         </li>
       </List>
-      <H3>The session bar</H3>
+      <H2>The session bar</H2>
       <p>
         The sticky bar at the top of the screen is the session: connection
         status, the current slot and firmware, a patch stepper, the stage lights

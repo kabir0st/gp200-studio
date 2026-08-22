@@ -59,7 +59,7 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     slug: 'overview',
     navLabel: 'Overview',
     title: 'What GP200 Studio does',
-    metaTitle: 'Overview: What GP200 Studio Does — Valeton GP-200',
+    metaTitle: 'Overview: Editing a Valeton GP-200 — GP200 Studio',
     metaDescription:
       'GP200 Studio is a free, open-source browser editor and loop station for the Valeton GP-200. Edit presets and push them live over USB-MIDI.',
     blurb: 'What the app is, what it needs, and what it can do without a pedal plugged in.',
@@ -80,18 +80,18 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     slug: 'pedalboard-editor',
     navLabel: 'The pedalboard editor',
     title: 'The pedalboard editor',
-    metaTitle: 'The Pedalboard Editor — GP200 Studio Guide',
+    metaTitle: 'The Pedalboard Editor — GP200 Studio',
     metaDescription:
       'Your GP-200 signal chain drawn as real stompboxes with patch cables. How the board wraps, scales to your window, and switches stage themes.',
     blurb: 'Your signal chain as physical pedals, with cables, a chain strip and stage lighting.',
-    lastmod: '2026-08-17',
+    lastmod: '2026-08-18',
   },
   {
     id: 'pedals',
     slug: 'changing-effects',
     navLabel: 'Changing & managing pedals',
     title: 'Changing & managing pedals',
-    metaTitle: 'Changing Effect Blocks — GP200 Studio Guide',
+    metaTitle: 'Changing Effect Blocks — GP200 Studio',
     metaDescription:
       'Bypass, replace, retune and reorder the GP-200 effect blocks. All 305 effects in a searchable browser, scoped to each block’s module.',
     blurb: 'Bypass, swap, edit and reorder the effect blocks in the chain.',
@@ -124,7 +124,7 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     slug: 'bulk-apply',
     navLabel: 'Bulk apply',
     title: 'Bulk apply: one patch’s settings across many',
-    metaTitle: 'Bulk Apply Footswitch Layouts to 256 Patches — GP200',
+    metaTitle: 'Bulk Apply Footswitch Layouts to 256 Patches — GP200 Studio',
     metaDescription:
       'Copy one patch’s CTRL footswitch layout and patch volume into a bank range or all 256 patches at once, instead of setting each one by hand.',
     blurb: 'Stamp one patch’s footswitch layout and volume onto a bank range, or all 256 slots.',
@@ -135,7 +135,7 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     slug: 'loop-station',
     navLabel: 'The loop station',
     title: 'The loop station',
-    metaTitle: 'The Multi-Layer Loop Station — GP200 Studio Guide',
+    metaTitle: 'The Multi-Layer Loop Station — GP200 Studio',
     metaDescription:
       'A multi-layer looper the GP-200 does not ship with: unlimited phase-locked takes over USB audio, driven hands-free from the pedal’s footswitches.',
     blurb: 'Unlimited phase-locked layers over USB audio, driven from your own footswitches.',
@@ -156,11 +156,11 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     slug: 'drum-machine',
     navLabel: 'Drums',
     title: 'Drums',
-    metaTitle: 'Browser Drum Machine & GP-200 Drum Remote — GP200',
+    metaTitle: 'Browser Drums & GP-200 Drum Remote — GP200 Studio',
     metaDescription:
       'A step-sequenced browser drum machine with kits, grooves, swing and 4/4, 3/4, 2/4 and 6/8 time — plus a MIDI remote for the GP-200’s own drums.',
     blurb: 'A browser drum machine that needs no pedal, plus a remote for the GP-200’s own drums.',
-    lastmod: '2026-08-17',
+    lastmod: '2026-08-18',
   },
   {
     id: 'remote',
@@ -245,7 +245,7 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'What GP200 Studio needs to run, what works offline, which browsers support Web MIDI, and exactly what data does and does not leave your machine.',
     blurb: 'What it needs, what works offline, and what data never leaves your machine.',
-    lastmod: '2026-08-20',
+    lastmod: '2026-08-21',
     faq: [
       {
         q: 'Do my presets get uploaded anywhere?',
