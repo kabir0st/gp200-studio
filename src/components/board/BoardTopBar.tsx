@@ -39,6 +39,12 @@ interface BoardTopBarProps {
   /* mute for the rocker's clack (src/lib/uiSound.ts) */
   soundOn: boolean;
   onToggleSound: () => void;
+  /** Tablet band only: is the full chrome showing, or just the patch island?
+   *  Rendered on every tree, but board.css only acts on it between 640px and
+   *  the tablet ceiling , the desktop bar has the width to show everything and
+   *  the phone has its own tab bar. */
+  chromeOpen: boolean;
+  onToggleChrome: () => void;
 }
 
 /** Device slots are 0..255, and the Patch −/+ steppers wrap across both ends. */
@@ -102,6 +108,8 @@ export function BoardTopBar({
   onToggleLights,
   soundOn,
   onToggleSound,
+  chromeOpen,
+  onToggleChrome,
 }: BoardTopBarProps) {
   // Device tuner toggle (CC58). Local best-effort state: the pedal doesn't
   // report tuner visibility, so a front-panel close can drift this until the
@@ -345,6 +353,22 @@ export function BoardTopBar({
         >
           <ActionIcon name="close" />
           <span className="db-label">CLOSE</span>
+        </button>
+        {/* Collapses the bar to the patch island and hides the deck, for the
+            short landscape screens where the chrome was eating a third of the
+            board. Last in the group so the collapsed island reads
+            "patch · CONNECT · CONTROLS", and kept out of the hidden set (with
+            CONNECT) so there is always a way back. Hidden outside the tablet
+            band, where nothing collapses. */}
+        <button
+          type="button"
+          className="deck-btn quiet chrome-toggle"
+          aria-expanded={chromeOpen}
+          title={chromeOpen ? 'Hide the controls' : 'Show the controls'}
+          onClick={onToggleChrome}
+        >
+          <ActionIcon name={chromeOpen ? 'chrome-hide' : 'chrome-show'} />
+          <span className="db-label">{chromeOpen ? 'HIDE' : 'CONTROLS'}</span>
         </button>
       </div>
     </div>

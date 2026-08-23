@@ -107,6 +107,16 @@ const ACTIONS: Record<string, ActionSpec> = {
     d: '<path d="M8.2 2.9 4.9 5.7H2.5v4.6h2.4l3.3 2.8z" /><path d="m11 6.2 3.4 3.6M14.4 6.2 11 9.8" />',
     color: '#5c6066',
   },
+  // show the board chrome: sliders, the universal "more controls" mark
+  'chrome-show': {
+    d: '<path d="M2.6 4.4h10.8M2.6 8h10.8M2.6 11.6h10.8" /><circle cx="10.4" cy="4.4" r="1.6" /><circle cx="5.6" cy="8" r="1.6" /><circle cx="9.2" cy="11.6" r="1.6" />',
+    color: '#5c6066',
+  },
+  // hide it again: the same bar stack collapsing upward
+  'chrome-hide': {
+    d: '<path d="M2.6 12.4h10.8" /><path d="M8 9.6V2.8" /><path d="m5.2 5.6 2.8-2.8 2.8 2.8" />',
+    color: '#5c6066',
+  },
   // ctrl footswitches: a bank of stomps
   ctrl: {
     d: '<circle cx="5.2" cy="5.2" r="2.2" /><circle cx="10.8" cy="5.2" r="2.2" /><circle cx="5.2" cy="10.8" r="2.2" /><circle cx="10.8" cy="10.8" r="2.2" />',

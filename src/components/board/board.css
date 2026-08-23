@@ -1303,6 +1303,14 @@
   flex-wrap: wrap;
   margin-left: auto;
 }
+/* The collapse toggle only means anything in the tablet band (last block in
+   this file): the desktop bar has the width to show everything at once, and
+   the phone tree never renders this bar at all. Written against .deck-btn as
+   well as .chrome-toggle so it outranks `.board-view .deck-btn`'s own
+   `display: inline-flex`, which is declared further down this file. */
+.board-view .deck-btn.chrome-toggle {
+  display: none;
+}
 
 /* ── control deck (clean, modern, no LCD glow, no decorative stomps) ── */
 /* Floating control deck: sticks to the bottom of the scroll stage and floats
@@ -2475,5 +2483,302 @@
   }
   .board-view .deck-meta-btn {
     min-height: 44px;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   Tablet band (640–1280px, and any touch device up to 1366px).
+
+   Between the phone tree (<640px, components/mobile/) and a real desktop the
+   board previously got the desktop chrome unchanged, and it does not fit: the
+   top bar's three groups need ~1430px to share a line, so on a landscape
+   tablet they wrapped into three lines (170px, 274px in portrait) and the deck
+   wrapped into two (136px). On a 1024x600 Android tablet that left a 378px
+   stage for 953px of board — barely one row of pedals under a wall of chrome.
+
+   The fix is metrics, not a third component tree. Three ideas do the work:
+
+   1. Toolbar buttons stack their icon over their label. The (pointer: coarse)
+      block already reserves 44px of height for the tap target, so the label
+      costs nothing vertically and the button loses ~45% of its width , which
+      is what lets all three groups share one line with their labels intact.
+      Icon-only would have been narrower still, but a tablet has no hover, so
+      a bare icon has no way left to explain itself.
+   2. Passive readouts go. The live treadle bars and the IN/OUT level meters
+      are the widest things in the deck and neither is an input; the audio
+      *controls* beside them stay, since nothing else exposes them.
+   3. Bays hug their current pedal rather than reserving their module's widest
+      enclosure, which is what turns three lines of chain into two (details on
+      the rule below).
+
+   Placed last in the file on purpose: it must out-order the (pointer: coarse)
+   block above, whose 10px/12px button padding these rules tighten.
+
+   Ceiling: 1280px by width, extended to 1366px for coarse pointers only , a
+   12.9" iPad in landscape has the same wrap problem a 1366px laptop does not.
+   ════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 640px) and (max-width: 1279.98px),
+  (pointer: coarse) and (min-width: 640px) and (max-width: 1366.98px) {
+  /* ── stage + chassis: trim the frame, not the pedals ── */
+  .board-view .stage {
+    padding: 6px 10px 8px;
+  }
+  .board-view .board-deck {
+    padding: 8px 12px 6px;
+  }
+  /* row-gap still clears the cable droop between two lines (see CableLayer's
+     stub()), it just stops paying for a 1440px board's breathing room. The
+     40px side gutters stay as they are: a line here has slack, so the row
+     centres its pedals and extra padding would only narrow the wrap width. */
+  .board-view .board-row {
+    gap: 22px 16px;
+  }
+
+  /* Bays hug their current pedal instead of reserving their module's widest
+     enclosure. Nine of the eleven bays are wide (310px) because *some* effect
+     in that module is knob-heavy, but the effect actually loaded is usually a
+     compact 172px body , which left ~410px of dead air on every line and
+     pushed the chain onto a third line. Hugging fits six pedals per line at
+     1024px instead of four, and two lines instead of three is ~250px of a
+     600px-tall landscape tablet.
+
+     The trade is the one the base rule buys: swapping an effect for a
+     wider/narrower one can now nudge its neighbours sideways. On a desktop
+     that stability is worth 410px of width; on a tablet it is not. */
+  .board-view .pedal-bay,
+  .board-view .pedal-bay.wide {
+    width: auto;
+    min-width: 172px;
+  }
+
+  /* ── top bar: one line ── */
+  .board-view .board-topbar {
+    gap: 10px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+  }
+  /* Deliberately still wrap, not nowrap. The compact buttons below are what
+     get the three groups onto one line; wrap is the safety net for the states
+     that add buttons to the bar (connecting the device swaps CONNECT for
+     LOAD + SAVE AS + disconnect). nowrap there does not keep one line, it
+     clips actions off the end of the bar , which is strictly worse than a
+     second line. min-width:0 lets the 1fr tracks shrink rather than widen. */
+  .board-view .board-topbar-left,
+  .board-view .board-topbar-actions {
+    gap: 5px;
+    min-width: 0;
+  }
+  .board-view .board-topbar-status {
+    gap: 6px;
+  }
+  /* the well still truncates rather than resizing (see the base rule), just at
+     a width a tablet can spare */
+  .board-view .deck-patch-well {
+    width: 132px;
+  }
+  .board-view .deck-name {
+    font-size: 13px;
+  }
+  .board-view .deck-slot-stepper {
+    gap: 3px;
+  }
+  .board-view .power-switch .ps-bezel {
+    width: 44px;
+  }
+
+  /* icon over label , see (1) in the block comment */
+  .board-view .board-topbar .deck-btn,
+  .board-view .deck .deck-btn {
+    flex-direction: column;
+    gap: 3px;
+    padding: 5px 8px;
+    min-height: 44px;
+    font-size: 8px;
+    letter-spacing: 0.06em;
+    line-height: 1;
+  }
+  .board-view .board-topbar .deck-btn .db-label,
+  .board-view .deck .deck-btn .db-label {
+    white-space: nowrap;
+  }
+  .board-view .board-topbar .deck-btn.quiet,
+  .board-view .deck .deck-btn.quiet {
+    padding: 5px;
+    min-width: 40px;
+  }
+
+  /* ── deck: one line , see (2) in the block comment ── */
+  .board-view .deck {
+    gap: 8px 14px;
+    padding: 8px 12px;
+    margin: 10px 4px 4px;
+  }
+  .board-view .deck-live {
+    display: none;
+  }
+  .board-view .audio-meters .am-row {
+    display: none;
+  }
+  .board-view .audio-meters .am-out-select {
+    max-width: 132px;
+  }
+  .board-view .deck-readouts {
+    gap: 12px;
+  }
+  .board-view .deck-vol-slider {
+    width: 84px;
+  }
+  .board-view .deck-actions,
+  .board-view .audio-meters {
+    gap: 6px;
+  }
+
+  /* ════════════════════════════════════════════════════════════════════
+     Collapsed chrome: the patch island.
+
+     Even at 58px + 62px the two bars are a third of a 480px-tall landscape
+     screen, and neither is where the work happens , the board is. So the
+     bar collapses to a small floating pill (patch identity + the two things
+     that must never be unreachable) and the deck goes away entirely, and
+     one button brings both back.
+
+     Two controls survive the collapse on purpose: CONNECT GP-200, because a
+     board nobody has plugged a pedal into yet has nothing more important to
+     offer, and the toggle itself, or there is no way back. Everything else
+     is one tap away.
+
+     The island is absolutely positioned rather than in flow so it reads as
+     a HUD over the board and stays put while the stage scrolls under it;
+     the stage pads clear of it so it never covers a pedal. It also drops to
+     flex, which neutralises the 3-track grid above and the ≤960px
+     grid-template-areas below , an island has nothing to centre against.
+     ════════════════════════════════════════════════════════════════════ */
+  .board-view .deck-btn.chrome-toggle {
+    display: inline-flex;
+  }
+  .board-view[data-chrome='closed'] {
+    position: relative;
+  }
+  .board-view[data-chrome='closed'] .board-topbar {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    width: auto;
+    max-width: calc(100% - 16px);
+    gap: 8px;
+    margin: 0;
+    padding: 4px 6px 4px 12px;
+    border-radius: 999px;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.34);
+  }
+  .board-view[data-chrome='closed'] .board-topbar-status {
+    display: flex;
+    gap: 4px;
+  }
+  /* nowrap, and not just cosmetically: an absolutely-positioned island is
+     shrink-to-fit, and a *wrapping* flex child reports the widest button as
+     its minimum, so the island sized itself to one button and stacked CONNECT
+     on top of the patch stepper. The ≤960px block below turns wrapping on for
+     the expanded bar, which is where it belongs. */
+  .board-view[data-chrome='closed'] .board-topbar-status,
+  .board-view[data-chrome='closed'] .board-topbar-actions {
+    flex-wrap: nowrap;
+    flex: none;
+  }
+  .board-view[data-chrome='closed'] .board-topbar-actions {
+    margin-left: 0;
+  }
+  .board-view[data-chrome='closed'] .board-topbar-left,
+  .board-view[data-chrome='closed'] .deck-conn,
+  .board-view[data-chrome='closed'] .info-bar,
+  .board-view[data-chrome='closed'] .deck,
+  .board-view[data-chrome='closed']
+    .board-topbar-actions
+    > *:not(.deck-btn.primary):not(.chrome-toggle) {
+    display: none;
+  }
+  /* Island buttons go back to icon-beside-label and shed the 44px tap block.
+     Stacking exists to save width in a bar of eleven buttons; a pill holding
+     two has width to spare, and the island wants the height back. */
+  .board-view[data-chrome='closed'] .board-topbar .deck-btn {
+    flex-direction: row;
+    gap: 6px;
+    min-height: 36px;
+    padding: 6px 10px;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+  .board-view[data-chrome='closed'] .board-topbar .deck-btn.quiet {
+    min-width: 36px;
+    padding: 6px;
+  }
+  /* the patch-name editor hangs off a pill that is itself centred, so centre
+     the popover on it rather than letting a 240px sheet run off one side */
+  .board-view[data-chrome='closed'] .board-topbar .deck-pop {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  /* the stage is the whole column now; pad it clear of the floating island */
+  .board-view[data-chrome='closed'] .stage {
+    padding-top: 52px;
+  }
+}
+
+/* Narrow tablets and portrait tablets (640–960px) can't fit the three groups
+   on one line at any button size, so the bar becomes two deliberate lines ,
+   patch identity above, controls below , instead of the three-to-four ragged
+   ones flex-wrap produced. The connection badge goes with it: the status dot
+   beside the stepper already says connected/offline, and the firmware string
+   is the one thing here nobody reads mid-session. */
+@media (min-width: 640px) and (max-width: 959.98px) {
+  .board-view .board-topbar {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'status status'
+      'left actions';
+    row-gap: 6px;
+  }
+  .board-view .board-topbar-status {
+    grid-area: status;
+    justify-self: center;
+  }
+  .board-view .board-topbar-left {
+    grid-area: left;
+    justify-self: start;
+    /* on their own line the groups have room, so wrapping here is a graceful
+       fallback for a 640px viewport rather than the default failure mode */
+    flex-wrap: wrap;
+  }
+  .board-view .board-topbar-actions {
+    grid-area: actions;
+    justify-self: end;
+    flex-wrap: wrap;
+  }
+}
+
+/* Below 1100px the connection badge is what tips a connected bar onto a second
+   line: "USB-MIDI · FW 1.5.2" is ~140px, and connecting also swaps CONNECT for
+   LOAD + SAVE AS + disconnect. The status dot beside the patch stepper already
+   says connected/offline, and the firmware string is read once, not mid-set.
+   The SYNC readout that shares this slot stays , that one is live. */
+@media (min-width: 640px) and (max-width: 1099.98px) {
+  .board-view .deck-conn {
+    display: none;
+  }
+}
+
+/* The info bar's empty state is a "hover a pedal" hint, and a touch tablet has
+   no hover to give it , it's 36px of permanent dead chrome on the screens with
+   the least height to spare. Tapping a pedal's ⓘ still pins it, which renders
+   the bar with content and brings it back. Gated on hover, not width: a
+   1024px-wide *mouse* window can still hover, and there the hint is how the
+   info dots get discovered at all. */
+@media (hover: none) and (min-width: 640px) and (max-width: 1366.98px) {
+  .board-view .info-bar:has(.i-empty) {
+    display: none;
   }
 }

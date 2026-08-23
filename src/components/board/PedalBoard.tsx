@@ -247,6 +247,14 @@ export function PedalBoard({
     useState<'fxloop' | 'patch' | 'looper' | 'drums' | 'remote' | null>(null);
   const [pickerSlot, setPickerSlot] = useState<number | null>(null);
   const [patchTab, setPatchTab] = useState<PatchSettingsTab>('exp');
+  // Tablet/landscape only (board.css acts on data-chrome inside the tablet
+  // band): collapse the top bar to a patch island and drop the deck, so a
+  // 480px-tall landscape screen spends its height on pedals instead of chrome.
+  // Starts collapsed , that band is where the chrome does not fit, and CONNECT
+  // and the toggle itself both survive the collapse. Deliberately not
+  // persisted: it is a per-window fit, and the same browser on a desk should
+  // not inherit the choice made on a tablet.
+  const [chromeOpen, setChromeOpen] = useState(false);
 
   function selectPatchTab(id: string) {
     if (id === 'exp' || id === 'ctrl' || id === 'bulk') {
@@ -371,8 +379,13 @@ export function PedalBoard({
   };
 
   return (
-    <div className={`board-view${flickering ? ' flickering' : ''}`}>
+    <div
+      className={`board-view${flickering ? ' flickering' : ''}`}
+      data-chrome={chromeOpen ? 'open' : 'closed'}
+    >
       <BoardTopBar
+        chromeOpen={chromeOpen}
+        onToggleChrome={() => setChromeOpen((prev) => !prev)}
         connected={connected}
         currentSlot={currentSlot}
         firmware={firmware}
