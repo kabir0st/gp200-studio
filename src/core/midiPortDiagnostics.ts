@@ -138,3 +138,131 @@ export function describeMissingDevice({ portNames, userAgent }: MidiPortSurvey):
   return `${found} On Linux the browser only sees MIDI through the ALSA `
     + 'sequencer: run "sudo modprobe snd-seq-midi", then reload this page.';
 }
+
+/**
+ * The other half of the connect funnel: the pedal WAS found.
+ *
+ * Everything above covers "no GP-200 in the port list". Once both ports open,
+ * the next thing that goes wrong is silence — the handshake sends its first
+ * query and nothing ever comes back, and the caller rejects with a bare
+ * "Response timeout" that names no cause at all.
+ *
+ * On Windows one cause dwarfs the rest, and it is invisible from inside the
+ * page: Chromium's default MIDI backend there is legacy WinMM, which is
+ * exclusive per process. Chromium opens every MIDI port the moment a page
+ * calls requestMIDIAccess and holds them for the life of the process, so one
+ * other browser with this app open — or Valeton's editor, or a DAW — takes
+ * the pedal away from this one. Enumeration still succeeds, because listing
+ * ports is a separate query that does not open them, which is exactly why
+ * this presents as a timeout and not as a missing device.
+ *
+ * The second cause is the WinRT backend behind `use-winrt-midi-api`, which is
+ * documented to hang on SysEx (crbug 645403) and this app speaks nothing but
+ * SysEx. It is a flag rather than a default, so it is worth naming only after
+ * the port-contention fix, and only as "match a browser that does work".
+ *
+ * Whether ANY byte arrived is the discriminator between those two shapes, and
+ * it is passed in rather than guessed: a pedal that has said something is
+ * plainly not being held by another process, and sending that user off to
+ * close their other browser is a wrong turn.
+ */
+
+export interface HandshakeSilence {
+  /** `navigator.userAgent`, or '' where there isn't one. */
+  userAgent: string;
+  /** Whether the browser is Brave; see braveFlagsUrl for why it can't be a UA test. */
+  isBrave: boolean;
+  /** Whether any MIDI byte at all arrived from the device since CONNECT. */
+  sawAnyBytes: boolean;
+}
+
+/** Whether the exclusive-port advice applies. Desktop Windows only; nothing
+ *  else in the UA field can match, so no exclusion list is needed. */
+export function isWindowsUserAgent(userAgent: string): boolean {
+  return /Windows NT/i.test(userAgent);
+}
+
+/**
+ * The MIDI-backend flag, in the browser the user is actually holding.
+ *
+ * Brave ships Chrome's user-agent string byte for byte, so this cannot be
+ * derived from `userAgent` and the caller has to resolve it from the
+ * `navigator.brave` object Brave injects. Naming the wrong scheme here is
+ * worse than naming none: `chrome://flags` does not open in Brave at all.
+ */
+function flagsUrl(isBrave: boolean): string {
+  if (isBrave) return 'brave://flags/#use-winrt-midi-api';
+  return 'chrome://flags/#use-winrt-midi-api';
+}
+
+/** Where the MIDI permission for this site lives. Brave gets its own wording
+ *  because it defaults the grant to the session, so it lapses on every
+ *  restart and the user is re-asked forever without being told why. */
+function sitePermissionAdvice(isBrave: boolean): string {
+  const path = 'Click the icon at the left of the address bar, open Site settings, and set '
+    + '"MIDI device control & reprogram" to Allow.';
+  if (!isBrave) return `${path} Then reload this page.`;
+  return `${path} Brave lets that grant lapse when you close the site, so choose to `
+    + 'remember the decision if you would rather not re-allow it after every restart. '
+    + 'Then reload this page.';
+}
+
+/**
+ * The message for a handshake that opened both ports and then heard nothing.
+ *
+ * Keeps the words "Response timeout" at the head deliberately: errorCode() in
+ * analyticsEvents.ts matches substrings in priority order and tests `timeout`
+ * first, so this stays in the bucket the terse message used to occupy and the
+ * added prose cannot retitle the funnel.
+ */
+export function describeHandshakeSilence(
+  { userAgent, isBrave, sawAnyBytes }: HandshakeSilence,
+): string {
+  // Bytes arrived, so the port is ours and the pedal is alive; the fault is in
+  // what it replied, not in who owns it.
+  if (sawAnyBytes) {
+    return 'Response timeout — the GP-200 is sending, but not the reply this step asked '
+      + 'for. Power-cycle the pedal and connect again; if it stops at the same step every '
+      + 'time, your firmware may be one this app has not been read against.';
+  }
+
+  const held = 'Response timeout — the GP-200 port opened but the pedal never answered, '
+    + 'which usually means another program already owns it. Close any other browser that '
+    + 'has this app open (a browser keeps its MIDI ports for as long as its process lives, '
+    + 'including a background tray icon after the last window is shut), quit Valeton\'s '
+    + 'editor and any DAW, then unplug and replug the pedal.';
+
+  if (!isWindowsUserAgent(userAgent)) return held;
+
+  return `${held} Windows gives one program at a time exclusive use of a USB-MIDI port, so `
+    + `this is the usual cause there. If nothing else is running, check ${flagsUrl(isBrave)}: `
+    + 'that backend is known to hang on the SysEx messages this app is built out of. Set it '
+    + 'to match a browser that does work, then fully relaunch.';
+}
+
+/**
+ * The message for a browser that refused Web MIDI outright.
+ *
+ * Once a Block is stored for the origin the browser stops prompting, so this
+ * failure is instant and has no popup behind it — the DOMException says
+ * "Permission denied" and nothing about where the switch is. Carries the word
+ * "permission" and none of errorCode()'s earlier triggers, so it buckets as
+ * `permission` rather than as a timeout or a missing API.
+ */
+export function describeMidiAccessDenied({ isBrave }: { isBrave: boolean }): string {
+  return 'The browser refused Web MIDI permission, so the GP-200 cannot be reached. '
+    + sitePermissionAdvice(isBrave);
+}
+
+/**
+ * The message for a MIDIAccess that resolved with SysEx stripped out.
+ *
+ * A browser can grant plain MIDI and withhold System Exclusive, and every
+ * frame this app sends or expects is SysEx — so the access is worthless and
+ * would otherwise present as a handshake that hangs for no visible reason.
+ * Same bucketing constraint as describeMidiAccessDenied.
+ */
+export function describeSysexDenied({ isBrave }: { isBrave: boolean }): string {
+  return 'Web MIDI opened without SysEx permission, and the GP-200 speaks nothing but '
+    + 'SysEx. ' + sitePermissionAdvice(isBrave);
+}

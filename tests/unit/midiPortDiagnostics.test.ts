@@ -1,8 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
+  describeHandshakeSilence,
+  describeMidiAccessDenied,
   describeMissingDevice,
+  describeSysexDenied,
   hasOnlyVirtualPorts,
   isVirtualPortName,
+  isWindowsUserAgent,
   needsAlsaSequencerHint,
   summarisePortNames,
 } from '@/core/midiPortDiagnostics';
@@ -196,5 +200,112 @@ describe('describeMissingDevice: the sandboxed-browser branch', () => {
   // and silently retitle the connect_error funnel.
   it('still buckets as device_not_found despite the added prose', () => {
     expect(errorCode(onlyVirtual())).toBe('device_not_found');
+  });
+});
+
+/**
+ * The handshake-silence branch: both ports opened and the pedal said nothing.
+ *
+ * This is the failure that reads as an app bug and is almost never one — on
+ * Windows another program owning the port produces it exactly. The tests below
+ * pin the two things that make the message worth having: it only offers the
+ * port-contention fix when no byte ever arrived, and it names the flag in a
+ * scheme the user's browser will actually open.
+ */
+describe('isWindowsUserAgent', () => {
+  it('fires on Windows, where MIDI ports are exclusive per process', () => {
+    expect(isWindowsUserAgent(WINDOWS_UA)).toBe(true);
+  });
+
+  it('stays quiet everywhere else', () => {
+    for (const ua of [LINUX_UA, MAC_UA, ANDROID_UA, CROS_UA, '']) {
+      expect(isWindowsUserAgent(ua)).toBe(false);
+    }
+  });
+});
+
+describe('describeHandshakeSilence', () => {
+  const silent = (userAgent: string, isBrave = false) =>
+    describeHandshakeSilence({ userAgent, isBrave, sawAnyBytes: false });
+
+  it('names the port-contention fix when nothing was ever received', () => {
+    const message = silent(WINDOWS_UA);
+    expect(message).toContain('another program already owns it');
+    expect(message).toContain('unplug and replug');
+  });
+
+  it('adds the Windows exclusivity rule and the backend flag, on Windows only', () => {
+    expect(silent(WINDOWS_UA)).toContain('exclusive use of a USB-MIDI port');
+    expect(silent(WINDOWS_UA)).toContain('use-winrt-midi-api');
+    for (const ua of [LINUX_UA, MAC_UA, ANDROID_UA, CROS_UA, '']) {
+      expect(silent(ua)).not.toContain('use-winrt-midi-api');
+    }
+  });
+
+  // Brave's UA is Chrome's byte for byte, so this cannot come from the UA —
+  // and chrome://flags does not open in Brave at all, so guessing is worse
+  // than useless.
+  it('writes the flag URL in a scheme the running browser will open', () => {
+    expect(silent(WINDOWS_UA, true)).toContain('brave://flags/#use-winrt-midi-api');
+    expect(silent(WINDOWS_UA, true)).not.toContain('chrome://flags');
+    expect(silent(WINDOWS_UA, false)).toContain('chrome://flags/#use-winrt-midi-api');
+    expect(silent(WINDOWS_UA, false)).not.toContain('brave://flags');
+  });
+
+  // A device that has said anything is demonstrably not being held by another
+  // process, and sending that user off to close their other browser is a wrong
+  // turn down a road with nothing at the end of it.
+  it('drops the whole port-contention story once any byte has arrived', () => {
+    const message = describeHandshakeSilence({
+      userAgent: WINDOWS_UA,
+      isBrave: false,
+      sawAnyBytes: true,
+    });
+    expect(message).toContain('is sending, but not the reply');
+    expect(message).not.toContain('another program');
+    expect(message).not.toContain('use-winrt-midi-api');
+  });
+
+  it('still buckets as timeout for analytics, in every branch', () => {
+    for (const ua of [LINUX_UA, MAC_UA, WINDOWS_UA, ANDROID_UA, CROS_UA, '']) {
+      for (const sawAnyBytes of [true, false]) {
+        for (const isBrave of [true, false]) {
+          expect(errorCode(describeHandshakeSilence({ userAgent: ua, isBrave, sawAnyBytes })))
+            .toBe('timeout');
+        }
+      }
+    }
+  });
+});
+
+describe('the permission messages', () => {
+  it('says where the switch is, since a stored Block never prompts again', () => {
+    for (const message of [
+      describeMidiAccessDenied({ isBrave: false }),
+      describeSysexDenied({ isBrave: false }),
+    ]) {
+      expect(message).toContain('MIDI device control & reprogram');
+    }
+  });
+
+  // Brave defaults the grant to the session, so it lapses on every restart and
+  // the user is re-asked forever without being told why.
+  it('warns Brave users that the grant lapses, and only them', () => {
+    expect(describeSysexDenied({ isBrave: true })).toContain('lapse');
+    expect(describeSysexDenied({ isBrave: false })).not.toContain('lapse');
+  });
+
+  it('names SysEx specifically when that is the half that was withheld', () => {
+    expect(describeSysexDenied({ isBrave: false })).toContain('without SysEx permission');
+  });
+
+  // Both carry "permission" and none of errorCode's earlier triggers, so they
+  // land in the permission bucket rather than being read as a timeout or as a
+  // browser with no Web MIDI at all.
+  it('buckets as permission, not as timeout or no_webmidi', () => {
+    for (const isBrave of [true, false]) {
+      expect(errorCode(describeMidiAccessDenied({ isBrave }))).toBe('permission');
+      expect(errorCode(describeSysexDenied({ isBrave }))).toBe('permission');
+    }
   });
 });

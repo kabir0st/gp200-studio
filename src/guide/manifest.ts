@@ -199,8 +199,12 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'Connect a Valeton GP-200 over USB in Chrome or Edge: the firmware handshake, live two-way sync, the MIDI channel, and what to do if it is not found.',
     blurb: 'The USB handshake, the firmware check, and how live two-way sync behaves.',
-    lastmod: '2026-08-21',
+    lastmod: '2026-08-23',
     faq: [
+      {
+        q: 'Why does connecting time out in one browser but work in another?',
+        a: 'Because on Windows only one program at a time can own a USB-MIDI port, and a browser claims every port on the machine as soon as any page asks for MIDI, then holds them for as long as its process lives. A second browser with GP200 Studio open — or Valeton\'s editor, or a DAW — takes the pedal away from the one you are looking at. It reads as "Response timeout" rather than "not found", because listing ports does not open them, so the GP-200 is found and simply never answers. Close the other browser completely (Chrome can outlive its last window: check the system tray and turn off "Continue running background apps" in chrome://settings/system), quit the official editor and any DAW, then replug the pedal. If nothing else is running, compare the #use-winrt-midi-api flag between the two browsers — that MIDI backend is known to hang on the System Exclusive messages this app uses — set the failing one to match, and relaunch it.',
+      },
       {
         q: 'Which browsers work with the Valeton GP-200?',
         a: 'Chrome or Edge on any desktop OS, and Chrome on Android. Firefox and Safari do not implement Web MIDI, so they can edit and export files but cannot talk to the pedal.',

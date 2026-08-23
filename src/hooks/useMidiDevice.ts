@@ -13,7 +13,12 @@ import { presetNameCacheKey, loadCachedNames, saveCachedNames } from '@/core/pre
 import type { BulkApplyOptions, BulkApplyProgress } from '@/core/bulkApply';
 import { track } from '@/core/analytics';
 import { PRSTEncoder } from '@/core/PRSTEncoder';
-import { describeMissingDevice } from '@/core/midiPortDiagnostics';
+import {
+  describeHandshakeSilence,
+  describeMidiAccessDenied,
+  describeMissingDevice,
+  describeSysexDenied,
+} from '@/core/midiPortDiagnostics';
 import { useMidiSend } from './useMidiSend';
 
 const READ_TIMEOUT_MS = 3000;
@@ -45,6 +50,82 @@ function portName(port: unknown): string | null {
 function isGP200Port(port: unknown): boolean {
   const name = portName(port);
   return typeof name === 'string' && name.includes('GP-200');
+}
+
+/** `navigator.userAgent`, or '' under the prerender's bare Node environment. */
+function currentUserAgent(): string {
+  if (typeof navigator === 'undefined') return '';
+  return navigator.userAgent;
+}
+
+/**
+ * Whether this is Brave.
+ *
+ * Brave ships Chrome's user-agent string byte for byte, so the injected
+ * `navigator.brave` object is the only tell, and it answers asynchronously.
+ * Called on the failure paths only: a connect that works must not pay for a
+ * question that only changes the wording of an error.
+ */
+async function detectBrave(): Promise<boolean> {
+  const { brave } = navigator as { brave?: { isBrave?: () => Promise<boolean> } };
+  if (!brave?.isBrave) return false;
+  try {
+    return await brave.isBrave();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * requestMIDIAccess, with the browser's two refusals turned into advice.
+ *
+ * Both are otherwise dead ends. A stored Block stops the browser prompting at
+ * all, so the failure is instant, popup-less, and explained only by a
+ * DOMException that does not say where the switch is; and an access granted
+ * without SysEx looks like a total success right up until the handshake times
+ * out twice for no visible reason. Checking sysexEnabled turns the second one
+ * into a one-second failure with a fix in it.
+ */
+async function requestGP200Access(): Promise<GP200Access> {
+  if (!('requestMIDIAccess' in navigator)) {
+    throw new Error('Web MIDI API not supported in this browser');
+  }
+  const midiNavigator = navigator as unknown as {
+    requestMIDIAccess: (opts: { sysex: boolean }) => Promise<GP200Access>;
+  };
+  let access: GP200Access;
+  try {
+    access = await midiNavigator.requestMIDIAccess({ sysex: true });
+  } catch (err) {
+    // Only the permission refusals get reworded; AbortError and friends mean
+    // something else entirely and keep their own message.
+    const { name } = err as { name?: string };
+    if (name !== 'SecurityError' && name !== 'NotAllowedError') throw err;
+    const message = describeMidiAccessDenied({ isBrave: await detectBrave() });
+    throw new Error(message, { cause: err });
+  }
+  if (!access.sysexEnabled) {
+    throw new Error(describeSysexDenied({ isBrave: await detectBrave() }));
+  }
+  return access;
+}
+
+/**
+ * The message for a handshake that started and then failed.
+ *
+ * A timeout here is the costliest failure in the app: both ports opened, so
+ * every "GP-200 not found" hint is wrong, and "Response timeout" alone names
+ * none of the causes that actually explain it. Anything that is not a timeout
+ * already carries its own message and keeps it.
+ */
+async function describeHandshakeFailure(err: unknown, sawAnyBytes: boolean): Promise<string> {
+  if (!(err instanceof Error)) return 'Handshake failed';
+  if (!/timeout/i.test(err.message)) return err.message;
+  return describeHandshakeSilence({
+    userAgent: currentUserAgent(),
+    isBrave: await detectBrave(),
+    sawAnyBytes,
+  });
 }
 
 export interface UseMidiDeviceReturn {
@@ -149,6 +230,9 @@ interface GP200Output {
 interface GP200Access {
   inputs: { values: () => Iterable<GP200Input> };
   outputs: { values: () => Iterable<GP200Output> };
+  /** A browser can grant plain MIDI and withhold System Exclusive. Every frame
+   *  this app sends or expects is SysEx, so a false here is fatal, silently. */
+  sysexEnabled: boolean;
 }
 
 function waitForResponse(
@@ -242,6 +326,11 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   // those would pull the park slot into the editor mid-save; ignore echoes
   // until this timestamp.
   const suppressSlotEchoUntilRef = useRef(0);
+  // Whether ANY byte has arrived from the device since CONNECT was pressed.
+  // The only thing that separates "another program owns this port" from "the
+  // pedal answered, just not with what we asked for" when a handshake step
+  // times out; see describeHandshakeSilence in core/midiPortDiagnostics.ts.
+  const sawDeviceBytesRef = useRef(false);
 
   // Delegate all send operations, device-initiated callback registration,
   // and FX-state echo suppression to useMidiSend. The parent hook keeps
@@ -274,6 +363,10 @@ export function useMidiDevice(): UseMidiDeviceReturn {
 
   const onMidiMessage = useCallback((event: { data: unknown }) => {
     const data = getBytes(event.data);
+    // Before the tap below, which consumes frames and returns: this records
+    // that the device is reachable at all, and a consumed frame proves that
+    // just as well as a handled one.
+    sawDeviceBytesRef.current = true;
     // Looper MIDI-learn/hijack tap runs before EVERY branch below: a consumed
     // frame (learn capture, hijacked stomp, debounced sibling) must never
     // reach the normal handlers , that's what keeps a hijacked toggle from
@@ -415,6 +508,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
   }, [
     onDeviceChangeRef, onDeviceToggleRef, onDeviceEffectChangeRef, onDeviceParamChangeRef,
     onFootswitchRef, onExpPositionRef, onLooperFrameTapRef, suppressFxCountRef,
+    sawDeviceBytesRef,
   ]);
 
   /** Persist the current name list to localStorage under this device's key. */
@@ -429,15 +523,9 @@ export function useMidiDevice(): UseMidiDeviceReturn {
     track('connect_start', { retry: statusRef.current === 'error' });
     setStatus('connecting');
     setErrorMessage(null);
+    sawDeviceBytesRef.current = false;
     try {
-      if (!('requestMIDIAccess' in navigator)) {
-        throw new Error('Web MIDI API not supported in this browser');
-      }
-      const access = await (
-        navigator as unknown as {
-          requestMIDIAccess: (opts: { sysex: boolean }) => Promise<GP200Access>;
-        }
-      ).requestMIDIAccess({ sysex: true });
+      const access = await requestGP200Access();
 
       const outputs = Array.from(access.outputs.values());
       const inputs = Array.from(access.inputs.values());
@@ -449,7 +537,7 @@ export function useMidiDevice(): UseMidiDeviceReturn {
         // output" reads as the half-open port it is rather than as absence.
         throw new Error(describeMissingDevice({
           portNames: [...inputs, ...outputs].map(portName),
-          userAgent: typeof navigator === 'undefined' ? '' : navigator.userAgent,
+          userAgent: currentUserAgent(),
         }));
       }
 
@@ -589,11 +677,12 @@ export function useMidiDevice(): UseMidiDeviceReturn {
         setStatus('connected');
       } catch (err) {
         setStatus('error');
-        setErrorMessage(err instanceof Error ? err.message : 'Handshake failed');
+        setErrorMessage(await describeHandshakeFailure(err, sawDeviceBytesRef.current));
       }
     } catch (err) {
       setStatus('error');
-      setErrorMessage(err instanceof Error ? err.message : 'Connection failed');
+      if (err instanceof Error) setErrorMessage(err.message);
+      else setErrorMessage('Connection failed');
     }
   }, [onMidiMessage, persistNames]);
 

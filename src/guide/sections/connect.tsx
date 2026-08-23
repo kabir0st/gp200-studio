@@ -49,16 +49,51 @@ export function ConnectBody() {
           site; if you dismissed it, clear the site permission and reload.
         </li>
         <li>
+          <strong>On Windows, close every other browser.</strong> Only one
+          program at a time can own a USB-MIDI port there, and a browser holds
+          its ports for as long as it is running. This one looks like a
+          timeout, not like a missing device; the Windows note below has it.
+        </li>
+        <li>
           <strong>On Linux, check for a sandboxed browser.</strong> A Flatpak or
           Snap Chrome, Chromium, Brave or Edge cannot see USB MIDI at all
-          without one extra grant; the first note below has the fix.
+          without one extra grant; the Flatpak note below has the fix.
         </li>
         <li>
           <strong>On Linux, load the ALSA sequencer bridge.</strong> This one
           looks like a broken app rather than a missing driver, so it is worth
-          knowing about; the second note below has the one-line fix.
+          knowing about; the ALSA note below has the one-line fix.
         </li>
       </List>
+
+      <Note title="Windows: another program is holding the MIDI port">
+        <p>
+          Windows gives one program at a time exclusive use of a USB-MIDI port,
+          and a browser claims every port on the machine the moment any page
+          asks for MIDI — then keeps them for the life of the process. So a
+          second browser, or Valeton's editor, or a DAW, quietly takes the
+          pedal away from this tab. The tell is a{' '}
+          <strong>Response timeout</strong> rather than a "not found": listing
+          ports is a separate query that does not open them, so the GP-200 is
+          found, opened, sent to, and simply never answers.
+        </p>
+        <p>
+          Close the other browser <em>completely</em>. Chrome in particular can
+          outlive its last window — check the system tray, and turn off
+          "Continue running background apps when Google Chrome is closed" in{' '}
+          <code>chrome://settings/system</code>. Quit the official editor and
+          any DAW, then unplug and replug the pedal to clear a stuck handle.
+        </p>
+        <p>
+          If nothing else is running, the browser may be on the WinRT MIDI
+          backend, which is known to hang on exactly the System Exclusive
+          messages this app is built out of. Compare{' '}
+          <code>#use-winrt-midi-api</code> in{' '}
+          <code>brave://flags</code> or <code>chrome://flags</code> against a
+          browser that does work, set the failing one to match, and relaunch it
+          fully.
+        </p>
+      </Note>
 
       <Note title="Linux: a Flatpak or Snap browser cannot see USB devices">
         <p>
