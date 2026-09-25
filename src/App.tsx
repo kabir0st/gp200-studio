@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { usePreset } from '@/hooks/usePreset';
 import { applyFxScenario, findFxScenario } from '@/core/fxScenarios';
 import { patchStyleName } from '@/core/patchStyles';
@@ -23,6 +23,7 @@ import { EFFECT_MAP } from '@/core/effectNames';
 import type { GP200Preset } from '@/core/types';
 
 import { Landing } from '@/components/Landing';
+import { StartScreen } from '@/components/start/StartScreen';
 import { PedalBoard, type PedalBoardProps } from '@/components/board/PedalBoard';
 import { useIsPhone } from '@/hooks/useMediaQuery';
 import { useCoalescedParamSend } from '@/hooks/useCoalescedParamSend';
@@ -67,12 +68,14 @@ function slotFilename(slot: number, name: string | null): string {
 }
 
 /**
- * The two URLs this app answers on. Both go through BASE_URL for the same
- * reason every runtime asset path does (see the `base` note in
- * vite.config.ts): it is '/' today, and moving the site back into a subfolder
- * stays a one-line change.
+ * The three URLs this app answers on: the start screen (connect, or open a
+ * blank preset), the long-form home page that tours the product, and the
+ * editor. All go through BASE_URL for the same reason every runtime asset path
+ * does (see the `base` note in vite.config.ts): it is '/' today, and moving the
+ * site back into a subfolder stays a one-line change.
  */
-const HOME_PATH = import.meta.env.BASE_URL;
+const START_PATH = import.meta.env.BASE_URL;
+const HOME_PATH = `${import.meta.env.BASE_URL}home`;
 const EDITOR_PATH = `${import.meta.env.BASE_URL}editor`;
 
 /**
@@ -225,9 +228,11 @@ function App() {
 
   /* ── The address bar ─────────────────────────────────────────────────────
    * There is no router here, and adding one would be a lot of machinery for
-   * two URLs. The board is simply what this component renders once a preset
+   * three URLs. The board is simply what this component renders once a preset
    * exists, so the whole of "routing" is keeping `location.pathname` in step
-   * with that one boolean, in both directions.
+   * with that one boolean, in both directions. With no preset, the path only
+   * picks which front page to show: '/home' gets the tour, anything else the
+   * start screen.
    *
    * Driven off the preset rather than off each button on purpose: all five
    * ways into the editor (blank, device, import, slot, the landing's sticky
@@ -259,14 +264,18 @@ function App() {
   // path is already right, and pushing it again would put a duplicate entry
   // in the history that Back would appear to do nothing on.
   useEffect(() => {
-    const target = preset ? EDITOR_PATH : HOME_PATH;
+    // Closed and already on a front page ('/' or '/home'): both are right.
+    // Only leaving the editor needs the URL rewritten, and CLOSE always lands
+    // on the start screen, the page the board's own CLOSE button implies.
+    if (!preset && !atPath(EDITOR_PATH)) return;
+    const target = preset ? EDITOR_PATH : START_PATH;
     if (atPath(target)) return;
-    // Only ever move between the two URLs this app owns. If it has been
-    // mounted anywhere else — a dev server's SPA fallback answering a guide
-    // URL with index.html is the real case — then rewriting that URL to '/'
-    // silently throws away the address the reader asked for, and the guide
-    // link they clicked looks like it bounced them home.
-    if (!atPath(HOME_PATH) && !atPath(EDITOR_PATH)) return;
+    // Only ever move between the URLs this app owns. If it has been mounted
+    // anywhere else — a dev server's SPA fallback answering a guide URL with
+    // index.html is the real case — then rewriting that URL silently throws
+    // away the address the reader asked for, and the guide link they clicked
+    // looks like it bounced them home.
+    if (!atPath(START_PATH) && !atPath(HOME_PATH) && !atPath(EDITOR_PATH)) return;
     window.history.pushState(null, '', `${target}${window.location.search}`);
   }, [preset]);
 
@@ -277,6 +286,12 @@ function App() {
   // what the board's own CLOSE button does (`onCloseRequest: reset` below),
   // so this adds a second door to a room that was already unlocked, not a new
   // way to lose work.
+  //
+  // Which front page shows with no preset is read from the URL at render time,
+  // so a popstate always forces a render. Nearly every one would get it anyway
+  // from the preset changing; the exception is a jump between '/' and '/home'
+  // that skips the editor entry between them (a long-press on Back).
+  const [, rerenderForLocation] = useReducer((n: number) => n + 1, 0);
   useEffect(() => {
     const onPopState = () => {
       const wantsEditor = atPath(EDITOR_PATH);
@@ -286,6 +301,7 @@ function App() {
       } else if (!wantsEditor && presetRef.current) {
         reset();
       }
+      rerenderForLocation();
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
@@ -820,8 +836,11 @@ function App() {
     !firmwareWarningDismissed;
 
   if (!preset) {
+    // Both front pages take the same five props, and both are prerendered with
+    // the same stub (src/prerender/entry-server.tsx); only the path picks one.
+    const FrontPage = atPath(HOME_PATH) ? Landing : StartScreen;
     return (
-      <Landing
+      <FrontPage
         midiDevice={midiDevice}
         onOpenBlank={() => {
           markEditorEntry('blank');

@@ -22,10 +22,10 @@ function attr(html: string, pattern: RegExp): string | undefined {
 }
 
 describe('seo head', () => {
-  it('covers the home page, the editor, the guide hub, 13 sections and a 404', () => {
-    expect(ROUTES).toHaveLength(17);
+  it('covers the start screen, the home tour, the editor, the guide hub, 13 sections and a 404', () => {
+    expect(ROUTES).toHaveLength(18);
     // /editor is an app shell, so it is described but never advertised.
-    expect(SITEMAP_ROUTES).toHaveLength(15);
+    expect(SITEMAP_ROUTES).toHaveLength(16);
   });
 
   it.each(heads)('%s has exactly one title and canonical', (_path, html) => {
@@ -47,7 +47,7 @@ describe('seo head', () => {
   });
 
   // The two pages with nothing for a searcher to land on: the 404, and the
-  // editor, which is an app shell whose prose all lives on '/' and '/guide'.
+  // editor, which is an app shell whose prose lives on '/home' and '/guide'.
   // Everything else must stay indexable — that is what this asserts, and the
   // set is the allowlist rather than a reason to stop checking.
   const NOINDEX = new Set(['/404', '/editor']);

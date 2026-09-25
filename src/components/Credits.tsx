@@ -14,8 +14,9 @@ const LINKS: { href: string; label: string }[] = [
   { href: 'https://www.linkedin.com/in/kabirtamari/', label: 'LinkedIn' },
 ];
 
-/** Author credit block: one source shared by Landing and Guide so the byline
- *  and links stay identical. Styling comes from the passed className. */
+/** Author credit block: one source shared by the start screen, the home tour
+ *  and the guide, so the byline, links and version stay identical. Styling
+ *  comes from the passed className. */
 export function Credits({ className = '' }: CreditsProps) {
   return (
     <div className={className}>
@@ -35,6 +36,11 @@ export function Credits({ className = '' }: CreditsProps) {
       >
         ☕ Buy me a coffee
       </a>
+      {__APP_VERSION__ && (
+        <span className="credits-version" title={`Commit ${__APP_VERSION__.commit}`}>
+          {__APP_VERSION__.label}
+        </span>
+      )}
     </div>
   );
 }

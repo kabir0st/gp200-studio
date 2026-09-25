@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Landing } from '@/components/Landing';
+import { StartScreen } from '@/components/start/StartScreen';
 import { EditorShell } from './EditorShell';
 import { GuideHub } from '@/guide/GuideHub';
 import { GuideSectionPage } from '@/guide/GuideSection';
@@ -16,13 +17,14 @@ import { STUB_MIDI_DEVICE } from './stubMidiDevice';
  * AudioContext, ResizeObserver or gsap. In practice that means it must never
  * import App.tsx, which pulls in PedalBoard → useFlipReorder (which calls
  * gsap.registerPlugin at module scope) and useAudioMeter (which reads
- * AudioContext.prototype). `Landing` and the guide tree are both clean, and
+ * AudioContext.prototype). `StartScreen`, `Landing` and the guide tree are
+ * all clean, and
  * tests/unit/prerenderSafety.test.ts runs this file under a node environment
  * so a future import that breaks the rule fails a test rather than the build.
  *
  * renderToStaticMarkup rather than renderToString: the guide pages are never
- * hydrated (no React ships to them at all), and `/` is mounted with
- * createRoot, not hydrateRoot — so React's hydration markers would be dead
+ * hydrated (no React ships to them at all), and `/` and `/home` are mounted
+ * with createRoot, not hydrateRoot — so React's hydration markers would be dead
  * weight in every byte of every page.
  */
 
@@ -32,16 +34,17 @@ export interface RenderedPage {
   shell: Route['shell'];
 }
 
-/** Landing, rendered exactly as the app renders it, from a disconnected stub.
- *  Using the real component (not a hand-written copy) is what stops the static
- *  and live landing pages drifting apart. */
+/** A front page (StartScreen at `/`, Landing at `/home`), rendered exactly as
+ *  the app renders it, from a disconnected stub. Using the real component (not
+ *  a hand-written copy) is what stops the static and live pages drifting
+ *  apart. */
 // This module is a Node build entry and is never part of a browser bundle, so
 // fast refresh does not apply to it. Mixing a component with render() and
 // sitemapXml() is the whole point of the file.
 // eslint-disable-next-line react/only-export-components
-function LandingPage() {
+function FrontPage({ component: Page }: { component: typeof StartScreen | typeof Landing }) {
   return (
-    <Landing
+    <Page
       midiDevice={STUB_MIDI_DEVICE}
       onOpenBlank={() => {}}
       onOpenCurrent={() => {}}
@@ -52,7 +55,8 @@ function LandingPage() {
 }
 
 function bodyFor(route: Route): string {
-  if (route.path === '/') return renderToStaticMarkup(<LandingPage />);
+  if (route.path === '/') return renderToStaticMarkup(<FrontPage component={StartScreen} />);
+  if (route.path === '/home') return renderToStaticMarkup(<FrontPage component={Landing} />);
   if (route.path === '/editor') return renderToStaticMarkup(<EditorShell />);
   if (route.path === '/404') return renderToStaticMarkup(<NotFound />);
   if (route.path === '/guide') return renderToStaticMarkup(<GuideHub />);

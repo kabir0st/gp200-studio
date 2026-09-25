@@ -1,6 +1,6 @@
 import { GUIDE_SECTIONS } from '@/guide/manifest';
 import type { PageMeta } from './head';
-import { guideHubGraph, guideSectionGraph, homeGraph } from './schema';
+import { guideHubGraph, guideSectionGraph, homeGraph, homeTourGraph } from './schema';
 
 /**
  * Every URL the build emits, with the metadata that describes it. Consumed by
@@ -38,6 +38,13 @@ const HOME_DESCRIPTION =
 const HOME_OG_DESCRIPTION =
   'Edit presets, push them live over USB-MIDI, and stack unlimited loops. Free, open-source, runs in your browser.';
 
+/** 57 characters, and the same no-'&' rule as HOME_TITLE. */
+const TOUR_TITLE = 'What GP200 Studio Does — Valeton GP-200 Editor and Looper';
+
+/** 150 characters. */
+const TOUR_DESCRIPTION =
+  'A visual pedalboard editor, a multi-layer loop station, a drum machine and a patch manager for the Valeton GP-200. Free, open source, in your browser.';
+
 const GUIDE_DESCRIPTION =
   'The complete GP200 Studio guide: the pedalboard editor, the multi-layer loop station, footswitch and expression assignment, patch management and .prst files.';
 
@@ -63,10 +70,27 @@ export const ROUTES: readonly Route[] = [
     },
   },
   {
+    // The long-form tour: what the app does, screenshots, FAQ, write-ups.
+    // '/' is the app's front door (connect, or open a blank preset) and links
+    // here for anyone who arrived without knowing what they were looking at.
+    path: '/home',
+    shell: 'main',
+    kind: 'app',
+    sitemap: { priority: '0.9', lastmod: NEWEST },
+    meta: {
+      path: '/home',
+      title: TOUR_TITLE,
+      description: TOUR_DESCRIPTION,
+      ogDescription: HOME_OG_DESCRIPTION,
+      ogType: 'website',
+      jsonLd: homeTourGraph(),
+    },
+  },
+  {
     // The editor's own URL, so a session can be bookmarked, shared and told
     // apart in analytics. Deliberately absent from SITEMAP_ROUTES and marked
     // noindex: what ships here is an app shell, and the prose that earns the
-    // search traffic is all on '/' and under '/guide'. Its prerendered body
+    // search traffic is on '/home' and under '/guide'. Its prerendered body
     // (src/prerender/EditorShell.tsx) exists for the visitor who arrives with
     // JavaScript off, not for a crawler.
     path: '/editor',

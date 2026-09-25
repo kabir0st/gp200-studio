@@ -1,0 +1,279 @@
+/* ════════════════════════════════════════════════════════════════════════
+   Start screen (`/`, StartScreen.tsx): same stage vocabulary as the board
+   (case, chrome panel, JetBrains-mono display type) and the same light/dark
+   tokens, so opening the editor feels like the lights coming up on a room
+   you were already standing in. Two actions only: connect / open.
+   ════════════════════════════════════════════════════════════════════════ */
+.start-view {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--case);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.start-panel {
+  width: 100%;
+  max-width: 520px;
+  border-radius: 14px;
+  background: var(--chrome-bg);
+  border: 1px solid var(--chrome-border);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
+  padding: 36px 40px 32px;
+  text-align: center;
+}
+.start-chips {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 26px;
+}
+.start-chip {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--body, #444);
+  color: var(--ink, #eee);
+  border: 1px solid color-mix(in srgb, var(--ink, #888) 25%, transparent);
+}
+.start-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.start-title {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--chrome-text);
+  margin: 0 0 4px;
+}
+.start-sub {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--chrome-muted);
+  margin: 0 0 30px;
+}
+.start-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.start-btn {
+  position: relative;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 16px 18px;
+  border-radius: 10px;
+  background: var(--chrome-face);
+  border: 1px solid var(--chrome-border);
+  color: var(--chrome-text);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: border-color 0.1s ease, transform 0.1s ease;
+}
+.start-btn:hover:not(:disabled) {
+  border-color: var(--chrome-muted);
+  transform: translateY(-1px);
+}
+.start-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.start-btn.primary {
+  background: var(--chrome-text);
+  border-color: var(--chrome-text);
+  color: var(--chrome-bg);
+  /* keep the label clear of the absolutely-positioned LED on both sides */
+  padding-inline: 38px;
+}
+/* The no-pedal way in. Dashed and quieter than CONNECT, but still a full
+   button: for anyone without the pedal on the desk it is the whole page. */
+.start-btn.ghost {
+  display: inline-flex;
+  max-width: 100%;
+  margin: 18px auto 0;
+  padding: 12px 18px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  background: transparent;
+  border-style: dashed;
+  color: var(--chrome-muted);
+}
+.start-btn.ghost:hover:not(:disabled) {
+  color: var(--chrome-text);
+}
+.start-btn-sub {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+.start-led {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--dot-off);
+}
+.start-led.on {
+  background: #2f9e5f;
+  box-shadow: 0 0 8px 2px rgba(47, 158, 95, 0.5);
+}
+.start-led.busy {
+  background: #d9a13c;
+  animation: led-pulse 1.2s ease-in-out infinite;
+}
+.start-msg {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  line-height: 1.55;
+  letter-spacing: 0.06em;
+  color: var(--chrome-muted);
+  margin: 18px 0 0;
+}
+.start-msg.error {
+  color: var(--accent-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* The not-found message names the ports the browser did see and, on Linux,
+     the modprobe fix — several lines inside the 520px panel. Wrap it rather
+     than letting it squeeze the ✕ button. */
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.start-msg.error button {
+  font-weight: 800;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: inherit;
+}
+.start-features {
+  list-style: none;
+  margin: 26px 0 0;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--chrome-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+.start-feature {
+  position: relative;
+  padding-left: 18px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--chrome-muted);
+}
+.start-feature::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.start-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 22px;
+  margin: 20px 0 0;
+}
+.start-links a {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--chrome-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.start-links a:hover {
+  color: var(--accent);
+}
+.start-credits {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--chrome-border);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--chrome-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.start-credits .credits-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 16px;
+}
+.start-credits .credits-links a {
+  color: var(--chrome-text);
+  text-decoration: none;
+}
+.start-credits .credits-links a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+/* the support link is promoted out of the 10px credits row into its own pill;
+   `order: -1` lifts it above the byline without reordering the markup (the
+   guide footer wants it last). */
+.start-credits .credits-coffee {
+  order: -1;
+  margin-bottom: 6px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: none;
+  color: var(--accent);
+  text-decoration: none;
+  transition: background 0.1s ease;
+}
+.start-credits .credits-coffee:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.start-credits .credits-version {
+  font-size: 9px;
+  opacity: 0.7;
+}
+
+@media (max-width: 480px) {
+  .start-view {
+    padding: 16px;
+  }
+  .start-panel {
+    padding: 28px 20px 24px;
+  }
+  .start-title {
+    font-size: 26px;
+  }
+}

@@ -121,6 +121,23 @@ export function homeGraph(): Node[] {
   ];
 }
 
+/** `/home` — the long-form tour of the app. The app, site and author nodes
+ *  are defined once on `/` and referenced from here, like the guide pages. */
+export function homeTourGraph(): Node[] {
+  return [
+    {
+      '@type': 'WebPage',
+      '@id': `${abs('/home')}#webpage`,
+      url: abs('/home'),
+      isPartOf: websiteRef,
+      about: appRef,
+      primaryImageOfPage: OG_IMAGE,
+      inLanguage: 'en',
+    },
+    breadcrumbNode([{ name: SITE_NAME, path: '/' }, { name: 'Home' }]),
+  ];
+}
+
 /** `/guide` — the hub, carrying every section's FAQ. */
 export function guideHubGraph(): Node[] {
   return [

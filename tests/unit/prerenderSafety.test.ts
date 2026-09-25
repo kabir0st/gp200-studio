@@ -31,7 +31,7 @@ describe('prerender safety', () => {
   it('renders every route to static markup with no browser globals', async () => {
     const { render, ROUTE_PATHS } = await import('@/prerender/entry-server');
 
-    expect(ROUTE_PATHS).toHaveLength(17);
+    expect(ROUTE_PATHS).toHaveLength(18);
 
     for (const path of ROUTE_PATHS) {
       const page = render(path);
@@ -75,7 +75,7 @@ describe('prerender safety', () => {
 
   /**
    * scripts/prerender.mjs only ever replaces the region between the seo markers.
-   * Anything a shell declares OUTSIDE them survives into all 17 pages verbatim —
+   * Anything a shell declares OUTSIDE them survives into all 18 pages verbatim —
    * so a <title> or canonical added there ships twice on every page, and the
    * head builder's own "exactly one" assertions cannot see it, because they run
    * on headFor()'s string rather than on the composed document.
@@ -106,19 +106,19 @@ describe('prerender safety', () => {
   });
 
   /**
-   * The landing page is the strongest URL on the site and used to link to
-   * /guide and nothing beneath it, so all thirteen sections depended on a single
-   * hop. These deep links are the fix — and because they are hand-written slugs
-   * rather than derived from the manifest, a rename would turn one into a 404
-   * silently. This is what makes that a test failure instead.
+   * The tour at /home used to link to /guide and nothing beneath it, so all
+   * thirteen sections depended on a single hop. These deep links are the fix —
+   * and because they are hand-written slugs rather than derived from the
+   * manifest, a rename would turn one into a 404 silently. This is what makes
+   * that a test failure instead.
    */
-  it('links the landing page into real guide sections', async () => {
+  it('links the home tour into real guide sections', async () => {
     const { render } = await import('@/prerender/entry-server');
     const { GUIDE_SECTIONS } = await import('@/guide/manifest');
 
     const slugs = new Set(GUIDE_SECTIONS.map((s: { slug: string }) => s.slug));
     const linked = new Set(
-      [...render('/').body.matchAll(/href="\/guide\/([a-z0-9-]+)"/g)].map((m) => m[1]),
+      [...render('/home').body.matchAll(/href="\/guide\/([a-z0-9-]+)"/g)].map((m) => m[1]),
     );
 
     expect(linked.size, 'landing links no guide section').toBeGreaterThanOrEqual(3);
@@ -127,11 +127,29 @@ describe('prerender safety', () => {
     }
   });
 
+  /**
+   * '/' is the app's front door: the two ways into the editor and nothing in
+   * front of them. It must still reach the tour and the guide with real
+   * anchors, or everything that moved to /home is cut off from the root.
+   */
+  it('puts both ways into the editor on the start screen, and links out', async () => {
+    const { render } = await import('@/prerender/entry-server');
+    const body = render('/').body;
+
+    expect(body).toContain('CONNECT YOUR GP-200');
+    expect(body).toContain('OPEN WITHOUT CONNECTING');
+    expect(body).toContain('href="/home"');
+    expect(body).toContain('href="/guide"');
+    // The tour's hero must not have leaked onto the start screen.
+    expect(body).not.toContain('class="lp ');
+  });
+
   it('emits a sitemap listing every indexable URL', async () => {
     const { sitemapXml } = await import('@/prerender/entry-server');
     const xml = sitemapXml();
-    expect((xml.match(/<loc>/g) ?? [])).toHaveLength(15);
+    expect((xml.match(/<loc>/g) ?? [])).toHaveLength(16);
     expect(xml).toContain('<loc>https://gp200studio.com/</loc>');
+    expect(xml).toContain('<loc>https://gp200studio.com/home</loc>');
     expect(xml).toContain('<loc>https://gp200studio.com/guide/loop-station</loc>');
     // The 404 must never be advertised.
     expect(xml).not.toContain('/404');

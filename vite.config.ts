@@ -1,7 +1,32 @@
 import { defineConfig, type Plugin } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
+import { parseGitDescribe, type AppVersion } from './src/core/appVersion.ts'
+
+/**
+ * The version printed under the credits, as `__APP_VERSION__`: the latest
+ * release tag and the commits since it (src/core/appVersion.ts).
+ *
+ * `--match 'v[0-9]*'` counts from release tags only, so a stray tag of any
+ * other shape can't reset the number. With no git, or no tag reachable — a
+ * shallow CI clone fetched without tags is the likely one — this is null and
+ * the page shows no version at all, which beats a confidently wrong one.
+ */
+function appVersion(): AppVersion | null {
+  try {
+    const described = execFileSync(
+      'git',
+      ['describe', '--tags', '--long', '--match', 'v[0-9]*'],
+      { cwd: __dirname, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
+    )
+    return parseGitDescribe(described)
+  } catch {
+    console.warn('[gp200] no release tag reachable from HEAD; the version will not be shown')
+    return null
+  }
+}
 
 /**
  * Serves the prerendered guide pages during `npm run dev`.
@@ -16,8 +41,9 @@ import path from 'node:path'
  * shows what production will and guide copy can be edited without a build.
  * `apply: 'serve'` because the build already has prerender.mjs for this.
  *
- * Only guide-shell routes are intercepted. '/' and '/editor' are the editor
- * SPA, which the normal dev pipeline already serves correctly, and taking them
+ * Only guide-shell routes are intercepted. '/', '/home' and '/editor' are the
+ * editor SPA, which the normal dev pipeline already serves correctly (its SPA
+ * fallback answers '/home' and '/editor' with index.html), and taking them
  * over here would put an SSR pass in front of every hot reload.
  */
 function guideDevServer(): Plugin {
@@ -59,6 +85,9 @@ export default defineConfig(() => ({
   // Everything that resolves an asset at runtime still goes through
   // import.meta.env.BASE_URL, so the subfolder case remains a one-line change.
   base: '/',
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion()),
+  },
   plugins: [react(), guideDevServer()],
   resolve: {
     alias: {

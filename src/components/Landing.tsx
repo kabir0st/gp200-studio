@@ -25,12 +25,13 @@ interface LandingProps {
 }
 
 /**
- * The home page.
+ * The home page tour, served at `/home`.
  *
- * Two jobs at once, and the order matters. It is the app's front door — the
- * connect button and the blank-preset escape hatch are the first thing under
- * the headline — and it is also the only marketing page the product has, the
- * page gp200studio.com serves and the one every social card links to.
+ * `/` is the app's front door (StartScreen: connect, or open a blank preset),
+ * so this page's job is to explain the product to someone who does not know it
+ * yet. It is the only marketing page the product has. It still leads with the
+ * same connect button and blank-preset escape hatch under the headline, so a
+ * reader who is sold by the first screen never has to go back to `/`.
  *
  * The page is dark end to end — `.theme-dark`, the inherited-token island
  * declared alongside `:root[data-theme='dark']` in src/index.css — regardless

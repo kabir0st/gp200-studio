@@ -1133,6 +1133,11 @@
   background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
+.lp-credits .credits-version {
+  font-size: 9px;
+  opacity: 0.7;
+}
+
 /* ── sticky bar ────────────────────────────────────────────────────────────
    Hidden unconditionally, not behind `data-anim`: with no JavaScript there is
    no scroll trigger to reveal it, and a bar pinned over a static page would
