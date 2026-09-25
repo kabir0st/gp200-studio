@@ -445,12 +445,38 @@
   color: var(--chrome-muted);
 }
 
+/* a button: tapping the value opens the entry field in its place */
 .mobile-view .m-rail-value {
   flex: none;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 6px;
+  border: 0;
+  border-bottom: 1px dashed var(--chrome-border);
+  border-radius: 0;
+  background: none;
+  font: inherit;
   font-size: 16px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--chrome-text);
+}
+
+/* 16px or iOS zooms the page in on focus */
+.mobile-view .m-rail-entry {
+  flex: none;
+  width: 84px;
+  height: 40px;
+  padding: 0 6px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--chrome-text);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
 /* ----------------------------------------------------------- footswitch */

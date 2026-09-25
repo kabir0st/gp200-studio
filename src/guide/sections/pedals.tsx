@@ -34,6 +34,20 @@ export function PedalsBody() {
           faders, or flip its switches. EQ blocks show faders.
         </li>
         <li>
+          <strong>Set an exact value</strong>: click the number under a knob
+          (or press Enter on a focused knob), type the value and press Enter.
+          The scroll wheel and arrow keys move one value at a time; on wide
+          knobs such as delay Time they move in bigger steps, so hold Shift
+          there for single steps (Shift also slows a drag). On a phone, touch a
+          knob, then tap its value in the bar above the footswitch.
+        </li>
+        <li>
+          <strong>Tempo-synced Rate and Time</strong>: with a mod or delay's{' '}
+          <em>Sync</em> switch on, its Rate or Time knob picks a note value (1/4,
+          1/8D, 1/8T…) against the patch tempo, and clicking the value opens
+          the list of notes.
+        </li>
+        <li>
           <strong>Reorder</strong>: drag a pedal into another bay, or focus its{' '}
           <strong>#n</strong> chain number and use the Left/Right arrow keys.
           Blocks animate to their new places, including across a row break.

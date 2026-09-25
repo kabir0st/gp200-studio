@@ -95,7 +95,7 @@ export const GUIDE_SECTIONS: readonly GuideSection[] = [
     metaDescription:
       'Bypass, replace, retune and reorder the GP-200 effect blocks. All 305 effects in a searchable browser, scoped to each block’s module.',
     blurb: 'Bypass, swap, edit and reorder the effect blocks in the chain.',
-    lastmod: '2026-08-17',
+    lastmod: '2026-09-25',
   },
   {
     id: 'deck',

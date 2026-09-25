@@ -1,8 +1,13 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { KnobParam } from '@/core/effectParams';
 import { KNOB_STYLES, type BodySpec } from '@/components/board/boardPalette';
-import { clampSnap, formatValue } from '@/components/board/paramValue';
-import { KNOB_VIEWBOX, keyStep, knobAngle, tickPaths } from '@/components/board/knobGeometry';
+import {
+  entryText,
+  formatValue,
+  snapValue,
+  stepValue,
+} from '@/components/board/paramValue';
+import { KNOB_VIEWBOX, knobAngle, tickPaths } from '@/components/board/knobGeometry';
 
 interface MobileKnobProps {
   param: KnobParam;
@@ -17,6 +22,8 @@ interface MobileKnobProps {
   onFocus: (paramIdx: number) => void;
   /** inert: no gesture, no keyboard, and announced as unavailable */
   disabled?: boolean;
+  /** its Sync switch is on: the knob picks a note value (core/tempoSync.ts) */
+  synced?: boolean;
 }
 
 /** Pixels of horizontal drag for a full min→max sweep. */
@@ -54,6 +61,7 @@ export function MobileKnob({
   pedalName,
   onFocus,
   disabled = false,
+  synced = false,
 }: MobileKnobProps) {
   const style = KNOB_STYLES[knobStyle];
   const [dragging, setDragging] = useState(false);
@@ -65,10 +73,10 @@ export function MobileKnob({
   const lastTap = useRef(-Infinity);
 
   const angle = knobAngle(value, param);
-  const step = keyStep(param);
+  const readout = formatValue(value, param, synced);
 
-  function nudge(notches: number) {
-    const next = clampSnap(value + notches * step, param);
+  function nudge(notches: number, fine: boolean) {
+    const next = stepValue(value, param, notches, { synced, fine });
     if (next !== value) onChange(next);
   }
 
@@ -91,7 +99,7 @@ export function MobileKnob({
     drag.current.turned = true;
 
     const range = param.max - param.min;
-    const next = clampSnap(drag.current.value + (dx * range) / DRAG_RANGE_PX, param);
+    const next = snapValue(drag.current.value + (dx * range) / DRAG_RANGE_PX, param, synced);
     if (next !== value) onChange(next);
   }
 
@@ -128,17 +136,17 @@ export function MobileKnob({
         aria-disabled={disabled || undefined}
         aria-valuemin={param.min}
         aria-valuemax={param.max}
-        aria-valuenow={Number(value.toFixed(param.step < 1 ? 1 : 0))}
-        aria-valuetext={formatValue(value, param)}
+        aria-valuenow={Number(entryText(value, param))}
+        aria-valuetext={readout}
         onFocus={() => onFocus(param.idx)}
         onKeyDown={(e) => {
           if (disabled) return;
           if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
             e.preventDefault();
-            nudge(1);
+            nudge(1, e.shiftKey);
           } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
             e.preventDefault();
-            nudge(-1);
+            nudge(-1, e.shiftKey);
           }
         }}
       >
@@ -169,7 +177,7 @@ export function MobileKnob({
       <span className="m-knob-label" title={param.name}>
         {param.name}
       </span>
-      <span className="m-knob-value">{formatValue(value, param)}</span>
+      <span className="m-knob-value">{readout}</span>
     </div>
   );
 }

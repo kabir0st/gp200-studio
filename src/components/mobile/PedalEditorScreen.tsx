@@ -3,6 +3,7 @@ import type { EffectSlot } from '@/core/types';
 import { getEffectName, getSlotModule } from '@/core/effectNames';
 import { EFFECT_DESCRIPTIONS } from '@/core/effectDescriptions';
 import { getEffectParams, type KnobParam } from '@/core/effectParams';
+import { isKnobSynced } from '@/core/tempoSync';
 import { getBodySpec } from '@/components/board/boardPalette';
 import { EffectPicker } from '@/components/board/EffectPicker';
 import { lookupPedalArt, type ManifestIndex } from '@/components/board/pedalManifest';
@@ -60,6 +61,7 @@ export function PedalEditorScreen({
 
   const focus = focusIdx === null ? null : (knobs.find((k) => k.idx === focusIdx) ?? null);
   const focusValue = focus ? (slot.params[focus.idx] ?? focus.default) : 0;
+  const synced = (knob: KnobParam) => isKnobSynced(slot.effectId, knob, slot.params);
 
   // amps wear their knobs on a control-panel strip, as the hardware does. Read
   // off the manifest rather than `spec`, which falls back to a BodySpec with no
@@ -118,6 +120,7 @@ export function PedalEditorScreen({
               ink={panel ? panelText : spec.ink}
               pedalName={effectName}
               onFocus={setFocusIdx}
+              synced={synced(param)}
             />
           ))}
         </div>
@@ -138,7 +141,12 @@ export function PedalEditorScreen({
       )}
 
       <div className="m-editor-foot">
-        <FocusRail param={focus} value={focusValue} onChange={onParamChange} />
+        <FocusRail
+          param={focus}
+          value={focusValue}
+          onChange={onParamChange}
+          synced={focus !== null && synced(focus)}
+        />
 
         <button
           type="button"

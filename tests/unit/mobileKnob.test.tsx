@@ -100,9 +100,9 @@ describe('MobileKnob', () => {
     const onChange = vi.fn();
     render(<Harness initial={50} onChange={onChange} />);
 
-    // one notch is a fiftieth of the sweep, floored at the param's own step
+    // one value per press on a 0..100 knob
     fireEvent.keyDown(knob(), { key: 'ArrowRight' });
-    expect(onChange).toHaveBeenLastCalledWith(52);
+    expect(onChange).toHaveBeenLastCalledWith(51);
     fireEvent.keyDown(knob(), { key: 'ArrowDown' });
     expect(onChange).toHaveBeenLastCalledWith(50);
   });

@@ -3,6 +3,7 @@ import type { EffectSlot } from '@/core/types';
 import { getEffectName, getSlotModule } from '@/core/effectNames';
 import { EFFECT_DESCRIPTIONS } from '@/core/effectDescriptions';
 import { getEffectParams } from '@/core/effectParams';
+import { isKnobSynced } from '@/core/tempoSync';
 import { getBodySpec } from './boardPalette';
 import { pedalIsWide } from './boardLayout';
 import { type PedalArtEntry } from './pedalManifest';
@@ -72,6 +73,8 @@ export function Pedal({
   // amps get a control-panel strip (knobs live on the panel, like the hardware)
   const panel = art?.colors?.panel;
   const panelText = art?.colors?.panelText ?? spec.ink;
+  let knobInk = spec.ink;
+  if (panel) knobInk = panelText;
   // graphic EQs get faders, not knobs
   const isEq = moduleName === 'EQ';
 
@@ -197,8 +200,9 @@ export function Pedal({
                 value={value}
                 onChange={(v) => onParamChange(def.idx, v)}
                 knobStyle={spec.knob}
-                ink={panel ? panelText : spec.ink}
+                ink={knobInk}
                 pedalName={effectName}
+                synced={isKnobSynced(slot.effectId, def, slot.params)}
               />
             );
           }

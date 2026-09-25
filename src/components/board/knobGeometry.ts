@@ -13,8 +13,12 @@ import type { KnobParam } from '@/core/effectParams';
 /** Seven o'clock, where a real pot's minimum sits. */
 export const START_ANGLE = -135;
 export const SWEEP = 270;
-/** Wheel notches (and arrow-key presses) for a full min→max sweep. */
-export const NOTCHES_PER_SWEEP = 50;
+/**
+ * The most wheel notches (and arrow-key presses) a full min→max sweep may take.
+ * Every 0..100 or ±100 knob fits in one step per notch; only a wide knob such
+ * as delay Time (3980 ms) is stepped coarser to stay under it.
+ */
+export const NOTCHES_PER_SWEEP = 200;
 
 /** The knob is drawn on a 100×100 viewBox, centred. */
 export const KNOB_VIEWBOX = 100;
@@ -43,12 +47,27 @@ export function tickPaths(inner = 42, outer = 48): string[] {
   return ticks;
 }
 
+/** The param's own resolution: its step, or 1 where the table gives none. */
+export function fineStep(param: KnobParam): number {
+  if (param.step > 0) return param.step;
+  return 1;
+}
+
 /**
  * How far one keyboard press or wheel notch moves the value.
  *
- * Never below the param's own step, or clampSnap would round a nudge straight
- * back to the current value and the knob would sit dead under the wheel.
+ * One step of the param's own resolution wherever NOTCHES_PER_SWEEP allows it,
+ * so a 0..100 knob goes 70 → 71 and never skips a value (it used to move two,
+ * which made 70 unreachable from 71). A wider knob moves a whole number of
+ * steps, so delay Time goes in even 20 ms rather than alternating 19 and 20;
+ * `fine` (Shift held) brings even that down to one.
+ *
+ * Always at least one step, or clampSnap would round a nudge straight back to
+ * the current value and the knob would sit dead under the wheel.
  */
-export function keyStep(param: KnobParam): number {
-  return Math.max((param.max - param.min) / NOTCHES_PER_SWEEP, param.step);
+export function keyStep(param: KnobParam, fine = false): number {
+  const resolution = fineStep(param);
+  if (fine) return resolution;
+  const steps = Math.round((param.max - param.min) / NOTCHES_PER_SWEEP / resolution);
+  return Math.max(steps, 1) * resolution;
 }

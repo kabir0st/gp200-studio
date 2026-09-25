@@ -1,7 +1,8 @@
 import type { CSSProperties, KeyboardEvent, PointerEvent } from 'react';
 import type { EffectSlot } from '@/core/types';
 import { getEffectName, getSlotModule } from '@/core/effectNames';
-import { getEffectParams, type EffectParam } from '@/core/effectParams';
+import { getEffectParams, type KnobParam } from '@/core/effectParams';
+import { isKnobSynced } from '@/core/tempoSync';
 import { getBodySpec } from '@/components/board/boardPalette';
 import { formatValue } from '@/components/board/paramValue';
 import type { PedalArtEntry } from '@/components/board/pedalManifest';
@@ -26,11 +27,14 @@ interface ChainRowProps {
 }
 
 /** The first two knob params, as "Drive 62 · Tone 40" , a glance-level summary. */
-function summarize(defs: EffectParam[], params: number[]): string {
-  return defs
-    .filter((def): def is Extract<EffectParam, { type: 'knob' }> => def.type === 'knob')
+function summarize(effectId: number, params: number[]): string {
+  return getEffectParams(effectId)
+    .filter((def): def is KnobParam => def.type === 'knob')
     .slice(0, 2)
-    .map((def) => `${def.name} ${formatValue(params[def.idx] ?? def.default, def)}`)
+    .map((def) => {
+      const synced = isKnobSynced(effectId, def, params);
+      return `${def.name} ${formatValue(params[def.idx] ?? def.default, def, synced)}`;
+    })
     .join(' · ');
 }
 
@@ -61,7 +65,7 @@ export function ChainRow({
   // module identity is the physical block, never the effectId (slot 5 is always CAB)
   const moduleName = getSlotModule(slot.slotIndex);
   const spec = art?.colors ?? getBodySpec(moduleName);
-  const summary = summarize(getEffectParams(slot.effectId), slot.params);
+  const summary = summarize(slot.effectId, slot.params);
 
   const vars = {
     '--body': spec.body,

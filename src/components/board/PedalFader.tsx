@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import type { KnobParam } from '@/core/effectParams';
-import { clampSnap, formatValue } from './paramValue';
+import { clampSnap, formatValue, stepValue } from './paramValue';
 
 interface PedalFaderProps {
   param: KnobParam;
@@ -24,7 +24,6 @@ export function PedalFader({ param, value, onChange, pedalName }: PedalFaderProp
 
   const range = param.max - param.min;
   const pct = range > 0 ? (value - param.min) / range : 0;
-  const keyStep = range / 50;
 
   return (
     <div className={`fader${dragging ? ' dragging' : ''}`}>
@@ -53,12 +52,15 @@ export function PedalFader({ param, value, onChange, pedalName }: PedalFaderProp
         onPointerUp={() => setDragging(false)}
         onDoubleClick={() => onChange(param.default)}
         onKeyDown={(e) => {
+          // the knobs' shared step: one unit per press. The fader's own
+          // fiftieth-of-the-range step skipped values on ±50 bands and, on
+          // ±12 dB bands, rounded back to where it started and never moved.
           if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
             e.preventDefault();
-            onChange(clampSnap(value + keyStep, param));
+            onChange(stepValue(value, param, 1, { fine: e.shiftKey }));
           } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
             e.preventDefault();
-            onChange(clampSnap(value - keyStep, param));
+            onChange(stepValue(value, param, -1, { fine: e.shiftKey }));
           }
         }}
       >

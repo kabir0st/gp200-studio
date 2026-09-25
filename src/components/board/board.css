@@ -887,6 +887,40 @@
   font-weight: 700;
   color: var(--ink);
   opacity: 0.95;
+  /* a click here opens the value entry; the wheel and drag still work on it */
+  cursor: text;
+}
+/* Typed value / note pick (ValueEntry). Same footprint as the readout it
+   replaces, so opening it never reflows the pedal face under useBoardFit. */
+.board-view .k-entry {
+  width: 46px;
+  height: 15px;
+  padding: 0;
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 13px;
+  text-align: center;
+  cursor: text;
+  user-select: text;
+}
+.board-view select.k-entry {
+  appearance: none;
+  text-align-last: center;
+  cursor: pointer;
+}
+.board-view .k-entry:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+/* hold the lift while a value is typed, even with the pointer gone */
+.board-view .knob.editing {
+  transform: scale(1.2);
+  z-index: 3;
 }
 
 /* ── EQ fader (graphic-EQ pedals render sliders, not knobs) ── */
